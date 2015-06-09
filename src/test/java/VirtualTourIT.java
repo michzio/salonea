@@ -11,8 +11,7 @@ import org.junit.runner.RunWith;
 import pl.salonea.embeddables.Address;
 import pl.salonea.entities.Provider;
 import pl.salonea.entities.ServicePoint;
-import pl.salonea.entities.ServicePointPhoto;
-import pl.salonea.entities.idclass.ServicePointId;
+import pl.salonea.entities.VirtualTour;
 import pl.salonea.enums.ProviderType;
 
 import javax.persistence.EntityManager;
@@ -28,16 +27,16 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 /**
- * ServicePointPhoto Tester.
+ * VirtualTour Tester.
  *
  * @author Michal Ziobro
  * @since <pre>Jun 4, 2015</pre>
  * @version 1.0
  */
 @RunWith(Arquillian.class)
-public class ServicePointPhotoIT {
+public class VirtualTourIT {
 
-    private static final Logger logger = Logger.getLogger(ServicePointPhotoIT.class.getName());
+    private static final Logger logger = Logger.getLogger(VirtualTourIT.class.getName());
 
     private static EntityManagerFactory emf;
     private EntityManager em;
@@ -77,7 +76,7 @@ public class ServicePointPhotoIT {
 
 
     @Test
-    public void shouldCreateNewServicePointWithPhoto() {
+    public void shouldCreateNewVirtualTour() {
 
         // Create instance of provider entity
         Address address = new Address("Poznańska", "15", "29-100", "Poznań", "Wielkopolska", "Poland");
@@ -93,26 +92,26 @@ public class ServicePointPhotoIT {
         em.persist(servicePoint);
 
         // Create instance of service point photo entity
-        ServicePointPhoto servicePointPhoto = new ServicePointPhoto("service_point_1.png", servicePoint);
-        em.persist(servicePointPhoto);
+        VirtualTour virtualTour = new VirtualTour("virtual_tour_1.swf", servicePoint);
+        em.persist(virtualTour);
 
         transaction.commit();
 
-        assertNotNull("Service point photo id can not be null", servicePointPhoto.getPhotoId());
+        assertNotNull("Virtual tour id can not be null", virtualTour.getTourId());
 
         transaction.begin();
-        ServicePointPhoto photo = em.find(ServicePointPhoto.class, servicePointPhoto.getPhotoId());
+        VirtualTour tour = em.find(VirtualTour.class, virtualTour.getTourId());
         em.refresh(servicePoint);
-        Set<ServicePointPhoto> servicePointPhotos = servicePoint.getPhotos();
+        Set<VirtualTour> servicePointTours = servicePoint.getVirtualTours();
         transaction.commit();
 
-        assertTrue("Service point photo collection must include added photo.", servicePointPhotos.contains(photo));
+        assertTrue("Service point tour collection must include added virtual tour.", servicePointTours.contains(tour));
 
         transaction.begin();
-        em.remove(photo);
+        em.remove(virtualTour);
         em.remove(servicePoint);
         em.remove(provider);
         transaction.commit();
-
     }
+
 }

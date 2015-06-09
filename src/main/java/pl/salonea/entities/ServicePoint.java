@@ -27,6 +27,7 @@ public class ServicePoint {
     private Float longitudeWGS84;
 
     private Set<ServicePointPhoto> photos;
+    private Set<VirtualTour> virtualTours;
 
     /* constructors */
 
@@ -138,5 +139,14 @@ public class ServicePoint {
 
     public void setPhotos(Set<ServicePointPhoto> photos) {
         this.photos = photos;
+    }
+
+    @OneToMany(mappedBy = "servicePoint", fetch = FetchType.LAZY)
+    public Set<VirtualTour> getVirtualTours() {
+        return virtualTours;
+    }
+
+    public void setVirtualTours(Set<VirtualTour> virtualTours) {
+        this.virtualTours = virtualTours;
     }
 }
