@@ -11,6 +11,7 @@ import org.junit.runner.RunWith;
 import pl.salonea.embeddables.Address;
 import pl.salonea.entities.Provider;
 import pl.salonea.entities.ServicePoint;
+import pl.salonea.entities.Tag;
 import pl.salonea.entities.VirtualTour;
 import pl.salonea.enums.ProviderType;
 
@@ -19,6 +20,7 @@ import javax.persistence.EntityManagerFactory;
 import javax.persistence.EntityTransaction;
 import javax.persistence.Persistence;
 import java.io.File;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -108,6 +110,59 @@ public class VirtualTourIT {
         assertTrue("Service point tour collection must include added virtual tour.", servicePointTours.contains(tour));
 
         transaction.begin();
+        em.remove(virtualTour);
+        em.remove(servicePoint);
+        em.remove(provider);
+        transaction.commit();
+    }
+
+    @Test
+    public void shouldDefineTagsForVirtualTour()  {
+
+        // Create instance of provider entity
+        Address address = new Address("Poznańska", "15", "29-100", "Poznań", "Wielkopolska", "Poland");
+        Provider provider = new Provider("firma2@allegro.pl", "allegro2", "aAle2@", "Allegro 2 Ltd.",
+                "2234567890", "2234567890", address, "Allegro Polska", ProviderType.SIMPLE);
+
+        transaction.begin();
+
+        em.persist(provider);
+
+        // Create instance of service point entity
+        ServicePoint servicePoint = new ServicePoint(provider, 1, address);
+        em.persist(servicePoint);
+
+        // Create instance of service point photo entity
+        VirtualTour virtualTour = new VirtualTour("virtual_tour_1.swf", servicePoint);
+        em.persist(virtualTour);
+
+        transaction.commit();
+
+        assertNotNull("Virtual tour id can not be null", virtualTour.getTourId());
+
+
+        Tag tag = new Tag("some tag");
+
+        transaction.begin();
+        em.persist(tag);
+        transaction.commit();
+
+        if(virtualTour.getTags() == null) {
+            Set<Tag> tags = new HashSet<>();
+            tags.add(tag);
+            virtualTour.setTags(tags);
+        }
+
+        transaction.begin();
+        em.persist(virtualTour);
+        em.refresh(tag);
+        transaction.commit();
+
+        assertTrue("Tag should be contained in virtual tour tag collection.",
+                tag.getTaggedVirtualTours().contains(virtualTour));
+
+        transaction.begin();
+        em.remove(tag);
         em.remove(virtualTour);
         em.remove(servicePoint);
         em.remove(provider);
