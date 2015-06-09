@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence xmlns="http://xmlns.jcp.org/xml/ns/persistence" version="2.1">
+
+    <persistence-unit name="LocalServicesMySQL"  transaction-type="RESOURCE_LOCAL">
+        <provider>org.hibernate.ejb.HibernatePersistence</provider>
+        <class>pl.salonea.entities.UserAccount</class>
+        <class>pl.salonea.entities.NaturalPerson</class>
+        <class>pl.salonea.entities.Client</class>
+        <class>pl.salonea.entities.Firm</class>
+        <class>pl.salonea.entities.Provider</class>
+        <class>pl.salonea.entities.Corporation</class>
+        <class>pl.salonea.entities.Industry</class>
+        <class>pl.salonea.entities.PaymentMethod</class>
+        <class>pl.salonea.entities.ServicePoint</class>
+        <class>pl.salonea.entities.ServicePointPhoto</class>
+        <class>pl.salonea.entities.VirtualTour</class>
+        <class>pl.salonea.entities.Tag</class>
+        <properties>
+            <property name="javax.persistence.jdbc.driver" value="com.mysql.jdbc.Driver"/>
+            <property name="javax.persistence.jdbc.user" value="root"/>
+            <property name="javax.persistence.jdbc.password" value="root"/>
+            <property name="javax.persistence.jdbc.url" value="jdbc:mysql://localhost:8889/salonea"/>
+            <property name="hibernate.dialect" value="org.hibernate.dialect.MySQLDialect"/>
+            <property name="hibernate.max_fetch_depth" value="3"/>
+            <property name="hibernate.hbm2ddl.auto" value="create" />
+            <property name="hibernate.show_sql" value="true"/>
+            <property name="hibernate.format_sql" value="true"/>
+        </properties>
+    </persistence-unit>
+
+</persistence>
