@@ -132,7 +132,7 @@ public class VirtualTourIT {
         ServicePoint servicePoint = new ServicePoint(provider, 1, address);
         em.persist(servicePoint);
 
-        // Create instance of service point photo entity
+        // Create instance of virtual tour entity
         VirtualTour virtualTour = new VirtualTour("virtual_tour_1.swf", servicePoint);
         em.persist(virtualTour);
 
@@ -141,24 +141,26 @@ public class VirtualTourIT {
         assertNotNull("Virtual tour id can not be null", virtualTour.getTourId());
 
 
+        // Create instance of tag
         Tag tag = new Tag("some tag");
 
         transaction.begin();
         em.persist(tag);
         transaction.commit();
 
-        if(virtualTour.getTags() == null) {
-            Set<Tag> tags = new HashSet<>();
-            tags.add(tag);
-            virtualTour.setTags(tags);
+        Set<Tag> tags = virtualTour.getTags();
+        if( tags == null) {
+            tags = new HashSet<>();
         }
+        tags.add(tag);
+        virtualTour.setTags(tags);
 
         transaction.begin();
         em.persist(virtualTour);
         em.refresh(tag);
         transaction.commit();
 
-        assertTrue("Tag should be contained in virtual tour tag collection.",
+        assertTrue("Virtual tour should be contained in collection for given tag.",
                 tag.getTaggedVirtualTours().contains(virtualTour));
 
         transaction.begin();

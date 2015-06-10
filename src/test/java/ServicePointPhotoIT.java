@@ -12,6 +12,7 @@ import pl.salonea.embeddables.Address;
 import pl.salonea.entities.Provider;
 import pl.salonea.entities.ServicePoint;
 import pl.salonea.entities.ServicePointPhoto;
+import pl.salonea.entities.Tag;
 import pl.salonea.entities.idclass.ServicePointId;
 import pl.salonea.enums.ProviderType;
 
@@ -20,6 +21,7 @@ import javax.persistence.EntityManagerFactory;
 import javax.persistence.EntityTransaction;
 import javax.persistence.Persistence;
 import java.io.File;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -110,6 +112,61 @@ public class ServicePointPhotoIT {
 
         transaction.begin();
         em.remove(photo);
+        em.remove(servicePoint);
+        em.remove(provider);
+        transaction.commit();
+
+    }
+
+    @Test
+    public void shouldDefineTagsForProvider() {
+
+        // Create instance of provider entity
+        Address address = new Address("Poznańska", "15", "29-100", "Poznań", "Wielkopolska", "Poland");
+        Provider provider = new Provider("firma2@allegro.pl", "allegro2", "aAle2@", "Allegro 2 Ltd.",
+                "2234567890", "2234567890", address, "Allegro Polska", ProviderType.SIMPLE);
+
+        transaction.begin();
+
+        em.persist(provider);
+
+        // Create instance of service point entity
+        ServicePoint servicePoint = new ServicePoint(provider, 1, address);
+        em.persist(servicePoint);
+
+        // Create instance of service point photo entity
+        ServicePointPhoto servicePointPhoto = new ServicePointPhoto("service_point_1.png", servicePoint);
+        em.persist(servicePointPhoto);
+
+        transaction.commit();
+
+        assertNotNull("Service point photo id can not be null", servicePointPhoto.getPhotoId());
+
+        // Create instance of tag
+        Tag tag = new Tag("some tag");
+
+        transaction.begin();
+        em.persist(tag);
+        transaction.commit();
+
+        Set<Tag> tags = servicePointPhoto.getTags();
+        if( tags == null) {
+            tags = new HashSet<>();
+        }
+        tags.add(tag);
+        servicePointPhoto.setTags(tags);
+
+        transaction.begin();
+        em.persist(servicePointPhoto);
+        em.refresh(tag);
+        transaction.commit();
+
+        assertTrue("Photo should be contained in collection for given tag.",
+                tag.getTaggedPhotos().contains(servicePointPhoto));
+
+        transaction.begin();
+        em.remove(tag);
+        em.remove(servicePointPhoto);
         em.remove(servicePoint);
         em.remove(provider);
         transaction.commit();
