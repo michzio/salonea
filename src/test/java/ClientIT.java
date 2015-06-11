@@ -1,38 +1,48 @@
+
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.importer.ZipImporter;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.jboss.shrinkwrap.resolver.api.maven.Maven;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import pl.salonea.embeddables.Address;
+import pl.salonea.entities.Client;
 import pl.salonea.entities.Firm;
+import pl.salonea.entities.NaturalPerson;
+import pl.salonea.enums.Gender;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.EntityTransaction;
 import javax.persistence.Persistence;
-import javax.validation.ConstraintViolationException;
+
 import java.io.File;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
 
 /**
- * Firm Tester.
+ * Client Tester.
  *
  * @author Michal Ziobro
- * @since <pre>Jun 4, 2015</pre>
+ * @since <pre>Jun 10, 2015</pre>
  * @version 1.0
  */
 @RunWith(Arquillian.class)
-public class FirmIT {
+public class ClientIT {
 
-    private static final Logger logger = Logger.getLogger(FirmIT.class.getName());
+    private static final Logger logger = Logger.getLogger(ClientIT.class.getName());
 
     private static EntityManagerFactory emf;
+    // @PersistenceContext(unitName = "LocalServicesMySQL")
     private EntityManager em;
     private EntityTransaction transaction;
 
@@ -51,9 +61,7 @@ public class FirmIT {
         war.addAsLibraries(dependencies);
 
         return war;
-
     }
-
 
     @Before
     public void before() throws Exception {
@@ -69,26 +77,28 @@ public class FirmIT {
         if(emf != null) emf.close();
     }
 
-    /*
-   @Test(expected = ConstraintViolationException.class) // not set required fields
-    public void shouldNotCreateNewFirm() {
-
-        // Create instance of firm entity
-        Firm firm = new Firm("firma@allegro.pl", "allegro", "aAle2@", "Allegro Ltd.");
-
-        // persist the firm to the database
-        transaction.begin();
-        em.persist(firm);
-
-        em.remove(firm);
-
-        transaction.commit();
-    }*/
 
     @Test
-    public void shouldCreateNewFirm() {
+    public void shouldCreateNewClient() {
 
-        // Create instance of firm entity
+        // Create instance of Client not binded to neither NaturalPerson nor Firm
+        Client client = new Client();
+
+        transaction.begin();
+        em.persist(client);
+        transaction.commit();
+
+        assertNotNull("Client id can not be null.", client.getClientId());
+
+        transaction.begin();
+        em.remove(client);
+        transaction.commit();
+    }
+
+    @Test
+    public void shouldCreateNewFirmClient() {
+
+        // Create instance of Firm entity
         Firm firm = new Firm("firma@allegro.pl", "allegro", "aAle2@", "Allegro Ltd.");
 
         Address address = new Address("Poznańska", "15", "29-100", "Poznań", "Wielkopolska", "Poland");
@@ -97,15 +107,50 @@ public class FirmIT {
         firm.setVatin("1234567890");
         firm.setCompanyNumber("1234567890");
 
-        // persist the firm to the database
+        // Create instance of Client entity
+        Client client = new Client("Nowy klient biznesowy.");
+
         transaction.begin();
         em.persist(firm);
+        em.persist(client);
+        firm.setClient(client);
+        client.setFirm(firm);
         transaction.commit();
 
-        assertNotNull("User id should be set.", firm.getUserId());
+        assertTrue(client.getFirm().equals(firm));
+        assertTrue(firm.getClient().equals(client));
 
         transaction.begin();
+        em.remove(client);
         em.remove(firm);
+        transaction.commit();
+    }
+
+    @Test
+    public void shouldCreateNewPersonClient() {
+
+        // Create instance of NaturalPerson entity
+        NaturalPerson person = new NaturalPerson("michzio@hotmail.com", "michzio", "pP12@o", "Michał", "Ziobro");
+        person.setAge((short) 20);
+        person.setGender(Gender.male);
+
+        // Create instance of Client entity
+        Client client = new Client("Personal client.");
+
+        transaction.begin();
+        em.persist(person);
+        em.persist(client);
+        person.setClient(client);
+        client.setNaturalPerson(person);
+        transaction.commit();
+
+        assertTrue(client.getNaturalPerson().equals(person));
+        assertTrue(person.getClient().equals(client));
+        assertNull(client.getFirm());
+
+        transaction.begin();
+        em.remove(client);
+        em.remove(person);
         transaction.commit();
     }
 

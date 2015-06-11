@@ -16,7 +16,7 @@ import java.util.Set;
 @PrimaryKeyJoinColumn(name = "provider_id")
 @Access(AccessType.PROPERTY)
 @CorporateOwner
-public class Provider extends Firm implements Serializable {
+public class Provider extends Firm {
 
     private String providerName;
     private String description;

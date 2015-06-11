@@ -26,8 +26,12 @@ public class ServicePoint {
     private Float latitudeWGS84;
     private Float longitudeWGS84;
 
+    /* ServicePoint can be assigned by many photos and tours */
     private Set<ServicePointPhoto> photos;
     private Set<VirtualTour> virtualTours;
+
+    /* ServicePoint can have many WorkStations */
+    private Set<WorkStation> workStations;
 
     /* constructors */
 
@@ -42,6 +46,7 @@ public class ServicePoint {
     /* getters and setters */
 
     @Id
+    @Basic(optional = false)
     @Column(name = "service_point_no", nullable = false, columnDefinition = "INT UNSIGNED")
     public Integer getServicePointNumber() {
         return servicePointNumber;
@@ -54,7 +59,8 @@ public class ServicePoint {
     /* many-to-one relationship to provider, provider id is FK and part of composite PK */
 
     @Id
-    @JoinColumn(name = "provider_id", referencedColumnName = "provider_id", nullable = false)
+    @JoinColumn(name = "provider_id", referencedColumnName = "provider_id", nullable = false, columnDefinition = "BIGINT UNSIGNED",
+        foreignKey = @ForeignKey(name = "fk_service_point_provider"))
     @ManyToOne(fetch = FetchType.EAGER)
     public Provider getProvider() {
         return provider;
@@ -63,7 +69,6 @@ public class ServicePoint {
     public void setProvider(Provider provider) {
         this.provider = provider;
     }
-
 
     @Valid
     @NotNull
@@ -148,5 +153,14 @@ public class ServicePoint {
 
     public void setVirtualTours(Set<VirtualTour> virtualTours) {
         this.virtualTours = virtualTours;
+    }
+
+    @OneToMany(mappedBy = "servicePoint", fetch = FetchType.LAZY)
+    public Set<WorkStation> getWorkStations() {
+        return workStations;
+    }
+
+    public void setWorkStations(Set<WorkStation> workStations) {
+        this.workStations = workStations;
     }
 }

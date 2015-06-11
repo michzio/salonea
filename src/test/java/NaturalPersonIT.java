@@ -10,7 +10,7 @@ import org.junit.*;
 import org.junit.runner.RunWith;
 import pl.salonea.embeddables.Address;
 import pl.salonea.entities.NaturalPerson;
-import pl.salonea.enumerated.Gender;
+import pl.salonea.enums.Gender;
 import pl.salonea.qualifiers.CountryQualifierLiteral;
 import pl.salonea.utils.zip_codes.ZipCodeChecker;
 

@@ -17,7 +17,8 @@ public class NaturalPersonOrFirmValidator implements ConstraintValidator<Natural
     @Override
     public boolean isValid(Client value, ConstraintValidatorContext context) {
 
-
+        // we remain possibility for client to be neither natural person nor firm
+        // e.g. temporary client that can make transactions about which data are also stored in DB
         if(value.getNaturalPerson() == null || value.getFirm() == null)
             return true;
 

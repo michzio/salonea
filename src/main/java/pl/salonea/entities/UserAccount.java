@@ -46,6 +46,8 @@ public class UserAccount implements Serializable {
     private Date lastLogged;
     private Date lastFailedLogin;
 
+    private String accountType; // discriminator
+
     /* Constructors */
     public UserAccount() {
     }
@@ -167,5 +169,14 @@ public class UserAccount implements Serializable {
         }
 
         return this.activationCode;
+    }
+
+    @Column(name = "account_type", insertable = false, updatable = false)
+    public String getAccountType() {
+        return accountType;
+    }
+
+    public void setAccountType(String accountType) {
+        this.accountType = accountType;
     }
 }

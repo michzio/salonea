@@ -9,8 +9,10 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import pl.salonea.embeddables.Address;
-import pl.salonea.entities.Corporation;
 import pl.salonea.entities.Provider;
+import pl.salonea.entities.ServicePoint;
+import pl.salonea.entities.WorkStation;
+import pl.salonea.entities.idclass.WorkStationId;
 import pl.salonea.enums.ProviderType;
 
 import javax.persistence.EntityManager;
@@ -18,6 +20,7 @@ import javax.persistence.EntityManagerFactory;
 import javax.persistence.EntityTransaction;
 import javax.persistence.Persistence;
 import java.io.File;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -25,16 +28,16 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 /**
- * Corporation Tester.
+ * WorkStation Tester.
  *
  * @author Michal Ziobro
- * @since <pre>Jun 4, 2015</pre>
+ * @since <pre>Jun 11, 2015</pre>
  * @version 1.0
  */
 @RunWith(Arquillian.class)
-public class CorporationIT {
+public class WorkStationIT {
 
-    private static final Logger logger = Logger.getLogger(CorporationIT.class.getName());
+    private static final Logger logger = Logger.getLogger(WorkStationIT.class.getName());
 
     private static EntityManagerFactory emf;
     private EntityManager em;
@@ -55,6 +58,7 @@ public class CorporationIT {
         war.addAsLibraries(dependencies);
 
         return war;
+
     }
 
     @Before
@@ -72,30 +76,49 @@ public class CorporationIT {
     }
 
     @Test
-    public void shouldCreateNewCorporation() {
+    public void shouldCreateNewWorkStationInServicePoint() {
 
-        // Create instance of corporation entity
+        // Create instance of provider entity
         Address address = new Address("Poznańska", "15", "29-100", "Poznań", "Wielkopolska", "Poland");
-        Corporation corporation = new Corporation("Mc'Donalds", "mcdonalds.png", address);
+        Provider provider = new Provider("firma2@allegro.pl", "allegro2", "aAle2@", "Allegro 2 Ltd.",
+                "2234567890", "2234567890", address, "Allegro Polska", ProviderType.SIMPLE);
 
-        // persist the corporation to the database
         transaction.begin();
 
-        em.persist(corporation);
+        em.persist(provider);
+
+        // Create instance of service point entity
+        ServicePoint servicePoint = new ServicePoint(provider, 1, address);
+
+        em.persist(servicePoint);
+
+        // Create instance of work station entity
+        WorkStation workStation = new WorkStation(servicePoint, 1);
+
+        em.persist(workStation);
 
         transaction.commit();
 
-        Corporation corporation2 = em.find(Corporation.class, corporation.getCorporationId());
+        WorkStation workStation2 = em.find(WorkStation.class,
+                new WorkStationId(provider.getUserId(), servicePoint.getServicePointNumber(), workStation.getWorkStationNumber()));
 
-        assertNotNull("Corporation id should be set.", corporation2.getCorporationId());
-        assertNotNull("Address should be set on Corporation entity.", corporation2.getAddress());
+        assertTrue("Service point should be set properly on work station.",
+               workStation2.getServicePoint() == servicePoint);
+        assertNotNull("Work station number can not be null", workStation2.getWorkStationNumber());
+
+        em.refresh(servicePoint);
+        Set<WorkStation> workStations = servicePoint.getWorkStations();
+
+        assertTrue("Work station must belong to current service provider",
+                workStations.contains(workStation2));
 
         transaction.begin();
-        em.remove(corporation2);
+        em.remove(workStation);
+        em.remove(servicePoint);
+        em.remove(provider);
         transaction.commit();
+
 
     }
-
-
 
 }

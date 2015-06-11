@@ -8,17 +8,16 @@ import javax.persistence.*;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
-import java.io.Serializable;
 
 
 @Entity
-@DiscriminatorValue("firm")
 @Table(name="firm")
+@DiscriminatorValue("firm")
 @Access(AccessType.PROPERTY)
 @VATIN // check country specific VAT identification number (e.g. poland NIP)
 @CompanyNumber // check country specific comany number (e.g. poland KRS)
 @StatisticNumber // check country specific statistic number (e.g. poland REGON)
-public class Firm extends UserAccount implements Serializable {
+public class Firm extends UserAccount {
 
     private String vatin; // in Poland -> NIP, VAT-EU number
     private String name;

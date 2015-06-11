@@ -4,6 +4,7 @@ import pl.salonea.constraints.NaturalPersonOrFirm;
 
 import javax.persistence.*;
 import java.io.Serializable;
+import java.util.Set;
 
 @Entity
 @Table(name="client")
@@ -17,6 +18,18 @@ public class Client implements Serializable{
     // one-to-one relationships with:
     private NaturalPerson naturalPerson;
     private Firm firm;
+
+    private Set<CreditCard> creditCards;
+
+    /* constructor */
+
+    public Client() { }
+
+    public Client(String description) {
+        this.description = description;
+    }
+
+    /* getters and setters */
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -56,5 +69,14 @@ public class Client implements Serializable{
 
     public void setFirm(Firm firm) {
         this.firm = firm;
+    }
+
+    @OneToMany(mappedBy = "client")
+    public Set<CreditCard> getCreditCards() {
+        return creditCards;
+    }
+
+    public void setCreditCards(Set<CreditCard> creditCards) {
+        this.creditCards = creditCards;
     }
 }

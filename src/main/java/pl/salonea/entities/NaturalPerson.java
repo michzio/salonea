@@ -4,19 +4,18 @@ import pl.salonea.constraints.DeliveryAddressFlagMatch;
 import pl.salonea.constraints.PhoneNumber;
 import pl.salonea.constraints.SkypeName;
 import pl.salonea.embeddables.Address;
-import pl.salonea.enumerated.Gender;
+import pl.salonea.enums.Gender;
 
 import javax.persistence.*;
 import javax.validation.Valid;
 import javax.validation.constraints.*;
-import java.io.Serializable;
 
 @Entity
 @DiscriminatorValue("natural_person")
 @Table(name="natural_person")
 @Access(AccessType.PROPERTY)
 @DeliveryAddressFlagMatch
-public class NaturalPerson extends UserAccount implements Serializable {
+public class NaturalPerson extends UserAccount {
 
     private String firstName;
     private String lastName;

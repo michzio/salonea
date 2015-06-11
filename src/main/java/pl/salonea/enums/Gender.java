@@ -1,4 +1,4 @@
-package pl.salonea.enumerated;
+package pl.salonea.enums;
 
 public enum Gender {
     male, female
