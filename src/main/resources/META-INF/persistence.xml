@@ -22,6 +22,8 @@
         <class>pl.salonea.entities.Skill</class>
         <class>pl.salonea.entities.Term</class>
         <class>pl.salonea.entities.TermEmployeeWorkOn</class>
+        <class>pl.salonea.entities.Service</class>
+        <class>pl.salonea.entities.ServiceCategory</class>
         <properties>
             <property name="javax.persistence.jdbc.driver" value="com.mysql.jdbc.Driver"/>
             <property name="javax.persistence.jdbc.user" value="root"/>

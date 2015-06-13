@@ -1,5 +1,7 @@
 package pl.salonea.entities;
 
+import pl.salonea.constraints.CategoryPhrase;
+
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
@@ -48,7 +50,7 @@ public class ServiceCategory {
         this.categoryId = categoryId;
     }
 
-    @NotNull
+    @CategoryPhrase @NotNull
     @Size(min = 2, max = 45)
     @Column(name = "category_name", nullable = false, unique = true, length = 45)
     public String getCategoryName() {
