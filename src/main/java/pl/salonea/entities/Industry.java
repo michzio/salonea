@@ -3,12 +3,13 @@ package pl.salonea.entities;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.io.Serializable;
 import java.util.Set;
 
 @Entity
 @Table(name="industry")
 @Access(AccessType.PROPERTY)
-public class Industry {
+public class Industry implements Serializable {
 
     private Long industryId;
     private String name;
@@ -64,9 +65,8 @@ public class Industry {
     @ManyToMany
     @JoinTable(name = "provider_industry",
         joinColumns = @JoinColumn(name = "industry_id"),
-        inverseJoinColumns = @JoinColumn(name = "provider_id"),
-        foreignKey = @ForeignKey(name = "fk_provider_industry_industry"),
-        inverseForeignKey = @ForeignKey(name = "fk_provider_industry_provider"))
+        inverseJoinColumns = @JoinColumn(name = "provider_id")
+    )
     // @OrderBy("providerName ASC") - Hibernate + MySQL error
     public Set<Provider> getProviders() {
         return providers;

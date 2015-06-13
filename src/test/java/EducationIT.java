@@ -8,19 +8,16 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import pl.salonea.embeddables.Address;
-import pl.salonea.entities.Provider;
-import pl.salonea.entities.ServicePoint;
-import pl.salonea.entities.WorkStation;
-import pl.salonea.entities.idclass.WorkStationId;
-import pl.salonea.enums.ProviderType;
-import pl.salonea.enums.WorkStationType;
+import pl.salonea.entities.Education;
+import pl.salonea.entities.Employee;
+import pl.salonea.enums.Gender;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.EntityTransaction;
 import javax.persistence.Persistence;
 import java.io.File;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -29,16 +26,16 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 /**
- * WorkStation Tester.
+ * Education Tester.
  *
  * @author Michal Ziobro
- * @since <pre>Jun 11, 2015</pre>
+ * @since <pre>Jun 12, 2015</pre>
  * @version 1.0
  */
 @RunWith(Arquillian.class)
-public class WorkStationIT {
+public class EducationIT {
 
-    private static final Logger logger = Logger.getLogger(WorkStationIT.class.getName());
+    private static final Logger logger = Logger.getLogger(EducationIT.class.getName());
 
     private static EntityManagerFactory emf;
     private EntityManager em;
@@ -59,7 +56,6 @@ public class WorkStationIT {
         war.addAsLibraries(dependencies);
 
         return war;
-
     }
 
     @Before
@@ -77,48 +73,49 @@ public class WorkStationIT {
     }
 
     @Test
-    public void shouldCreateNewWorkStationInServicePoint() {
+    public void shouldCreateNewEducationEntity() {
 
-        // Create instance of provider entity
-        Address address = new Address("Poznańska", "15", "29-100", "Poznań", "Wielkopolska", "Poland");
-        Provider provider = new Provider("firma2@allegro.pl", "allegro2", "aAle2@", "Allegro 2 Ltd.",
-                "2234567890", "2234567890", address, "Allegro Polska", ProviderType.SIMPLE);
+        // Create instance of Education entity
+        Education education = new Education("Stanford University", "Master's Degree in Computer Science");
 
         transaction.begin();
-
-        em.persist(provider);
-
-        // Create instance of service point entity
-        ServicePoint servicePoint = new ServicePoint(provider, 1, address);
-
-        em.persist(servicePoint);
-
-        // Create instance of work station entity
-        WorkStation workStation = new WorkStation(servicePoint, 1, WorkStationType.OTHER);
-
-        em.persist(workStation);
-
+        em.persist(education);
         transaction.commit();
 
-        WorkStation workStation2 = em.find(WorkStation.class,
-                new WorkStationId(provider.getUserId(), servicePoint.getServicePointNumber(), workStation.getWorkStationNumber()));
-
-        assertTrue("Service point should be set properly on work station.",
-               workStation2.getServicePoint() == servicePoint);
-        assertNotNull("Work station number can not be null", workStation2.getWorkStationNumber());
-
-        em.refresh(servicePoint);
-        Set<WorkStation> workStations = servicePoint.getWorkStations();
-
-        assertTrue("Work station must belong to current service provider",
-                workStations.contains(workStation2));
+        assertNotNull("Education id can not be null.", education.getEducationId());
 
         transaction.begin();
-        em.remove(workStation);
-        em.remove(servicePoint);
-        em.remove(provider);
+        em.remove(education);
         transaction.commit();
 
     }
 
+    @Test
+    public void shouldAssignEducationToEmployee() {
+
+        // create instance of Employee entity
+        Employee employee = new Employee("michzio@hotmail.com", "michzio", "pAs12#", "Michał", "Ziobro", (short) 20, Gender.male, "assistant");
+
+        // create instance of Education entity
+        Education education = new Education("Stanford University", "Master's Degree in Computer Science");
+
+        transaction.begin();
+        em.persist(employee);
+        em.persist(education);
+        Set<Education> educations = new HashSet<>();
+        educations.add(education);
+        employee.setEducations(educations);
+        em.refresh(education);
+        transaction.commit();
+
+        assertNotNull("Employee id can not be null.", employee.getUserId());
+        assertNotNull("Education id can not be null.", education.getEducationId());
+        assertTrue("Employee should contain association to given education.", employee.getEducations().contains(education));
+        assertTrue("Education should contain association to given employee.", education.getEducatedEmployees().contains(employee));
+
+        transaction.begin();
+        em.remove(education);
+        em.remove(employee);
+        transaction.commit();
+    }
 }

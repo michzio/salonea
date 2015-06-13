@@ -103,9 +103,7 @@ public class Provider extends Firm {
     @ManyToMany
     @JoinTable(name = "accepted_payment_method",
         joinColumns = @JoinColumn(name = "provider_id"),
-        inverseJoinColumns = @JoinColumn(name = "payment_method_id"),
-            foreignKey = @ForeignKey(name = "fk_accepted_payment_method_provider"),
-            inverseForeignKey = @ForeignKey(name = "fk_accepted_payment_method_payment_method")
+        inverseJoinColumns = @JoinColumn(name = "payment_method_id")
     )
     public Set<PaymentMethod> getAcceptedPaymentMethods() {
         return acceptedPaymentMethods;

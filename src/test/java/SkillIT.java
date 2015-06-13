@@ -8,19 +8,16 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import pl.salonea.embeddables.Address;
-import pl.salonea.entities.Provider;
-import pl.salonea.entities.ServicePoint;
-import pl.salonea.entities.WorkStation;
-import pl.salonea.entities.idclass.WorkStationId;
-import pl.salonea.enums.ProviderType;
-import pl.salonea.enums.WorkStationType;
+import pl.salonea.entities.Employee;
+import pl.salonea.entities.Skill;
+import pl.salonea.enums.Gender;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.EntityTransaction;
 import javax.persistence.Persistence;
 import java.io.File;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -29,16 +26,16 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 /**
- * WorkStation Tester.
+ * Skill Tester.
  *
  * @author Michal Ziobro
- * @since <pre>Jun 11, 2015</pre>
+ * @since <pre>Jun 12, 2015</pre>
  * @version 1.0
  */
 @RunWith(Arquillian.class)
-public class WorkStationIT {
+public class SkillIT {
 
-    private static final Logger logger = Logger.getLogger(WorkStationIT.class.getName());
+    private static final Logger logger = Logger.getLogger(SkillIT.class.getName());
 
     private static EntityManagerFactory emf;
     private EntityManager em;
@@ -59,7 +56,6 @@ public class WorkStationIT {
         war.addAsLibraries(dependencies);
 
         return war;
-
     }
 
     @Before
@@ -76,49 +72,50 @@ public class WorkStationIT {
         if(emf != null) emf.close();
     }
 
+
     @Test
-    public void shouldCreateNewWorkStationInServicePoint() {
+    public void shouldCreateNewSkill() {
 
-        // Create instance of provider entity
-        Address address = new Address("Poznańska", "15", "29-100", "Poznań", "Wielkopolska", "Poland");
-        Provider provider = new Provider("firma2@allegro.pl", "allegro2", "aAle2@", "Allegro 2 Ltd.",
-                "2234567890", "2234567890", address, "Allegro Polska", ProviderType.SIMPLE);
+        // Create instance of Skill entity
+        Skill skill = new Skill("painting");
 
         transaction.begin();
-
-        em.persist(provider);
-
-        // Create instance of service point entity
-        ServicePoint servicePoint = new ServicePoint(provider, 1, address);
-
-        em.persist(servicePoint);
-
-        // Create instance of work station entity
-        WorkStation workStation = new WorkStation(servicePoint, 1, WorkStationType.OTHER);
-
-        em.persist(workStation);
-
+        em.persist(skill);
         transaction.commit();
 
-        WorkStation workStation2 = em.find(WorkStation.class,
-                new WorkStationId(provider.getUserId(), servicePoint.getServicePointNumber(), workStation.getWorkStationNumber()));
-
-        assertTrue("Service point should be set properly on work station.",
-               workStation2.getServicePoint() == servicePoint);
-        assertNotNull("Work station number can not be null", workStation2.getWorkStationNumber());
-
-        em.refresh(servicePoint);
-        Set<WorkStation> workStations = servicePoint.getWorkStations();
-
-        assertTrue("Work station must belong to current service provider",
-                workStations.contains(workStation2));
+        assertNotNull("Skill id can not be null.", skill.getSkillId());
 
         transaction.begin();
-        em.remove(workStation);
-        em.remove(servicePoint);
-        em.remove(provider);
+        em.remove(skill);
         transaction.commit();
-
     }
 
+    @Test
+    public void shouldAssignSkillToEmployee() {
+
+        // create instance of Employee entity
+        Employee employee = new Employee("michzio@hotmail.com", "michzio", "pAs12#", "Michał", "Ziobro", (short) 20, Gender.male, "assistant");
+
+        // Create instance of Skill entity
+        Skill skill = new Skill("painting");
+
+        transaction.begin();
+        em.persist(employee);
+        em.persist(skill);
+        Set<Skill> skills = new HashSet<>();
+        skills.add(skill);
+        employee.setSkills(skills);
+        em.refresh(skill);
+        transaction.commit();
+
+        assertNotNull("Employee id can not be null.", employee.getUserId());
+        assertNotNull("Skill id can not be null.", skill.getSkillId());
+        assertTrue("Employee should contain association to given skill.", employee.getSkills().contains(skill));
+        assertTrue("Skill should contain association to given employee.", skill.getSkilledEmployees().contains(employee));
+
+        transaction.begin();
+        em.remove(skill);
+        em.remove(employee);
+        transaction.commit();
+    }
 }

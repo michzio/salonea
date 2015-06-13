@@ -19,7 +19,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 /**
- * Corporation Tester.
+ * CreditCard Tester.
  *
  * @author Michal Ziobro
  * @since <pre>Jun 10, 2015</pre>

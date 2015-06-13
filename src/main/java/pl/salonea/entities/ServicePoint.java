@@ -8,13 +8,14 @@ import pl.salonea.entities.idclass.ServicePointId;
 import javax.persistence.*;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+import java.io.Serializable;
 import java.util.Set;
 
 @Entity
 @Table(name = "service_point")
 @Access(AccessType.PROPERTY)
 @IdClass(ServicePointId.class)
-public class ServicePoint {
+public class ServicePoint implements Serializable {
 
     private Integer servicePointNumber; // PK
     private Provider provider; // PK, FK
@@ -59,6 +60,7 @@ public class ServicePoint {
     /* many-to-one relationship to provider, provider id is FK and part of composite PK */
 
     @Id
+    @NotNull
     @JoinColumn(name = "provider_id", referencedColumnName = "provider_id", nullable = false, columnDefinition = "BIGINT UNSIGNED",
         foreignKey = @ForeignKey(name = "fk_service_point_provider"))
     @ManyToOne(fetch = FetchType.EAGER)

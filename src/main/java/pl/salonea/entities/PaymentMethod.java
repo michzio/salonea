@@ -4,12 +4,13 @@ package pl.salonea.entities;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.io.Serializable;
 import java.util.Set;
 
 @Entity
 @Table(name = "payment_method")
 @Access(AccessType.PROPERTY)
-public class PaymentMethod {
+public class PaymentMethod implements Serializable {
 
     private Long id;
     private String name;

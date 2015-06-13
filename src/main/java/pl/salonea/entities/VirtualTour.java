@@ -4,12 +4,13 @@ import pl.salonea.constraints.VirtualTourName;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
+import java.io.Serializable;
 import java.util.Set;
 
 @Entity
 @Table(name = "virtual_tour")
 @Access(AccessType.PROPERTY)
-public class VirtualTour {
+public class VirtualTour implements Serializable {
 
     private Long tourId;
 
@@ -87,9 +88,7 @@ public class VirtualTour {
     @ManyToMany
     @JoinTable(name = "tour_tagged_with",
             joinColumns = @JoinColumn(name = "virtual_tour_id", nullable = false),
-            inverseJoinColumns = @JoinColumn(name = "tag_id", nullable = false),
-            foreignKey = @ForeignKey(name = "fk_tour_tagged_with_virtual_tour"),
-            inverseForeignKey = @ForeignKey(name  = "fk_tour_tagged_with_tag")
+            inverseJoinColumns = @JoinColumn(name = "tag_id", nullable = false)
     )
     public Set<Tag> getTags() {
         return tags;
