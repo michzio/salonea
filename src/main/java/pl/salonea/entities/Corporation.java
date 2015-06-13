@@ -176,7 +176,7 @@ public class Corporation implements Serializable {
     /* one-to-many relationship with providers */
 
     // TODO: Corporation should have on update CASCADE_UPDATE, on delete SET_NULL
-    @OneToMany(mappedBy = "corporation")
+    @OneToMany(mappedBy = "corporation", fetch = FetchType.LAZY)
     // @OrderBy("providerName ASC") Hibernate + MySQL error
     public Set<Provider> getProviders() {
         return providers;
