@@ -22,6 +22,9 @@ public class WorkStation implements Serializable{
     /* one-to-many relationship */
     private Set<TermEmployeeWorkOn> termsEmployeesWorkOn;
 
+    /* many-to-many relationship */
+    private Set<ProviderService> providedServices;
+
     /* constructors */
 
     public  WorkStation() { }
@@ -87,5 +90,16 @@ public class WorkStation implements Serializable{
 
     public void setTermsEmployeesWorkOn(Set<TermEmployeeWorkOn> termsEmployeesWorkOn) {
         this.termsEmployeesWorkOn = termsEmployeesWorkOn;
+    }
+
+    /* many-to-many relationship */
+
+    @ManyToMany(mappedBy = "workStations", fetch = FetchType.LAZY)
+    public Set<ProviderService> getProvidedServices() {
+        return providedServices;
+    }
+
+    public void setProvidedServices(Set<ProviderService> providedServices) {
+        this.providedServices = providedServices;
     }
 }

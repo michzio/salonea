@@ -19,7 +19,7 @@ public class Service {
     private ServiceCategory serviceCategory;
 
     /* one-to-many relationship */
-    private Set<ServiceSupply> serviceSupplies;
+    private Set<ProviderService> providedServiceOffers;
 
     /* constructors */
 
@@ -84,11 +84,12 @@ public class Service {
     /* one-to-many relationship */
 
     @OneToMany(mappedBy = "service", fetch = FetchType.LAZY)
-    public Set<ServiceSupply> getServiceSupplies() {
-        return serviceSupplies;
+    public Set<ProviderService> getProvidedServiceOffers() {
+        return providedServiceOffers;
     }
 
-    public void setServiceSupplies(Set<ServiceSupply> serviceSupplies) {
-        this.serviceSupplies = serviceSupplies;
+    public void setProvidedServiceOffers(Set<ProviderService> providedServiceOffers) {
+        this.providedServiceOffers = providedServiceOffers;
     }
+
 }

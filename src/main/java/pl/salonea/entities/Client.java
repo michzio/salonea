@@ -20,6 +20,7 @@ public class Client implements Serializable{
     private Firm firm;
 
     private Set<CreditCard> creditCards;
+    private Set<ProviderRating> providerRatings;
 
     /* constructor */
 
@@ -53,7 +54,7 @@ public class Client implements Serializable{
         this.description = description;
     }
 
-    @OneToOne(mappedBy = "client")
+    @OneToOne(mappedBy = "client", fetch = FetchType.EAGER)
     public NaturalPerson getNaturalPerson() {
         return naturalPerson;
     }
@@ -62,7 +63,7 @@ public class Client implements Serializable{
         this.naturalPerson = naturalPerson;
     }
 
-    @OneToOne(mappedBy = "client")
+    @OneToOne(mappedBy = "client", fetch = FetchType.EAGER)
     public Firm getFirm() {
         return firm;
     }
@@ -71,12 +72,21 @@ public class Client implements Serializable{
         this.firm = firm;
     }
 
-    @OneToMany(mappedBy = "client")
+    @OneToMany(mappedBy = "client", fetch = FetchType.LAZY)
     public Set<CreditCard> getCreditCards() {
         return creditCards;
     }
 
     public void setCreditCards(Set<CreditCard> creditCards) {
         this.creditCards = creditCards;
+    }
+
+    @OneToMany(mappedBy = "client", fetch = FetchType.LAZY)
+    public Set<ProviderRating> getProviderRatings() {
+        return providerRatings;
+    }
+
+    public void setProviderRatings(Set<ProviderRating> providerRatings) {
+        this.providerRatings = providerRatings;
     }
 }

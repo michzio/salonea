@@ -34,6 +34,12 @@ public class Provider extends Firm {
     // Provider can have many ServicePoints
     private Set<ServicePoint> servicePoints;
 
+    // Provider supplies service offers
+    private Set<ProviderService> suppliedServiceOffers;
+
+    // Provider is rated by clients
+    private Set<ProviderRating> receivedRatings;
+
     /* constructors */
 
     public Provider() { }
@@ -120,5 +126,23 @@ public class Provider extends Firm {
 
     public void setServicePoints(Set<ServicePoint> servicePoints) {
         this.servicePoints = servicePoints;
+    }
+
+    @OneToMany(mappedBy = "provider", fetch = FetchType.LAZY)
+    public Set<ProviderService> getSuppliedServiceOffers() {
+        return suppliedServiceOffers;
+    }
+
+    public void setSuppliedServiceOffers(Set<ProviderService> suppliedServiceOffers) {
+        this.suppliedServiceOffers = suppliedServiceOffers;
+    }
+
+    @OneToMany(mappedBy = "provider", fetch = FetchType.LAZY)
+    public Set<ProviderRating> getReceivedRatings() {
+        return receivedRatings;
+    }
+
+    public void setReceivedRatings(Set<ProviderRating> receivedRatings) {
+        this.receivedRatings = receivedRatings;
     }
 }

@@ -8,20 +8,17 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import pl.salonea.entities.Employee;
-import pl.salonea.entities.Service;
-import pl.salonea.entities.ServiceSupply;
-import pl.salonea.entities.Term;
-import pl.salonea.enums.Gender;
+import pl.salonea.embeddables.Address;
+import pl.salonea.entities.Client;
+import pl.salonea.entities.Provider;
+import pl.salonea.entities.ProviderRating;
+import pl.salonea.enums.ProviderType;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.EntityTransaction;
 import javax.persistence.Persistence;
 import java.io.File;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.GregorianCalendar;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -29,16 +26,16 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 /**
- * ServiceSupply Tester.
+ * ProviderRating Tester.
  *
  * @author Michal Ziobro
  * @since <pre>Jun 14, 2015</pre>
  * @version 1.0
  */
 @RunWith(Arquillian.class)
-public class ServiceSupplyIT {
+public class ProviderRatingIT {
 
-    private static final Logger logger = Logger.getLogger(ServiceSupplyIT.class.getName());
+    private static final Logger logger = Logger.getLogger(ProviderRatingIT.class.getName());
 
     private static EntityManagerFactory emf;
     private EntityManager em;
@@ -77,52 +74,40 @@ public class ServiceSupplyIT {
     }
 
     @Test
-    public void shouldCreateNewServiceSupply() {
+    public void shouldCreateNewProviderRating() {
 
-        // create instance of Service entity
-        Service service = new Service("New Service");
+        // create instance of Client entity
+        Client client = new Client();
 
-        // create instance of Employee entity
-        Employee employee =  new Employee("michzio@hotmail.com", "michzio", "pAs12#", "Michał", "Ziobro", (short) 20, Gender.male, "assistant");
+        // create instance of Provider entity
+        Address address = new Address("Poznańska", "15", "29-100", "Poznań", "Wielkopolska", "Poland");
+        Provider provider = new Provider("firma2@allegro.pl", "allegro2", "aAle2@", "Allegro 2 Ltd.",
+                "2234567890", "2234567890", address, "Allegro Polska", ProviderType.SIMPLE);
 
-        // get opening and closing datetimes
-        Calendar calendar = new GregorianCalendar(2016, 1, 12, 8, 00);
-        Date openingTime = calendar.getTime();
-        calendar.add(Calendar.HOUR_OF_DAY, 8);
-        Date closingTime = calendar.getTime();
-
-        // create instance of Term entity
-        Term term = new Term(openingTime, closingTime);
-
-        // create instance of ServiceSupply entity
-        ServiceSupply supply = new ServiceSupply(service, employee, term);
+        // create instance of ProviderRating entity
+        ProviderRating providerRating = new ProviderRating(provider, client, (short) 9);
 
         transaction.begin();
-        em.persist(service);
-        em.persist(employee);
-        em.persist(term);
-        em.persist(supply);
+        em.persist(client);
+        em.persist(provider);
+        em.persist(providerRating);
         transaction.commit();
 
-        assertEquals(supply.getService(), service);
-        assertEquals(supply.getTerm(), term);
-        assertEquals(supply.getEmployee(), employee);
+        assertEquals(providerRating.getProvider(), provider);
+        assertEquals(providerRating.getClient(), client);
 
         transaction.begin();
-        em.refresh(service);
-        em.refresh(term);
-        em.refresh(employee);
+        em.refresh(client);
+        em.refresh(provider);
         transaction.commit();
 
-        assertTrue(service.getServiceSupplies().contains(supply));
-        assertTrue(employee.getSuppliedServices().contains(supply));
-        assertTrue(term.getSuppliedServices().contains(supply));
+        assertTrue(client.getProviderRatings().contains(providerRating));
+        assertTrue(provider.getReceivedRatings().contains(providerRating));
 
         transaction.begin();
-        em.remove(supply);
-        em.remove(term);
-        em.remove(employee);
-        em.remove(service);
+        em.remove(providerRating);
+        em.remove(provider);
+        em.remove(client);
         transaction.commit();
     }
 }

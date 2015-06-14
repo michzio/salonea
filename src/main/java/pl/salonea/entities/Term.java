@@ -22,11 +22,11 @@ public class Term  implements Serializable {
 
     /* one-to-many relationships */
     private Set<TermEmployeeWorkOn> employeesWorkStation;
-    private Set<ServiceSupply> suppliedServices;
 
     /* constructors */
 
-    public Term() { }
+    public Term() {
+    }
 
     public Term(Date openingTime, Date closingTime) {
         this.openingTime = openingTime;
@@ -47,7 +47,8 @@ public class Term  implements Serializable {
         this.termId = termId;
     }
 
-    @Future @NotNull
+    @Future
+    @NotNull
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "opening_time", nullable = false, columnDefinition = "DATETIME")
     public Date getOpeningTime() {
@@ -58,7 +59,8 @@ public class Term  implements Serializable {
         this.openingTime = openingTime;
     }
 
-    @Future @NotNull
+    @Future
+    @NotNull
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "closing_time", nullable = false, columnDefinition = "DATETIME")
     public Date getClosingTime() {
@@ -80,12 +82,4 @@ public class Term  implements Serializable {
         this.employeesWorkStation = employeesWorkStation;
     }
 
-    @OneToMany(mappedBy = "term", fetch = FetchType.LAZY)
-    public Set<ServiceSupply> getSuppliedServices() {
-        return suppliedServices;
-    }
-
-    public void setSuppliedServices(Set<ServiceSupply> suppliedServices) {
-        this.suppliedServices = suppliedServices;
-    }
 }

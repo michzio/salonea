@@ -23,7 +23,7 @@ public class Employee extends NaturalPerson {
 
     /* one-to-many relationships */
     private Set<TermEmployeeWorkOn> termsOnWorkStation;
-    private Set<ServiceSupply> suppliedServices;
+    private Set<ProviderService> suppliedServices;
 
     /* constructors */
     public Employee() { }
@@ -101,12 +101,12 @@ public class Employee extends NaturalPerson {
         this.termsOnWorkStation = termsOnWorkStation;
     }
 
-    @OneToMany(mappedBy = "employee", fetch = FetchType.LAZY)
-    public Set<ServiceSupply> getSuppliedServices() {
+    @ManyToMany(mappedBy = "supplyingEmployees", fetch = FetchType.LAZY)
+    public Set<ProviderService> getSuppliedServices() {
         return suppliedServices;
     }
 
-    public void setSuppliedServices(Set<ServiceSupply> suppliedServices) {
+    public void setSuppliedServices(Set<ProviderService> suppliedServices) {
         this.suppliedServices = suppliedServices;
     }
 }
