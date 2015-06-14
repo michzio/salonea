@@ -25,8 +25,8 @@ public class CreditCardId {
         return client;
     }
 
-    public void setClient(Long client) {
-        this.client = client;
+    public void setClient(Long clientId) {
+        this.client = clientId;
     }
 
     public String getCreditCardNumber() {

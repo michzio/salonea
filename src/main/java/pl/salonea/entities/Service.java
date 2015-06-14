@@ -4,6 +4,7 @@ package pl.salonea.entities;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.util.Set;
 
 @Entity
 @Table(name = "service")
@@ -16,6 +17,9 @@ public class Service {
 
     /* many-to-one relationship */
     private ServiceCategory serviceCategory;
+
+    /* one-to-many relationship */
+    private Set<ServiceSupply> serviceSupplies;
 
     /* constructors */
 
@@ -65,6 +69,8 @@ public class Service {
         this.description = description;
     }
 
+    /* many-to-one relationship */
+
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "category_id", referencedColumnName = "category_id", columnDefinition = "INT UNSIGNED DEFAULT NULL")
     public ServiceCategory getServiceCategory() {
@@ -73,5 +79,16 @@ public class Service {
 
     public void setServiceCategory(ServiceCategory serviceCategory) {
         this.serviceCategory = serviceCategory;
+    }
+
+    /* one-to-many relationship */
+
+    @OneToMany(mappedBy = "service", fetch = FetchType.LAZY)
+    public Set<ServiceSupply> getServiceSupplies() {
+        return serviceSupplies;
+    }
+
+    public void setServiceSupplies(Set<ServiceSupply> serviceSupplies) {
+        this.serviceSupplies = serviceSupplies;
     }
 }

@@ -22,6 +22,7 @@ public class Term  implements Serializable {
 
     /* one-to-many relationships */
     private Set<TermEmployeeWorkOn> employeesWorkStation;
+    private Set<ServiceSupply> suppliedServices;
 
     /* constructors */
 
@@ -77,5 +78,14 @@ public class Term  implements Serializable {
 
     public void setEmployeesWorkStation(Set<TermEmployeeWorkOn> employeesWorkStation) {
         this.employeesWorkStation = employeesWorkStation;
+    }
+
+    @OneToMany(mappedBy = "term", fetch = FetchType.LAZY)
+    public Set<ServiceSupply> getSuppliedServices() {
+        return suppliedServices;
+    }
+
+    public void setSuppliedServices(Set<ServiceSupply> suppliedServices) {
+        this.suppliedServices = suppliedServices;
     }
 }

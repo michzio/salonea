@@ -11,8 +11,8 @@ public class WorkStationId implements Serializable{
     /* constructors */
     public WorkStationId() { }
 
-    public WorkStationId(ServicePointId servicePoint, Integer workStationNumber) {
-        this.servicePoint = servicePoint;
+    public WorkStationId(ServicePointId servicePointId, Integer workStationNumber) {
+        this.servicePoint = servicePointId;
         this.workStationNumber = workStationNumber;
     }
 
@@ -35,8 +35,8 @@ public class WorkStationId implements Serializable{
         return servicePoint;
     }
 
-    public void setServicePoint(ServicePointId servicePoint) {
-        this.servicePoint = servicePoint;
+    public void setServicePoint(ServicePointId servicePointId) {
+        this.servicePoint = servicePointId;
     }
 
     /* equals() and hashCode() */

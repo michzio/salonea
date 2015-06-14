@@ -23,6 +23,7 @@ public class Employee extends NaturalPerson {
 
     /* one-to-many relationships */
     private Set<TermEmployeeWorkOn> termsOnWorkStation;
+    private Set<ServiceSupply> suppliedServices;
 
     /* constructors */
     public Employee() { }
@@ -98,5 +99,14 @@ public class Employee extends NaturalPerson {
 
     public void setTermsOnWorkStation(Set<TermEmployeeWorkOn> termsOnWorkStation) {
         this.termsOnWorkStation = termsOnWorkStation;
+    }
+
+    @OneToMany(mappedBy = "employee", fetch = FetchType.LAZY)
+    public Set<ServiceSupply> getSuppliedServices() {
+        return suppliedServices;
+    }
+
+    public void setSuppliedServices(Set<ServiceSupply> suppliedServices) {
+        this.suppliedServices = suppliedServices;
     }
 }

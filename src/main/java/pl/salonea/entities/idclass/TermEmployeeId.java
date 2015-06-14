@@ -11,9 +11,9 @@ public class TermEmployeeId implements Serializable {
 
     public TermEmployeeId() { }
 
-    public TermEmployeeId(Long term, Long employee) {
-        this.term = term;
-        this.employee = employee;
+    public TermEmployeeId(Long termId, Long employeeId) {
+        this.term = termId;
+        this.employee = employeeId;
     }
 
     /* getters and setters */
@@ -22,16 +22,16 @@ public class TermEmployeeId implements Serializable {
         return term;
     }
 
-    public void setTerm(Long term) {
-        this.term = term;
+    public void setTerm(Long termId) {
+        this.term = termId;
     }
 
     public Long getEmployee() {
         return employee;
     }
 
-    public void setEmployee(Long employee) {
-        this.employee = employee;
+    public void setEmployee(Long employeeId) {
+        this.employee = employeeId;
     }
 
      /* equals() and hashCode() */

@@ -1,7 +1,5 @@
 package pl.salonea.utils.zip_codes;
 
-import pl.salonea.qualifiers.Country;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
@@ -89,7 +87,7 @@ public class CountryZipCodeChecker implements ZipCodeChecker {
 
     private Properties loadZipCodePatternsProperties() {
 
-        InputStream inputStream = getClass().getClassLoader().getResourceAsStream("zip_code_patterns.properties");
+        InputStream inputStream = getClass().getClassLoader().getResourceAsStream("ZipCodePatterns.properties");
 
         Properties properties = new Properties();
         try {
@@ -97,7 +95,7 @@ public class CountryZipCodeChecker implements ZipCodeChecker {
 
         } catch (IOException e) {
             e.printStackTrace();
-            logger.log(Level.INFO, "Could not load zip_code_patterns.properties file.");
+            logger.log(Level.INFO, "Could not load ZipCodePatterns.properties file.");
         }
 
         return properties;

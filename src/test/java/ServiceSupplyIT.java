@@ -8,32 +8,37 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import pl.salonea.entities.Employee;
 import pl.salonea.entities.Service;
-import pl.salonea.entities.ServiceCategory;
+import pl.salonea.entities.ServiceSupply;
+import pl.salonea.entities.Term;
+import pl.salonea.enums.Gender;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.EntityTransaction;
 import javax.persistence.Persistence;
 import java.io.File;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 /**
- * Service Tester.
+ * ServiceSupply Tester.
  *
  * @author Michal Ziobro
- * @since <pre>Jun 13, 2015</pre>
+ * @since <pre>Jun 14, 2015</pre>
  * @version 1.0
  */
 @RunWith(Arquillian.class)
-public class ServiceIT {
+public class ServiceSupplyIT {
 
-    private static final Logger logger = Logger.getLogger(ServiceIT.class.getName());
+    private static final Logger logger = Logger.getLogger(ServiceSupplyIT.class.getName());
 
     private static EntityManagerFactory emf;
     private EntityManager em;
@@ -72,49 +77,52 @@ public class ServiceIT {
     }
 
     @Test
-    public void shouldCreateNewService() {
+    public void shouldCreateNewServiceSupply() {
 
         // create instance of Service entity
-        Service service = new Service("Hair washing");
+        Service service = new Service("New Service");
+
+        // create instance of Employee entity
+        Employee employee =  new Employee("michzio@hotmail.com", "michzio", "pAs12#", "Michał", "Ziobro", (short) 20, Gender.male, "assistant");
+
+        // get opening and closing datetimes
+        Calendar calendar = new GregorianCalendar(2016, 1, 12, 8, 00);
+        Date openingTime = calendar.getTime();
+        calendar.add(Calendar.HOUR_OF_DAY, 8);
+        Date closingTime = calendar.getTime();
+
+        // create instance of Term entity
+        Term term = new Term(openingTime, closingTime);
+
+        // create instance of ServiceSupply entity
+        ServiceSupply supply = new ServiceSupply(service, employee, term);
 
         transaction.begin();
         em.persist(service);
+        em.persist(employee);
+        em.persist(term);
+        em.persist(supply);
         transaction.commit();
 
-        assertNotNull("Service id can not be null.", service.getServiceId());
+        assertEquals(supply.getService(), service);
+        assertEquals(supply.getTerm(), term);
+        assertEquals(supply.getEmployee(), employee);
 
         transaction.begin();
+        em.refresh(service);
+        em.refresh(term);
+        em.refresh(employee);
+        transaction.commit();
+
+        assertTrue(service.getServiceSupplies().contains(supply));
+        assertTrue(employee.getSuppliedServices().contains(supply));
+        assertTrue(term.getSuppliedServices().contains(supply));
+
+        transaction.begin();
+        em.remove(supply);
+        em.remove(term);
+        em.remove(employee);
         em.remove(service);
         transaction.commit();
-
-    }
-
-    @Test
-    public void shouldCreateNewServiceAssignedToCategory() {
-
-        // create instance of Category entity
-        ServiceCategory category = new ServiceCategory("Category Name");
-
-        // create instance of Service entity
-        Service service = new Service("Service name");
-
-        // assign Service instance to Category
-        service.setServiceCategory(category);
-
-        transaction.begin();
-        em.persist(category);
-        em.persist(service);
-        em.refresh(category);
-        transaction.commit();
-
-        assertNotNull("Service id can not be null.", service.getServiceId());
-        assertTrue(category.getServices().contains(service));
-        assertEquals(service.getServiceCategory(), category);
-
-        transaction.begin();
-        em.remove(service);
-        em.remove(category);
-        transaction.commit();
-
     }
 }
