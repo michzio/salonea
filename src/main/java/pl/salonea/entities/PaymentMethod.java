@@ -12,7 +12,7 @@ import java.util.Set;
 @Access(AccessType.PROPERTY)
 public class PaymentMethod implements Serializable {
 
-    private Long id;
+    private Integer id;
     private String name;
     private String description;
     private Boolean inAdvance;
@@ -37,12 +37,12 @@ public class PaymentMethod implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Basic(optional = false)
-    @Column(name = "payment_method_id", nullable = false, columnDefinition = "BIGINT UNSIGNED")
-    public Long getId() {
+    @Column(name = "payment_method_id", nullable = false, columnDefinition = "INT UNSIGNED")
+    public Integer getId() {
         return id;
     }
 
-    public void setId(Long paymentMethodId) {
+    public void setId(Integer paymentMethodId) {
         this.id = paymentMethodId;
     }
 
