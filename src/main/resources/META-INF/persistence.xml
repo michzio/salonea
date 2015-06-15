@@ -27,6 +27,8 @@
         <class>pl.salonea.entities.ProviderService</class>
         <class>pl.salonea.entities.ProviderRating</class>
         <class>pl.salonea.entities.Transaction</class>
+        <class>pl.salonea.entities.HistoricalTransaction</class>
+        <class>pl.salonea.entities.EmployeeRating</class>
         <properties>
             <property name="javax.persistence.jdbc.driver" value="com.mysql.jdbc.Driver"/>
             <property name="javax.persistence.jdbc.user" value="root"/>

@@ -19,8 +19,10 @@ public class Client implements Serializable{
     private NaturalPerson naturalPerson;
     private Firm firm;
 
+    // one-to-many relationships with:
     private Set<CreditCard> creditCards;
     private Set<ProviderRating> providerRatings;
+    private Set<EmployeeRating> employeeRatings;
 
     /* constructor */
 
@@ -88,5 +90,14 @@ public class Client implements Serializable{
 
     public void setProviderRatings(Set<ProviderRating> providerRatings) {
         this.providerRatings = providerRatings;
+    }
+
+    @OneToMany(mappedBy = "client", fetch = FetchType.LAZY)
+    public Set<EmployeeRating> getEmployeeRatings() {
+        return employeeRatings;
+    }
+
+    public void setEmployeeRatings(Set<EmployeeRating> employeeRatings) {
+        this.employeeRatings = employeeRatings;
     }
 }

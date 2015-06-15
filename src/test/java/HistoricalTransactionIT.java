@@ -28,16 +28,16 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 /**
- * Transaction Tester.
+ * HistoricalTransaction Tester.
  *
  * @author Michal Ziobro
- * @since <pre>Jun 14, 2015</pre>
+ * @since <pre>Jun 15, 2015</pre>
  * @version 1.0
  */
 @RunWith(Arquillian.class)
-public class TransactionIT {
+public class HistoricalTransactionIT {
 
-    private static final Logger logger = Logger.getLogger(TransactionIT.class.getName());
+    private static final Logger logger = Logger.getLogger(HistoricalTransactionIT.class.getName());
 
     private static EntityManagerFactory emf;
     private EntityManager em;
@@ -76,7 +76,7 @@ public class TransactionIT {
     }
 
     @Test
-    public void shouldCreateNewTransaction() {
+    public void shouldCreateNewHistoricalTransaction() {
 
         // Create instance of Client entity
         Client client = new Client("Personal client.");
@@ -135,22 +135,42 @@ public class TransactionIT {
         em.refresh(myTransaction);
         transaction.commit();
 
-        assertNotNull(myTransaction);
-        assertEquals(myTransaction.getClient(), client);
-        assertEquals(myTransaction.getProvider(), provider);
-        assertEquals(myTransaction.getService(), service);
-        assertEquals(myTransaction.getProviderService(), providerService);
-        assertEquals(myTransaction.getBookedTime().getTime(), bookedTime.getTime());
-        assertEquals(myTransaction.getPaid(), false);
-        assertEquals(myTransaction.getPaymentMethod(), paymentMethod);
-        assertEquals(myTransaction.getPriceCurrencyCode(), CurrencyCode.EUR);
-        assertEquals(myTransaction.getTerm(), term);
-        assertTrue(myTransaction.getEmployees().contains(employee));
-        assertEquals(myTransaction.getProviderService().getProvider(), myTransaction.getProvider());
-        assertEquals(myTransaction.getProviderService().getService(), myTransaction.getService());
+        // creating instance of HistoricalTransaction based on created Transaction entity
+        HistoricalTransaction historicalTransaction
+                = new HistoricalTransaction(myTransaction.getClient(),
+                myTransaction.getTransactionNumber(), myTransaction.getPrice(), myTransaction.getPriceCurrencyCode(),
+                myTransaction.getTransactionTime(),myTransaction.getBookedTime(), true,
+                myTransaction.getProviderService(), myTransaction.getPaymentMethod(), myTransaction.getTerm(), true);
+
+        historicalTransaction.setEmployees(myTransaction.getEmployees());
+
+        // moving completed transaction to historical_transaction
+        transaction.begin();
+        em.persist(historicalTransaction);
+        em.remove(myTransaction);
+        transaction.commit();
 
         transaction.begin();
-        em.remove(myTransaction);
+        em.refresh(historicalTransaction);
+        transaction.commit();
+
+        assertNotNull(historicalTransaction);
+        assertEquals(historicalTransaction.getClient(), client);
+        assertEquals(historicalTransaction.getProvider(), provider);
+        assertEquals(historicalTransaction.getService(), service);
+        assertEquals(historicalTransaction.getProviderService(), providerService);
+        assertEquals(historicalTransaction.getBookedTime().getTime(), bookedTime.getTime());
+        assertEquals(historicalTransaction.getPaid(), true);
+        assertEquals(historicalTransaction.getPaymentMethod(), paymentMethod);
+        assertEquals(historicalTransaction.getPriceCurrencyCode(), CurrencyCode.EUR);
+        assertEquals(historicalTransaction.getTerm(), term);
+        assertTrue(historicalTransaction.getEmployees().contains(employee));
+        assertEquals(historicalTransaction.getProviderService().getProvider(), historicalTransaction.getProvider());
+        assertEquals(historicalTransaction.getProviderService().getService(), historicalTransaction.getService());
+        assertEquals(historicalTransaction.getCompletionStatus(), true);
+
+        transaction.begin();
+        em.remove(historicalTransaction);
         em.remove(employee);
         em.remove(term);
         em.remove(paymentMethod);
