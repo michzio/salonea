@@ -1,15 +1,14 @@
 package pl.salonea.ejb.stateless;
 
-import com.sun.deploy.security.ValidationState;
-import pl.salonea.constraints.ChronologicalDates;
-import pl.salonea.entities.Client;
-import sun.misc.Cleaner;
 
+import pl.salonea.ejb.interfaces.ClientFacadeInterface;
+import pl.salonea.entities.Client;
+
+import javax.ejb.LocalBean;
 import javax.ejb.Stateless;
+import javax.inject.Inject;
 import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
 import javax.persistence.TypedQuery;
-import java.lang.reflect.Type;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -18,9 +17,10 @@ import java.util.List;
  * Created by michzio on 11/07/2015.
  */
 @Stateless
-public class ClientFacade extends AbstractFacade<Client>{
+@LocalBean
+public class ClientFacade extends AbstractFacade<Client> implements ClientFacadeInterface.Remote, ClientFacadeInterface.Local {
 
-    @PersistenceContext(unitName = "LocalServicesMySQL_JTA")
+    @Inject
     private EntityManager em;
 
     @Override

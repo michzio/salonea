@@ -18,7 +18,7 @@ import static java.lang.annotation.ElementType.*;
 public @interface BirthDate {
 
     String message() default "{javax.validation.constraints.BirthDate.message}";
-    Class<?>[] group() default {};
+    Class<?>[] groups() default {};
     Class<? extends Payload>[] payload() default {};
 
     int minAge() default 0;

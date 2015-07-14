@@ -9,6 +9,7 @@ import javax.persistence.Query;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
+import javax.validation.constraints.NotNull;
 import java.util.List;
 
 /**
@@ -29,15 +30,17 @@ public abstract class AbstractFacade<T> {
 
     protected abstract EntityManager getEntityManager();
 
-    public void create(T entity) {
+    public @NotNull T create(@NotNull T entity) {
         getEntityManager().persist(entity);
+        return entity;
     }
 
-    public void update(T entity) {
-        getEntityManager().merge(entity);
+    public @NotNull T update(@NotNull T entity) {
+
+        return getEntityManager().merge(entity);
     }
 
-    public void remove(T entity) {
+    public void remove(@NotNull T entity) {
         getEntityManager().remove(getEntityManager().merge(entity));
     }
 

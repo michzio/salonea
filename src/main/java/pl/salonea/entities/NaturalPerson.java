@@ -17,8 +17,20 @@ import java.util.Date;
 @DiscriminatorValue("natural_person")
 @Table(name="natural_person")
 @Access(AccessType.PROPERTY)
+@NamedQueries({
+        @NamedQuery(name = NaturalPerson.FIND_BY_FIRST_NAME, query = "SELECT np FROM NaturalPerson np WHERE np.firstName LIKE :fname"),
+})
 @DeliveryAddressFlagMatch
 public class NaturalPerson extends UserAccount {
+
+    public static final String FIND_BY_FIRST_NAME = "NaturalPerson.findByFirstName";
+    public static final String FIND_BY_LAST_NAME = "NaturalPerson.findByLastName";
+    public static final String FIND_BY_NAMES = "NaturalPerson.findByNames";
+    public static final String FIND_BORN_AFTER = "NaturalPerson.findBornAfter";
+    public final static String FIND_BORN_BEFORE = "NaturalPerson.findBornBefore";
+    public final static String FIND_BORN_BETWEEN = "NaturalPerson.findBornBetween";
+    public final static String FIND_BY_LOCATION = "NaturalPerson.findByLocation";
+    public final static String FIND_BY_DELIVERY = "NaturalPerson.findByDelivery";
 
     private String firstName;
     private String lastName;
@@ -94,10 +106,10 @@ public class NaturalPerson extends UserAccount {
     }
 
     @Transient
-    @NotNull(message = "The age can not be null.")
-    @Digits(integer = 3, fraction = 0, message = "The value of age can not be more than 3 digits")
-    @Min(value = 13, message = "The minimum age should be 13")
-    @Max(value = 150, message = "The maximum age can not more than be 150")
+    @NotNull(message = "The age can not be null.", groups = { NaturalPerson.class })
+    @Digits(integer = 3, fraction = 0, message = "The value of age can not be more than 3 digits", groups = { NaturalPerson.class })
+    @Min(value = 13, message = "The minimum age should be 13", groups = { NaturalPerson.class})
+    @Max(value = 150, message = "The maximum age can not more than be 150", groups = { NaturalPerson.class })
     public Short getAge() {
         return age;
     }
