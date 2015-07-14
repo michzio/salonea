@@ -29,7 +29,7 @@ import java.util.logging.Logger;
 @NamedQueries({
         @NamedQuery(name="findAllNotActivated", query="SELECT u FROM UserAccount u WHERE u.activationCode IS NOT NULL"),
         @NamedQuery(name="findAllActivated", query="SELECT u FROM UserAccount u WHERE u.activationCode IS NULL"),
-        @NamedQuery(name="findForEmail", query="SELECT u FROM UserAccount u WHERE u.email = :email"),
+        @NamedQuery(name="findByEmail", query="SELECT u FROM UserAccount u WHERE u.email = :email"),
         @NamedQuery(name="findCreatedBetween", query="SELECT u FROM UserAccount u WHERE u.registrationDate >= :fromDate AND u.registrationDate <= :toDate")
 })
 @ChronologicalAccountDates

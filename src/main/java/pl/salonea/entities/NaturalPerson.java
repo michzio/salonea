@@ -1,5 +1,6 @@
 package pl.salonea.entities;
 
+import pl.salonea.constraints.BirthDate;
 import pl.salonea.constraints.DeliveryAddressFlagMatch;
 import pl.salonea.constraints.PhoneNumber;
 import pl.salonea.constraints.SkypeName;
@@ -9,6 +10,8 @@ import pl.salonea.enums.Gender;
 import javax.persistence.*;
 import javax.validation.Valid;
 import javax.validation.constraints.*;
+import java.util.Calendar;
+import java.util.Date;
 
 @Entity
 @DiscriminatorValue("natural_person")
@@ -19,7 +22,7 @@ public class NaturalPerson extends UserAccount {
 
     private String firstName;
     private String lastName;
-    private Short age;
+    private Date birthDate;
     private Gender gender;
 
     private String homePhoneNumber;
@@ -29,6 +32,8 @@ public class NaturalPerson extends UserAccount {
     private Address homeAddress;
     private boolean deliveryAsHome;
     private Address deliveryAddress;
+
+    private Short age;
 
     private Client client;
 
@@ -42,11 +47,11 @@ public class NaturalPerson extends UserAccount {
         this.lastName = lastName;
     }
 
-    public NaturalPerson(String email, String login, String password, String firstName, String lastName, Short age, Gender gender) {
+    public NaturalPerson(String email, String login, String password, String firstName, String lastName, Date birthDate, Gender gender) {
         super(email, login, password);
         this.firstName = firstName;
         this.lastName = lastName;
-        this.age = age;
+        this.birthDate = birthDate;
         this.gender = gender;
     }
 
@@ -75,11 +80,24 @@ public class NaturalPerson extends UserAccount {
         this.lastName = lastName;
     }
 
+    @NotNull(message = "The birth date can not be null.")
+    @Past
+    @BirthDate(minAge = 13, maxAge = 150)
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name = "birth_date", nullable = false, columnDefinition = "DATETIME")
+    public Date getBirthDate() {
+        return birthDate;
+    }
+
+    public void setBirthDate(Date birthDate) {
+        this.birthDate = birthDate;
+    }
+
+    @Transient
     @NotNull(message = "The age can not be null.")
     @Digits(integer = 3, fraction = 0, message = "The value of age can not be more than 3 digits")
     @Min(value = 13, message = "The minimum age should be 13")
     @Max(value = 150, message = "The maximum age can not more than be 150")
-    @Column(name = "age", nullable = false, columnDefinition = "TINYINT(3) UNSIGNED DEFAULT 0")
     public Short getAge() {
         return age;
     }
@@ -206,5 +224,32 @@ public class NaturalPerson extends UserAccount {
 
     public void setClient(Client client) {
         this.client = client;
+    }
+
+    /* entity life cycle callback methods */
+    @PostPersist
+    @PostLoad
+    @PostUpdate
+    public void onManagedEntityLoaded() {
+        calculateAge();
+    }
+
+    private void calculateAge() {
+
+        if(birthDate == null) {
+            age = null;
+            return;
+        }
+
+        Calendar birth = Calendar.getInstance();
+        birth.setTime(birthDate);
+        Calendar today = Calendar.getInstance();
+        age = (short) (today.get(Calendar.YEAR) - birth.get(Calendar.YEAR));
+        if(today.get(Calendar.MONTH) < birth.get(Calendar.MONTH)) {
+            age--;
+        } else if (today.get(Calendar.MONTH) == birth.get(Calendar.MONTH)
+                && today.get(Calendar.DAY_OF_MONTH) < birth.get(Calendar.DAY_OF_MONTH)) {
+            age--;
+        }
     }
 }

@@ -88,8 +88,10 @@ public class TermEmployeeWorkOnIT {
         // create instance of Term entity
         Term term = new Term(openingTime, closingTime);
 
+        Date dateOfBirth = new GregorianCalendar(1988, Calendar.OCTOBER, 3).getTime();
+
         // create instance of Employee entity
-        Employee employee =  new Employee("michzio@hotmail.com", "michzio", "pAs12#", "Michał", "Ziobro", (short) 20, Gender.male, "assistant");
+        Employee employee =  new Employee("michzio@hotmail.com", "michzio", "pAs12#", "Michał", "Ziobro", dateOfBirth, Gender.male, "assistant");
 
         // create instance of Provider entity
         Address address = new Address("Poznańska", "15", "29-100", "Poznań", "Wielkopolska", "Poland");

@@ -19,6 +19,9 @@ import javax.enterprise.inject.Any;
 import javax.inject.Inject;
 import javax.persistence.*;
 import java.io.File;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -91,8 +94,10 @@ public class NaturalPersonIT {
     @Test
     public void shouldCreateNewNaturalPerson() throws Exception {
 
+        Date dateOfBirth = new GregorianCalendar(1988, Calendar.OCTOBER, 3).getTime();
+
         // create instance of natural person entity
-        NaturalPerson naturalPerson = new NaturalPerson("michzio@hotmail.com", "michzio", "pP123#", "Michał", "Ziobro", (short) 16, Gender.male);
+        NaturalPerson naturalPerson = new NaturalPerson("michzio@hotmail.com", "michzio", "pP123#", "Michał", "Ziobro", dateOfBirth , Gender.male);
 
         // persist the user account to the database
         transaction.begin();
@@ -109,8 +114,10 @@ public class NaturalPersonIT {
     @Test
     public void shouldSetAddressOnNaturalPerson() throws Exception {
 
+        Date dateOfBirth = new GregorianCalendar(1988, Calendar.OCTOBER, 3).getTime();
+
         // create instance of natural person entity
-        NaturalPerson naturalPerson = new NaturalPerson("michzio@hotmail.com", "michzio", "pP123#", "Michał", "Ziobro", (short) 16, Gender.male);
+        NaturalPerson naturalPerson = new NaturalPerson("michzio@hotmail.com", "michzio", "pP123#", "Michał", "Ziobro", dateOfBirth, Gender.male);
 
         naturalPerson.setHomeAddress(new Address("Wolica Piaskowa", "156", null, "39-120", "Sędziszów Małopolski", "podkarpackie", "Poland"));
         naturalPerson.setDeliveryAsHome(true);

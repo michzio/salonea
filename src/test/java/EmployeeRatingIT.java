@@ -18,6 +18,9 @@ import javax.persistence.EntityManagerFactory;
 import javax.persistence.EntityTransaction;
 import javax.persistence.Persistence;
 import java.io.File;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -78,8 +81,10 @@ public class EmployeeRatingIT {
         // create instance of Client entity
         Client client = new Client();
 
+        Date dateOfBirth = new GregorianCalendar(1988, Calendar.OCTOBER, 3).getTime();
+
         // create instance of Employee entity
-        Employee employee = new Employee("michzio@hotmail.com", "michzio", "pAs12#", "Michał", "Ziobro", (short) 20, Gender.male, "assistant");
+        Employee employee = new Employee("michzio@hotmail.com", "michzio", "pAs12#", "Michał", "Ziobro", dateOfBirth, Gender.male, "assistant");
 
         // create instance of EmployeeRating entity
         EmployeeRating employeeRating = new EmployeeRating(employee, client, (short) 9);

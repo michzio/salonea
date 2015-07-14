@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="Gradle: org.wildfly.checkstyle:wildfly-checkstyle-config:1.0.1.Final">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.wildfly.checkstyle/wildfly-checkstyle-config/1.0.1.Final/5c67aba1ac7f6f1b2a356ad4881d8c937002a6d0/wildfly-checkstyle-config-1.0.1.Final.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.wildfly.checkstyle/wildfly-checkstyle-config/1.0.1.Final/3c710395482dc96938aeb1a9266e0daf550fc483/wildfly-checkstyle-config-1.0.1.Final-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

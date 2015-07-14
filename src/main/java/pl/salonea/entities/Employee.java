@@ -5,6 +5,7 @@ import pl.salonea.enums.Gender;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.util.Date;
 import java.util.Set;
 
 @Entity
@@ -34,8 +35,8 @@ public class Employee extends NaturalPerson {
         this.jobPosition = jobPosition;
     }
 
-    public Employee(String email, String login, String password, String firstName, String lastName, Short age, Gender gender, String jobPosition) {
-        super(email, login, password, firstName, lastName, age, gender);
+    public Employee(String email, String login, String password, String firstName, String lastName, Date birthDate, Gender gender, String jobPosition) {
+        super(email, login, password, firstName, lastName, birthDate, gender);
         this.jobPosition = jobPosition;
     }
 
