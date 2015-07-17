@@ -1,5 +1,7 @@
 package pl.salonea.entities;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import pl.salonea.constraints.ChronologicalAccountDates;
 import pl.salonea.constraints.Email;
 import pl.salonea.constraints.EmailAvailability;
@@ -27,13 +29,28 @@ import java.util.logging.Logger;
 @Access(AccessType.PROPERTY)
 @Table(name = "user_account")
 @NamedQueries({
-        @NamedQuery(name="findAllNotActivated", query="SELECT u FROM UserAccount u WHERE u.activationCode IS NOT NULL"),
-        @NamedQuery(name="findAllActivated", query="SELECT u FROM UserAccount u WHERE u.activationCode IS NULL"),
-        @NamedQuery(name="findByEmail", query="SELECT u FROM UserAccount u WHERE u.email = :email"),
-        @NamedQuery(name="findCreatedBetween", query="SELECT u FROM UserAccount u WHERE u.registrationDate >= :fromDate AND u.registrationDate <= :toDate")
+        @NamedQuery(name= UserAccount.FIND_ALL_NOT_ACTIVATED, query="SELECT u FROM UserAccount u WHERE u.activationCode IS NOT NULL"),
+        @NamedQuery(name= UserAccount.FIND_ALL_ACTIVATED, query="SELECT u FROM UserAccount u WHERE u.activationCode IS NULL"),
+        @NamedQuery(name= UserAccount.FIND_BY_EMAIL, query="SELECT u FROM UserAccount u WHERE u.email LIKE :email"),
+        @NamedQuery(name= UserAccount.FIND_BY_LOGIN, query="SELECT u FROM UserAccount u WHERE u.login LIKE :login"),
+        @NamedQuery(name= UserAccount.FIND_CREATED_BETWEEN, query="SELECT u FROM UserAccount u WHERE u.registrationDate >= :start_date AND u.registrationDate <= :end_date"),
+        @NamedQuery(name= UserAccount.FIND_LAST_LOGGED_BETWEEN, query="SELECT u FROM UserAccount u WHERE u.lastLogged >= :start_date AND u.lastLogged <= :end_date"),
+        @NamedQuery(name= UserAccount.FIND_LAST_FAILED_LOGIN_BETWEEN, query="SELECT u FROM UserAccount u WHERE u.lastFailedLogin >= :start_date AND u.lastFailedLogin <= :end_date"),
+        @NamedQuery(name= UserAccount.DELETE_OLD_NOT_ACTIVATED, query= "DELETE FROM UserAccount u WHERE u.activationCode IS NOT NULL AND u.registrationDate <= :oldest_date"),
+        @NamedQuery(name= UserAccount.UPDATE_ACTIVATE_ALL, query="UPDATE UserAccount u SET u.activationCode = NULL WHERE u.activationCode IS NOT NULL")
 })
 @ChronologicalAccountDates
 public class UserAccount implements Serializable {
+
+    public final static String FIND_ALL_NOT_ACTIVATED = "UserAccount.findAllNotActivated";
+    public final static String FIND_ALL_ACTIVATED = "UserAccount.findAllActivated";
+    public final static String FIND_BY_EMAIL = "UserAccount.findByEmail";
+    public final static String FIND_BY_LOGIN = "UserAccount.findByLogin";
+    public final static String FIND_CREATED_BETWEEN = "UserAccount.findCreatedBetween";
+    public final static String FIND_LAST_LOGGED_BETWEEN = "UserAccount.findLastLoggedBetween";
+    public final static String FIND_LAST_FAILED_LOGIN_BETWEEN = "UserAccount.findLastFailedLoginBetween";
+    public final static String DELETE_OLD_NOT_ACTIVATED = "UserAccount.deleteOldNotActivated";
+    public final static String UPDATE_ACTIVATE_ALL = "UserAccount.updateActivateAll";
 
     private static final Logger logger = Logger.getLogger(UserAccount.class.getName());
 
@@ -178,5 +195,28 @@ public class UserAccount implements Serializable {
 
     public void setAccountType(String accountType) {
         this.accountType = accountType;
+    }
+
+    @Override
+    public int hashCode() {
+
+        return new HashCodeBuilder(17, 31). // two randomly chosen prime numbers
+                // if deriving: appendSuper(super.hashCode()).
+                append(getEmail())
+                .toHashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null || !(obj instanceof UserAccount))
+            return false;
+        if (obj == this)
+            return true;
+
+        UserAccount rhs = (UserAccount) obj;
+        return new EqualsBuilder().
+                // if deriving: appendSuper(super.equals(obj)).
+                append(getEmail(), rhs.getEmail()).
+                isEquals();
     }
 }

@@ -19,6 +19,16 @@ import java.util.Date;
 @Access(AccessType.PROPERTY)
 @NamedQueries({
         @NamedQuery(name = NaturalPerson.FIND_BY_FIRST_NAME, query = "SELECT np FROM NaturalPerson np WHERE np.firstName LIKE :fname"),
+        @NamedQuery(name = NaturalPerson.FIND_BY_LAST_NAME, query = "SELECT np FROM NaturalPerson np WHERE np.lastName LIKE :lname"),
+        @NamedQuery(name = NaturalPerson.FIND_BY_NAMES, query = "SELECT np FROM NaturalPerson np WHERE np.firstName LIKE :fname AND np.lastName LIKE :lname"),
+        @NamedQuery(name = NaturalPerson.FIND_BORN_AFTER, query = "SELECT np FROM NaturalPerson np WHERE np.birthDate >= :date"),
+        @NamedQuery(name = NaturalPerson.FIND_BORN_BEFORE, query = "SELECT np FROM NaturalPerson np WHERE np.birthDate <= :date"),
+        @NamedQuery(name = NaturalPerson.FIND_BORN_BETWEEN, query = "SELECT np FROM NaturalPerson np WHERE np.birthDate >= :start_date AND np.birthDate <= :end_date"),
+        @NamedQuery(name = NaturalPerson.FIND_BY_LOCATION, query = "SELECT np FROM NaturalPerson np WHERE np.homeAddress.city LIKE :city AND np.homeAddress.state LIKE :state " +
+                "AND np.homeAddress.country LIKE :country AND np.homeAddress.street LIKE :street AND np.homeAddress.zipCode LIKE :zip_code"),
+        @NamedQuery(name = NaturalPerson.FIND_BY_DELIVERY, query = "SELECT np FROM NaturalPerson np WHERE np.deliveryAddress.city LIKE :city AND np.deliveryAddress.state LIKE :state " +
+                "AND np.deliveryAddress.country LIKE :country AND np.deliveryAddress.street LIKE :street AND np.deliveryAddress.zipCode LIKE :zip_code"),
+        @NamedQuery(name = NaturalPerson.FIND_BY_GENDER, query = "SELECT np FROM NaturalPerson np WHERE np.gender = :gender")
 })
 @DeliveryAddressFlagMatch
 public class NaturalPerson extends UserAccount {
@@ -31,6 +41,7 @@ public class NaturalPerson extends UserAccount {
     public final static String FIND_BORN_BETWEEN = "NaturalPerson.findBornBetween";
     public final static String FIND_BY_LOCATION = "NaturalPerson.findByLocation";
     public final static String FIND_BY_DELIVERY = "NaturalPerson.findByDelivery";
+    public final static String FIND_BY_GENDER = "NaturalPerson.findByGender";
 
     private String firstName;
     private String lastName;
@@ -227,7 +238,7 @@ public class NaturalPerson extends UserAccount {
 
     /* relationship one-to-one with Client */
     /* TODO @NotNull shouldn't be possible to create NaturalPerson that isn't Client */
-    @OneToOne
+    @OneToOne(cascade = {CascadeType.REMOVE, CascadeType.PERSIST})
     @JoinColumn(name="client_id", unique = true, columnDefinition = "BIGINT UNSIGNED default NULL",
                 foreignKey = @ForeignKey(name="fk_natural_person_client"))
     public Client getClient() {

@@ -14,10 +14,26 @@ import javax.validation.constraints.Size;
 @Table(name="firm")
 @DiscriminatorValue("firm")
 @Access(AccessType.PROPERTY)
+@NamedQueries({
+        @NamedQuery(name = Firm.FIND_BY_ADDRESS, query = "SELECT f FROM Firm f WHERE f.address.city LIKE :city AND f.address.state LIKE :state " +
+             "AND f.address.country LIKE :country AND f.address.street LIKE :street AND f.address.zipCode LIKE :zip_code"),
+        @NamedQuery(name = Firm.FIND_BY_NAME, query = "SELECT f FROM Firm f WHERE f.name LIKE :firm_name"),
+        @NamedQuery(name = Firm.FIND_BY_VATIN, query = "SELECT f FROM Firm f WHERE f.vatin = :vatin"),
+        @NamedQuery(name = Firm.FIND_BY_COMPANY_NUMBER, query = "SELECT f FROM Firm f WHERE f.companyNumber = :company_number"),
+        @NamedQuery(name = Firm.DELETE_WITH_VATIN, query = "DELETE FROM Firm f WHERE f.vatin = :vatin"),
+        @NamedQuery(name = Firm.DELETE_WITH_COMPANY_NUMBER, query = "DELETE FROM Firm f WHERE f.companyNumber = :company_number")
+})
 @VATIN // check country specific VAT identification number (e.g. poland NIP)
 @CompanyNumber // check country specific comany number (e.g. poland KRS)
 @StatisticNumber // check country specific statistic number (e.g. poland REGON)
 public class Firm extends UserAccount {
+
+    public static final String FIND_BY_ADDRESS = "Firm.findByAddress";
+    public static final String FIND_BY_NAME = "Firm.findByName";
+    public static final String FIND_BY_VATIN = "Firm.findByVATIN";
+    public static final String FIND_BY_COMPANY_NUMBER = "Firm.findByCompanyNumber";
+    public static final String DELETE_WITH_VATIN = "Firm.deleteWithVATIN";
+    public static final String DELETE_WITH_COMPANY_NUMBER = "Firm.deleteWithCompanyNumber";
 
     private String vatin; // in Poland -> NIP, VAT-EU number
     private String name;
@@ -152,7 +168,7 @@ public class Firm extends UserAccount {
 
     /* relationship one-to-one with Client */
     // TODO @NotNull - shouldn't be possible to create firm that isnt Client
-    @OneToOne
+    @OneToOne(cascade = {CascadeType.REMOVE, CascadeType.PERSIST})
     @JoinColumn(name = "client_id", unique = true, columnDefinition = "BIGINT UNSIGNED default NULL",
             foreignKey = @ForeignKey(name="fk_firm_client"))
     public Client getClient() {

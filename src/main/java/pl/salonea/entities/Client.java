@@ -5,6 +5,7 @@ import pl.salonea.constraints.NaturalPersonOrFirm;
 import javax.persistence.*;
 import java.io.Serializable;
 import java.util.Set;
+import java.util.UUID;
 
 @Entity
 @Table(name="client")
@@ -19,10 +20,11 @@ import java.util.Set;
         @NamedQuery(name = Client.FIND_BY_LOCATION, query = "SELECT c FROM Client c WHERE c.naturalPerson.homeAddress.city LIKE :city AND c.naturalPerson.homeAddress.state LIKE :state " +
                 "AND c.naturalPerson.homeAddress.country LIKE :country AND c.naturalPerson.homeAddress.street LIKE :street AND c.naturalPerson.homeAddress.zipCode LIKE :zip_code"),
         @NamedQuery(name = Client.FIND_BY_DELIVERY, query = "SELECT c FROM Client c WHERE c.naturalPerson.deliveryAddress.city LIKE :city AND c.naturalPerson.deliveryAddress.state LIKE :state " +
-        "AND c.naturalPerson.deliveryAddress.country LIKE :country AND c.naturalPerson.deliveryAddress.street LIKE :street AND c.naturalPerson.deliveryAddress.zipCode LIKE :zip_code")
+        "AND c.naturalPerson.deliveryAddress.country LIKE :country AND c.naturalPerson.deliveryAddress.street LIKE :street AND c.naturalPerson.deliveryAddress.zipCode LIKE :zip_code"),
+        @NamedQuery(name = Client.FIND_BY_GENDER, query = "SELECT c FROM Client c WHERE c.naturalPerson.gender = :gender")
 })
 @NaturalPersonOrFirm
-public class Client implements Serializable{
+public class Client extends UUIDEntity implements Serializable{
 
     public final static String FIND_BY_FIRST_NAME = "Client.findByFirstName";
     public final static String FIND_BY_LAST_NAME = "Client.findByLastName";
@@ -32,6 +34,7 @@ public class Client implements Serializable{
     public final static String FIND_BORN_BETWEEN = "Client.findBornBetween";
     public final static String FIND_BY_LOCATION = "Client.findByLocation";
     public final static String FIND_BY_DELIVERY = "Client.findByDelivery";
+    public final static String FIND_BY_GENDER = "Client.findByGender";
 
     private Long clientId;
     private String description;
@@ -47,7 +50,8 @@ public class Client implements Serializable{
 
     /* constructor */
 
-    public Client() { }
+    public Client() {
+    }
 
     public Client(String description) {
         this.description = description;
@@ -121,4 +125,5 @@ public class Client implements Serializable{
     public void setEmployeeRatings(Set<EmployeeRating> employeeRatings) {
         this.employeeRatings = employeeRatings;
     }
+
 }

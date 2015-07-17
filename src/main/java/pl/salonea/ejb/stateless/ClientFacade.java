@@ -3,6 +3,8 @@ package pl.salonea.ejb.stateless;
 
 import pl.salonea.ejb.interfaces.ClientFacadeInterface;
 import pl.salonea.entities.Client;
+import pl.salonea.entities.NaturalPerson;
+import pl.salonea.enums.Gender;
 
 import javax.ejb.LocalBean;
 import javax.ejb.Stateless;
@@ -24,7 +26,7 @@ public class ClientFacade extends AbstractFacade<Client> implements ClientFacade
     private EntityManager em;
 
     @Override
-    protected EntityManager getEntityManager() {
+    public EntityManager getEntityManager() {
         return em;
     }
 
@@ -107,6 +109,8 @@ public class ClientFacade extends AbstractFacade<Client> implements ClientFacade
 
         TypedQuery<Client> query = getEntityManager().createNamedQuery(Client.FIND_BORN_BEFORE, Client.class);
         query.setParameter("date", date);
+        query.setFirstResult(start);
+        query.setMaxResults(offset);
         return query.getResultList();
     }
 
@@ -214,7 +218,7 @@ public class ClientFacade extends AbstractFacade<Client> implements ClientFacade
     }
 
     public List<Client> findByDelivery(String city, String state, String country, String street, String zipCode, Integer start, Integer offset) {
-        return findByDelivery(city, state, country, street, zipCode, start, offset);
+        return findByAddress(Client.FIND_BY_DELIVERY, city, state, country, street, zipCode, start, offset);
     }
 
     private List<Client> findByAddress(String queryName, String city, String state, String country, String street, String zipCode, Integer start, Integer offset) {
@@ -230,6 +234,21 @@ public class ClientFacade extends AbstractFacade<Client> implements ClientFacade
         query.setParameter("street", "%" + street + "%");
         if(zipCode == null) zipCode = "";
         query.setParameter("zip_code", "%" + zipCode + "%");
+        if(start != null && offset != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(offset);
+        }
+        return query.getResultList();
+    }
+
+    public List<Client> findByGender(Gender gender) {
+        return findByGender(gender, null, null);
+    }
+
+    public List<Client> findByGender(Gender gender, Integer start, Integer offset) {
+
+        TypedQuery<Client> query = getEntityManager().createNamedQuery(Client.FIND_BY_GENDER, Client.class);
+        query.setParameter("gender", gender);
         if(start != null && offset != null) {
             query.setFirstResult(start);
             query.setMaxResults(offset);

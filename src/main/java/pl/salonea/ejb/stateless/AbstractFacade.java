@@ -28,7 +28,7 @@ public abstract class AbstractFacade<T> {
         this.entityClass = entityClass;
     }
 
-    protected abstract EntityManager getEntityManager();
+    public abstract EntityManager getEntityManager();
 
     public @NotNull T create(@NotNull T entity) {
         getEntityManager().persist(entity);
