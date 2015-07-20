@@ -14,7 +14,6 @@ import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -56,14 +55,12 @@ public class CreditCardIT {
         Calendar cal = Calendar.getInstance();
         cal.add(Calendar.YEAR, 1);
 
-        transaction.begin();
-        em.persist(client);
-
         // create instance of CreditCard entity
         CreditCard creditCard = new CreditCard(client, "4129239494949494", cal.getTime(), "Michał Ziobro", CreditCardType.VISA);
 
+        transaction.begin();
+        em.persist(client);
         em.persist(creditCard);
-        em.refresh(client);
         transaction.commit();
 
         assertNotNull(client.getCreditCards());

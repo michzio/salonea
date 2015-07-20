@@ -71,12 +71,11 @@ public class ClientFacadeIT {
         client = clientFacade.create(client);
 
         assertNotNull("Client ID should not be null.", client.getClientId());
-
         assertTrue("Number of clients should be one.", clientFacade.count() == 1);
 
         Client foundClient = clientFacade.find(client.getClientId());
 
-        assertEquals(client.getClientId(), foundClient.getClientId());
+        assertEquals(client, foundClient);
 
         clientFacade.remove(foundClient);
 
@@ -123,6 +122,5 @@ public class ClientFacadeIT {
         naturalPersonFacade.remove(person2);
         naturalPersonFacade.remove(person1);
     }
-
 
 }

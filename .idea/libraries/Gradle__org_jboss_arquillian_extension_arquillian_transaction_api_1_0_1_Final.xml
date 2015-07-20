@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="Gradle: org.jboss.arquillian.extension:arquillian-transaction-api:1.0.1.Final">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jboss.arquillian.extension/arquillian-transaction-api/1.0.1.Final/7dc890c111645369071d1276107f78ce141edde8/arquillian-transaction-api-1.0.1.Final.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jboss.arquillian.extension/arquillian-transaction-api/1.0.1.Final/da8dd4bb1ac1490f2d27f5809177c7c44caa8504/arquillian-transaction-api-1.0.1.Final-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

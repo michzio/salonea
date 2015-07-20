@@ -4,8 +4,8 @@ import pl.salonea.constraints.NaturalPersonOrFirm;
 
 import javax.persistence.*;
 import java.io.Serializable;
+import java.util.HashSet;
 import java.util.Set;
-import java.util.UUID;
 
 @Entity
 @Table(name="client")
@@ -44,7 +44,7 @@ public class Client extends UUIDEntity implements Serializable{
     private Firm firm;
 
     // one-to-many relationships with:
-    private Set<CreditCard> creditCards;
+    private Set<CreditCard> creditCards = new HashSet<>();
     private Set<ProviderRating> providerRatings;
     private Set<EmployeeRating> employeeRatings;
 
@@ -99,7 +99,7 @@ public class Client extends UUIDEntity implements Serializable{
         this.firm = firm;
     }
 
-    @OneToMany(mappedBy = "client", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "client", fetch = FetchType.LAZY, cascade = { CascadeType.REMOVE })
     public Set<CreditCard> getCreditCards() {
         return creditCards;
     }
@@ -125,5 +125,12 @@ public class Client extends UUIDEntity implements Serializable{
     public void setEmployeeRatings(Set<EmployeeRating> employeeRatings) {
         this.employeeRatings = employeeRatings;
     }
+
+   /* public void addCreditCard(CreditCard creditCard) {
+        this.creditCards.add(creditCard);
+        if(creditCard.getClient() != this) {
+            creditCard.setClient(this);
+        }
+    } */
 
 }

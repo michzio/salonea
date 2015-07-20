@@ -31,10 +31,12 @@ public class UserAccountFacade extends AbstractFacade<UserAccount> implements Us
         super(UserAccount.class);
     }
 
+    @Override
     public List<UserAccount> findAllNotActivated() {
         return findAllNotActivated(null, null);
     }
 
+    @Override
     public List<UserAccount> findAllNotActivated(Integer start, Integer offset) {
 
         TypedQuery<UserAccount> query = getEntityManager().createNamedQuery(UserAccount.FIND_ALL_NOT_ACTIVATED, UserAccount.class);
@@ -45,10 +47,12 @@ public class UserAccountFacade extends AbstractFacade<UserAccount> implements Us
         return query.getResultList();
     }
 
+    @Override
     public List<UserAccount> findAllActivated() {
         return findAllActivated(null, null);
     }
 
+    @Override
     public List<UserAccount> findAllActivated(Integer start, Integer offset) {
 
         TypedQuery<UserAccount> query = getEntityManager().createNamedQuery(UserAccount.FIND_ALL_ACTIVATED, UserAccount.class);
@@ -59,10 +63,12 @@ public class UserAccountFacade extends AbstractFacade<UserAccount> implements Us
         return query.getResultList();
     }
 
+    @Override
     public List<UserAccount> findByEmail(String email) {
         return findByEmail(email, null, null);
     }
 
+    @Override
     public List<UserAccount> findByEmail(String email, Integer start, Integer offset) {
 
         TypedQuery<UserAccount> query = getEntityManager().createNamedQuery(UserAccount.FIND_BY_EMAIL, UserAccount.class);
@@ -74,10 +80,12 @@ public class UserAccountFacade extends AbstractFacade<UserAccount> implements Us
         return query.getResultList();
     }
 
+    @Override
     public List<UserAccount> findByLogin(String login) {
         return findByLogin(login, null, null);
     }
 
+    @Override
     public List<UserAccount> findByLogin(String login, Integer start, Integer offset) {
 
         TypedQuery<UserAccount> query = getEntityManager().createNamedQuery(UserAccount.FIND_BY_LOGIN, UserAccount.class);
@@ -93,6 +101,7 @@ public class UserAccountFacade extends AbstractFacade<UserAccount> implements Us
         return findCreatedBetween(startDate, endDate, null, null);
     }
 
+    @Override
     public List<UserAccount> findCreatedBetween(Date startDate, Date endDate, Integer start, Integer offset) {
 
         TypedQuery<UserAccount> query = getEntityManager().createNamedQuery(UserAccount.FIND_CREATED_BETWEEN, UserAccount.class);
@@ -105,10 +114,12 @@ public class UserAccountFacade extends AbstractFacade<UserAccount> implements Us
         return query.getResultList();
     }
 
+    @Override
     public List<UserAccount> findLastLoggedBetween(Date startDate, Date endDate) {
         return findLastLoggedBetween(startDate, endDate, null, null);
     }
 
+    @Override
     public List<UserAccount> findLastLoggedBetween(Date startDate, Date endDate, Integer start, Integer offset) {
 
         TypedQuery<UserAccount> query = getEntityManager().createNamedQuery(UserAccount.FIND_LAST_LOGGED_BETWEEN, UserAccount.class);
@@ -121,10 +132,12 @@ public class UserAccountFacade extends AbstractFacade<UserAccount> implements Us
         return  query.getResultList();
     }
 
+    @Override
     public List<UserAccount> findLastFailedLoginBetween(Date startDate, Date endDate) {
         return findLastFailedLoginBetween(startDate, endDate, null, null);
     }
 
+    @Override
     public List<UserAccount> findLastFailedLoginBetween(Date startDate, Date endDate, Integer start, Integer offset) {
 
         TypedQuery<UserAccount> query = getEntityManager().createNamedQuery(UserAccount.FIND_LAST_FAILED_LOGIN_BETWEEN, UserAccount.class);
@@ -137,6 +150,7 @@ public class UserAccountFacade extends AbstractFacade<UserAccount> implements Us
         return query.getResultList();
     }
 
+    @Override
     public Integer deleteOldNotActivated(Date oldestDate) {
 
         Query query = getEntityManager().createNamedQuery(UserAccount.DELETE_OLD_NOT_ACTIVATED);
@@ -144,6 +158,7 @@ public class UserAccountFacade extends AbstractFacade<UserAccount> implements Us
         return query.executeUpdate();
     }
 
+    @Override
     public Integer updateActivateAll() {
 
         Query query = getEntityManager().createNamedQuery(UserAccount.UPDATE_ACTIVATE_ALL);

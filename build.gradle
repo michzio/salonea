@@ -35,6 +35,7 @@ dependencies {
     testCompile 'org.jboss.shrinkwrap.resolver:shrinkwrap-resolver-depchain:2.1.0'
     testCompile 'org.jboss.arquillian:arquillian-bom:1.1.2.Final-wildfly-1'
     testCompile 'org.jboss.arquillian.junit:arquillian-junit-container:1.1.2.Final-wildfly-1'
+    testCompile 'org.jboss.arquillian.extension:arquillian-transaction-api:1.0.1.Final'
 
     testRuntime 'org.jboss.logging:jboss-logging:3.1.4.GA'
     /**

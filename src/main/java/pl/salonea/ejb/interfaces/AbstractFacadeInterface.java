@@ -10,6 +10,7 @@ public interface AbstractFacadeInterface<T> {
         // abstract interface
         T create(T client);
         T update(T client);
+        void refresh(T client);
         void remove(T client);
         T find(Object obj);
         List<T> findAll();

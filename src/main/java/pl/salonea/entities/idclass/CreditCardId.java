@@ -1,9 +1,10 @@
 package pl.salonea.entities.idclass;
 
 
+import java.io.Serializable;
 import java.util.Date;
 
-public class CreditCardId {
+public class CreditCardId implements Serializable {
 
     private Long client;
     private String creditCardNumber;

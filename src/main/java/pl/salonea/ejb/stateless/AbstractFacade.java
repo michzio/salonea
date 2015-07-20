@@ -40,6 +40,11 @@ public abstract class AbstractFacade<T> {
         return getEntityManager().merge(entity);
     }
 
+    public void refresh(@NotNull T entity) {
+
+        getEntityManager().refresh(getEntityManager().merge(entity));
+    }
+
     public void remove(@NotNull T entity) {
         getEntityManager().remove(getEntityManager().merge(entity));
     }

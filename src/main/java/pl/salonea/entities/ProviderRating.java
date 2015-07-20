@@ -8,10 +8,27 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
 @Entity
+@IdClass(ProviderRatingId.class)
 @Table(name = "provider_rating")
 @Access(AccessType.PROPERTY)
-@IdClass(ProviderRatingId.class)
+@NamedQueries({
+        @NamedQuery(name = ProviderRating.FIND_BY_CLIENT, query = "SELECT pr FROM ProviderRating pr WHERE pr.client = :client"),
+        @NamedQuery(name = ProviderRating.FIND_BY_PROVIDER, query = "SELECT pr FROM ProviderRating pr WHERE pr.provider = :provider"),
+        @NamedQuery(name = ProviderRating.FIND_FOR_PROVIDER_BY_RATING, query = "SELECT pr FROM ProviderRating pr WHERE pr.provider = :provider AND pr.clientRating = :rating"),
+        @NamedQuery(name = ProviderRating.FIND_FROM_CLIENT_BY_RATING, query = "SELECT pr FROM ProviderRating pr WHERE pr.client = :client AND pr.clientRating = :rating"),
+        @NamedQuery(name = ProviderRating.FIND_PROVIDER_AVG_RATING, query = "SELECT AVG(pr.clientRating) FROM ProviderRating pr WHERE pr.provider = :provider"),
+        @NamedQuery(name = ProviderRating.COUNT_PROVIDER_RATINGS, query = "SELECT COUNT(pr) FROM ProviderRating pr WHERE pr.provider = :provider"),
+        @NamedQuery(name = ProviderRating.COUNT_CLIENT_RATINGS, query = "SELECT COUNT(pr) FROM ProviderRating pr WHERE pr.client = :client")
+})
 public class ProviderRating {
+
+    public static final String FIND_BY_CLIENT = "ProviderRating.findByClient";
+    public static final String FIND_BY_PROVIDER = "ProviderRating.findByProvider";
+    public static final String FIND_FOR_PROVIDER_BY_RATING = "ProviderRating.findForProviderByRating";
+    public static final String FIND_FROM_CLIENT_BY_RATING = "ProviderRating.findFromClientByRating";
+    public static final String FIND_PROVIDER_AVG_RATING = "ProviderRating.findProviderAvgRating";
+    public static final String COUNT_PROVIDER_RATINGS = "ProviderRating.countProviderRatings";
+    public static final String COUNT_CLIENT_RATINGS = "ProviderRating.countClientRatings";
 
     private Client client; // PK, FK
     private Provider provider; // PK, FK

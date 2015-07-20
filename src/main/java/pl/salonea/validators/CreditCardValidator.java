@@ -39,6 +39,8 @@ public class CreditCardValidator implements ConstraintValidator<CreditCardValidi
         // Enroute = [2014|2149] - XXXX - XXXX - XXX
         // Switch = [4903|4911|4936|5641|6333|6759|6334|6767] - XXXX - XXXX - XXXX
 
-        return Luhn.validate(value.getCreditCardNumber());
+        Boolean valid =  Luhn.validate(value.getCreditCardNumber());
+
+        return valid;
     }
 }

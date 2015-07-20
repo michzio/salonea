@@ -33,7 +33,8 @@ public class Luhn {
      * @return
      */
     public static boolean validate(String numberString) {
-        return checkSum(numberString) == 0;
+        int checkDigit = Integer.parseInt(String.valueOf(numberString.charAt(numberString.length()-1)));
+        return checkSum(numberString) == checkDigit;
     }
 
     /**
@@ -60,15 +61,21 @@ public class Luhn {
         int sum = 0, checkDigit = 0;
 
         if(!noCheckDigit)
+            // Drop the last digit from the number. The last digit is what we want to check against
             numberString = numberString.substring(0, numberString.length()-1);
 
         boolean isDouble = true;
+        // Reverse the numbers
         for (int i = numberString.length() - 1; i >= 0; i--) {
+            // Multiply the digits in odd (here even, as taking into account dropped number)
+            // positions (1, 3, 5, etc.) by 2 and subtract 9 to all any result higher than 9
             int k = Integer.parseInt(String.valueOf(numberString.charAt(i)));
             sum += sumToSingleDigit((k * (isDouble ? 2 : 1)));
+            // Add all the numbers together
             isDouble = !isDouble;
         }
 
+        // The check digit (the last number of the card) is the amount that you would need to add to get a multiple of 10 (Modulo 10)
         if ((sum % 10) > 0)
             checkDigit = (10 - (sum % 10));
 
