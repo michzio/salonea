@@ -16,16 +16,16 @@ import java.util.Set;
 @PrimaryKeyJoinColumn(name = "provider_id")
 @Access(AccessType.PROPERTY)
 @NamedQueries({
-        @NamedQuery(name = "findByCorporation", query = "SELECT p FROM Provider p WHERE p.corporation = :corporation"),
-        @NamedQuery(name = "findByType", query = "SELECT p FROM Provider p WHERE p.type = :provider_type"),
-        @NamedQuery(name = "findByIndustry", query = "SELECT p FROM Provider p WHERE :industry MEMBER OF p.industries"),
-        @NamedQuery(name = "findByPaymentMethod", query = "SELECT p FROM Provider p WHERE :payment_method MEMBER OF p.acceptedPaymentMethods"),
-        @NamedQuery(name = "findBySuppliedService", query = "SELECT p FROM Provider p INNER JOIN p.suppliedServiceOffers ps WHERE ps.service = :service"),
-        @NamedQuery(name = "findRated", query = "SELECT p FROM Provider p WHERE p.receivedRatings.size > 0"),
-        @NamedQuery(name = "findUnrated", query = "SELECT p FROM Provider p WHERE p.receivedRatings.size = 0"),
-        @NamedQuery(name = "findOnAvgRatedAbove", query = "SELECT p FROM Provider p INNER JOIN p.receivedRatings pr GROUP BY p HAVING AVG(pr.clientRating) >= :avg_rating"),
-        @NamedQuery(name = "findOnAvgRatedBelow", query = "SELECT p FROM Provider p INNER JOIN p.receivedRatings pr GROUP BY p HAVING AVG(pr.clientRating) <= :avg_rating"),
-        @NamedQuery(name = "findRatedByClient", query = "SELECT p FROM Provider p INNER JOIN p.receivedRatings pr WHERE pr.client = :client"),
+        @NamedQuery(name = Provider.FIND_BY_CORPORATION, query = "SELECT p FROM Provider p WHERE p.corporation = :corporation"),
+        @NamedQuery(name = Provider.FIND_BY_TYPE, query = "SELECT p FROM Provider p WHERE p.type = :provider_type"),
+        @NamedQuery(name = Provider.FIND_BY_INDUSTRY, query = "SELECT p FROM Provider p WHERE :industry MEMBER OF p.industries"),
+        @NamedQuery(name = Provider.FIND_BY_PAYMENT_METHOD, query = "SELECT p FROM Provider p WHERE :payment_method MEMBER OF p.acceptedPaymentMethods"),
+        @NamedQuery(name = Provider.FIND_BY_SUPPLIED_SERVICE, query = "SELECT p FROM Provider p INNER JOIN p.suppliedServiceOffers ps WHERE ps.service = :service"),
+        @NamedQuery(name = Provider.FIND_RATED, query = "SELECT p FROM Provider p WHERE p.receivedRatings.size > 0"),
+        @NamedQuery(name = Provider.FIND_UNRATED, query = "SELECT p FROM Provider p WHERE p.receivedRatings.size = 0"),
+        @NamedQuery(name = Provider.FIND_ON_AVG_RATED_ABOVE, query = "SELECT p FROM Provider p INNER JOIN p.receivedRatings pr GROUP BY p HAVING AVG(pr.clientRating) >= :avg_rating"),
+        @NamedQuery(name = Provider.FIND_ON_AVG_RATED_BELOW, query = "SELECT p FROM Provider p INNER JOIN p.receivedRatings pr GROUP BY p HAVING AVG(pr.clientRating) <= :avg_rating"),
+        @NamedQuery(name = Provider.FIND_RATED_BY_CLIENT, query = "SELECT p FROM Provider p INNER JOIN p.receivedRatings pr WHERE pr.client = :client"),
 })
 @CorporateOwner
 public class Provider extends Firm {
