@@ -8,10 +8,10 @@ import java.util.List;
 public interface AbstractFacadeInterface<T> {
 
         // abstract interface
-        T create(T client);
-        T update(T client);
-        void refresh(T client);
-        void remove(T client);
+        T create(T entity);
+        T update(T entity);
+        void refresh(T entity); // works only with attached entity, if entity is detached need to find it again
+        void remove(T entity);
         T find(Object obj);
         List<T> findAll();
         List<T> findRange(int[] range);

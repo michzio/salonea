@@ -16,8 +16,7 @@ import java.util.List;
  */
 @Stateless
 @LocalBean
-public class ProviderFacade extends AbstractFacade<Provider> implements ProviderFacadeInterface.Locale, ProviderFacadeInterface.Remote {
-
+public class ProviderFacade extends AbstractFacade<Provider> implements ProviderFacadeInterface.Local, ProviderFacadeInterface.Remote {
 
     @Inject
     private EntityManager em;
@@ -135,7 +134,8 @@ public class ProviderFacade extends AbstractFacade<Provider> implements Provider
         return findUnrated(null, null);
     }
 
-    @Override List<Provider> findUnrated(Integer start, Integer offset) {
+    @Override
+    public List<Provider> findUnrated(Integer start, Integer offset) {
 
         TypedQuery<Provider> query = getEntityManager().createNamedQuery(Provider.FIND_UNRATED, Provider.class);
         if(start != null && offset != null) {
@@ -147,16 +147,52 @@ public class ProviderFacade extends AbstractFacade<Provider> implements Provider
 
     @Override
     public List<Provider> findOnAvgRatedAbove(Double minAvgRating) {
-        return null;
+        return findOnAvgRatedAbove(minAvgRating, null, null);
+    }
+
+    @Override
+    public List<Provider> findOnAvgRatedAbove(Double minAvgRating, Integer start, Integer offset) {
+
+        TypedQuery<Provider> query = getEntityManager().createNamedQuery(Provider.FIND_ON_AVG_RATED_ABOVE, Provider.class);
+        query.setParameter("avg_rating", minAvgRating);
+        if(start != null && offset != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(offset);
+        }
+        return query.getResultList();
     }
 
     @Override
     public List<Provider> findOnAvgRatedBelow(Double maxAvgRating) {
-        return null;
+        return findOnAvgRatedBelow(maxAvgRating, null, null);
+    }
+
+    @Override
+    public List<Provider> findOnAvgRatedBelow(Double maxAvgRating, Integer start, Integer offset) {
+
+        TypedQuery<Provider> query = getEntityManager().createNamedQuery(Provider.FIND_ON_AVG_RATED_BELOW, Provider.class);
+        query.setParameter("avg_rating", maxAvgRating);
+        if(start != null && offset != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(offset);
+        }
+        return query.getResultList();
     }
 
     @Override
     public List<Provider> findRatedByClient(Client client) {
-        return null;
+        return findRatedByClient(client, null, null);
+    }
+
+    @Override
+    public List<Provider> findRatedByClient(Client client, Integer start, Integer offset) {
+
+        TypedQuery<Provider> query = getEntityManager().createNamedQuery(Provider.FIND_RATED_BY_CLIENT, Provider.class);
+        query.setParameter("client", client);
+        if(start != null && offset != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(offset);
+        }
+        return query.getResultList();
     }
 }

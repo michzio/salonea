@@ -1,5 +1,7 @@
 package pl.salonea.entities;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import pl.salonea.entities.idclass.ProviderRatingId;
 
 import javax.persistence.*;
@@ -15,20 +17,32 @@ import javax.validation.constraints.NotNull;
         @NamedQuery(name = ProviderRating.FIND_BY_CLIENT, query = "SELECT pr FROM ProviderRating pr WHERE pr.client = :client"),
         @NamedQuery(name = ProviderRating.FIND_BY_PROVIDER, query = "SELECT pr FROM ProviderRating pr WHERE pr.provider = :provider"),
         @NamedQuery(name = ProviderRating.FIND_FOR_PROVIDER_BY_RATING, query = "SELECT pr FROM ProviderRating pr WHERE pr.provider = :provider AND pr.clientRating = :rating"),
+        @NamedQuery(name = ProviderRating.FIND_FOR_PROVIDER_ABOVE_RATING, query = "SELECT pr FROM ProviderRating pr WHERE pr.provider = :provider AND pr.clientRating >= :min_rating"),
+        @NamedQuery(name = ProviderRating.FIND_FOR_PROVIDER_BELOW_RATING, query = "SELECT pr FROM ProviderRating pr WHERE pr.provider = :provider AND pr.clientRating <= :max_rating"),
         @NamedQuery(name = ProviderRating.FIND_FROM_CLIENT_BY_RATING, query = "SELECT pr FROM ProviderRating pr WHERE pr.client = :client AND pr.clientRating = :rating"),
+        @NamedQuery(name = ProviderRating.FIND_FROM_CLIENT_ABOVE_RATING, query = "SELECT pr FROM ProviderRating pr WHERE pr.client = :client AND pr.clientRating >= :min_rating"),
+        @NamedQuery(name = ProviderRating.FIND_FROM_CLIENT_BELOW_RATING, query = "SELECT pr FROM ProviderRating pr WHERE pr.client = :client AND pr.clientRating <= :max_rating"),
         @NamedQuery(name = ProviderRating.FIND_PROVIDER_AVG_RATING, query = "SELECT AVG(pr.clientRating) FROM ProviderRating pr WHERE pr.provider = :provider"),
         @NamedQuery(name = ProviderRating.COUNT_PROVIDER_RATINGS, query = "SELECT COUNT(pr) FROM ProviderRating pr WHERE pr.provider = :provider"),
-        @NamedQuery(name = ProviderRating.COUNT_CLIENT_RATINGS, query = "SELECT COUNT(pr) FROM ProviderRating pr WHERE pr.client = :client")
+        @NamedQuery(name = ProviderRating.COUNT_CLIENT_RATINGS, query = "SELECT COUNT(pr) FROM ProviderRating pr WHERE pr.client = :client"),
+        @NamedQuery(name = ProviderRating.DELETE_BY_CLIENT, query = "DELETE FROM ProviderRating pr WHERE pr.client = :client"),
+        @NamedQuery(name = ProviderRating.DELETE_BY_PROVIDER, query = "DELETE FROM ProviderRating pr WHERE pr.provider = :provider"),
 })
 public class ProviderRating {
 
     public static final String FIND_BY_CLIENT = "ProviderRating.findByClient";
     public static final String FIND_BY_PROVIDER = "ProviderRating.findByProvider";
     public static final String FIND_FOR_PROVIDER_BY_RATING = "ProviderRating.findForProviderByRating";
+    public static final String FIND_FOR_PROVIDER_ABOVE_RATING = "ProviderRating.findForProviderAboveRating";
+    public static final String FIND_FOR_PROVIDER_BELOW_RATING = "ProviderRating.findForProviderBelowRating";
     public static final String FIND_FROM_CLIENT_BY_RATING = "ProviderRating.findFromClientByRating";
+    public static final String FIND_FROM_CLIENT_ABOVE_RATING = "ProviderRating.findFromClientAboveRating";
+    public static final String FIND_FROM_CLIENT_BELOW_RATING = "ProviderRating.findFromClientBelowRating";
     public static final String FIND_PROVIDER_AVG_RATING = "ProviderRating.findProviderAvgRating";
     public static final String COUNT_PROVIDER_RATINGS = "ProviderRating.countProviderRatings";
     public static final String COUNT_CLIENT_RATINGS = "ProviderRating.countClientRatings";
+    public static final String DELETE_BY_CLIENT = "ProviderRating.deleteByClient";
+    public static final String DELETE_BY_PROVIDER = "ProviderRating.deleteByProvider";
 
     private Client client; // PK, FK
     private Provider provider; // PK, FK
@@ -111,5 +125,28 @@ public class ProviderRating {
         this.providerDementi = providerDementi;
     }
 
+    @Override
+    public int hashCode() {
 
+        return new HashCodeBuilder(17, 31). // two randomly chosen prime numbers
+                // if deriving: appendSuper(super.hashCode()).
+                 append(getClient())
+                .append(getProvider())
+                .toHashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null || !(obj instanceof ProviderRating))
+            return false;
+        if (obj == this)
+            return true;
+
+        ProviderRating rhs = (ProviderRating) obj;
+        return new EqualsBuilder().
+                // if deriving: appendSuper(super.equals(obj)).
+                 append(getClient(), rhs.getClient())
+                .append(getProvider(), rhs.getProvider())
+                .isEquals();
+    }
 }

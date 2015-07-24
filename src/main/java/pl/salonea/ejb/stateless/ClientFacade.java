@@ -4,6 +4,7 @@ package pl.salonea.ejb.stateless;
 import pl.salonea.ejb.interfaces.ClientFacadeInterface;
 import pl.salonea.entities.Client;
 import pl.salonea.entities.NaturalPerson;
+import pl.salonea.entities.Provider;
 import pl.salonea.enums.Gender;
 
 import javax.ejb.LocalBean;
@@ -273,6 +274,23 @@ public class ClientFacade extends AbstractFacade<Client> implements ClientFacade
 
         TypedQuery<Client> query = getEntityManager().createNamedQuery(Client.FIND_BY_GENDER, Client.class);
         query.setParameter("gender", gender);
+        if(start != null && offset != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(offset);
+        }
+        return query.getResultList();
+    }
+
+    @Override
+    public List<Client> findRatingProvider(Provider provider) {
+        return findRatingProvider(provider, null, null);
+    }
+
+    @Override
+    public List<Client> findRatingProvider(Provider provider, Integer start, Integer offset) {
+
+        TypedQuery<Client> query = getEntityManager().createNamedQuery(Client.FIND_RATING_PROVIDER, Client.class);
+        query.setParameter("provider", provider);
         if(start != null && offset != null) {
             query.setFirstResult(start);
             query.setMaxResults(offset);

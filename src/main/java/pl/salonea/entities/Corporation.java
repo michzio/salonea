@@ -17,8 +17,19 @@ import java.util.Set;
 @Entity
 @Table(name = "corporation")
 @Access(AccessType.PROPERTY)
-public class Corporation implements Serializable {
+@NamedQueries({
+        @NamedQuery(name = Corporation.FIND_BY_ADDRESS,  query = "SELECT c FROM Corporation c WHERE c.address.city LIKE :city AND c.address.state LIKE :state " +
+                "AND c.address.country LIKE :country AND c.address.street LIKE :street AND c.address.zipCode LIKE :zip_code"),
+        @NamedQuery(name = Corporation.FIND_BY_NAME, query = "SELECT c FROM Corporation c WHERE c.corporationName LIKE :name"),
+        @NamedQuery(name = Corporation.FIND_OPEN_AFTER, query = "SELECT c FROM Corporation c WHERE c.openingDate >= :date"),
+        @NamedQuery(name = Corporation.FIND_OPEN_BEFORE, query = "SELECT c FROM Corporation c WHERE c.openingDate <= :date")
+})
+public class Corporation extends UUIDEntity implements Serializable {
 
+    public static final String FIND_BY_ADDRESS = "Corporation.findByAddress";
+    public static final String FIND_BY_NAME = "Corporation.findByName";
+    public static final String FIND_OPEN_AFTER = "Corporation.findOpenAfter";
+    public static final String FIND_OPEN_BEFORE = "Corporation.findOpenBefore";
 
     private Long corporationId;
     private String corporationName;
@@ -185,4 +196,6 @@ public class Corporation implements Serializable {
     public void setProviders(Set<Provider> providers) {
         this.providers = providers;
     }
+
+
 }

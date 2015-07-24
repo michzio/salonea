@@ -3,6 +3,7 @@ package pl.salonea.ejb.interfaces;
 
 import pl.salonea.ejb.stateless.AbstractFacade;
 import pl.salonea.entities.Client;
+import pl.salonea.entities.Provider;
 import pl.salonea.enums.Gender;
 
 import java.util.Date;
@@ -38,6 +39,8 @@ public interface ClientFacadeInterface extends AbstractFacadeInterface<Client> {
     List<Client> findByDelivery(String city, String state, String country, String street, String zipCode, Integer start, Integer offset);
     List<Client> findByGender(Gender gender);
     List<Client> findByGender(Gender gender, Integer start, Integer offset);
+    List<Client> findRatingProvider(Provider provider);
+    List<Client> findRatingProvider(Provider provider, Integer start, Integer offset);
 
     @javax.ejb.Remote
     interface Remote extends ClientFacadeInterface {

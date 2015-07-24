@@ -21,7 +21,8 @@ import java.util.Set;
                 "AND c.naturalPerson.homeAddress.country LIKE :country AND c.naturalPerson.homeAddress.street LIKE :street AND c.naturalPerson.homeAddress.zipCode LIKE :zip_code"),
         @NamedQuery(name = Client.FIND_BY_DELIVERY, query = "SELECT c FROM Client c WHERE c.naturalPerson.deliveryAddress.city LIKE :city AND c.naturalPerson.deliveryAddress.state LIKE :state " +
         "AND c.naturalPerson.deliveryAddress.country LIKE :country AND c.naturalPerson.deliveryAddress.street LIKE :street AND c.naturalPerson.deliveryAddress.zipCode LIKE :zip_code"),
-        @NamedQuery(name = Client.FIND_BY_GENDER, query = "SELECT c FROM Client c WHERE c.naturalPerson.gender = :gender")
+        @NamedQuery(name = Client.FIND_BY_GENDER, query = "SELECT c FROM Client c WHERE c.naturalPerson.gender = :gender"),
+        @NamedQuery(name = Client.FIND_RATING_PROVIDER, query = "SELECT c FROM Client c INNER JOIN c.providerRatings pr WHERE pr.provider = :provider")
 })
 @NaturalPersonOrFirm
 public class Client extends UUIDEntity implements Serializable{
@@ -35,6 +36,7 @@ public class Client extends UUIDEntity implements Serializable{
     public final static String FIND_BY_LOCATION = "Client.findByLocation";
     public final static String FIND_BY_DELIVERY = "Client.findByDelivery";
     public final static String FIND_BY_GENDER = "Client.findByGender";
+    public final static String FIND_RATING_PROVIDER = "Client.findRatingProvider";
 
     private Long clientId;
     private String description;
@@ -108,7 +110,7 @@ public class Client extends UUIDEntity implements Serializable{
         this.creditCards = creditCards;
     }
 
-    @OneToMany(mappedBy = "client", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "client", fetch = FetchType.LAZY, cascade = { CascadeType.PERSIST, CascadeType.REMOVE })
     public Set<ProviderRating> getProviderRatings() {
         return providerRatings;
     }

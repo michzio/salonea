@@ -160,7 +160,7 @@ public class Provider extends Firm {
         this.suppliedServiceOffers = suppliedServiceOffers;
     }
 
-    @OneToMany(mappedBy = "provider", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "provider", fetch = FetchType.LAZY, cascade = { CascadeType.PERSIST, CascadeType.REMOVE })
     public Set<ProviderRating> getReceivedRatings() {
         return receivedRatings;
     }

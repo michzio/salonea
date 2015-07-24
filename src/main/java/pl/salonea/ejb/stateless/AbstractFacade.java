@@ -42,7 +42,7 @@ public abstract class AbstractFacade<T> {
 
     public void refresh(@NotNull T entity) {
 
-        getEntityManager().refresh(getEntityManager().merge(entity));
+       getEntityManager().refresh(entity);
     }
 
     public void remove(@NotNull T entity) {

@@ -9,10 +9,10 @@ import java.util.List;
 /**
  * Created by michzio on 20/07/2015.
  */
-public interface ProviderFacadeInterface {
+public interface ProviderFacadeInterface extends AbstractFacadeInterface<Provider> {
 
     // concrete interface
-    List<Provider> findByCorporation(Corporation corporation);
+    List<Provider> findByCorporation(Corporation corporation); // solve lazy loading problem
     List<Provider> findByCorporation(Corporation corporation, Integer start, Integer offset);
     List<Provider> findByType(ProviderType providerType);
     List<Provider> findByType(ProviderType providerType, Integer start, Integer offset);
@@ -37,5 +37,5 @@ public interface ProviderFacadeInterface {
     interface Remote extends ProviderFacadeInterface { }
 
     @javax.ejb.Local
-    interface Locale extends ProviderFacadeInterface { }
+    interface Local extends ProviderFacadeInterface { }
 }

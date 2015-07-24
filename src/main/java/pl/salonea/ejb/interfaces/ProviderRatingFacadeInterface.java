@@ -17,12 +17,21 @@ public interface ProviderRatingFacadeInterface extends AbstractFacadeInterface<P
     List<ProviderRating> findByProvider(Provider provider, Integer start, Integer offset);
     List<ProviderRating> findForProviderByRating(Provider provider, Short rating);
     List<ProviderRating> findForProviderByRating(Provider provider, Short rating, Integer start, Integer offset);
+    List<ProviderRating> findForProviderAboveRating(Provider provider, Short minRating);
+    List<ProviderRating> findForProviderAboveRating(Provider provider, Short minRating, Integer start, Integer offset);
+    List<ProviderRating> findForProviderBelowRating(Provider provider, Short maxRating);
+    List<ProviderRating> findForProviderBelowRating(Provider provider, Short maxRating, Integer start, Integer offset);
     List<ProviderRating> findFromClientByRating(Client client, Short rating);
     List<ProviderRating> findFromClientByRating(Client client, Short rating, Integer start, Integer offset);
+    List<ProviderRating> findFromClientAboveRating(Client client, Short minRating);
+    List<ProviderRating> findFromClientAboveRating(Client client, Short minRating, Integer start, Integer offset);
+    List<ProviderRating> findFromClientBelowRating(Client client, Short maxRating);
+    List<ProviderRating> findFromClientBelowRating(Client client, Short maxRating, Integer start, Integer offset);
     Double findProviderAvgRating(Provider provider);
-    Integer countProviderRatings(Provider provider);
-    Integer countClientRatings(Client client);
-
+    Long countProviderRatings(Provider provider);
+    Long countClientRatings(Client client);
+    Integer deleteByClient(Client client);
+    Integer deleteByProvider(Provider provider);
 
     @javax.ejb.Remote
     interface Remote extends ProviderRatingFacadeInterface { }
