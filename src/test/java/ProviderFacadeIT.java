@@ -9,7 +9,7 @@ import org.junit.runner.RunWith;
 import pl.salonea.ejb.interfaces.ClientFacadeInterface;
 import pl.salonea.ejb.interfaces.CorporationFacadeInterface;
 import pl.salonea.ejb.interfaces.ProviderFacadeInterface;
-import pl.salonea.ejb.stateless.ClientFacade;
+import pl.salonea.ejb.stateless.IndustryFacade;
 import pl.salonea.ejb.stateless.ProviderRatingFacade;
 import pl.salonea.embeddables.Address;
 import pl.salonea.entities.*;
@@ -19,7 +19,6 @@ import javax.inject.Inject;
 import javax.transaction.UserTransaction;
 import java.io.File;
 import java.util.List;
-import java.util.Set;
 import java.util.logging.Logger;
 
 import static org.junit.Assert.*;
@@ -64,6 +63,9 @@ public class ProviderFacadeIT {
 
     @Inject
     private ProviderRatingFacade.Local ratingFacade;
+
+    @Inject
+    private IndustryFacade.Local industryFacade;
 
     @Inject
     private UserTransaction utx;
@@ -313,6 +315,67 @@ public class ProviderFacadeIT {
         assertTrue(providerFacade.count() == 0);
 
 
+    }
+
+    @Test
+    public void shouldFindProvidersByIndustry() throws Exception {
+
+        // create some instances of Industry entity
+        Industry industry1 = new Industry("Cosmetics");
+        Industry industry2 = new Industry("Hairdressing");
+        Industry industry3 = new Industry("Automotive");
+        Industry industry4 = new Industry("Dental");
+
+        // create some instances of Provider entity
+        Address address1 =  new Address("Poznańska", "15", "29-100", "Poznań", "Wielkopolska", "Poland");
+        Provider provider1 = new Provider("firma@allegro.pl", "allegro", "aAle2@_", "Allegro Ltd.",
+                "2234567890", "2234567890", address1, "Allegro Polska", ProviderType.SIMPLE);
+
+        Address address2 = new Address("Wrocławska", "45", "10-140", "Szczecin", "Zachodnio Pomorskie", "Poland");
+        Provider provider2 = new Provider("firma@tieto.pl", "tieto", "tIe%13?", "Tieto Sp. z o.o.",
+                "6593878688", "6510029930", address2, "Tieto Poland", ProviderType.SIMPLE);
+
+        industry1.getProviders().add(provider1);
+        industry1.getProviders().add(provider2);
+        industry2.getProviders().add(provider1);
+        industry3.getProviders().add(provider2);
+        industry4.getProviders().add(provider2);
+        provider1.getIndustries().add(industry1);
+        provider1.getIndustries().add(industry2);
+        provider2.getIndustries().add(industry1);
+        provider2.getIndustries().add(industry3);
+        provider2.getIndustries().add(industry4);
+
+        // persist providers and industries
+        providerFacade.create(provider1);
+        providerFacade.create(provider2);
+        industryFacade.create(industry1);
+        industryFacade.create(industry2);
+        industryFacade.create(industry3);
+        industryFacade.create(industry4);
+
+        List<Provider> providers1 = providerFacade.findByIndustry(industry1);
+        List<Provider> providers2 = providerFacade.findByIndustry(industry2);
+        List<Provider> providers4 = providerFacade.findByIndustry(industry4);
+
+        assertTrue("There should be two providers functioning in first industry.", providers1.size() == 2);
+        assertTrue(providers1.contains(provider1) && providers1.contains(provider2));
+
+        assertTrue("There should be only one provider functioning in second industry.", providers2.size() == 1);
+        assertTrue(providers2.contains(provider1));
+
+        assertTrue("There should be only one provider functioning in fourth industry.", providers4.size() == 1);
+        assertTrue(providers4.contains(provider2));
+
+        // removing providers and industries
+        utx.begin();
+        providerFacade.remove(provider2);
+        providerFacade.remove(provider1);
+        industryFacade.remove(industry4);
+        industryFacade.remove(industry3);
+        industryFacade.remove(industry2);
+        industryFacade.remove(industry1);
+        utx.commit();
     }
 
     // TODO Other JPQL named queries tests

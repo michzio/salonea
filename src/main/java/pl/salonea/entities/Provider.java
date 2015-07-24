@@ -8,6 +8,7 @@ import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.util.HashSet;
 import java.util.Set;
 
 @Entity
@@ -49,7 +50,7 @@ public class Provider extends Firm {
     private Corporation corporation;
 
     // Provider can function in many Industries
-    private Set<Industry> industries;
+    private Set<Industry> industries = new HashSet<>();
 
     // Provider can accept many PaymentMethods
     private Set<PaymentMethod> acceptedPaymentMethods;

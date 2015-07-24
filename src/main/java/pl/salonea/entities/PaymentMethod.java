@@ -1,6 +1,9 @@
 package pl.salonea.entities;
 
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
@@ -10,7 +13,20 @@ import java.util.Set;
 @Entity
 @Table(name = "payment_method")
 @Access(AccessType.PROPERTY)
+@NamedQueries({
+        @NamedQuery(name = PaymentMethod.FIND_FOR_NAME, query = "SELECT pm FROM PaymentMethod pm WHERE pm.name = :name"),
+        @NamedQuery(name = PaymentMethod.FIND_BY_NAME, query = "SELECT pm FROM PaymentMethod pm WHERE pm.name LIKE :name"),
+        @NamedQuery(name = PaymentMethod.FIND_IN_ADVANCE, query = "SELECT pm FROM PaymentMethod pm WHERE pm.inAdvance = :in_advance"),
+        @NamedQuery(name = PaymentMethod.FIND_BY_NAME_AND_IN_ADVANCE, query = "SELECT pm FROM PaymentMethod pm WHERE pm.name LIKE :name AND pm.inAdvance = :in_advance"),
+        @NamedQuery(name = PaymentMethod.FIND_BY_PROVIDER, query = "SELECT pm FROM PaymentMethod pm WHERE :provider MEMBER OF pm.acceptingProviders"),
+})
 public class PaymentMethod implements Serializable {
+
+    public static final String FIND_FOR_NAME = "PaymentMethod.findForName";
+    public static final String FIND_BY_NAME = "PaymentMethod.findByName";
+    public static final String FIND_IN_ADVANCE = "PaymentMethod.findInAdvance";
+    public static final String FIND_BY_NAME_AND_IN_ADVANCE = "PaymentMethod.findByNameAndInAdvance";
+    public static final String FIND_BY_PROVIDER = "PaymentMethod.findByProvider";
 
     private Integer id;
     private String name;
@@ -85,5 +101,28 @@ public class PaymentMethod implements Serializable {
 
     public void setAcceptingProviders(Set<Provider> acceptingProviders) {
         this.acceptingProviders = acceptingProviders;
+    }
+
+    @Override
+    public int hashCode() {
+
+        return new HashCodeBuilder(17, 31). // two randomly chosen prime numbers
+                // if deriving: appendSuper(super.hashCode()).
+                append(getName())
+                .toHashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null || !(obj instanceof PaymentMethod))
+            return false;
+        if (obj == this)
+            return true;
+
+        PaymentMethod rhs = (PaymentMethod) obj;
+        return new EqualsBuilder().
+                // if deriving: appendSuper(super.equals(obj)).
+                append(getName(), rhs.getName()).
+                isEquals();
     }
 }
