@@ -8,6 +8,7 @@ import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.util.HashSet;
 import java.util.Set;
 
 @Entity
@@ -33,7 +34,7 @@ public class PaymentMethod implements Serializable {
     private String description;
     private Boolean inAdvance;
 
-    private Set<Provider> acceptingProviders;
+    private Set<Provider> acceptingProviders = new HashSet<>();
 
     /* constructors */
 

@@ -6,11 +6,7 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.jboss.shrinkwrap.resolver.api.maven.Maven;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import pl.salonea.ejb.interfaces.ClientFacadeInterface;
-import pl.salonea.ejb.interfaces.CorporationFacadeInterface;
-import pl.salonea.ejb.interfaces.ProviderFacadeInterface;
-import pl.salonea.ejb.stateless.IndustryFacade;
-import pl.salonea.ejb.stateless.ProviderRatingFacade;
+import pl.salonea.ejb.interfaces.*;
 import pl.salonea.embeddables.Address;
 import pl.salonea.entities.*;
 import pl.salonea.enums.ProviderType;
@@ -62,10 +58,13 @@ public class ProviderFacadeIT {
     private ClientFacadeInterface.Local clientFacade;
 
     @Inject
-    private ProviderRatingFacade.Local ratingFacade;
+    private ProviderRatingFacadeInterface.Local ratingFacade;
 
     @Inject
-    private IndustryFacade.Local industryFacade;
+    private IndustryFacadeInterface.Local industryFacade;
+
+    @Inject
+    private PaymentMethodFacadeInterface.Local paymentFacade;
 
     @Inject
     private UserTransaction utx;
@@ -378,67 +377,84 @@ public class ProviderFacadeIT {
         utx.commit();
     }
 
-    // TODO Other JPQL named queries tests
-    /*@Test
-    public void shouldFindProviderByPaymentMethod() {
-
-        // create some instances of Corporation
-        Address corpo_address1 = new Address("Poznańska", "15", "29-100", "Poznań", "Wielkopolska", "Poland");
-        Corporation corporation1 = new Corporation("Allegro", "allegro_logo.png", corpo_address1);
-
-        Address corpo_address2 =  new Address("Wrocławska", "45", "10-140", "Szczecin", "Zachodnio Pomorskie", "Poland");
-        Corporation corporation2 = new Corporation("Tieto", "tieto_logo.png", corpo_address2);
-
-        Address corpo_address3 = new Address("Pomorska", "12", "99-200", "Gdańsk", "Pomorze", "Poland");
-        Corporation corporation3 = new Corporation("Przeprowadzki24", "przeprowadzki24_logo.gif", corpo_address3);
+    @Test
+    public void shouldFindProviderByPaymentMethod() throws Exception {
 
         // create some instances of Provider entity
         Address address1 =  new Address("Poznańska", "15", "29-100", "Poznań", "Wielkopolska", "Poland");
         Provider provider1 = new Provider("firma@allegro.pl", "allegro", "aAle2@_", "Allegro Ltd.",
-                "2234567890", "2234567890", address1, "Allegro Polska", ProviderType.CORPORATE);
-        provider1.setCorporation(corporation1);
-        provider1.getAcceptedPaymentMethods().add();
-        provider1.getAcceptedPaymentMethods().add();
+                "2234567890", "2234567890", address1, "Allegro Polska", ProviderType.SIMPLE);
 
         Address address2 = new Address("Wrocławska", "45", "10-140", "Szczecin", "Zachodnio Pomorskie", "Poland");
         Provider provider2 = new Provider("firma@tieto.pl", "tieto", "tIe%13?", "Tieto Sp. z o.o.",
-                "6593878688", "6510029930", address2, "Tieto Poland", ProviderType.CORPORATE);
-        provider2.setCorporation(corporation2);
-        provider2.getAcceptedPaymentMethods().add();
-        provider2.getAcceptedPaymentMethods().add();
+                "6593878688", "6510029930", address2, "Tieto Poland", ProviderType.SIMPLE);
 
         Address address3 = new Address("Kijowska", "09", "20-160", "Lublin", "Lubelskie", "Poland");
         Provider provider3 = new Provider("firma@fryzjerka.pl", "fryzjerka_pl", "fRyZU123?", "Fryzjerka Sp. z o.o.",
                 "1910020030", "1930040050", address3, "Fryzjerka Polska", ProviderType.SIMPLE);
-        provider3.getAcceptedPaymentMethods().add();
-        provider3.getAcceptedPaymentMethods().add();
 
         Address address4 = new Address("Pomorska", "12", "99-200", "Gdańsk", "Pomorze", "Poland");
         Provider provider4 = new Provider("kontakt@przeprowadzki24.pl", "przeprowadzki24", "prZEP_M24%", "Przeprowadzki24 Sp. z o.o.",
-                "4530040050", "4530040050", address4, "Przeprowadzki24 Pomorze", ProviderType.FRANCHISE);
-        provider4.getAcceptedPaymentMethods().add();
-        provider4.getAcceptedPaymentMethods().add();
+                "4530040050", "4530040050", address4, "Przeprowadzki24 Pomorze", ProviderType.SIMPLE);
 
-        corporationFacade.create(corporation1);
+        // create some instances of PaymentMethod entity
+        PaymentMethod paymentMethod1 = new PaymentMethod("Credit Card", true);
+        PaymentMethod paymentMethod2 = new PaymentMethod("Cash", false);
+        PaymentMethod paymentMethod3 = new PaymentMethod("Bank Transfer", true);
+
+        provider1.getAcceptedPaymentMethods().add(paymentMethod1);
+        provider1.getAcceptedPaymentMethods().add(paymentMethod2);
+        provider1.getAcceptedPaymentMethods().add(paymentMethod3);
+        provider2.getAcceptedPaymentMethods().add(paymentMethod1);
+        provider3.getAcceptedPaymentMethods().add(paymentMethod2);
+        provider4.getAcceptedPaymentMethods().add(paymentMethod1);
+        provider4.getAcceptedPaymentMethods().add(paymentMethod3);
+        paymentMethod1.getAcceptingProviders().add(provider1);
+        paymentMethod1.getAcceptingProviders().add(provider2);
+        paymentMethod1.getAcceptingProviders().add(provider4);
+        paymentMethod2.getAcceptingProviders().add(provider1);
+        paymentMethod2.getAcceptingProviders().add(provider3);
+        paymentMethod3.getAcceptingProviders().add(provider1);
+        paymentMethod3.getAcceptingProviders().add(provider4);
+
+        paymentFacade.create(paymentMethod1);
+        paymentFacade.create(paymentMethod2);
+        paymentFacade.create(paymentMethod3);
         providerFacade.create(provider1);
-        corporationFacade.create(corporation2);
         providerFacade.create(provider2);
         providerFacade.create(provider3);
-        corporationFacade.create(corporation3);
         providerFacade.create(provider4);
 
+        // find Provider entities by PaymentMethod
+        List<Provider> creditCardProviders = providerFacade.findByPaymentMethod(paymentMethod1);
+        List<Provider> cashProviders = providerFacade.findByPaymentMethod(paymentMethod2);
+        List<Provider> bankTransferProviders = providerFacade.findByPaymentMethod(paymentMethod3);
 
+        assertTrue("There should be three credit card providers.", creditCardProviders.size() == 3);
+        assertTrue(creditCardProviders.contains(provider1));
+        assertTrue(creditCardProviders.contains(provider2));
+        assertTrue(creditCardProviders.contains(provider4));
+        assertTrue("There should be two cash providers.", cashProviders.size() == 2);
+        assertTrue(cashProviders.contains(provider1));
+        assertTrue(cashProviders.contains(provider3));
+        assertTrue("There should be two bank transfer providers.", bankTransferProviders.size() == 2);
+        assertTrue(bankTransferProviders.contains(provider1));
+        assertTrue(bankTransferProviders.contains(provider4));
 
+        utx.begin();
         providerFacade.remove(provider4);
         providerFacade.remove(provider3);
         providerFacade.remove(provider2);
         providerFacade.remove(provider1);
-        corporationFacade.remove(corporation2);
-        corporationFacade.remove(corporation1);
+        paymentFacade.remove(paymentMethod3);
+        paymentFacade.remove(paymentMethod2);
+        paymentFacade.remove(paymentMethod1);
+        utx.commit();
 
         assertTrue("There should not be any provider in database.", providerFacade.count() == 0);
-        assertTrue("There should not be any corporation in database.", corporationFacade.count() == 0);
+        assertTrue("There should not be any payment method in database.", paymentFacade.count() == 0);
     }
-    */
+
+    // TODO Other JPQL named queries tests
 
 }

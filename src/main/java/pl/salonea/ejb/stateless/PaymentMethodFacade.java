@@ -6,11 +6,9 @@ import pl.salonea.entities.Provider;
 
 import javax.ejb.LocalBean;
 import javax.ejb.Stateless;
-import javax.enterprise.inject.Typed;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
-import java.lang.reflect.Type;
 import java.util.List;
 
 /**

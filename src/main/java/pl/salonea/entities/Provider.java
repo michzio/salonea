@@ -53,7 +53,7 @@ public class Provider extends Firm {
     private Set<Industry> industries = new HashSet<>();
 
     // Provider can accept many PaymentMethods
-    private Set<PaymentMethod> acceptedPaymentMethods;
+    private Set<PaymentMethod> acceptedPaymentMethods = new HashSet<>();
 
     // Provider can have many ServicePoints
     private Set<ServicePoint> servicePoints;
