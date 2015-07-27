@@ -1,5 +1,7 @@
 package pl.salonea.entities;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import pl.salonea.constraints.MutualProvider;
 import pl.salonea.entities.idclass.ProviderServiceId;
 import pl.salonea.enums.CurrencyCode;
@@ -36,6 +38,7 @@ import java.util.Set;
         @NamedQuery(name = ProviderService.DELETE_FOR_PROVIDER_AND_ONLY_EMPLOYEE, query = "DELETE FROM ProviderService ps WHERE ps.provider = :provider AND :employee MEMBER OF ps.supplyingEmployees AND ps.supplyingEmployees.size = 1"),
         @NamedQuery(name = ProviderService.DELETE_FOR_PROVIDER_AND_SERVICE_CATEGORY, query = "DELETE FROM ProviderService ps WHERE ps.provider = :provider AND ps.service IN (SELECT s FROM Service s WHERE s.serviceCategory = :service_category)"),
         @NamedQuery(name = ProviderService.DELETE_FOR_PROVIDER, query = "DELETE FROM ProviderService ps WHERE ps.provider = :provider"),
+        @NamedQuery(name = ProviderService.DELETE_FOR_SERVICE, query = "DELETE FROM ProviderService ps WHERE ps.service = :service")
 })
 @MutualProvider
 public class ProviderService {
@@ -60,6 +63,7 @@ public class ProviderService {
     public static final String DELETE_FOR_PROVIDER_AND_ONLY_EMPLOYEE = "ProviderService.deleteForProviderAndOnlyEmployee";
     public static final String DELETE_FOR_PROVIDER_AND_SERVICE_CATEGORY = "ProviderService.deleteForProviderAndServiceCategory";
     public static final String DELETE_FOR_PROVIDER = "ProviderService.deleteForProvider";
+    public static final String DELETE_FOR_SERVICE = "ProviderService.deleteForService";
 
 
     private Provider provider; // PK, FK
@@ -205,5 +209,30 @@ public class ProviderService {
 
     public void setWorkStations(Set<WorkStation> workStations) {
         this.workStations = workStations;
+    }
+
+    @Override
+    public int hashCode() {
+
+        return new HashCodeBuilder(17, 31) // two randomly chosen prime numbers
+                // if deriving: .appendSuper(super.hashCode()).
+                .append(getProvider())
+                .append(getService())
+                .toHashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null || !(obj instanceof ProviderService))
+            return false;
+        if (obj == this)
+            return true;
+
+        ProviderService rhs = (ProviderService) obj;
+        return new EqualsBuilder()
+                // if deriving: .appendSuper(super.equals(obj)).
+                .append(getProvider(), rhs.getProvider())
+                .append(getService(), rhs.getService())
+                .isEquals();
     }
 }

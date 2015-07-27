@@ -10,7 +10,7 @@ import java.util.List;
  */
 public interface UserAccountFacadeInterface extends AbstractFacadeInterface<UserAccount> {
 
-    // concrete class
+    // concrete interface
     List<UserAccount> findAllNotActivated();
     List<UserAccount> findAllNotActivated(Integer start, Integer offset);
     List<UserAccount> findAllActivated();

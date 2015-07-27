@@ -1,6 +1,9 @@
 package pl.salonea.entities;
 
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
@@ -9,10 +12,23 @@ import java.util.Set;
 @Entity
 @Table(name = "service")
 @Access(AccessType.PROPERTY)
+@NamedQueries({
+        @NamedQuery(name = Service.FIND_BY_NAME, query = "SELECT s FROM Service s WHERE s.serviceName = :name"),
+        @NamedQuery(name = Service.FIND_BY_DESCRIPTION, query = "SELECT s FROM Service s WHERE s.description = :description"),
+        @NamedQuery(name = Service.FIND_BY_CATEGORY, query = "SELECT s FROM Service s WHERE s.serviceCategory = :service_category"),
+        @NamedQuery(name = Service.FIND_BY_PROVIDER, query = "SELECT s FROM Service s INNER JOIN s.providedServiceOffers ps WHERE ps.provider = :provider"),
+        @NamedQuery(name = Service.FIND_BY_EMPLOYEE, query = "SELECT s FROM Service s INNER JOIN s.providedServiceOffers ps WHERE :employee MEMBER OF ps.supplyingEmployees")
+})
 public class Service {
 
+    public static final String FIND_BY_NAME = "Service.findByName";
+    public static final String FIND_BY_DESCRIPTION = "Service.findByDescription";
+    public static final String FIND_BY_CATEGORY = "Service.findByCategory";
+    public static final String FIND_BY_PROVIDER = "Service.findByProvider";
+    public static final String FIND_BY_EMPLOYEE = "Service.findByEmployee";
+
     private Integer serviceId;
-    private String serviceName;
+    private String serviceName; // business key
     private String description;
 
     /* many-to-one relationship */
@@ -90,6 +106,29 @@ public class Service {
 
     public void setProvidedServiceOffers(Set<ProviderService> providedServiceOffers) {
         this.providedServiceOffers = providedServiceOffers;
+    }
+
+    @Override
+    public int hashCode() {
+
+        return new HashCodeBuilder(17, 31) // two randomly chosen prime numbers
+                // if deriving: .appendSuper(super.hashCode())
+                .append(getServiceName())
+                .toHashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null || !(obj instanceof Service))
+            return false;
+        if (obj == this)
+            return true;
+
+        Service rhs = (Service) obj;
+        return new EqualsBuilder()
+                // if deriving: .appendSuper(super.equals(obj)).
+                .append(getServiceName(), rhs.getServiceName())
+                .isEquals();
     }
 
 }
