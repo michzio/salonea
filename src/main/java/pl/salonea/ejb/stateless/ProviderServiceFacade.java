@@ -9,6 +9,9 @@ import javax.inject.Inject;
 import javax.persistence.Query;
 import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
+import javax.persistence.criteria.*;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -50,7 +53,7 @@ public class ProviderServiceFacade extends AbstractFacade<ProviderService> imple
 
     @Override
     public List<ProviderService> findByService(Service service) {
-        return findByService(service);
+        return findByService(service, null, null);
     }
 
     @Override
@@ -342,4 +345,137 @@ public class ProviderServiceFacade extends AbstractFacade<ProviderService> imple
         query.setParameter("service", service);
         return query.executeUpdate();
     }
+
+    @Override
+    public List<ProviderService> findByMultipleCriteria(List<Provider> providers, List<Service> services, List<ServiceCategory> serviceCategories,
+                                                        String description, Double minPrice, Double maxPrice, Boolean includeDiscounts,
+                                                        Short minDiscount, Short maxDiscount, List<WorkStation> workStations, List<Employee> employees) {
+
+
+        CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
+        CriteriaQuery<ProviderService> criteriaQuery = criteriaBuilder.createQuery(ProviderService.class);
+        // FROM
+        Root<ProviderService> providerService = criteriaQuery.from(ProviderService.class);
+        // SELECT
+        criteriaQuery.select(providerService);
+
+        // INNER JOIN-s
+        Join<ProviderService, Service> service = null;
+        Join<ProviderService, Provider> provider = null;
+
+        // WHERE'S PREDICATE
+        List<Predicate> predicates = new ArrayList<>();
+
+        if(providers != null && providers.size() > 0) {
+
+            // inner joining
+            if(provider == null) provider = providerService.join(ProviderService_.provider);
+            predicates.add(provider.in(providers));
+        }
+
+        if(services != null && services.size() > 0) {
+
+            // inner joining
+            if(service == null) service = providerService.join(ProviderService_.service);
+            predicates.add(service.in(services));
+
+        }
+
+        if(serviceCategories != null && serviceCategories.size() > 0) {
+
+            // inner joining
+            if(service == null) service = providerService.join(ProviderService_.service);
+            predicates.add(service.get(Service_.serviceCategory).in(serviceCategories));
+        }
+
+        if(description != null) {
+
+            // TODO maybe split description param into several keywords by blank spaces
+            //      and make following predicate: %key1% AND %key2% AND ... AND %keyN%
+            predicates.add(criteriaBuilder.like(providerService.get(ProviderService_.description), "%" + description + "%"));
+        }
+
+        if(minPrice != null) {
+            if(includeDiscounts) {
+
+                Expression<Number> discount = criteriaBuilder.quot(criteriaBuilder.diff(100.0, criteriaBuilder.toDouble(providerService.get(ProviderService_.discount))), 100.0);
+                Expression<Number> discountedPrice = criteriaBuilder.prod(providerService.get(ProviderService_.price), discount);
+                predicates.add(criteriaBuilder.greaterThanOrEqualTo(criteriaBuilder.toDouble(discountedPrice), minPrice));
+
+            } else {
+                predicates.add(criteriaBuilder.greaterThanOrEqualTo(
+                        providerService.get(ProviderService_.price), minPrice) );
+            }
+        }
+
+        if(maxPrice != null) {
+            if(includeDiscounts) {
+
+                Expression<Number> discount = criteriaBuilder.quot(criteriaBuilder.diff(100.0, criteriaBuilder.toDouble(providerService.get(ProviderService_.discount))), 100.0);
+                Expression<Number> discountedPrice = criteriaBuilder.prod(providerService.get(ProviderService_.price), discount);
+                predicates.add(criteriaBuilder.lessThanOrEqualTo(criteriaBuilder.toDouble(discountedPrice), maxPrice));
+
+            } else {
+                predicates.add(criteriaBuilder.lessThanOrEqualTo(
+                        providerService.get(ProviderService_.price), maxPrice) );
+            }
+        }
+
+        if(minDiscount != null) {
+
+            predicates.add(criteriaBuilder.greaterThanOrEqualTo( providerService.get(ProviderService_.discount), minDiscount));
+        }
+
+        if(maxDiscount != null) {
+
+            predicates.add(criteriaBuilder.lessThanOrEqualTo( providerService.get(ProviderService_.discount), maxDiscount));
+        }
+
+        if(workStations != null) {
+
+           List<Predicate> orPredicates = new ArrayList<>();
+           for(WorkStation workStation : workStations) {
+                orPredicates.add( criteriaBuilder.isMember(workStation, providerService.get(ProviderService_.workStations)) );
+           }
+
+          predicates.add( criteriaBuilder.or(orPredicates.toArray(new Predicate[] {})) );
+
+        }
+
+        if(employees != null) {
+
+            List<Predicate> orPredicates = new ArrayList<>();
+            for(Employee employee : employees) {
+                orPredicates.add( criteriaBuilder.isMember(employee, providerService.get(ProviderService_.supplyingEmployees)) );
+            }
+
+            predicates.add( criteriaBuilder.or(orPredicates.toArray(new Predicate[] {})) );
+        }
+
+        // WHERE predicate1 AND predicate2 AND ... AND predicateN
+        criteriaQuery.where(predicates.toArray(new Predicate[] { }));
+
+        TypedQuery<ProviderService> query = getEntityManager().createQuery(criteriaQuery);
+        return query.getResultList();
+    }
+
+    /**
+     * Criteria API multi-criteria predicates in WHERE clause
+     * PATTERN 1
+     *
+     * List<Predicate> predicates = new ArrayList<Predicate>();
+     * for (Key key : keys) {
+     *      predicates.add(criteriaBuilder.equal(root.get(key), value));
+     * }
+     * c.where(criteriaBuilder.and(predicates.toArray(new Predicate[] {})));
+     *
+     * PATTTERN 2
+     *
+     * Predicate predicate = criteriaBuilder.conjunction();
+     * for (Key key : keys) {
+     *      Predicate newPredicate = criteriaBuilder.equal(root.get(key), value);
+     *      predicate = criteriaBuilder.and(predicate, newPredicate);
+     * }
+     * c.where(predicate);
+     */
 }

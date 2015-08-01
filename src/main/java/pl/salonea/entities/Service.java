@@ -13,19 +13,32 @@ import java.util.Set;
 @Table(name = "service")
 @Access(AccessType.PROPERTY)
 @NamedQueries({
-        @NamedQuery(name = Service.FIND_BY_NAME, query = "SELECT s FROM Service s WHERE s.serviceName = :name"),
-        @NamedQuery(name = Service.FIND_BY_DESCRIPTION, query = "SELECT s FROM Service s WHERE s.description = :description"),
+        @NamedQuery(name = Service.FIND_BY_NAME, query = "SELECT s FROM Service s WHERE s.serviceName LIKE :name"),
+        @NamedQuery(name = Service.FIND_BY_DESCRIPTION, query = "SELECT s FROM Service s WHERE s.description LIKE :description"),
+        @NamedQuery(name = Service.SEARCH_BY_KEYWORD, query = "SELECT s FROM Service s WHERE s.serviceName LIKE :keyword OR s.description LIKE :keyword"),
         @NamedQuery(name = Service.FIND_BY_CATEGORY, query = "SELECT s FROM Service s WHERE s.serviceCategory = :service_category"),
+        @NamedQuery(name = Service.FIND_BY_CATEGORY_AND_KEYWORD, query = "SELECT s FROM Service s WHERE s.serviceCategory = :service_category AND (s.serviceName LIKE :keyword OR s.description LIKE :keyword)"),
         @NamedQuery(name = Service.FIND_BY_PROVIDER, query = "SELECT s FROM Service s INNER JOIN s.providedServiceOffers ps WHERE ps.provider = :provider"),
-        @NamedQuery(name = Service.FIND_BY_EMPLOYEE, query = "SELECT s FROM Service s INNER JOIN s.providedServiceOffers ps WHERE :employee MEMBER OF ps.supplyingEmployees")
+        @NamedQuery(name = Service.FIND_BY_EMPLOYEE, query = "SELECT s FROM Service s INNER JOIN s.providedServiceOffers ps WHERE :employee MEMBER OF ps.supplyingEmployees"),
+        @NamedQuery(name = Service.FIND_BY_WORK_STATION, query = "SELECT DISTINCT s FROM Service s INNER JOIN s.providedServiceOffers ps WHERE :work_station MEMBER OF ps.workStations"),
+        @NamedQuery(name = Service.FIND_BY_SERVICE_POINT, query = "SELECT DISTINCT s FROM Service s INNER JOIN s.providedServiceOffers ps INNER JOIN ps.workStations ws WHERE ws.servicePoint = :service_point"),
+        @NamedQuery(name = Service.DELETE_BY_NAME, query = "DELETE FROM Service s WHERE s.serviceName = :name"),
+        @NamedQuery(name = Service.DELETE_BY_CATEGORY, query = "DELETE FROM Service s WHERE s.serviceCategory = :service_category"),
+
 })
 public class Service {
 
     public static final String FIND_BY_NAME = "Service.findByName";
     public static final String FIND_BY_DESCRIPTION = "Service.findByDescription";
+    public static final String SEARCH_BY_KEYWORD = "Service.searchByKeyword";
     public static final String FIND_BY_CATEGORY = "Service.findByCategory";
+    public static final String FIND_BY_CATEGORY_AND_KEYWORD = "Service.findByCategoryAndKeyword";
     public static final String FIND_BY_PROVIDER = "Service.findByProvider";
     public static final String FIND_BY_EMPLOYEE = "Service.findByEmployee";
+    public static final String FIND_BY_WORK_STATION = "Service.findByWorkStation";
+    public static final String FIND_BY_SERVICE_POINT = "Service.findByServicePoint";
+    public static final String DELETE_BY_NAME = "Service.deleteByName";
+    public static final String DELETE_BY_CATEGORY = "Service.deleteByCategory";
 
     private Integer serviceId;
     private String serviceName; // business key
@@ -99,7 +112,7 @@ public class Service {
 
     /* one-to-many relationship */
 
-    @OneToMany(mappedBy = "service", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "service", fetch = FetchType.LAZY, cascade = { CascadeType.REMOVE })
     public Set<ProviderService> getProvidedServiceOffers() {
         return providedServiceOffers;
     }
@@ -130,5 +143,4 @@ public class Service {
                 .append(getServiceName(), rhs.getServiceName())
                 .isEquals();
     }
-
 }

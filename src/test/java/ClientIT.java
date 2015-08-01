@@ -21,6 +21,9 @@ import javax.persistence.EntityTransaction;
 import javax.persistence.Persistence;
 
 import java.io.File;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -130,8 +133,9 @@ public class ClientIT {
     public void shouldCreateNewPersonClient() {
 
         // Create instance of NaturalPerson entity
+        Date dateOfBirth = new GregorianCalendar(1988, Calendar.OCTOBER, 3).getTime();
         NaturalPerson person = new NaturalPerson("michzio@hotmail.com", "michzio", "pP12@o", "Michał", "Ziobro");
-        person.setAge((short) 20);
+        person.setBirthDate(dateOfBirth);
         person.setGender(Gender.male);
 
         // Create instance of Client entity

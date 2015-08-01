@@ -38,6 +38,9 @@ public interface ProviderServiceFacadeInterface extends AbstractFacadeInterface<
     List<ProviderService> findByEmployee(Employee employee, Integer start, Integer offset);
     List<ProviderService> findByProviderAndEmployee(Provider provider, Employee employee);
     List<ProviderService> findByProviderAndEmployee(Provider provider, Employee employee, Integer start, Integer offset);
+    List<ProviderService> findByMultipleCriteria(List<Provider> providers, List<Service> services, List<ServiceCategory> serviceCategories,
+                                                 String description, Double minPrice, Double maxPrice, Boolean includeDiscounts,
+                                                 Short minDiscount, Short maxDiscount, List<WorkStation> workStations, List<Employee> employees);
     Integer updateDiscountForProviderAndServiceCategory(Provider provider, ServiceCategory serviceCategory, Short newDiscount);
     Integer updateDiscountForProviderAndEmployee(Provider provider, Employee employee, Short newDiscount);
     Integer deleteForOnlyWorkStation(WorkStation workStation);

@@ -10,7 +10,6 @@ import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorFactory;
-import javax.validation.Validation;
 import java.util.Set;
 
 public class CDIConstraintValidatorFactory implements ConstraintValidatorFactory {

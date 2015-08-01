@@ -152,7 +152,7 @@ public class Provider extends Firm {
         this.servicePoints = servicePoints;
     }
 
-    @OneToMany(mappedBy = "provider", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "provider", fetch = FetchType.LAZY, cascade = { CascadeType.REMOVE })
     public Set<ProviderService> getSuppliedServiceOffers() {
         return suppliedServiceOffers;
     }

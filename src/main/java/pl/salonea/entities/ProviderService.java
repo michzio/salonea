@@ -65,7 +65,6 @@ public class ProviderService {
     public static final String DELETE_FOR_PROVIDER = "ProviderService.deleteForProvider";
     public static final String DELETE_FOR_SERVICE = "ProviderService.deleteForService";
 
-
     private Provider provider; // PK, FK
     private Service service; // PK, FK
 
@@ -73,7 +72,7 @@ public class ProviderService {
     private Long serviceDuration; // [ms]
     private Double price;
     private CurrencyCode priceCurrencyCode;
-    private Short discount; // [%]
+    private Short discount = 0; // [%]
 
     /* many-to-many relationships */
     private Set<Employee> supplyingEmployees;
@@ -164,7 +163,7 @@ public class ProviderService {
     }
 
     @Min(0) @Max(99)
-    @Column(name = "discount", columnDefinition = "TINYINT(2) UNSIGNED DEFAULT NULL")
+    @Column(name = "discount", nullable = false, columnDefinition = "TINYINT(2) UNSIGNED DEFAULT 0")
     public Short getDiscount() {
         return discount;
     }
