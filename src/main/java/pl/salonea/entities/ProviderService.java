@@ -3,8 +3,11 @@ package pl.salonea.entities;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import pl.salonea.constraints.MutualProvider;
+import pl.salonea.constraints.PriceNeedType;
+import pl.salonea.constraints.PriceTypeDependentDuration;
 import pl.salonea.entities.idclass.ProviderServiceId;
 import pl.salonea.enums.CurrencyCode;
+import pl.salonea.enums.PriceType;
 
 import javax.persistence.*;
 import javax.validation.constraints.Digits;
@@ -41,6 +44,8 @@ import java.util.Set;
         @NamedQuery(name = ProviderService.DELETE_FOR_SERVICE, query = "DELETE FROM ProviderService ps WHERE ps.service = :service")
 })
 @MutualProvider
+@PriceNeedType
+@PriceTypeDependentDuration
 public class ProviderService {
 
     public static final String FIND_BY_PROVIDER = "ProviderService.findByProvider";
@@ -71,6 +76,7 @@ public class ProviderService {
     private String description;
     private Long serviceDuration; // [ms]
     private Double price;
+    private PriceType priceType; // per hour, per service, per day
     private CurrencyCode priceCurrencyCode;
     private Short discount = 0; // [%]
 
@@ -150,6 +156,16 @@ public class ProviderService {
 
     public void setPrice(Double price) {
         this.price = price;
+    }
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "price_type", columnDefinition = "ENUM('PER_HOUR', 'PER_DAY', 'PER_SERVICE') DEFAULT NULL")
+    public PriceType getPriceType() {
+        return priceType;
+    }
+
+    public void setPriceType(PriceType priceType) {
+        this.priceType = priceType;
     }
 
     @Enumerated(EnumType.STRING)

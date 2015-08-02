@@ -16,6 +16,7 @@ import pl.salonea.entities.Provider;
 import pl.salonea.entities.ProviderService;
 import pl.salonea.entities.Service;
 import pl.salonea.entities.ServiceCategory;
+import pl.salonea.enums.PriceType;
 import pl.salonea.enums.ProviderType;
 
 import javax.inject.Inject;
@@ -166,19 +167,24 @@ public class ServiceFacadeIT {
         // create instances of ProviderService entity
         ProviderService provider1Filling = new ProviderService(provider1, fillingCavities, 1800000L /* 30 min */);
         provider1Filling.setPrice(100.0);
+        provider1Filling.setPriceType(PriceType.PER_SERVICE);
         provider1Filling.setDescription("A dental restoration or dental filling is a dental restorative material used to restore the function, integrity and morphology of missing tooth structure.");
-        ProviderService provider1Removals = new ProviderService(provider1, removals, 1800000L /* 30 min */);
+        ProviderService provider1Removals = new ProviderService(provider1, removals, 60*60*1000L /* 1h */);
         provider1Removals.setPrice(60.0);
+        provider1Removals.setPriceType(PriceType.PER_HOUR);
         provider1Removals.setDescription("A moving company, van line is a company that helps people and businesses move their goods from one place to another.");
         ProviderService provider2Filling = new ProviderService(provider2, fillingCavities, 1800000L /* 30 min */);
         provider2Filling.setPrice(150.0);
+        provider2Filling.setPriceType(PriceType.PER_SERVICE);
         provider2Filling.setDiscount((short) 10 /* [%] */);
         provider2Filling.setDescription("A dental restoration or dental filling is a dental restorative material used to restore the function, integrity and morphology of missing tooth structure.");
         ProviderService provider2Haircut = new ProviderService(provider2, haircut, 1800000L /* 30 min */);
         provider2Haircut.setPrice(50.0);
+        provider2Haircut.setPriceType(PriceType.PER_SERVICE);
         provider2Haircut.setDescription("A hairstyle, hairdo, or haircut refers to the styling of hair, usually on the human scalp.");
         ProviderService provider2Dyeing = new ProviderService(provider2, hairDyeing, 1800000L /* 30 min */);
         provider2Dyeing.setPrice(80.0);
+        provider2Dyeing.setPriceType(PriceType.PER_SERVICE);
         provider2Dyeing.setDiscount((short) 50 /* [%] */);
         provider2Dyeing.setDescription("Hair coloring is the practice of changing the color of hair.");
 
@@ -263,18 +269,24 @@ public class ServiceFacadeIT {
         // create instances of ProviderService entity
         ProviderService provider1Filling = new ProviderService(provider1, fillingCavities, 1800000L /* 30 min */);
         provider1Filling.setPrice(100.0);
-        ProviderService provider1Removals = new ProviderService(provider1, removals, 1800000L /* 30 min */);
+        provider1Filling.setPriceType(PriceType.PER_SERVICE);
+        ProviderService provider1Removals = new ProviderService(provider1, removals, 60*60*1000L /* 1h */);
         provider1Removals.setPrice(60.0);
+        provider1Removals.setPriceType(PriceType.PER_HOUR);
         ProviderService provider2Filling = new ProviderService(provider2, fillingCavities, 1800000L /* 30 min */);
         provider2Filling.setPrice(150.0);
+        provider2Filling.setPriceType(PriceType.PER_SERVICE);
         provider2Filling.setDiscount((short) 10 /* [%] */);
         ProviderService provider3Haircut = new ProviderService(provider3, haircut, 1800000L /* 30 min */);
         provider3Haircut.setPrice(50.0);
+        provider3Haircut.setPriceType(PriceType.PER_SERVICE);
         ProviderService provider3Dyeing = new ProviderService(provider3, hairDyeing, 1800000L /* 30 min */);
         provider3Dyeing.setPrice(80.0);
+        provider3Dyeing.setPriceType(PriceType.PER_SERVICE);
         provider3Dyeing.setDiscount((short) 50 /* [%] */);
-        ProviderService provider4Removals = new ProviderService(provider4, removals, 1800000L /* 30 min */);
+        ProviderService provider4Removals = new ProviderService(provider4, removals, 60*60*1000L /* 1h */);
         provider4Removals.setPrice(75.0);
+        provider4Removals.setPriceType(PriceType.PER_HOUR);
 
         utx.begin();
         providerFacade.create(provider1);
