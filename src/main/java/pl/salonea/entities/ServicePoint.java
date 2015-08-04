@@ -1,5 +1,7 @@
 package pl.salonea.entities;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import pl.salonea.constraints.PhoneNumber;
 import pl.salonea.constraints.SkypeName;
 import pl.salonea.embeddables.Address;
@@ -20,16 +22,17 @@ import java.util.Set;
         @NamedQuery(name = ServicePoint.FIND_BY_ADDRESS, query = "SELECT sp FROM ServicePoint sp WHERE sp.address.city LIKE :city AND sp.address.state LIKE :state " +
                 "AND sp.address.country LIKE :country AND sp.address.street LIKE :street AND sp.address.zipCode LIKE :zip_code"),
         @NamedQuery(name = ServicePoint.FIND_BY_COORDINATES_SQUARE, query = "SELECT sp FROM ServicePoint sp WHERE sp.longitudeWGS84 >= :min_longitude_wgs84 AND sp.longitudeWGS84 <= :max_longitude_wgs84 AND sp.latitudeWGS84 >= :min_latitude_wgs84 AND sp.latitudeWGS84 <= :max_latitude_wgs84"),
-        @NamedQuery(name = ServicePoint.FIND_BY_COORDINATES_CIRCLE, query = "SELECT sp FROM ServicePoint sp WHERE SQRT((sp.longitudeWGS84 - :longitude_wgs84)*(sp.longitudeWGS84 - :longitude_wgs84) + (sp.latitudeWGS84 - :latitude_wgs84)*(sp.latitudeWGS84 - :latitude_wgs84)) < :radius"),
+        @NamedQuery(name = ServicePoint.FIND_BY_COORDINATES_CIRCLE, query = "SELECT sp FROM ServicePoint sp WHERE SQRT((sp.longitudeWGS84 - :longitude_wgs84)*(sp.longitudeWGS84 - :longitude_wgs84) + (sp.latitudeWGS84 - :latitude_wgs84)*(sp.latitudeWGS84 - :latitude_wgs84)) <= :radius"),
         @NamedQuery(name = ServicePoint.FIND_BY_PROVIDER_AND_COORDINATES_SQUARE, query = "SELECT sp FROM ServicePoint sp WHERE sp.provider = :provider AND sp.longitudeWGS84 >= :min_longitude_wgs84 AND sp.longitudeWGS84 <= :max_longitude_wgs84 AND sp.latitudeWGS84 >= :min_latitude_wgs84 AND sp.latitudeWGS84 <= :max_latitude_wgs84"),
-        @NamedQuery(name = ServicePoint.FIND_BY_PROVIDER_AND_COORDINATES_CIRCLE, query = "SELECT sp FROM ServicePoint sp WHERE sp.provider = :provider AND SQRT((sp.longitudeWGS84 - :longitude_wgs84)*(sp.longitudeWGS84 - :longitude_wgs84) + (sp.latitudeWGS84 - :latitude_wgs84)*(sp.latitudeWGS84 - :latitude_wgs84)) < :radius"),
+        @NamedQuery(name = ServicePoint.FIND_BY_PROVIDER_AND_COORDINATES_CIRCLE, query = "SELECT sp FROM ServicePoint sp WHERE sp.provider = :provider AND SQRT((sp.longitudeWGS84 - :longitude_wgs84)*(sp.longitudeWGS84 - :longitude_wgs84) + (sp.latitudeWGS84 - :latitude_wgs84)*(sp.latitudeWGS84 - :latitude_wgs84)) <= :radius"),
         @NamedQuery(name = ServicePoint.FIND_BY_SERVICE_AND_COORDINATES_SQUARE, query = "SELECT sp FROM ServicePoint sp INNER JOIN sp.workStations ws INNER JOIN ws.providedServices ps WHERE ps.service = :service AND sp.longitudeWGS84 >= :min_longitude_wgs84 AND sp.longitudeWGS84 <= :max_longitude_wgs84 AND sp.latitudeWGS84 >= :min_latitude_wgs84 AND sp.latitudeWGS84 <= :max_latitude_wgs84 "),
-        @NamedQuery(name = ServicePoint.FIND_BY_SERVICE_AND_COORDINATES_CIRCLE, query = "SELECT sp FROM ServicePoint sp INNER JOIN sp.workStations ws INNER JOIN ws.providedServices ps WHERE ps.service = :service AND SQRT((sp.longitudeWGS84 - :longitude_wgs84)*(sp.longitudeWGS84 - :longitude_wgs84) + (sp.latitudeWGS84 - :latitude_wgs84)*(sp.latitudeWGS84 - :latitude_wgs84)) < :radius"),
+        @NamedQuery(name = ServicePoint.FIND_BY_SERVICE_AND_COORDINATES_CIRCLE, query = "SELECT sp FROM ServicePoint sp INNER JOIN sp.workStations ws INNER JOIN ws.providedServices ps WHERE ps.service = :service AND SQRT((sp.longitudeWGS84 - :longitude_wgs84)*(sp.longitudeWGS84 - :longitude_wgs84) + (sp.latitudeWGS84 - :latitude_wgs84)*(sp.latitudeWGS84 - :latitude_wgs84)) <= :radius"),
         @NamedQuery(name = ServicePoint.FIND_BY_SERVICE, query = "SELECT DISTINCT sp FROM ServicePoint sp INNER JOIN sp.workStations ws INNER JOIN ws.providedServices ps WHERE ps.service = :service"),
         @NamedQuery(name = ServicePoint.FIND_BY_EMPLOYEE, query = "SELECT DISTINCT sp FROM ServicePoint sp INNER JOIN sp.workStations ws INNER JOIN ws.termsEmployeesWorkOn term WHERE term.employee = :employee"),
         @NamedQuery(name = ServicePoint.FIND_BY_PROVIDER_SERVICE, query = "SELECT DISTINCT sp FROM ServicePoint sp INNER JOIN sp.workStations ws WHERE :provider_service MEMBER OF ws.providedServices"),
         @NamedQuery(name = ServicePoint.FIND_BY_CORPORATION, query = "SELECT sp FROM ServicePoint sp INNER JOIN sp.provider p WHERE p.corporation = :corporation"),
-        @NamedQuery(name = ServicePoint.FIND_BY_INDUSTRY, query = "SELECT sp FROM ServicePoint sp INNER JOIN sp.provider p WHERE :industry MEMBER OF p.industries")
+        @NamedQuery(name = ServicePoint.FIND_BY_INDUSTRY, query = "SELECT sp FROM ServicePoint sp INNER JOIN sp.provider p WHERE :industry MEMBER OF p.industries"),
+        @NamedQuery(name = ServicePoint.DELETE_BY_PROVIDER, query = "DELETE FROM ServicePoint sp WHERE sp.provider = :provider"),
 })
 public class ServicePoint implements Serializable {
 
@@ -46,6 +49,7 @@ public class ServicePoint implements Serializable {
     public static final String FIND_BY_PROVIDER_SERVICE = "ServicePoint.findByProviderService";
     public static final String FIND_BY_CORPORATION = "ServicePoint.findByCorporation";
     public static final String FIND_BY_INDUSTRY = "ServicePoint.findByIndustry";
+    public static final String DELETE_BY_PROVIDER = "ServicePoint.deleteByProvider";
 
     private Integer servicePointNumber; // PK
     private Provider provider; // PK, FK
@@ -194,5 +198,30 @@ public class ServicePoint implements Serializable {
 
     public void setWorkStations(Set<WorkStation> workStations) {
         this.workStations = workStations;
+    }
+
+    @Override
+    public int hashCode() {
+
+        return new HashCodeBuilder(17, 31) // two randomly chosen prime numbers
+                // if deriving: .appendSuper(super.hashCode()).
+                .append(getProvider())
+                .append(getServicePointNumber())
+                .toHashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null || !(obj instanceof ServicePoint))
+            return false;
+        if (obj == this)
+            return true;
+
+        ServicePoint rhs = (ServicePoint) obj;
+        return new EqualsBuilder()
+                // if deriving: .appendSuper(super.equals(obj)).
+                .append(getProvider(), rhs.getProvider())
+                .append(getServicePointNumber(), rhs.getServicePointNumber())
+                .isEquals();
     }
 }

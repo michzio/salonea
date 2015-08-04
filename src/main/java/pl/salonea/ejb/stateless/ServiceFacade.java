@@ -219,7 +219,7 @@ public class ServiceFacade extends AbstractFacade<Service> implements ServiceFac
         Join<ProviderService, WorkStation> workStationJoin = null;
         Join<WorkStation, ServicePoint> servicePoint = null;
 
-        // WHERE'S PREDICATE
+        // WHERE PREDICATES
         List<Predicate> predicates = new ArrayList<>();
 
         if(name != null) {

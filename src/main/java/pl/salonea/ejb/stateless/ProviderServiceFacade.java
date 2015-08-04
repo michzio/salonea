@@ -363,7 +363,7 @@ public class ProviderServiceFacade extends AbstractFacade<ProviderService> imple
         Join<ProviderService, Service> service = null;
         Join<ProviderService, Provider> provider = null;
 
-        // WHERE'S PREDICATE
+        // WHERE PREDICATES
         List<Predicate> predicates = new ArrayList<>();
 
         if(providers != null && providers.size() > 0) {

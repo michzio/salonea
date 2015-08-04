@@ -94,10 +94,15 @@ public class FirmFacade extends AbstractFacade<Firm> implements FirmFacadeInterf
     public List<Firm> findByAddress(String city, String state, String country, String street, String zipCode, Integer start, Integer offset) {
 
         TypedQuery<Firm> query = getEntityManager().createNamedQuery(Firm.FIND_BY_ADDRESS, Firm.class);
+        if(city == null) city = "";
         query.setParameter("city", "%" + city + "%");
+        if(state == null) state = "";
         query.setParameter("state", "%" + state + "%");
+        if(country == null) country = "";
         query.setParameter("country", "%" + country + "%");
+        if(street == null) street = "";
         query.setParameter("street", "%" + street + "%");
+        if(zipCode == null) zipCode = "";
         query.setParameter("zip_code", "%" + zipCode + "%");
         if(start != null && offset != null) {
             query.setFirstResult(start);
