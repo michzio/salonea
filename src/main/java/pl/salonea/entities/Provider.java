@@ -1,5 +1,6 @@
 package pl.salonea.entities;
 
+import org.codehaus.groovy.util.HashCodeHelper;
 import pl.salonea.constraints.CorporateOwner;
 import pl.salonea.embeddables.Address;
 import pl.salonea.enums.ProviderType;
@@ -56,13 +57,13 @@ public class Provider extends Firm {
     private Set<PaymentMethod> acceptedPaymentMethods = new HashSet<>();
 
     // Provider can have many ServicePoints
-    private Set<ServicePoint> servicePoints;
+    private Set<ServicePoint> servicePoints = new HashSet<>();
 
     // Provider supplies service offers
-    private Set<ProviderService> suppliedServiceOffers;
+    private Set<ProviderService> suppliedServiceOffers = new HashSet<>();
 
     // Provider is rated by clients
-    private Set<ProviderRating> receivedRatings;
+    private Set<ProviderRating> receivedRatings = new HashSet<>();
 
     /* constructors */
 
@@ -143,7 +144,7 @@ public class Provider extends Firm {
         this.acceptedPaymentMethods = acceptedPaymentMethods;
     }
 
-    @OneToMany(mappedBy = "provider", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "provider", fetch = FetchType.LAZY, cascade = { CascadeType.REMOVE })
     public Set<ServicePoint> getServicePoints() {
         return servicePoints;
     }

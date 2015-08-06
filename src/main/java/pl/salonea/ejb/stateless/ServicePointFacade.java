@@ -102,13 +102,13 @@ public class ServicePointFacade extends AbstractFacade<ServicePoint> implements 
     }
 
     @Override
-    public List<ServicePoint> findByCoordinatesCircle(Float longitudeWGS84, Float latitudeWGS84, Float radius) {
+    public List<ServicePoint> findByCoordinatesCircle(Float longitudeWGS84, Float latitudeWGS84, Double radius) {
 
         return findByCoordinatesCircle(longitudeWGS84, latitudeWGS84, radius, null, null);
     }
 
     @Override
-    public List<ServicePoint> findByCoordinatesCircle(Float longitudeWGS84, Float latitudeWGS84, Float radius, Integer start, Integer offset) {
+    public List<ServicePoint> findByCoordinatesCircle(Float longitudeWGS84, Float latitudeWGS84, Double radius, Integer start, Integer offset) {
 
         TypedQuery<ServicePoint> query = getEntityManager().createNamedQuery(ServicePoint.FIND_BY_COORDINATES_CIRCLE, ServicePoint.class);
         query.setParameter("longitude_wgs84", longitudeWGS84);
@@ -162,12 +162,12 @@ public class ServicePointFacade extends AbstractFacade<ServicePoint> implements 
     }
 
     @Override
-    public List<ServicePoint> findByProviderAndCoordinatesCircle(Provider provider, Float longitudeWGS84, Float latitudeWGS84, Float radius) {
+    public List<ServicePoint> findByProviderAndCoordinatesCircle(Provider provider, Float longitudeWGS84, Float latitudeWGS84, Double radius) {
         return findByProviderAndCoordinatesCircle(provider, longitudeWGS84, latitudeWGS84, radius, null, null);
     }
 
     @Override
-    public List<ServicePoint> findByProviderAndCoordinatesCircle(Provider provider, Float longitudeWGS84, Float latitudeWGS84, Float radius, Integer start, Integer offset) {
+    public List<ServicePoint> findByProviderAndCoordinatesCircle(Provider provider, Float longitudeWGS84, Float latitudeWGS84, Double radius, Integer start, Integer offset) {
 
         TypedQuery<ServicePoint> query = getEntityManager().createNamedQuery(ServicePoint.FIND_BY_PROVIDER_AND_COORDINATES_CIRCLE, ServicePoint.class);
         query.setParameter("provider", provider);
@@ -203,12 +203,12 @@ public class ServicePointFacade extends AbstractFacade<ServicePoint> implements 
     }
 
     @Override
-    public List<ServicePoint> findByServiceAndCoordinatesCircle(Service service, Float longitudeWGS84, Float latitudeWGS84, Float radius) {
+    public List<ServicePoint> findByServiceAndCoordinatesCircle(Service service, Float longitudeWGS84, Float latitudeWGS84, Double radius) {
         return findByServiceAndCoordinatesCircle(service, longitudeWGS84, latitudeWGS84, radius, null, null);
     }
 
     @Override
-    public List<ServicePoint> findByServiceAndCoordinatesCircle(Service service, Float longitudeWGS84, Float latitudeWGS84, Float radius, Integer start, Integer offset) {
+    public List<ServicePoint> findByServiceAndCoordinatesCircle(Service service, Float longitudeWGS84, Float latitudeWGS84, Double radius, Integer start, Integer offset) {
 
         TypedQuery<ServicePoint> query = getEntityManager().createNamedQuery(ServicePoint.FIND_BY_SERVICE_AND_COORDINATES_CIRCLE, ServicePoint.class);
         query.setParameter("service", service);
@@ -398,15 +398,15 @@ public class ServicePointFacade extends AbstractFacade<ServicePoint> implements 
             Join<ServicePoint, Address> servicePointAddress = servicePoint.join(ServicePoint_.address);
 
             if(address.getCountry() != null)
-                predicates.add(criteriaBuilder.equal(servicePointAddress.get(Address_.country), "%" + address.getCountry() + "%"));
+                predicates.add(criteriaBuilder.like(servicePointAddress.get(Address_.country), "%" + address.getCountry() + "%"));
             if(address.getState() != null)
-                predicates.add( criteriaBuilder.equal( servicePointAddress.get(Address_.state), "%" + address.getState() + "%"));
+                predicates.add( criteriaBuilder.like(servicePointAddress.get(Address_.state), "%" + address.getState() + "%"));
             if(address.getCity() != null)
-                predicates.add( criteriaBuilder.equal( servicePointAddress.get(Address_.city), "%" + address.getCity() + "%"));
+                predicates.add( criteriaBuilder.like(servicePointAddress.get(Address_.city), "%" + address.getCity() + "%"));
             if(address.getZipCode() != null)
-                predicates.add( criteriaBuilder.equal( servicePointAddress.get(Address_.zipCode), "%" + address.getZipCode() + "%"));
+                predicates.add( criteriaBuilder.like(servicePointAddress.get(Address_.zipCode), "%" + address.getZipCode() + "%"));
             if(address.getStreet() != null)
-                predicates.add( criteriaBuilder.equal( servicePointAddress.get(Address_.street), "%" + address.getStreet() + "%"));
+                predicates.add( criteriaBuilder.like(servicePointAddress.get(Address_.street), "%" + address.getStreet() + "%"));
 
         }
 
@@ -437,7 +437,7 @@ public class ServicePointFacade extends AbstractFacade<ServicePoint> implements 
             Expression<Float> latitudeDifferenceSquared = criteriaBuilder.prod(latitudeDifference, latitudeDifference);
             Expression<Double> calculatedRadius = criteriaBuilder.sqrt(criteriaBuilder.sum(longitudeDifferenceSquared, latitudeDifferenceSquared));
 
-            predicates.add( criteriaBuilder.lessThanOrEqualTo( calculatedRadius, coordinatesCircle.getRadius().doubleValue() ));
+            predicates.add( criteriaBuilder.lessThanOrEqualTo( calculatedRadius, coordinatesCircle.getRadius() ));
         }
 
         // WHERE predicate1 AND predicate2 AND ... AND predicateN

@@ -12,6 +12,7 @@ import javax.validation.constraints.Past;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Set;
 
 @Entity
@@ -44,7 +45,7 @@ public class Corporation extends UUIDEntity implements Serializable {
     private String skypeName;
 
     /* one-to-many relationship with providers */
-    private Set<Provider> providers;
+    private Set<Provider> providers = new HashSet<>();
 
     /* constructors */
 

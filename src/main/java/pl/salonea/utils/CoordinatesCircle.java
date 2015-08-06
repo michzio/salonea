@@ -6,9 +6,9 @@ package pl.salonea.utils;
 public class CoordinatesCircle {
 
     private Float longitudeWGS84, latitudeWGS84;
-    private Float radius;
+    private Double radius;
 
-    public CoordinatesCircle(Float longitudeWGS84, Float latitudeWGS84, Float radius) {
+    public CoordinatesCircle(Float longitudeWGS84, Float latitudeWGS84, Double radius) {
         this.longitudeWGS84 = longitudeWGS84;
         this.latitudeWGS84 = latitudeWGS84;
         this.radius = radius;
@@ -30,11 +30,11 @@ public class CoordinatesCircle {
         this.latitudeWGS84 = latitudeWGS84;
     }
 
-    public Float getRadius() {
+    public Double getRadius() {
         return radius;
     }
 
-    public void setRadius(Float radius) {
+    public void setRadius(Double radius) {
         this.radius = radius;
     }
 }

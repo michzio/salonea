@@ -13,7 +13,6 @@ import pl.salonea.entities.Provider;
 import pl.salonea.entities.ServicePoint;
 import pl.salonea.entities.ServicePointPhoto;
 import pl.salonea.entities.Tag;
-import pl.salonea.entities.idclass.ServicePointId;
 import pl.salonea.enums.ProviderType;
 
 import javax.persistence.EntityManager;
