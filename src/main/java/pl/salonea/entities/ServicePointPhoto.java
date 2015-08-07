@@ -8,6 +8,7 @@ import pl.salonea.constraints.ImageName;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
+import java.util.HashSet;
 import java.util.Set;
 
 @Entity
@@ -18,7 +19,7 @@ import java.util.Set;
         @NamedQuery(name = ServicePointPhoto.FIND_BY_DESCRIPTION, query = "SELECT photo FROM ServicePointPhoto photo WHERE photo.description LIKE :description"),
         @NamedQuery(name = ServicePointPhoto.FIND_BY_FILE_NAME_AND_DESCRIPTION, query = "SELECT photo FROM ServicePointPhoto photo WHERE photo.fileName LIKE :file_name AND photo.description LIKE :description"),
         @NamedQuery(name = ServicePointPhoto.FIND_BY_KEYWORD, query = "SELECT photo FROM ServicePointPhoto photo WHERE photo.fileName LIKE :keyword OR photo.description LIKE :keyword"),
-        @NamedQuery(name = ServicePointPhoto.FIND_BY_TAG_NAME, query = "SELECT photo FROM ServicePointPhoto photo INNER JOIN photo.tags tag WHERE tag.tagName LIKE :tag_name"),
+        @NamedQuery(name = ServicePointPhoto.FIND_BY_TAG_NAME, query = "SELECT DISTINCT photo FROM ServicePointPhoto photo INNER JOIN photo.tags tag WHERE tag.tagName LIKE :tag_name"),
         @NamedQuery(name = ServicePointPhoto.FIND_BY_ANY_TAG_NAMES, query = "SELECT DISTINCT photo FROM ServicePointPhoto photo INNER JOIN photo.tags tag WHERE tag.tagName IN :tag_names"),
         @NamedQuery(name = ServicePointPhoto.FIND_BY_ALL_TAG_NAMES, query = "SELECT photo FROM ServicePointPhoto photo JOIN photo.tags tag WHERE tag.tagName IN :tag_names GROUP BY photo.photoId HAVING COUNT(photo.photoId) = :tag_count"),
         @NamedQuery(name = ServicePointPhoto.FIND_BY_KEYWORD_INCLUDING_TAGS, query = "SELECT DISTINCT photo FROM ServicePointPhoto photo INNER JOIN photo.tags tag WHERE photo.fileName LIKE :keyword OR photo.description LIKE :keyword OR tag.tagName LIKE :keyword"),
@@ -48,7 +49,7 @@ public class ServicePointPhoto implements Serializable {
 
     /* relationships */
     private ServicePoint servicePoint; // composite FK
-    private Set<Tag> tags;
+    private Set<Tag> tags = new HashSet<>();
 
     /* constructors */
 

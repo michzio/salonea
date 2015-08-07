@@ -173,7 +173,7 @@ public class ServicePoint implements Serializable {
         this.longitudeWGS84 = longitudeWGS84;
     }
 
-    @OneToMany(mappedBy = "servicePoint", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "servicePoint", fetch = FetchType.LAZY, cascade = { CascadeType.REMOVE })
     public Set<ServicePointPhoto> getPhotos() {
         return photos;
     }
@@ -182,7 +182,7 @@ public class ServicePoint implements Serializable {
         this.photos = photos;
     }
 
-    @OneToMany(mappedBy = "servicePoint", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "servicePoint", fetch = FetchType.LAZY, cascade = { CascadeType.REMOVE })
     public Set<VirtualTour> getVirtualTours() {
         return virtualTours;
     }

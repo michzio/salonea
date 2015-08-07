@@ -174,7 +174,7 @@ public class ServicePointPhotoFacade extends AbstractFacade<ServicePointPhoto>
 
         TypedQuery<ServicePointPhoto> query = getEntityManager().createNamedQuery(ServicePointPhoto.FIND_BY_ALL_TAG_NAMES, ServicePointPhoto.class);
         query.setParameter("tag_names", tagNames);
-        query.setParameter("tag_count", tagNames.size());
+        query.setParameter("tag_count",  Long.valueOf(tagNames.size()));
         if(start != null && offset != null) {
             query.setFirstResult(start);
             query.setMaxResults(offset);
