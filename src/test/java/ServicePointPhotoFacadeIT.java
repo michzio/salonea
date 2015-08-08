@@ -114,7 +114,7 @@ public class ServicePointPhotoFacadeIT {
         // create instance of ServicePoint entity
         ServicePoint servicePoint = new ServicePoint(provider, 1, address);
 
-        // create instance of ServicePointPhoto entity
+        // create some instances of ServicePointPhoto entity
         ServicePointPhoto photo1 = new ServicePointPhoto("medical_point.gif", servicePoint);
                           photo1.setDescription("Overall view of Medical service point.");
         ServicePointPhoto photo2 = new ServicePointPhoto("medical_point_front.png", servicePoint);
@@ -155,7 +155,6 @@ public class ServicePointPhotoFacadeIT {
         List<ServicePointPhoto> keyPhotos = photoFacade.findByKeyword("view");
         assertTrue("There should be found four Photos with 'view' keyword in name or description.", keyPhotos.size() == 4);
 
-
         List<String> keywords = new ArrayList<>(); keywords.add("service");
         List<ServicePointPhoto> multiplePhotos = photoFacade.findByMultipleCriteria(keywords, null, null, null, null);
         assertTrue("There should be found three Photos by specified keywords.", multiplePhotos.size() == 3);
@@ -184,7 +183,7 @@ public class ServicePointPhotoFacadeIT {
         // create instance of ServicePoint entity
         ServicePoint servicePoint = new ServicePoint(provider, 1, address);
 
-        // create instance of ServicePointPhoto entity
+        // create some instances of ServicePointPhoto entity
         ServicePointPhoto photo1 = new ServicePointPhoto("medical_point.gif", servicePoint);
         photo1.setDescription("Overall view of Medical service point.");
         ServicePointPhoto photo2 = new ServicePointPhoto("medical_point_front.png", servicePoint);

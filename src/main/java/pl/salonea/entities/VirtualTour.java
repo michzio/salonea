@@ -1,10 +1,13 @@
 package pl.salonea.entities;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import pl.salonea.constraints.VirtualTourName;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
+import java.util.HashSet;
 import java.util.Set;
 
 @Entity
@@ -45,7 +48,7 @@ public class VirtualTour implements Serializable {
 
     /* relationships */
     private ServicePoint servicePoint; // composite FK
-    private Set<Tag> tags;
+    private Set<Tag> tags = new HashSet<>();
 
     /* constructors */
 
@@ -121,5 +124,28 @@ public class VirtualTour implements Serializable {
 
     public void setTags(Set<Tag> tags) {
         this.tags = tags;
+    }
+
+    @Override
+    public int hashCode() {
+
+        return new HashCodeBuilder(17, 31) // two randomly chosen prime numbers
+                // if deriving: .appendSuper(super.hashCode())
+                .append(getFileName())
+                .toHashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null || !(obj instanceof VirtualTour))
+            return false;
+        if (obj == this)
+            return true;
+
+        VirtualTour rhs = (VirtualTour) obj;
+        return new EqualsBuilder()
+                // if deriving: .appendSuper(super.equals(obj)).
+                .append(getFileName(), rhs.getFileName())
+                .isEquals();
     }
 }
