@@ -10,9 +10,34 @@ import java.util.Set;
 @Entity
 @Table(name = "virtual_tour")
 @Access(AccessType.PROPERTY)
+@NamedQueries({
+        @NamedQuery(name = VirtualTour.FIND_BY_FILE_NAME, query = "SELECT vt FROM VirtualTour vt WHERE vt.fileName LIKE :file_name"),
+        @NamedQuery(name = VirtualTour.FIND_BY_DESCRIPTION, query = "SELECT vt FROM VirtualTour vt WHERE vt.description LIKE :description"),
+        @NamedQuery(name = VirtualTour.FIND_BY_FILE_NAME_AND_DESCRIPTION, query = "SELECT vt FROM VirtualTour vt WHERE vt.fileName LIKE :file_name AND vt.description LIKE :description"),
+        @NamedQuery(name = VirtualTour.FIND_BY_KEYWORD, query = "SELECT vt FROM VirtualTour vt WHERE vt.fileName LIKE :keyword OR vt.description LIKE :keyword"),
+        @NamedQuery(name = VirtualTour.FIND_BY_TAG_NAME, query = "SELECT DISTINCT vt FROM VirtualTour vt INNER JOIN vt.tags tag WHERE tag.tagName LIKE :tag_name"),
+        @NamedQuery(name = VirtualTour.FIND_BY_ANY_TAG_NAMES, query = "SELECT DISTINCT vt FROM VirtualTour vt INNER JOIN vt.tags tag WHERE tag.tagName IN :tag_names"),
+        @NamedQuery(name = VirtualTour.FIND_BY_ALL_TAG_NAMES, query = "SELECT vt FROM VirtualTour vt JOIN vt.tags tag WHERE tag.tagName IN :tag_names GROUP BY vt.tourId HAVING COUNT(vt.tourId) = :tag_count"),
+        @NamedQuery(name = VirtualTour.FIND_BY_KEYWORD_INCLUDING_TAGS, query = "SELECT DISTINCT vt FROM VirtualTour vt INNER JOIN vt.tags tag WHERE vt.fileName LIKE :keyword OR vt.description LIKE :keyword OR tag.tagName LIKE :keyword"),
+        @NamedQuery(name = VirtualTour.FIND_BY_SERVICE_POINT, query = "SELECT vt FROM VirtualTour vt WHERE vt.servicePoint = :service_point"),
+        @NamedQuery(name = VirtualTour.FIND_BY_PROVIDER, query = "SELECT vt FROM VirtualTour vt INNER JOIN vt.servicePoint sp WHERE sp.provider = :provider"),
+        @NamedQuery(name = VirtualTour.FIND_BY_CORPORATION, query = "SELECT vt FROM VirtualTour vt INNER JOIN vt.servicePoint sp INNER JOIN sp.provider p WHERE p.corporation = :corporation")
+})
 public class VirtualTour implements Serializable {
 
-    private Long tourId;
+    public static final String FIND_BY_FILE_NAME = "VirtualTour.findByFileName";
+    public static final String FIND_BY_DESCRIPTION = "VirtualTour.findByDescription";
+    public static final String FIND_BY_FILE_NAME_AND_DESCRIPTION = "VirtualTour.findByFileNameAndDescription";
+    public static final String FIND_BY_KEYWORD = "VirtualTour.findByKeyword";
+    public static final String FIND_BY_TAG_NAME = "VirtualTour.findByTagName";
+    public static final String FIND_BY_ANY_TAG_NAMES = "VirtualTour.findByAnyTagNames";
+    public static final String FIND_BY_ALL_TAG_NAMES = "VirtualTour.findByAllTagNames";
+    public static final String FIND_BY_KEYWORD_INCLUDING_TAGS = "VirtualTour.findByKeywordIncludingTags";
+    public static final String FIND_BY_SERVICE_POINT = "VirtualTour.findByServicePoint";
+    public static final String FIND_BY_PROVIDER = "VirtualTour.findByProvider";
+    public static final String FIND_BY_CORPORATION = "VirtualTour.findByCorporation";
+
+    private Long tourId; // PK
 
     /* simple attributes */
     private String fileName;

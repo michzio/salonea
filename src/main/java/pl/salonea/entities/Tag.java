@@ -72,7 +72,7 @@ public class Tag implements Serializable {
 
     /* many-to-many relationships */
 
-    @ManyToMany(mappedBy = "tags")
+    @ManyToMany(mappedBy = "tags", cascade = { CascadeType.MERGE })
     public Set<ServicePointPhoto> getTaggedPhotos() {
         return taggedPhotos;
     }
@@ -81,7 +81,7 @@ public class Tag implements Serializable {
         this.taggedPhotos = taggedPhotos;
     }
 
-    @ManyToMany(mappedBy = "tags")
+    @ManyToMany(mappedBy = "tags", cascade = { CascadeType.MERGE })
     public Set<VirtualTour> getTaggedVirtualTours() {
         return taggedVirtualTours;
     }

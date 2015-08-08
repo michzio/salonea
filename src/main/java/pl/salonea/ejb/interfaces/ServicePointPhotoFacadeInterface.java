@@ -43,6 +43,4 @@ public interface ServicePointPhotoFacadeInterface extends AbstractFacadeInterfac
 
     @javax.ejb.Remote
     interface Remote extends ServicePointPhotoFacadeInterface { }
-
-
 }

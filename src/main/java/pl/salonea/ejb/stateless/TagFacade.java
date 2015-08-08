@@ -8,7 +8,6 @@ import pl.salonea.entities.VirtualTour;
 
 import javax.ejb.LocalBean;
 import javax.ejb.Stateless;
-import javax.enterprise.inject.Typed;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
@@ -16,7 +15,6 @@ import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,12 +39,12 @@ public class TagFacade extends AbstractFacade<Tag> implements TagFacadeInterface
 
 
     @Override
-    public List<Tag> findByTagName(Tag tagName) {
+    public List<Tag> findByTagName(String tagName) {
         return findByTagName(tagName, null, null);
     }
 
     @Override
-    public List<Tag> findByTagName(Tag tagName, Integer start, Integer offset) {
+    public List<Tag> findByTagName(String tagName, Integer start, Integer offset) {
 
         TypedQuery<Tag> query = getEntityManager().createNamedQuery(Tag.FIND_BY_TAG_NAME, Tag.class);
         query.setParameter("tag_name", "%" + tagName + "%");
