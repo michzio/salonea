@@ -8,10 +8,7 @@ import javax.ejb.Stateless;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Predicate;
-import javax.persistence.criteria.Root;
+import javax.persistence.criteria.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -273,7 +270,98 @@ public class VirtualTourFacade extends AbstractFacade<VirtualTour> implements Vi
                                                            List<String> tagNames, List<ServicePoint> servicePoints,
                                                            List<Provider> providers, List<Corporation> corporations) {
 
-        return null;
+        CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
+        CriteriaQuery<VirtualTour> criteriaQuery = criteriaBuilder.createQuery(VirtualTour.class);
+        // FROM
+        Root<VirtualTour> virtualTour = criteriaQuery.from(VirtualTour.class);
+        // SELECT
+        criteriaQuery.select(virtualTour).distinct(true);
 
+        // INNER JOIN-s
+        Join<VirtualTour, Tag> tag = null;
+        Join<VirtualTour, ServicePoint> servicePoint = null;
+        Join<ServicePoint, Provider> provider = null;
+
+        // WHERE PREDICATES
+        List<Predicate> predicates = new ArrayList<>();
+        List<Predicate> orPredicates = new ArrayList<>();
+
+        if(fileNames != null && fileNames.size() > 0) {
+
+            List<Predicate> orFileNamePredicates = new ArrayList<>();
+
+            for(String fileName : fileNames) {
+                orFileNamePredicates.add( criteriaBuilder.like(virtualTour.get(VirtualTour_.fileName), "%" + fileName + "%") );
+            }
+
+            if(orWithFileNames) {
+                orPredicates.add( criteriaBuilder.or(orFileNamePredicates.toArray(new Predicate[] {})) );
+            } else {
+                predicates.add( criteriaBuilder.or(orFileNamePredicates.toArray(new Predicate[]{})) );
+            }
+        }
+
+        if(descriptions != null && descriptions.size() > 0) {
+
+            List<Predicate> orDescriptionPredicates = new ArrayList<>();
+
+            for(String description : descriptions) {
+                orDescriptionPredicates.add( criteriaBuilder.like(virtualTour.get(VirtualTour_.description), "%" + description + "%") );
+            }
+
+            if(orWithDescriptions) {
+                orPredicates.add( criteriaBuilder.or(orDescriptionPredicates.toArray(new Predicate[] {})) );
+            } else {
+                predicates.add( criteriaBuilder.or(orDescriptionPredicates.toArray(new Predicate[] {})) );
+            }
+        }
+
+        if(tagNames != null && tagNames.size() > 0) {
+
+            if(tag == null) tag = virtualTour.join(VirtualTour_.tags);
+
+            // it will match virtualTours with ANY specified tag name
+            List<Predicate> orTagNamePredicates = new ArrayList<>();
+
+            for(String tagName : tagNames) {
+                orTagNamePredicates.add( criteriaBuilder.like(tag.get(Tag_.tagName), "%" + tagName + "%") );
+            }
+
+            if(orWithTagNames) {
+                orPredicates.add( criteriaBuilder.or(orTagNamePredicates.toArray(new Predicate[] {})) );
+            } else {
+                predicates.add( criteriaBuilder.or(orTagNamePredicates.toArray(new Predicate[] {})) );
+            }
+        }
+
+        if(orPredicates.size() > 0)
+            predicates.add( criteriaBuilder.or(orPredicates.toArray(new Predicate[]{})) );
+
+        if(servicePoints != null && servicePoints.size() > 0) {
+
+            predicates.add( virtualTour.get(VirtualTour_.servicePoint).in(servicePoints) );
+        }
+
+        if(providers != null && providers.size() > 0) {
+
+            if(servicePoint == null) servicePoint = virtualTour.join(VirtualTour_.servicePoint);
+            if(provider == null) provider = servicePoint.join(ServicePoint_.provider);
+
+            predicates.add( provider.in(providers) );
+        }
+
+        if(corporations != null && corporations.size() > 0) {
+
+            if(servicePoint == null) servicePoint = virtualTour.join(VirtualTour_.servicePoint);
+            if(provider == null) provider = servicePoint.join(ServicePoint_.provider);
+
+            predicates.add( provider.get(Provider_.corporation).in(corporations) );
+        }
+
+        // WHERE predicate1 AND predicate2 AND ... AND predicateN
+        criteriaQuery.where(predicates.toArray(new Predicate[] { }));
+
+        TypedQuery<VirtualTour> query = getEntityManager().createQuery(criteriaQuery);
+        return query.getResultList();
     }
 }
