@@ -37,7 +37,6 @@ public class TagFacade extends AbstractFacade<Tag> implements TagFacadeInterface
         super(Tag.class);
     }
 
-
     @Override
     public List<Tag> findByTagName(String tagName) {
         return findByTagName(tagName, null, null);
