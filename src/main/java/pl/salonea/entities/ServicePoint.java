@@ -191,7 +191,7 @@ public class ServicePoint implements Serializable {
         this.virtualTours = virtualTours;
     }
 
-    @OneToMany(mappedBy = "servicePoint", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "servicePoint", fetch = FetchType.LAZY, cascade = { CascadeType.REMOVE })
     public Set<WorkStation> getWorkStations() {
         return workStations;
     }

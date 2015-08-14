@@ -6,15 +6,43 @@ import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Set;
 
 @Entity
 @Table(name = "employee")
-@DiscriminatorValue("employee")
 @PrimaryKeyJoinColumn(name = "employee_id",
-                foreignKey = @ForeignKey(name = "fk_employee_natural_person"))
+        foreignKey = @ForeignKey(name = "fk_employee_natural_person"))
+@DiscriminatorValue("employee")
 @Access(AccessType.PROPERTY)
+@NamedQueries({
+        @NamedQuery(name = Employee.FIND_BY_DESCRIPTION, query = "SELECT e FROM Employee e WHERE e.description LIKE :description"),
+        @NamedQuery(name = Employee.FIND_BY_JOB_POSITION, query = "SELECT e FROM Employee e WHERE e.jobPosition = :job_position"),
+        @NamedQuery(name = Employee.FIND_BY_SKILL, query = "SELECT e FROM Employee e WHERE :skill MEMBER OF e.skills"),
+        @NamedQuery(name = Employee.FIND_BY_EDUCATION, query = "SELECT e FROM Employee e WHERE :education MEMBER OF e.educations"),
+        @NamedQuery(name = Employee.FIND_BY_SERVICE, query = "SELECT DISTINCT e FROM Employee e INNER JOIN e.suppliedServices ps WHERE ps.service = :service"),
+        @NamedQuery(name = Employee.FIND_BY_PROVIDER_SERVICE, query = "SELECT DISTINCT e FROM Employee e INNER JOIN e.suppliedServices ps WHERE ps = :provider_service"),
+        @NamedQuery(name = Employee.FIND_BY_SERVICE_POINT, query = "SELECT DISTINCT e FROM Employee e INNER JOIN e.termsOnWorkStation empl_term INNER JOIN empl_term.workStation ws WHERE ws.servicePoint = :service_point"),
+        @NamedQuery(name = Employee.FIND_BY_SERVICE_POINT_AND_TERM, query = "SELECT DISTINCT e FROM Employee e INNER JOIN e.termsOnWorkStation empl_term INNER JOIN empl_term.workStation ws INNER JOIN empl_term.term term WHERE ws.servicePoint = :service_point AND term.openingTime < :end_time AND term.closingTime > :start_time"), // constraint: openingTime < closingTime
+        @NamedQuery(name = Employee.FIND_BY_SERVICE_POINT_AND_TERM_STRICT, query = "SELECT DISTINCT e FROM Employee e INNER JOIN e.termsOnWorkStation empl_term INNER JOIN empl_term.workStation ws INNER JOIN  empl_term.term term WHERE ws.servicePoint = :service_point AND term.openingTime <= :start_time AND term.closingTime >= :end_time"),
+        @NamedQuery(name = Employee.FIND_BY_WORK_STATION, query = "SELECT DISTINCT e FROM Employee e INNER JOIN e.termsOnWorkStation empl_term WHERE empl_term.workStation = :work_station"),
+        @NamedQuery(name = Employee.FIND_BY_WORK_STATION_AND_TERM, query = "SELECT DISTINCT e FROM Employee e INNER JOIN e.termsOnWorkStation empl_term INNER JOIN empl_term.term term WHERE empl_term.workStation = :work_station AND term.openingTime < :end_time AND term.closingTime > :start_time"), // constraint: openingTime < closingTime
+        @NamedQuery(name = Employee.FIND_BY_WORK_STATION_AND_TERM_STRICT, query = "SELECT DISTINCT e FROM Employee e INNER JOIN e.termsOnWorkStation empl_term INNER JOIN empl_term.term term WHERE empl_term.workStation = :work_station AND term.openingTime <= :start_time AND term.closingTime >= :end_time"),
+})
 public class Employee extends NaturalPerson {
+
+    public static final String FIND_BY_DESCRIPTION = "Employee.findByDescription";
+    public static final String FIND_BY_JOB_POSITION = "Employee.findByJobPosition";
+    public static final String FIND_BY_SKILL = "Employee.findBySkill";
+    public static final String FIND_BY_EDUCATION = "Employee.findByEducation";
+    public static final String FIND_BY_SERVICE = "Employee.findByService";
+    public static final String FIND_BY_PROVIDER_SERVICE = "Employee.findByProviderService";
+    public static final String FIND_BY_SERVICE_POINT = "Employee.findByServicePoint";
+    public static final String FIND_BY_SERVICE_POINT_AND_TERM = "Employee.findByServicePointAndTerm";
+    public static final String FIND_BY_SERVICE_POINT_AND_TERM_STRICT = "Employee.findByServicePointAndTermStrict";
+    public static final String FIND_BY_WORK_STATION = "Employee.findByWorkStation";
+    public static final String FIND_BY_WORK_STATION_AND_TERM = "Employee.findByWorkStationAndTerm";
+    public static final String FIND_BY_WORK_STATION_AND_TERM_STRICT = "Employee.findByWorkStationAndTermStrict";
 
     private String jobPosition;
     private String description;
@@ -23,9 +51,9 @@ public class Employee extends NaturalPerson {
     private Set<Skill> skills;
 
     /* one-to-many relationships */
-    private Set<TermEmployeeWorkOn> termsOnWorkStation;
-    private Set<ProviderService> suppliedServices;
-    private Set<EmployeeRating> receivedRatings;
+    private Set<TermEmployeeWorkOn> termsOnWorkStation = new HashSet<>();
+    private Set<ProviderService> suppliedServices = new HashSet<>();
+    private Set<EmployeeRating> receivedRatings = new HashSet<>();
 
     /* constructors */
     public Employee() { }

@@ -14,6 +14,7 @@ import javax.validation.constraints.Digits;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
+import java.util.HashSet;
 import java.util.Set;
 
 @Entity
@@ -81,8 +82,8 @@ public class ProviderService {
     private Short discount = 0; // [%]
 
     /* many-to-many relationships */
-    private Set<Employee> supplyingEmployees;
-    private Set<WorkStation> workStations;
+    private Set<Employee> supplyingEmployees = new HashSet<>();
+    private Set<WorkStation> workStations = new HashSet<>();
 
     /* constructors */
 

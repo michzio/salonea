@@ -360,7 +360,7 @@ public class ServicePointPhotoFacadeIT {
 
         utx.begin();
         List<ServicePoint> servicePoints = new ArrayList<>();
-        servicePoints.add( pointFacade.find(new ServicePointId(point11.getProvider().getUserId(), point11.getServicePointNumber()))  );
+        servicePoints.add( pointFacade.find(new ServicePointId(point11.getProvider().getUserId(), point11.getServicePointNumber())) );
         servicePoints.add( pointFacade.find(new ServicePointId(point12.getProvider().getUserId(), point12.getServicePointNumber())) );
         servicePoints.add( pointFacade.find(new ServicePointId(point13.getProvider().getUserId(), point13.getServicePointNumber())) );
         List<Provider> providers = new ArrayList<>();
