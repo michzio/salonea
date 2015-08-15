@@ -8,6 +8,8 @@ import javax.ejb.LocalBean;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
+import javax.persistence.Query;
+import javax.persistence.TypedQuery;
 import java.util.List;
 
 /**
@@ -32,61 +34,112 @@ public class SkillFacade extends AbstractFacade<Skill> implements SkillFacadeInt
 
     @Override
     public List<Skill> findByName(String skillName) {
-        return null;
+        return findByName(skillName, null, null);
     }
 
     @Override
     public List<Skill> findByName(String skillName, Integer start, Integer offset) {
-        return null;
+
+        TypedQuery<Skill> query = getEntityManager().createNamedQuery(Skill.FIND_BY_NAME, Skill.class);
+        query.setParameter("skill_name", "%" + skillName + "%");
+        if(start != null && offset != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(offset);
+        }
+        return query.getResultList();
     }
 
     @Override
     public List<Skill> findByDescription(String description) {
-        return null;
+        return findByDescription(description, null, null);
     }
 
     @Override
     public List<Skill> findByDescription(String description, Integer start, Integer offset) {
-        return null;
+
+        TypedQuery<Skill> query = getEntityManager().createNamedQuery(Skill.FIND_BY_DESCRIPTION, Skill.class);
+        query.setParameter("description", "%" + description + "%");
+        if(start != null && offset != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(offset);
+        }
+        return query.getResultList();
     }
 
     @Override
     public List<Skill> findByKeyword(String keyword) {
-        return null;
+        return findByKeyword(keyword, null, null);
     }
 
     @Override
     public List<Skill> findByKeyword(String keyword, Integer start, Integer offset) {
-        return null;
+
+        TypedQuery<Skill> query = getEntityManager().createNamedQuery(Skill.FIND_BY_KEYWORD, Skill.class);
+        query.setParameter("keyword", "%" + keyword + "%");
+        if(start != null && offset != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(offset);
+        }
+        return query.getResultList();
     }
 
     @Override
     public List<Skill> findByEmployee(Employee employee) {
-        return null;
+        return findByEmployee(employee, null, null);
     }
 
     @Override
     public List<Skill> findByEmployee(Employee employee, Integer start, Integer offset) {
-        return null;
+
+        TypedQuery<Skill> query = getEntityManager().createNamedQuery(Skill.FIND_BY_EMPLOYEE, Skill.class);
+        query.setParameter("employee", employee);
+        if(start != null && offset != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(offset);
+        }
+        return query.getResultList();
     }
 
     @Override
     public List<Skill> findByEmployeeAndKeyword(Employee employee, String keyword) {
-        return null;
+        return findByEmployeeAndKeyword(employee, keyword, null, null);
     }
 
     @Override
     public List<Skill> findByEmployeeAndKeyword(Employee employee, String keyword, Integer start, Integer offset) {
-        return null;
+
+        TypedQuery<Skill> query = getEntityManager().createNamedQuery(Skill.FIND_BY_EMPLOYEE_AND_KEYWORD, Skill.class);
+        query.setParameter("employee", employee);
+        query.setParameter("keyword", "%" + keyword + "%");
+        if(start != null && offset != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(offset);
+        }
+        return query.getResultList();
     }
 
     @Override
     public Integer deleteByName(String skillName) {
-        return null;
+
+        Query query = getEntityManager().createNamedQuery(Skill.DELETE_BY_NAME);
+        query.setParameter("skill_name", skillName);
+        return query.executeUpdate();
     }
 
     @Override
     public Integer deleteByEmployee(Employee employee) {
-        return null;
+
+        // select skills for given employee that will be deleted in the following query
+        List<Skill> skills = findByEmployee(employee);
+
+        return deleteBySkills(skills);
+    }
+
+    @Override
+    public Integer deleteBySkills(List<Skill> skills) {
+
+        Query query = getEntityManager().createNamedQuery(Skill.DELETE_BY_SKILLS);
+        query.setParameter("skills", skills);
+        return query.executeUpdate();
     }
 }

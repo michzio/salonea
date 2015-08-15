@@ -23,6 +23,7 @@ public interface SkillFacadeInterface extends AbstractFacadeInterface<Skill> {
     List<Skill> findByEmployeeAndKeyword(Employee employee, String keyword, Integer start, Integer offset);
     Integer deleteByName(String skillName);
     Integer deleteByEmployee(Employee employee);
+    Integer deleteBySkills(List<Skill> skills);
 
     @javax.ejb.Local
     interface Local extends SkillFacadeInterface { }

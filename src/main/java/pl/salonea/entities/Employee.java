@@ -47,8 +47,8 @@ public class Employee extends NaturalPerson {
     private String jobPosition;
     private String description;
 
-    private Set<Education> educations;
-    private Set<Skill> skills;
+    private Set<Education> educations = new HashSet<>();
+    private Set<Skill> skills = new HashSet<>();
 
     /* one-to-many relationships */
     private Set<TermEmployeeWorkOn> termsOnWorkStation = new HashSet<>();

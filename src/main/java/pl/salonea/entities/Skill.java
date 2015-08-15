@@ -7,6 +7,7 @@ import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.util.HashSet;
 import java.util.Set;
 
 @Entity
@@ -20,7 +21,7 @@ import java.util.Set;
         @NamedQuery(name = Skill.FIND_BY_EMPLOYEE_AND_KEYWORD, query = "SELECT s FROM Skill s WHERE :employee MEMBER OF s.skilledEmployees " +
                                                                         "AND (s.skillName LIKE :keyword OR s.description LIKE :keyword)"),
         @NamedQuery(name = Skill.DELETE_BY_NAME, query = "DELETE FROM Skill s WHERE s.skillName = :skill_name"),
-        @NamedQuery(name = Skill.DELETE_BY_EMPLOYEE, query = "DELETE FROM Skill s WHERE :employee MEMBER OF s.skilledEmployees"),
+        @NamedQuery(name = Skill.DELETE_BY_SKILLS, query = "DELETE FROM Skill s WHERE s IN :skills"),
 })
 public class Skill implements Serializable {
 
@@ -30,13 +31,13 @@ public class Skill implements Serializable {
     public static final String FIND_BY_EMPLOYEE = "Skill.findByEmployee";
     public static final String FIND_BY_EMPLOYEE_AND_KEYWORD = "Skill.findByEmployeeAndKeyword";
     public static final String DELETE_BY_NAME = "Skill.deleteByName";
-    public static final String DELETE_BY_EMPLOYEE = "Skill.deleteByEmployee";
+    public static final String DELETE_BY_SKILLS = "Skill.deleteBySkills";
 
     private Integer skillId; // PK
     private String skillName; // business key
     private String description;
 
-    private Set<Employee> skilledEmployees;
+    private Set<Employee> skilledEmployees = new HashSet<>();
 
     /* constructors */
 
