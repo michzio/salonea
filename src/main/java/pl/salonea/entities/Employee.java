@@ -20,6 +20,7 @@ import java.util.Set;
         @NamedQuery(name = Employee.FIND_BY_JOB_POSITION, query = "SELECT e FROM Employee e WHERE e.jobPosition = :job_position"),
         @NamedQuery(name = Employee.FIND_BY_SKILL, query = "SELECT e FROM Employee e WHERE :skill MEMBER OF e.skills"),
         @NamedQuery(name = Employee.FIND_BY_EDUCATION, query = "SELECT e FROM Employee e WHERE :education MEMBER OF e.educations"),
+        @NamedQuery(name = Employee.FIND_BY_EDUCATION_AND_SKILLS, query = "SELECT DISTINCT e FROM Employee e INNER JOIN e.skills s WHERE :education MEMBER OF e.educations AND s IN :skills"),
         @NamedQuery(name = Employee.FIND_BY_SERVICE, query = "SELECT DISTINCT e FROM Employee e INNER JOIN e.suppliedServices ps WHERE ps.service = :service"),
         @NamedQuery(name = Employee.FIND_BY_PROVIDER_SERVICE, query = "SELECT DISTINCT e FROM Employee e INNER JOIN e.suppliedServices ps WHERE ps = :provider_service"),
         @NamedQuery(name = Employee.FIND_BY_SERVICE_POINT, query = "SELECT DISTINCT e FROM Employee e INNER JOIN e.termsOnWorkStation empl_term INNER JOIN empl_term.workStation ws WHERE ws.servicePoint = :service_point"),
@@ -35,6 +36,7 @@ public class Employee extends NaturalPerson {
     public static final String FIND_BY_JOB_POSITION = "Employee.findByJobPosition";
     public static final String FIND_BY_SKILL = "Employee.findBySkill";
     public static final String FIND_BY_EDUCATION = "Employee.findByEducation";
+    public static final String FIND_BY_EDUCATION_AND_SKILLS = "Employee.findByEducationAndSkills";
     public static final String FIND_BY_SERVICE = "Employee.findByService";
     public static final String FIND_BY_PROVIDER_SERVICE = "Employee.findByProviderService";
     public static final String FIND_BY_SERVICE_POINT = "Employee.findByServicePoint";

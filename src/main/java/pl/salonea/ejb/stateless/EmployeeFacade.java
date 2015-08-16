@@ -33,7 +33,6 @@ public class EmployeeFacade extends AbstractFacade<Employee> implements Employee
         super(Employee.class);
     }
 
-
     @Override
     public List<Employee> findByDescription(String description) {
         return findByDescription(description, null, null);
@@ -95,6 +94,24 @@ public class EmployeeFacade extends AbstractFacade<Employee> implements Employee
 
         TypedQuery<Employee> query = getEntityManager().createNamedQuery(Employee.FIND_BY_EDUCATION, Employee.class);
         query.setParameter("education", education);
+        if(start != null && offset != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(offset);
+        }
+        return query.getResultList();
+    }
+
+    @Override
+    public List<Employee> findByEducationAndSkills(Education education, List<Skill> skills) {
+        return findByEducationAndSkills(education, skills, null, null);
+    }
+
+    @Override
+    public List<Employee> findByEducationAndSkills(Education education, List<Skill> skills, Integer start, Integer offset) {
+
+        TypedQuery<Employee> query = getEntityManager().createNamedQuery(Employee.FIND_BY_EDUCATION_AND_SKILLS, Employee.class);
+        query.setParameter("education", education);
+        query.setParameter("skills", skills);
         if(start != null && offset != null) {
             query.setFirstResult(start);
             query.setMaxResults(offset);

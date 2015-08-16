@@ -6,16 +6,9 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.jboss.shrinkwrap.resolver.api.maven.Maven;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import pl.salonea.ejb.interfaces.EmployeeFacadeInterface;
-import pl.salonea.ejb.interfaces.ProviderFacadeInterface;
-import pl.salonea.ejb.interfaces.ProviderServiceFacadeInterface;
-import pl.salonea.ejb.interfaces.ServiceFacadeInterface;
-import pl.salonea.ejb.stateless.ServiceFacade;
+import pl.salonea.ejb.interfaces.*;
 import pl.salonea.embeddables.Address;
-import pl.salonea.entities.Employee;
-import pl.salonea.entities.Provider;
-import pl.salonea.entities.ProviderService;
-import pl.salonea.entities.Service;
+import pl.salonea.entities.*;
 import pl.salonea.entities.idclass.ProviderServiceId;
 import pl.salonea.enums.Gender;
 import pl.salonea.enums.PriceType;
@@ -71,6 +64,12 @@ public class EmployeeFacadeIT {
 
     @Inject
     private ProviderServiceFacadeInterface.Local providerServiceFacade;
+
+    @Inject
+    private EducationFacadeInterface.Local educationFacade;
+
+    @Inject
+    private SkillFacadeInterface.Local skillFacade;
 
     @Inject
     private UserTransaction utx;
@@ -143,7 +142,126 @@ public class EmployeeFacadeIT {
 
     @Test
     public void shouldFindEmployeeBySkillsAndEducation() {
-        // TODO Implement finding employee by skills and education
+
+        // create some instances of Employee entity
+        Date dateOfBirth1 = new GregorianCalendar(1988, Calendar.OCTOBER, 3).getTime();
+        Date dateOfBirth2 = new GregorianCalendar(1985, Calendar.NOVEMBER, 10).getTime();
+        Date dateOfBirth3 = new GregorianCalendar(1975, Calendar.APRIL, 6).getTime();
+
+        Employee employee1 = new Employee("michzio@hotmail.com", "michzio", "pAs12#", "Michał", "Ziobro", dateOfBirth1, Gender.male, "consultant");
+                 employee1.setDescription("Consultant");
+        Employee employee2 = new Employee("nowak.adam@gmail.com", "nowak.adam", "nOw12#", "Adam", "Nowak", dateOfBirth2, Gender.male, "consultant");
+                 employee2.setDescription("Developer");
+        Employee employee3 = new Employee("maria.kwiatkowska@gmail.com", "m.kwiatkowska", "kWO29*", "Maria", "Kwiatkowska", dateOfBirth3, Gender.female, "developer");
+                 employee3.setDescription("Developer");
+
+        // create some instances of Education entity
+        Education stanfordUniversity = new Education("Stanford University", "Bachelor of Computer Science");
+        Education massachusettsInstituteOfTechnology = new Education("Massachusetts Institute of Technology", "Bachelor of Computer Science");
+        Education santaClaraUniversity = new Education("Santa Clara University", "Master of Computer Science");
+
+        // create some instances of Skill entity
+        Skill painting = new Skill("painting");
+              painting.setDescription("The action or skill of using paint, either in a picture or as decoration.");
+        Skill hairdressing = new Skill("hairdressing");
+              hairdressing.setDescription("Hairdressers cut, style, colour, straighten and permanently wave hair and provide clients with hair and scalp treatments.");
+        Skill hairdying = new Skill("hairdying");
+        Skill cavityFilling = new Skill("cavity filling");
+              cavityFilling.setDescription("Fillings are also used to repair cracked or broken teeth and teeth that have been worn down from misuse.");
+
+        // wire up both Employee and Education entities
+        employee1.getEducations().add(santaClaraUniversity);
+        employee1.getEducations().add(stanfordUniversity);
+        employee2.getEducations().add(massachusettsInstituteOfTechnology);
+        employee3.getEducations().add(massachusettsInstituteOfTechnology);
+
+        santaClaraUniversity.getEducatedEmployees().add(employee1);
+        stanfordUniversity.getEducatedEmployees().add(employee1);
+        massachusettsInstituteOfTechnology.getEducatedEmployees().add(employee2);
+        massachusettsInstituteOfTechnology.getEducatedEmployees().add(employee3);
+
+        // wire up employees and skills
+        employee1.getSkills().add(painting);
+        employee2.getSkills().add(hairdressing);
+        employee2.getSkills().add(hairdying);
+        employee3.getSkills().add(cavityFilling);
+        employee3.getSkills().add(painting);
+
+        painting.getSkilledEmployees().add(employee1);
+        painting.getSkilledEmployees().add(employee3);
+        hairdressing.getSkilledEmployees().add(employee2);
+        hairdying.getSkilledEmployees().add(employee2);
+        cavityFilling.getSkilledEmployees().add(employee3);
+
+        // persist employees and skills in database
+        educationFacade.create(stanfordUniversity);
+        educationFacade.create(santaClaraUniversity);
+        educationFacade.create(massachusettsInstituteOfTechnology);
+
+        skillFacade.create(painting);
+        skillFacade.create(hairdressing);
+        skillFacade.create(hairdying);
+        skillFacade.create(cavityFilling);
+
+        employeeFacade.create(employee1);
+        employeeFacade.create(employee2);
+        employeeFacade.create(employee3);
+
+        assertTrue("There should be three employees in database.", employeeFacade.count() == 3);
+        assertTrue("There should be three skills in database.", skillFacade.count() == 4);
+        assertTrue("There should be three educations in database.", educationFacade.count() == 3);
+
+        List<Employee> mitEmployees = employeeFacade.findByEducation(massachusettsInstituteOfTechnology);
+        assertTrue("There should be two MIT educated employees in database.", mitEmployees.size() == 2);
+        assertTrue(mitEmployees.contains(employee2) && mitEmployees.contains(employee3));
+
+        List<Employee> paintableEmployees = employeeFacade.findBySkill(painting);
+        assertTrue("There should be two paintable employees in database.", paintableEmployees.size() == 2);
+        assertTrue(paintableEmployees.contains(employee1) && paintableEmployees.contains(employee3));
+
+        List<Skill> desiredSkills = new ArrayList<>();
+                    desiredSkills.add(cavityFilling);
+        List<Employee> educatedAndSkilledEmployees = employeeFacade.findByEducationAndSkills(massachusettsInstituteOfTechnology, desiredSkills);
+        assertTrue("There should be only one employee with given education and skills.", educatedAndSkilledEmployees.size() == 1);
+        assertTrue(educatedAndSkilledEmployees.contains(employee3));
+
+        List<Education> desiredEducations = new ArrayList<>();
+                        desiredEducations.add(massachusettsInstituteOfTechnology);
+                        desiredEducations.add(stanfordUniversity);
+        List<Employee> multiEmployees = employeeFacade.findByMultipleCriteria("Developer", null, desiredSkills, desiredEducations, null, null, null, null, null, null);
+        assertTrue("There should be only one employee matching given criteria.", multiEmployees.size() == 1);
+        assertTrue(multiEmployees.contains(employee3));
+
+        // remove educations, skills and employees
+        employee3.setSkills(null);
+        employee2.setSkills(null);
+        employee1.setSkills(null);
+        employee3.setEducations(null);
+        employee2.setEducations(null);
+        employee1.setEducations(null);
+        employeeFacade.remove(employee3);
+        employeeFacade.remove(employee2);
+        employeeFacade.remove(employee1);
+
+        painting.setSkilledEmployees(null);
+        hairdying.setSkilledEmployees(null);
+        hairdressing.setSkilledEmployees(null);
+        cavityFilling.setSkilledEmployees(null);
+        skillFacade.remove(painting);
+        skillFacade.remove(hairdying);
+        skillFacade.remove(hairdressing);
+        skillFacade.remove(cavityFilling);
+
+        stanfordUniversity.setEducatedEmployees(null);
+        massachusettsInstituteOfTechnology.setEducatedEmployees(null);
+        santaClaraUniversity.setEducatedEmployees(null);
+        educationFacade.remove(stanfordUniversity);
+        educationFacade.remove(massachusettsInstituteOfTechnology);
+        educationFacade.remove(santaClaraUniversity);
+
+        assertTrue("There should not be any employee in database.", employeeFacade.count() == 0);
+        assertTrue("There should not be any skill in database.", skillFacade.count() == 0);
+        assertTrue("There should not be any education in database.", educationFacade.count() == 0);
     }
 
     @Test

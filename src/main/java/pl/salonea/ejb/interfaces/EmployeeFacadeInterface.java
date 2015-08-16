@@ -20,6 +20,8 @@ public interface EmployeeFacadeInterface extends AbstractFacadeInterface<Employe
     List<Employee> findBySkill(Skill skill, Integer start, Integer offset);
     List<Employee> findByEducation(Education education);
     List<Employee> findByEducation(Education education, Integer start, Integer offset);
+    List<Employee> findByEducationAndSkills(Education education, List<Skill> skills);
+    List<Employee> findByEducationAndSkills(Education education, List<Skill> skills, Integer start, Integer offset);
     List<Employee> findByService(Service service);
     List<Employee> findByService(Service service, Integer start, Integer offset);
     List<Employee> findByProviderService(ProviderService providerService);

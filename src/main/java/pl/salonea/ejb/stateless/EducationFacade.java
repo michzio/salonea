@@ -41,7 +41,7 @@ public class EducationFacade extends AbstractFacade<Education> implements Educat
     public List<Education> findByDegree(String degree, Integer start, Integer offset) {
 
         TypedQuery<Education> query = getEntityManager().createNamedQuery(Education.FIND_BY_DEGREE, Education.class);
-        query.setParameter("degree", degree);
+        query.setParameter("degree", "%" + degree + "%");
         if(start != null && offset != null) {
             query.setFirstResult(start);
             query.setMaxResults(offset);
@@ -58,7 +58,7 @@ public class EducationFacade extends AbstractFacade<Education> implements Educat
     public List<Education> findBySchool(String school, Integer start, Integer offset) {
 
         TypedQuery<Education> query = getEntityManager().createNamedQuery(Education.FIND_BY_SCHOOL, Education.class);
-        query.setParameter("school", school);
+        query.setParameter("school", "%" + school + "%");
         if(start != null && offset != null) {
             query.setFirstResult(start);
             query.setMaxResults(offset);
@@ -75,8 +75,8 @@ public class EducationFacade extends AbstractFacade<Education> implements Educat
     public List<Education> findByDegreeAndSchool(String degree, String school, Integer start, Integer offset) {
 
         TypedQuery<Education> query = getEntityManager().createNamedQuery(Education.FIND_BY_DEGREE_AND_SCHOOL, Education.class);
-        query.setParameter("degree", degree);
-        query.setParameter("school", school);
+        query.setParameter("degree", "%" + degree + "%");
+        query.setParameter("school", "%" + school + "%");
         if(start != null && offset != null) {
             query.setFirstResult(start);
             query.setMaxResults(offset);
@@ -93,7 +93,7 @@ public class EducationFacade extends AbstractFacade<Education> implements Educat
     public List<Education> findByKeyword(String keyword, Integer start, Integer offset) {
 
         TypedQuery<Education> query = getEntityManager().createNamedQuery(Education.FIND_BY_KEYWORD, Education.class);
-        query.setParameter("keyword", keyword);
+        query.setParameter("keyword", "%" + keyword + "%");
         if(start != null && offset != null) {
             query.setFirstResult(start);
             query.setMaxResults(offset);
@@ -128,7 +128,7 @@ public class EducationFacade extends AbstractFacade<Education> implements Educat
 
         TypedQuery<Education> query = getEntityManager().createNamedQuery(Education.FIND_BY_EMPLOYEE_AND_KEYWORD, Education.class);
         query.setParameter("employee", employee);
-        query.setParameter("keyword", keyword);
+        query.setParameter("keyword", "%" + keyword + "%");
         if(start != null && offset != null) {
             query.setFirstResult(start);
             query.setMaxResults(offset);
