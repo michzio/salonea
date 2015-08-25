@@ -15,6 +15,9 @@ import java.util.Set;
 @IdClass(TransactionId.class)
 @ChronologicalDates(dateAttributes = {"transactionTime", "bookedTime",}, order = ChronologicalDates.Order.ASCENDING)
 @BookedTimeInTerm
+// @ProviderServiceExists
+// @ProviderServiceSuppliedOnWorkStation
+// @EmployeeWorksOnWorkStationInGivenTerm
 public abstract class AbstractTransaction {
     private Client client; // PK, FK
     private Integer transactionNumber; // PK
@@ -28,6 +31,8 @@ public abstract class AbstractTransaction {
     private ProviderService providerService;
     private Provider provider;
     private Service service;
+    private ServicePoint servicePoint;
+    private WorkStation workStation;
     private PaymentMethod paymentMethod;
     private Term term;
 
@@ -42,7 +47,7 @@ public abstract class AbstractTransaction {
         this.transactionNumber = transactionNumber;
     }
 
-    public AbstractTransaction(Client client, Integer transactionNumber, Double price, CurrencyCode priceCurrencyCode, Date transactionTime, Date bookedTime, Boolean paid, ProviderService providerService, PaymentMethod paymentMethod, Term term) {
+    public AbstractTransaction(Client client, Integer transactionNumber, Double price, CurrencyCode priceCurrencyCode, Date transactionTime, Date bookedTime, Boolean paid, Service service, WorkStation workStation, PaymentMethod paymentMethod, Term term) {
         this.client = client;
         this.transactionNumber = transactionNumber;
         this.price = price;
@@ -50,7 +55,8 @@ public abstract class AbstractTransaction {
         this.transactionTime = transactionTime;
         this.bookedTime = bookedTime;
         this.paid = paid;
-        this.providerService = providerService;
+        this.service = service;
+        this.workStation = workStation;
         this.paymentMethod = paymentMethod;
         this.term = term;
     }
@@ -141,11 +147,10 @@ public abstract class AbstractTransaction {
 
     /* many-to-one relationships */
 
-    @NotNull
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumns({
-            @JoinColumn(name = "service_id", referencedColumnName = "service_id", nullable = false, columnDefinition = "INT UNSIGNED"),
-            @JoinColumn(name = "provider_id", referencedColumnName = "provider_id", nullable = false, columnDefinition = "BIGINT UNSIGNED")
+            @JoinColumn(name = "service_id", referencedColumnName = "service_id", insertable = false, updatable = false),
+            @JoinColumn(name = "provider_id", referencedColumnName = "provider_id", insertable = false, updatable = false)
     })
     public ProviderService getProviderService() {
         return providerService;
@@ -165,14 +170,43 @@ public abstract class AbstractTransaction {
         this.provider = provider;
     }
 
+    @NotNull
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "service_id", referencedColumnName = "service_id", insertable = false, updatable = false)
+    @JoinColumn(name = "service_id", referencedColumnName = "service_id", nullable = false, columnDefinition = "INT UNSIGNED")
     public Service getService() {
         return service;
     }
 
     private void setService(Service service) {
         this.service = service;
+    }
+
+    @NotNull
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumns({
+        @JoinColumn(name = "provider_id", referencedColumnName = "provider_id", nullable = false, columnDefinition = "BIGINT UNSIGNED"),
+        @JoinColumn(name = "service_point_no", referencedColumnName = "service_point_no", nullable = false, columnDefinition = "INT UNSIGNED"),
+        @JoinColumn(name = "work_station_no", referencedColumnName = "work_station_no", nullable = false, columnDefinition = "INT UNSIGNED")
+    })
+    public WorkStation getWorkStation() {
+        return workStation;
+    }
+
+    public void setWorkStation(WorkStation workStation) {
+        this.workStation = workStation;
+    }
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumns({
+            @JoinColumn(name = "provider_id", referencedColumnName = "provider_id", insertable = false, updatable = false),
+            @JoinColumn(name = "service_point_no", referencedColumnName = "service_point_no", insertable = false, updatable = false)
+    })
+    public ServicePoint getServicePoint() {
+        return servicePoint;
+    }
+
+    public void setServicePoint(ServicePoint servicePoint) {
+        this.servicePoint = servicePoint;
     }
 
     @NotNull

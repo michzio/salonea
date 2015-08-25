@@ -44,8 +44,8 @@ public class HistoricalTransaction extends AbstractTransaction implements Serial
         super(client, transactionNumber);
     }
 
-    public HistoricalTransaction(Client client, Integer transactionNumber, Double price, CurrencyCode priceCurrencyCode, Date transactionTime, Date bookedTime, Boolean paid, ProviderService providerService, PaymentMethod paymentMethod, Term term, Boolean completionStatus) {
-        super(client, transactionNumber, price, priceCurrencyCode, transactionTime, bookedTime, paid, providerService, paymentMethod, term);
+    public HistoricalTransaction(Client client, Integer transactionNumber, Double price, CurrencyCode priceCurrencyCode, Date transactionTime, Date bookedTime, Boolean paid, Service service, WorkStation workStation, PaymentMethod paymentMethod, Term term, Boolean completionStatus) {
+        super(client, transactionNumber, price, priceCurrencyCode, transactionTime, bookedTime, paid, service, workStation, paymentMethod, term);
         this.completionStatus = completionStatus;
     }
 

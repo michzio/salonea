@@ -1,17 +1,20 @@
 package pl.salonea.entities;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import pl.salonea.constraints.ChronologicalDates;
 
 import javax.persistence.*;
 import javax.validation.constraints.Future;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Set;
 
 @Entity
 @Table(name = "term",
-        uniqueConstraints = @UniqueConstraint(columnNames = { "opening_time", "closing_time" } ))
+        uniqueConstraints = @UniqueConstraint(columnNames = { "opening_time", "closing_time" } )) // business key
 @Access(AccessType.PROPERTY)
 @NamedQueries({
         @NamedQuery(name = Term.FIND_BY_PERIOD, query = "SELECT t FROM Term t WHERE t.openingTime < :end_time AND t.closingTime > :start_time"), // constraint: openingTime < closingTime
@@ -80,8 +83,8 @@ public class Term  implements Serializable {
     public static final String DELETE_OLDER_THAN = "Term.deleteOlderThan";
 
     private Long termId;
-    private Date openingTime;
-    private Date closingTime;
+    private Date openingTime; // business key
+    private Date closingTime; // business key
 
     /* one-to-many relationships */
     private Set<TermEmployeeWorkOn> employeesWorkStation;
@@ -143,6 +146,60 @@ public class Term  implements Serializable {
 
     public void setEmployeesWorkStation(Set<TermEmployeeWorkOn> employeesWorkStation) {
         this.employeesWorkStation = employeesWorkStation;
+    }
+
+    @Override
+    public int hashCode() {
+
+        Calendar calendar = Calendar.getInstance();
+
+        calendar.setTime(getOpeningTime());
+        calendar.set(Calendar.MILLISECOND, 0);
+        Long openingTime = calendar.getTimeInMillis();
+
+        calendar.setTime(getClosingTime());
+        calendar.set(Calendar.MILLISECOND, 0);
+        Long closingTime = calendar.getTimeInMillis();
+
+        return new HashCodeBuilder(17, 31) // two randomly chosen prime numbers
+                // if deriving: .appendSuper(super.hashCode())
+                .append(openingTime)
+                .append(closingTime)
+                .toHashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null || !(obj instanceof Term))
+            return false;
+        if (obj == this)
+            return true;
+
+        Term rhs = (Term) obj;
+
+        Calendar calendar = Calendar.getInstance();
+
+        calendar.setTime(getOpeningTime());
+        calendar.set(Calendar.MILLISECOND, 0);
+        Long openingTime = calendar.getTimeInMillis();
+
+        calendar.setTime(rhs.getOpeningTime());
+        calendar.set(Calendar.MILLISECOND, 0);
+        Long rhs_openingTime = calendar.getTimeInMillis();
+
+        calendar.setTime(getClosingTime());
+        calendar.set(Calendar.MILLISECOND, 0);
+        Long closingTime = calendar.getTimeInMillis();
+
+        calendar.setTime(rhs.getClosingTime());
+        calendar.set(Calendar.MILLISECOND, 0);
+        Long rhs_closingTime = calendar.getTimeInMillis();
+
+        return new EqualsBuilder()
+                // if deriving: .appendSuper(super.equals(obj))
+                .append(openingTime, rhs_openingTime)
+                .append(closingTime, rhs_closingTime)
+                .isEquals();
     }
 
 }

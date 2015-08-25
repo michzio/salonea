@@ -12,8 +12,12 @@ import java.util.List;
 public interface TermFacadeInterface extends AbstractFacadeInterface<Term> {
 
     // concrete interface
+    List<Term> findByPeriod(Date startTime, Date endTime);
+    List<Term> findByPeriod(Date startTime, Date endTime, Integer start, Integer offset);
     List<Term> findByPeriod(Period period);
     List<Term> findByPeriod(Period period, Integer start, Integer offset);
+    List<Term> findByPeriodStrict(Date startTime, Date endTime);
+    List<Term> findByPeriodStrict(Date startTime, Date endTime, Integer start, Integer offset);
     List<Term> findByPeriodStrict(Period period);
     List<Term> findByPeriodStrict(Period period, Integer start, Integer offset);
     List<Term> findAfter(Date time);

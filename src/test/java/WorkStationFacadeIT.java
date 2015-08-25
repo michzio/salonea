@@ -209,5 +209,18 @@ public class WorkStationFacadeIT {
         assertTrue("There should not be any work station in database.", workStationFacade.count() == 0);
     }
 
-    // TODO implement other integration test methods to find work stations by service, provider service, employee and term
+    @Test
+    public void shouldFindWorkStationByProviderService() {
+        // TODO implement integration test method to find work stations by service, provider service
+    }
+
+    @Test
+    public void shouldFindWorkStationByEmployee() {
+        // TODO implement integration test method to find work stations by employee
+    }
+
+    @Test
+    public void shouldFindWorkStationByTerm() {
+        // TODO implement integration test method to find work stations be terms
+    }
 }

@@ -13,6 +13,7 @@ import pl.salonea.entities.*;
 import pl.salonea.enums.CurrencyCode;
 import pl.salonea.enums.Gender;
 import pl.salonea.enums.ProviderType;
+import pl.salonea.enums.WorkStationType;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
@@ -92,6 +93,12 @@ public class TransactionIT {
         // Create instance of ProviderService entity
         ProviderService providerService = new ProviderService(provider, service, 1800000L);
 
+        // create instance of ServicePoint entity
+        ServicePoint servicePoint = new ServicePoint(provider, 1, address);
+
+        // create instance of WorkStation entity
+        WorkStation workStation = new WorkStation(servicePoint, 1, WorkStationType.OFFICE);
+
         // Create instance of PaymentMethod entity
         PaymentMethod paymentMethod = new PaymentMethod("Cash", false);
 
@@ -110,7 +117,7 @@ public class TransactionIT {
 
         // create instance of Transaction entity
         Transaction myTransaction = new Transaction(client, 1, 10.00, CurrencyCode.EUR, new Date(), bookedTime,
-                false, providerService, paymentMethod, term);
+                false, service, workStation, paymentMethod, term);
 
         Date dateOfBirth = new GregorianCalendar(1988, Calendar.OCTOBER, 3).getTime();
 
@@ -127,6 +134,8 @@ public class TransactionIT {
         em.persist(provider);
         em.persist(service);
         em.persist(providerService);
+        em.persist(servicePoint);
+        em.persist(workStation);
         em.persist(paymentMethod);
         em.persist(term);
         em.persist(employee);
@@ -142,6 +151,8 @@ public class TransactionIT {
         assertEquals(myTransaction.getProvider(), provider);
         assertEquals(myTransaction.getService(), service);
         assertEquals(myTransaction.getProviderService(), providerService);
+        assertEquals(myTransaction.getServicePoint(), servicePoint);
+        assertEquals(myTransaction.getWorkStation(), workStation);
         assertEquals(myTransaction.getBookedTime().getTime(), bookedTime.getTime());
         assertEquals(myTransaction.getPaid(), false);
         assertEquals(myTransaction.getPaymentMethod(), paymentMethod);
@@ -156,6 +167,8 @@ public class TransactionIT {
         em.remove(employee);
         em.remove(term);
         em.remove(paymentMethod);
+        em.remove(workStation);
+        em.remove(servicePoint);
         em.remove(providerService);
         em.remove(service);
         em.remove(provider);

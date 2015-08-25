@@ -1,5 +1,7 @@
 package pl.salonea.entities;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import pl.salonea.entities.idclass.TermEmployeeId;
 
 import javax.persistence.*;
@@ -16,7 +18,22 @@ import java.io.Serializable;
 @Table(name = "work_on")
 @Access(AccessType.PROPERTY)
 @IdClass(TermEmployeeId.class)
+@NamedQueries({
+        @NamedQuery(name = TermEmployeeWorkOn.DELETE_FOR_EMPLOYEES, query = "DELETE FROM TermEmployeeWorkOn empl_term WHERE empl_term.employee IN :employees"),
+        @NamedQuery(name = TermEmployeeWorkOn.DELETE_FOR_WORK_STATIONS, query = "DELETE FROM TermEmployeeWorkOn empl_term WHERE empl_term.workStation IN :work_stations"),
+        @NamedQuery(name = TermEmployeeWorkOn.DELETE_FOR_TERMS, query = "DELETE FROM TermEmployeeWorkOn empl_term WHERE empl_term.term IN :terms"),
+        @NamedQuery(name = TermEmployeeWorkOn.DELETE_FOR_EMPLOYEES_AND_WORK_STATIONS, query = "DELETE FROM TermEmployeeWorkOn empl_term WHERE empl_term.employee IN :employees AND empl_term.workStation IN :work_stations"),
+        @NamedQuery(name = TermEmployeeWorkOn.DELETE_FOR_EMPLOYEES_AND_TERMS, query = "DELETE FROM TermEmployeeWorkOn empl_term WHERE empl_term.employee IN :employees AND empl_term.term IN :terms"),
+        @NamedQuery(name = TermEmployeeWorkOn.DELETE_FOR_WORK_STATIONS_AND_TERMS, query = "DELETE FROM TermEmployeeWorkOn empl_term WHERE empl_term.workStation IN :work_stations AND empl_term.term IN :terms")
+})
 public class TermEmployeeWorkOn implements Serializable {
+
+    public static final String DELETE_FOR_EMPLOYEES = "TermEmployeeWorkOn.deleteForEmployees";
+    public static final String DELETE_FOR_WORK_STATIONS = "TermEmployeeWorkOn.deleteForWorkStations";
+    public static final String DELETE_FOR_TERMS = "TermEmployeeWorkOn.deleteForTerms";
+    public static final String DELETE_FOR_EMPLOYEES_AND_WORK_STATIONS = "TermEmployeeWorkOn.deleteForEmployeesAndWorkStations";
+    public static final String DELETE_FOR_EMPLOYEES_AND_TERMS = "TermEmployeeWorkOn.deleteForEmployeesAndTerms";
+    public static final String DELETE_FOR_WORK_STATIONS_AND_TERMS = "TermEmployeeWorkOn.deleteForWorkStationsAndTerms";
 
     private Term term; // PK, FK
     private Employee employee; // PK, FK
@@ -73,5 +90,30 @@ public class TermEmployeeWorkOn implements Serializable {
 
     public void setWorkStation(WorkStation workStation) {
         this.workStation = workStation;
+    }
+
+    @Override
+    public int hashCode() {
+
+        return new HashCodeBuilder(17, 31) // two randomly chosen prime numbers
+                // if deriving: .appendSuper(super.hashCode())
+                .append(getTerm())
+                .append(getEmployee())
+                .toHashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null || !(obj instanceof TermEmployeeWorkOn))
+            return false;
+        if (obj == this)
+            return true;
+
+        TermEmployeeWorkOn rhs = (TermEmployeeWorkOn) obj;
+        return new EqualsBuilder()
+                // if deriving: appendSuper(super.equals(obj)).
+                .append(getTerm(), rhs.getTerm())
+                .append(getEmployee(),rhs.getEmployee())
+                .isEquals();
     }
 }
