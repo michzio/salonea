@@ -13,21 +13,21 @@ public interface EmployeeRatingFacadeInterface extends AbstractFacadeInterface<E
 
     // concrete interface
     List<EmployeeRating> findByClient(Client client);
-    List<EmployeeRating> findByClient(Client client, Integer start, Integer offset);
+    List<EmployeeRating> findByClient(Client client, Integer start, Integer limit);
     List<EmployeeRating> findByEmployee(Employee employee);
-    List<EmployeeRating> findByEmployee(Employee employee, Integer start, Integer offset);
+    List<EmployeeRating> findByEmployee(Employee employee, Integer start, Integer limit);
     List<EmployeeRating> findForEmployeeByRating(Employee employee, Short rating);
-    List<EmployeeRating> findForEmployeeByRating(Employee employee, Short rating, Integer start, Integer offset);
+    List<EmployeeRating> findForEmployeeByRating(Employee employee, Short rating, Integer start, Integer limit);
     List<EmployeeRating> findForEmployeeAboveRating(Employee employee, Short minRating);
-    List<EmployeeRating> findForEmployeeAboveRating(Employee employee, Short minRating, Integer start, Integer offset);
+    List<EmployeeRating> findForEmployeeAboveRating(Employee employee, Short minRating, Integer start, Integer limit);
     List<EmployeeRating> findForEmployeeBelowRating(Employee employee, Short maxRating);
-    List<EmployeeRating> findForEmployeeBelowRating(Employee employee, Short maxRating, Integer start, Integer offset);
+    List<EmployeeRating> findForEmployeeBelowRating(Employee employee, Short maxRating, Integer start, Integer limit);
     List<EmployeeRating> findFromClientByRating(Client client, Short rating);
-    List<EmployeeRating> findFromClientByRating(Client client, Short rating, Integer start, Integer offset);
+    List<EmployeeRating> findFromClientByRating(Client client, Short rating, Integer start, Integer limit);
     List<EmployeeRating> findFromClientAboveRating(Client client, Short minRating);
-    List<EmployeeRating> findFromClientAboveRating(Client client, Short minRating, Integer start, Integer offset);
+    List<EmployeeRating> findFromClientAboveRating(Client client, Short minRating, Integer start, Integer limit);
     List<EmployeeRating> findFromClientBelowRating(Client client, Short maxRating);
-    List<EmployeeRating> findFromClientBelowRating(Client client, Short maxRating, Integer start, Integer offset);
+    List<EmployeeRating> findFromClientBelowRating(Client client, Short maxRating, Integer start, Integer limit);
     Double findEmployeeAvgRating(Employee employee);
     Long countEmployeeRatings(Employee employee);
     Long countClientRatings(Client client);

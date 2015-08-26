@@ -39,13 +39,13 @@ public class EmployeeFacade extends AbstractFacade<Employee> implements Employee
     }
 
     @Override
-    public List<Employee> findByDescription(String description, Integer start, Integer offset) {
+    public List<Employee> findByDescription(String description, Integer start, Integer limit) {
 
         TypedQuery<Employee> query = getEntityManager().createNamedQuery(Employee.FIND_BY_DESCRIPTION, Employee.class);
         query.setParameter("description", "%" + description + "%");
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -56,13 +56,13 @@ public class EmployeeFacade extends AbstractFacade<Employee> implements Employee
     }
 
     @Override
-    public List<Employee> findByJobPosition(String jobPosition, Integer start, Integer offset) {
+    public List<Employee> findByJobPosition(String jobPosition, Integer start, Integer limit) {
 
         TypedQuery<Employee> query = getEntityManager().createNamedQuery(Employee.FIND_BY_JOB_POSITION, Employee.class);
         query.setParameter("job_position", jobPosition);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -73,13 +73,13 @@ public class EmployeeFacade extends AbstractFacade<Employee> implements Employee
     }
 
     @Override
-    public List<Employee> findBySkill(Skill skill, Integer start, Integer offset) {
+    public List<Employee> findBySkill(Skill skill, Integer start, Integer limit) {
 
         TypedQuery<Employee> query = getEntityManager().createNamedQuery(Employee.FIND_BY_SKILL, Employee.class);
         query.setParameter("skill", skill);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -90,13 +90,13 @@ public class EmployeeFacade extends AbstractFacade<Employee> implements Employee
     }
 
     @Override
-    public List<Employee> findByEducation(Education education, Integer start, Integer offset) {
+    public List<Employee> findByEducation(Education education, Integer start, Integer limit) {
 
         TypedQuery<Employee> query = getEntityManager().createNamedQuery(Employee.FIND_BY_EDUCATION, Employee.class);
         query.setParameter("education", education);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -107,14 +107,14 @@ public class EmployeeFacade extends AbstractFacade<Employee> implements Employee
     }
 
     @Override
-    public List<Employee> findByEducationAndSkills(Education education, List<Skill> skills, Integer start, Integer offset) {
+    public List<Employee> findByEducationAndSkills(Education education, List<Skill> skills, Integer start, Integer limit) {
 
         TypedQuery<Employee> query = getEntityManager().createNamedQuery(Employee.FIND_BY_EDUCATION_AND_SKILLS, Employee.class);
         query.setParameter("education", education);
         query.setParameter("skills", skills);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -125,13 +125,13 @@ public class EmployeeFacade extends AbstractFacade<Employee> implements Employee
     }
 
     @Override
-    public List<Employee> findByService(Service service, Integer start, Integer offset) {
+    public List<Employee> findByService(Service service, Integer start, Integer limit) {
 
         TypedQuery<Employee> query = getEntityManager().createNamedQuery(Employee.FIND_BY_SERVICE, Employee.class);
         query.setParameter("service", service);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -142,13 +142,13 @@ public class EmployeeFacade extends AbstractFacade<Employee> implements Employee
     }
 
     @Override
-    public List<Employee> findByProviderService(ProviderService providerService, Integer start, Integer offset) {
+    public List<Employee> findByProviderService(ProviderService providerService, Integer start, Integer limit) {
 
         TypedQuery<Employee> query = getEntityManager().createNamedQuery(Employee.FIND_BY_PROVIDER_SERVICE, Employee.class);
         query.setParameter("provider_service",  providerService);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -159,13 +159,13 @@ public class EmployeeFacade extends AbstractFacade<Employee> implements Employee
     }
 
     @Override
-    public List<Employee> findByServicePoint(ServicePoint servicePoint, Integer start, Integer offset) {
+    public List<Employee> findByServicePoint(ServicePoint servicePoint, Integer start, Integer limit) {
 
         TypedQuery<Employee> query = getEntityManager().createNamedQuery(Employee.FIND_BY_SERVICE_POINT, Employee.class);
         query.setParameter("service_point", servicePoint);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -176,15 +176,15 @@ public class EmployeeFacade extends AbstractFacade<Employee> implements Employee
     }
 
     @Override
-    public List<Employee> findByServicePointAndTerm(ServicePoint servicePoint, Date startTime, Date endTime, Integer start, Integer offset) {
+    public List<Employee> findByServicePointAndTerm(ServicePoint servicePoint, Date startTime, Date endTime, Integer start, Integer limit) {
 
         TypedQuery<Employee> query = getEntityManager().createNamedQuery(Employee.FIND_BY_SERVICE_POINT_AND_TERM, Employee.class);
         query.setParameter("service_point", servicePoint);
         query.setParameter("start_time", startTime);
         query.setParameter("end_time", endTime);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -195,15 +195,15 @@ public class EmployeeFacade extends AbstractFacade<Employee> implements Employee
     }
 
     @Override
-    public List<Employee> findByServicePointAndTermStrict(ServicePoint servicePoint, Date startTime, Date endTime, Integer start, Integer offset) {
+    public List<Employee> findByServicePointAndTermStrict(ServicePoint servicePoint, Date startTime, Date endTime, Integer start, Integer limit) {
 
         TypedQuery<Employee> query = getEntityManager().createNamedQuery(Employee.FIND_BY_SERVICE_POINT_AND_TERM_STRICT, Employee.class);
         query.setParameter("service_point", servicePoint);
         query.setParameter("start_time", startTime);
         query.setParameter("end_time", endTime);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -214,13 +214,13 @@ public class EmployeeFacade extends AbstractFacade<Employee> implements Employee
     }
 
     @Override
-    public List<Employee> findByWorkStation(WorkStation workStation, Integer start, Integer offset) {
+    public List<Employee> findByWorkStation(WorkStation workStation, Integer start, Integer limit) {
 
         TypedQuery<Employee> query = getEntityManager().createNamedQuery(Employee.FIND_BY_WORK_STATION, Employee.class);
         query.setParameter("work_station", workStation);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -231,15 +231,15 @@ public class EmployeeFacade extends AbstractFacade<Employee> implements Employee
     }
 
     @Override
-    public List<Employee> findByWorkStationAndTerm(WorkStation workStation, Date startTime, Date endTime, Integer start, Integer offset) {
+    public List<Employee> findByWorkStationAndTerm(WorkStation workStation, Date startTime, Date endTime, Integer start, Integer limit) {
 
         TypedQuery<Employee> query = getEntityManager().createNamedQuery(Employee.FIND_BY_WORK_STATION_AND_TERM, Employee.class);
         query.setParameter("work_station", workStation);
         query.setParameter("start_time", startTime);
         query.setParameter("end_time", endTime);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -250,15 +250,15 @@ public class EmployeeFacade extends AbstractFacade<Employee> implements Employee
     }
 
     @Override
-    public List<Employee> findByWorkStationAndTermStrict(WorkStation workStation, Date startTime, Date endTime, Integer start, Integer offset) {
+    public List<Employee> findByWorkStationAndTermStrict(WorkStation workStation, Date startTime, Date endTime, Integer start, Integer limit) {
 
         TypedQuery<Employee> query = getEntityManager().createNamedQuery(Employee.FIND_BY_WORK_STATION_AND_TERM_STRICT, Employee.class);
         query.setParameter("work_station", workStation);
         query.setParameter("start_time", startTime);
         query.setParameter("end_time", endTime);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -269,7 +269,7 @@ public class EmployeeFacade extends AbstractFacade<Employee> implements Employee
     }
 
     @Override
-    public List<Employee> findByMultipleCriteria(String description, List<String> jobPositions, List<Skill> skills, List<Education> educations, List<Service> services, List<ProviderService> providerServices, List<ServicePoint> servicePoints, List<WorkStation> workStations, Period period, Boolean strictTerm, Integer start, Integer offset) {
+    public List<Employee> findByMultipleCriteria(String description, List<String> jobPositions, List<Skill> skills, List<Education> educations, List<Service> services, List<ProviderService> providerServices, List<ServicePoint> servicePoints, List<WorkStation> workStations, Period period, Boolean strictTerm, Integer start, Integer limit) {
 
         CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
         CriteriaQuery<Employee> criteriaQuery = criteriaBuilder.createQuery(Employee.class);
@@ -383,9 +383,9 @@ public class EmployeeFacade extends AbstractFacade<Employee> implements Employee
         criteriaQuery.where(predicates.toArray(new Predicate[] { }));
 
         TypedQuery<Employee> query = getEntityManager().createQuery(criteriaQuery);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }

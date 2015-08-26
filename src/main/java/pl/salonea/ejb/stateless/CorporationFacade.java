@@ -36,7 +36,7 @@ public class CorporationFacade extends AbstractFacade<Corporation> implements Co
     }
 
     @Override
-    public List<Corporation> findByAddress(String city, String state, String country, String street, String zipCode, Integer start, Integer offset) {
+    public List<Corporation> findByAddress(String city, String state, String country, String street, String zipCode, Integer start, Integer limit) {
 
         TypedQuery<Corporation> query = getEntityManager().createNamedQuery(Corporation.FIND_BY_ADDRESS, Corporation.class);
         if(city == null) city = "";
@@ -49,9 +49,9 @@ public class CorporationFacade extends AbstractFacade<Corporation> implements Co
         query.setParameter("street", "%" + street + "%");
         if(zipCode == null) zipCode = "";
         query.setParameter("zip_code", "%" + zipCode + "%");
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -62,13 +62,13 @@ public class CorporationFacade extends AbstractFacade<Corporation> implements Co
     }
 
     @Override
-    public List<Corporation> findByName(String name, Integer start, Integer offset) {
+    public List<Corporation> findByName(String name, Integer start, Integer limit) {
 
         TypedQuery<Corporation> query = getEntityManager().createNamedQuery(Corporation.FIND_BY_NAME, Corporation.class);
         query.setParameter("name", "%" + name + "%");
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -79,13 +79,13 @@ public class CorporationFacade extends AbstractFacade<Corporation> implements Co
     }
 
     @Override
-    public List<Corporation> findOpenAfter(Date date, Integer start, Integer offset) {
+    public List<Corporation> findOpenAfter(Date date, Integer start, Integer limit) {
 
         TypedQuery<Corporation> query = getEntityManager().createNamedQuery(Corporation.FIND_OPEN_AFTER, Corporation.class);
         query.setParameter("date", date);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -96,13 +96,13 @@ public class CorporationFacade extends AbstractFacade<Corporation> implements Co
     }
 
     @Override
-    public List<Corporation> findOpenBefore(Date date, Integer start, Integer offset) {
+    public List<Corporation> findOpenBefore(Date date, Integer start, Integer limit) {
 
         TypedQuery<Corporation> query = getEntityManager().createNamedQuery(Corporation.FIND_OPEN_BEFORE, Corporation.class);
         query.setParameter("date", date);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }

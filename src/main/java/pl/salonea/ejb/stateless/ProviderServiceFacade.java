@@ -40,13 +40,13 @@ public class ProviderServiceFacade extends AbstractFacade<ProviderService> imple
     }
 
     @Override
-    public List<ProviderService> findByProvider(Provider provider, Integer start, Integer offset) {
+    public List<ProviderService> findByProvider(Provider provider, Integer start, Integer limit) {
 
         TypedQuery<ProviderService> query = getEntityManager().createNamedQuery(ProviderService.FIND_BY_PROVIDER, ProviderService.class);
         query.setParameter("provider", provider);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -57,13 +57,13 @@ public class ProviderServiceFacade extends AbstractFacade<ProviderService> imple
     }
 
     @Override
-    public List<ProviderService> findByService(Service service, Integer start, Integer offset) {
+    public List<ProviderService> findByService(Service service, Integer start, Integer limit) {
 
         TypedQuery<ProviderService> query = getEntityManager().createNamedQuery(ProviderService.FIND_BY_SERVICE, ProviderService.class);
         query.setParameter("service", service);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -74,13 +74,13 @@ public class ProviderServiceFacade extends AbstractFacade<ProviderService> imple
     }
 
     @Override
-    public List<ProviderService> findByServiceCategory(ServiceCategory serviceCategory, Integer start, Integer offset) {
+    public List<ProviderService> findByServiceCategory(ServiceCategory serviceCategory, Integer start, Integer limit) {
 
         TypedQuery<ProviderService> query = getEntityManager().createNamedQuery(ProviderService.FIND_BY_SERVICE_CATEGORY, ProviderService.class);
         query.setParameter("service_category", serviceCategory);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -91,14 +91,14 @@ public class ProviderServiceFacade extends AbstractFacade<ProviderService> imple
     }
 
     @Override
-    public List<ProviderService> findByProviderAndServiceCategory(Provider provider, ServiceCategory serviceCategory, Integer start, Integer offset) {
+    public List<ProviderService> findByProviderAndServiceCategory(Provider provider, ServiceCategory serviceCategory, Integer start, Integer limit) {
 
         TypedQuery<ProviderService> query = getEntityManager().createNamedQuery(ProviderService.FIND_BY_PROVIDER_AND_SERVICE_CATEGORY, ProviderService.class);
         query.setParameter("provider", provider);
         query.setParameter("service_category", serviceCategory);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -109,13 +109,13 @@ public class ProviderServiceFacade extends AbstractFacade<ProviderService> imple
     }
 
     @Override
-    public List<ProviderService> findByDescription(String description, Integer start, Integer offset) {
+    public List<ProviderService> findByDescription(String description, Integer start, Integer limit) {
 
         TypedQuery<ProviderService> query = getEntityManager().createNamedQuery(ProviderService.FIND_BY_DESCRIPTION, ProviderService.class);
         query.setParameter("description", "%" + description + "%");
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -126,14 +126,14 @@ public class ProviderServiceFacade extends AbstractFacade<ProviderService> imple
     }
 
     @Override
-    public List<ProviderService> findByProviderAndDescription(Provider provider, String description, Integer start, Integer offset) {
+    public List<ProviderService> findByProviderAndDescription(Provider provider, String description, Integer start, Integer limit) {
 
         TypedQuery<ProviderService> query = getEntityManager().createNamedQuery(ProviderService.FIND_BY_PROVIDER_AND_DESCRIPTION, ProviderService.class);
         query.setParameter("provider", provider);
         query.setParameter("description", "%" + description + "%");
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -144,14 +144,14 @@ public class ProviderServiceFacade extends AbstractFacade<ProviderService> imple
     }
 
     @Override
-    public List<ProviderService> findByServiceAndDescription(Service service, String description, Integer start, Integer offset) {
+    public List<ProviderService> findByServiceAndDescription(Service service, String description, Integer start, Integer limit) {
 
         TypedQuery<ProviderService> query = getEntityManager().createNamedQuery(ProviderService.FIND_BY_SERVICE_AND_DESCRIPTION, ProviderService.class);
         query.setParameter("service", service);
         query.setParameter("description", "%" + description + "%");
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -162,15 +162,15 @@ public class ProviderServiceFacade extends AbstractFacade<ProviderService> imple
     }
 
     @Override
-    public List<ProviderService> findByServiceAndPrice(Service service, Double minPrice, Double maxPrice, Integer start, Integer offset) {
+    public List<ProviderService> findByServiceAndPrice(Service service, Double minPrice, Double maxPrice, Integer start, Integer limit) {
 
         TypedQuery<ProviderService> query = getEntityManager().createNamedQuery(ProviderService.FIND_BY_SERVICE_AND_PRICE, ProviderService.class);
         query.setParameter("service", service);
         query.setParameter("min_price", minPrice);
         query.setParameter("max_price", maxPrice);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -181,15 +181,15 @@ public class ProviderServiceFacade extends AbstractFacade<ProviderService> imple
     }
 
     @Override
-    public List<ProviderService> findByServiceAndDiscountedPrice(Service service, Double minPrice, Double maxPrice, Integer start, Integer offset) {
+    public List<ProviderService> findByServiceAndDiscountedPrice(Service service, Double minPrice, Double maxPrice, Integer start, Integer limit) {
 
         TypedQuery<ProviderService> query = getEntityManager().createNamedQuery(ProviderService.FIND_BY_SERVICE_AND_DISCOUNTED_PRICE, ProviderService.class);
         query.setParameter("service", service);
         query.setParameter("min_price", minPrice);
         query.setParameter("max_price", maxPrice);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -200,15 +200,15 @@ public class ProviderServiceFacade extends AbstractFacade<ProviderService> imple
     }
 
     @Override
-    public List<ProviderService> findByServiceAndDiscount(Service service, Short minDiscount, Short maxDiscount, Integer start, Integer offset) {
+    public List<ProviderService> findByServiceAndDiscount(Service service, Short minDiscount, Short maxDiscount, Integer start, Integer limit) {
 
         TypedQuery<ProviderService> query = getEntityManager().createNamedQuery(ProviderService.FIND_BY_SERVICE_AND_DISCOUNT, ProviderService.class);
         query.setParameter("service", service);
         query.setParameter("min_discount", minDiscount);
         query.setParameter("max_discount", maxDiscount);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -219,15 +219,15 @@ public class ProviderServiceFacade extends AbstractFacade<ProviderService> imple
     }
 
     @Override
-    public List<ProviderService> findByProviderAndDiscount(Provider provider, Short minDiscount, Short maxDiscount, Integer start, Integer offset) {
+    public List<ProviderService> findByProviderAndDiscount(Provider provider, Short minDiscount, Short maxDiscount, Integer start, Integer limit) {
 
         TypedQuery<ProviderService> query = getEntityManager().createNamedQuery(ProviderService.FIND_BY_PROVIDER_AND_DISCOUNT, ProviderService.class);
         query.setParameter("provider", provider);
         query.setParameter("min_discount", minDiscount);
         query.setParameter("max_discount", maxDiscount);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -238,13 +238,13 @@ public class ProviderServiceFacade extends AbstractFacade<ProviderService> imple
     }
 
     @Override
-    public List<ProviderService> findByWorkStation(WorkStation workStation, Integer start, Integer offset) {
+    public List<ProviderService> findByWorkStation(WorkStation workStation, Integer start, Integer limit) {
 
         TypedQuery<ProviderService> query = getEntityManager().createNamedQuery(ProviderService.FIND_BY_WORK_STATION, ProviderService.class);
         query.setParameter("work_station", workStation);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -255,13 +255,13 @@ public class ProviderServiceFacade extends AbstractFacade<ProviderService> imple
     }
 
     @Override
-    public List<ProviderService> findByEmployee(Employee employee, Integer start, Integer offset) {
+    public List<ProviderService> findByEmployee(Employee employee, Integer start, Integer limit) {
 
         TypedQuery<ProviderService> query = getEntityManager().createNamedQuery(ProviderService.FIND_BY_EMPLOYEE, ProviderService.class);
         query.setParameter("employee",employee);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -272,14 +272,14 @@ public class ProviderServiceFacade extends AbstractFacade<ProviderService> imple
     }
 
     @Override
-    public List<ProviderService> findByProviderAndEmployee(Provider provider, Employee employee, Integer start, Integer offset) {
+    public List<ProviderService> findByProviderAndEmployee(Provider provider, Employee employee, Integer start, Integer limit) {
 
         TypedQuery<ProviderService> query = getEntityManager().createNamedQuery(ProviderService.FIND_BY_PROVIDER_AND_EMPLOYEE, ProviderService.class);
         query.setParameter("provider", provider);
         query.setParameter("employee", employee);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }

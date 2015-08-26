@@ -40,13 +40,13 @@ public class CreditCardFacade extends AbstractFacade<CreditCard> implements Cred
     }
 
     @Override
-    public List<CreditCard> findByType(CreditCardType cardType, Integer start, Integer offset) {
+    public List<CreditCard> findByType(CreditCardType cardType, Integer start, Integer limit) {
 
         TypedQuery<CreditCard> query = getEntityManager().createNamedQuery(CreditCard.FIND_BY_TYPE, CreditCard.class);
         query.setParameter("card_type", cardType);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -57,12 +57,12 @@ public class CreditCardFacade extends AbstractFacade<CreditCard> implements Cred
     }
 
     @Override
-    public List<CreditCard> findExpired(Integer start, Integer offset) {
+    public List<CreditCard> findExpired(Integer start, Integer limit) {
 
         TypedQuery<CreditCard> query = getEntityManager().createNamedQuery(CreditCard.FIND_EXPIRED, CreditCard.class);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -73,12 +73,12 @@ public class CreditCardFacade extends AbstractFacade<CreditCard> implements Cred
     }
 
     @Override
-    public List<CreditCard> findNotExpired(Integer start, Integer offset) {
+    public List<CreditCard> findNotExpired(Integer start, Integer limit) {
 
         TypedQuery<CreditCard> query = getEntityManager().createNamedQuery(CreditCard.FIND_NOT_EXPIRED, CreditCard.class);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -89,13 +89,13 @@ public class CreditCardFacade extends AbstractFacade<CreditCard> implements Cred
     }
 
     @Override
-    public List<CreditCard> findExpirationDateAfter(Date date, Integer start, Integer offset) {
+    public List<CreditCard> findExpirationDateAfter(Date date, Integer start, Integer limit) {
 
         TypedQuery<CreditCard> query = getEntityManager().createNamedQuery(CreditCard.FIND_EXPIRATION_DATE_AFTER, CreditCard.class);
         query.setParameter("date", date);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -106,13 +106,13 @@ public class CreditCardFacade extends AbstractFacade<CreditCard> implements Cred
     }
 
     @Override
-    public List<CreditCard> findExpirationDateBefore(Date date, Integer start, Integer offset) {
+    public List<CreditCard> findExpirationDateBefore(Date date, Integer start, Integer limit) {
 
         TypedQuery<CreditCard> query = getEntityManager().createNamedQuery(CreditCard.FIND_EXPIRATION_DATE_BEFORE, CreditCard.class);
         query.setParameter("date", date);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -123,14 +123,14 @@ public class CreditCardFacade extends AbstractFacade<CreditCard> implements Cred
     }
 
     @Override
-    public List<CreditCard> findExpirationDateBetween(Date startDate, Date endDate, Integer start, Integer offset) {
+    public List<CreditCard> findExpirationDateBetween(Date startDate, Date endDate, Integer start, Integer limit) {
 
         TypedQuery<CreditCard> query = getEntityManager().createNamedQuery(CreditCard.FIND_EXPIRATION_DATE_BETWEEN, CreditCard.class);
         query.setParameter("start_date", startDate);
         query.setParameter("end_date", endDate);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }

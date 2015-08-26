@@ -38,13 +38,13 @@ public class ServiceFacade extends AbstractFacade<Service> implements ServiceFac
     }
 
     @Override
-    public List<Service> findByName(String name, Integer start, Integer offset) {
+    public List<Service> findByName(String name, Integer start, Integer limit) {
 
         TypedQuery<Service> query = getEntityManager().createNamedQuery(Service.FIND_BY_NAME, Service.class);
         query.setParameter("name", "%" + name + "%");
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -55,13 +55,13 @@ public class ServiceFacade extends AbstractFacade<Service> implements ServiceFac
     }
 
     @Override
-    public List<Service> findByDescription(String description, Integer start, Integer offset) {
+    public List<Service> findByDescription(String description, Integer start, Integer limit) {
 
         TypedQuery<Service> query = getEntityManager().createNamedQuery(Service.FIND_BY_DESCRIPTION, Service.class);
         query.setParameter("description", "%" + description + "%");
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -72,13 +72,13 @@ public class ServiceFacade extends AbstractFacade<Service> implements ServiceFac
     }
 
     @Override
-    public List<Service> searchByKeyword(String keyword, Integer start, Integer offset) {
+    public List<Service> searchByKeyword(String keyword, Integer start, Integer limit) {
 
         TypedQuery<Service> query = getEntityManager().createNamedQuery(Service.SEARCH_BY_KEYWORD, Service.class);
         query.setParameter("keyword", "%" + keyword + "%");
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -89,13 +89,13 @@ public class ServiceFacade extends AbstractFacade<Service> implements ServiceFac
     }
 
     @Override
-    public List<Service> findByCategory(ServiceCategory serviceCategory, Integer start, Integer offset) {
+    public List<Service> findByCategory(ServiceCategory serviceCategory, Integer start, Integer limit) {
 
         TypedQuery<Service> query = getEntityManager().createNamedQuery(Service.FIND_BY_CATEGORY, Service.class);
         query.setParameter("service_category", serviceCategory);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -106,14 +106,14 @@ public class ServiceFacade extends AbstractFacade<Service> implements ServiceFac
     }
 
     @Override
-    public List<Service> findByCategoryAndKeyword(ServiceCategory serviceCategory, String keyword, Integer start, Integer offset) {
+    public List<Service> findByCategoryAndKeyword(ServiceCategory serviceCategory, String keyword, Integer start, Integer limit) {
 
         TypedQuery<Service> query = getEntityManager().createNamedQuery(Service.FIND_BY_CATEGORY_AND_KEYWORD, Service.class);
         query.setParameter("service_category", serviceCategory);
         query.setParameter("keyword", "%" + keyword + "%");
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -124,13 +124,13 @@ public class ServiceFacade extends AbstractFacade<Service> implements ServiceFac
     }
 
     @Override
-    public List<Service> findByProvider(Provider provider, Integer start, Integer offset) {
+    public List<Service> findByProvider(Provider provider, Integer start, Integer limit) {
 
         TypedQuery<Service> query = getEntityManager().createNamedQuery(Service.FIND_BY_PROVIDER, Service.class);
         query.setParameter("provider", provider);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -141,13 +141,13 @@ public class ServiceFacade extends AbstractFacade<Service> implements ServiceFac
     }
 
     @Override
-    public List<Service> findByEmployee(Employee employee, Integer start, Integer offset) {
+    public List<Service> findByEmployee(Employee employee, Integer start, Integer limit) {
 
         TypedQuery<Service> query = getEntityManager().createNamedQuery(Service.FIND_BY_EMPLOYEE, Service.class);
         query.setParameter("employee", employee);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -158,13 +158,13 @@ public class ServiceFacade extends AbstractFacade<Service> implements ServiceFac
     }
 
     @Override
-    public List<Service> findByWorkStation(WorkStation workStation, Integer start, Integer offset) {
+    public List<Service> findByWorkStation(WorkStation workStation, Integer start, Integer limit) {
 
         TypedQuery<Service> query = getEntityManager().createNamedQuery(Service.FIND_BY_WORK_STATION, Service.class);
         query.setParameter("work_station", workStation);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -175,13 +175,13 @@ public class ServiceFacade extends AbstractFacade<Service> implements ServiceFac
     }
 
     @Override
-    public List<Service> findByServicePoint(ServicePoint servicePoint, Integer start, Integer offset) {
+    public List<Service> findByServicePoint(ServicePoint servicePoint, Integer start, Integer limit) {
 
         TypedQuery<Service> query = getEntityManager().createNamedQuery(Service.FIND_BY_SERVICE_POINT, Service.class);
         query.setParameter("service_point", servicePoint);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }

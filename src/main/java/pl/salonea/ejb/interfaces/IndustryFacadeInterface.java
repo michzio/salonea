@@ -13,9 +13,9 @@ public interface IndustryFacadeInterface extends AbstractFacadeInterface<Industr
     // concrete interface
     Industry findForName(String name);
     List<Industry> findByName(String name);
-    List<Industry> findByName(String name, Integer start, Integer offset);
+    List<Industry> findByName(String name, Integer start, Integer limit);
     List<Industry> findByProvider(Provider provider);
-    List<Industry> findByProvider(Provider provider, Integer start, Integer offset);
+    List<Industry> findByProvider(Provider provider, Integer start, Integer limit);
 
     @javax.ejb.Remote
     interface Remote extends IndustryFacadeInterface { }

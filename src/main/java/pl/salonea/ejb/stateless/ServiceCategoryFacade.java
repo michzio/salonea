@@ -36,13 +36,13 @@ public class ServiceCategoryFacade extends AbstractFacade<ServiceCategory> imple
     }
 
     @Override
-    public List<ServiceCategory> findByName(String name, Integer start, Integer offset) {
+    public List<ServiceCategory> findByName(String name, Integer start, Integer limit) {
 
         TypedQuery<ServiceCategory> query = getEntityManager().createNamedQuery(ServiceCategory.FIND_BY_NAME, ServiceCategory.class);
         query.setParameter("name", "%" + name + "%");
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -53,13 +53,13 @@ public class ServiceCategoryFacade extends AbstractFacade<ServiceCategory> imple
     }
 
     @Override
-    public List<ServiceCategory> findByDescription(String description, Integer start, Integer offset) {
+    public List<ServiceCategory> findByDescription(String description, Integer start, Integer limit) {
 
         TypedQuery<ServiceCategory> query = getEntityManager().createNamedQuery(ServiceCategory.FIND_BY_DESCRIPTION, ServiceCategory.class);
         query.setParameter("description", "%" + description + "%");
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -70,13 +70,13 @@ public class ServiceCategoryFacade extends AbstractFacade<ServiceCategory> imple
     }
 
     @Override
-    public List<ServiceCategory> findByKeyword(String keyword, Integer start, Integer offset) {
+    public List<ServiceCategory> findByKeyword(String keyword, Integer start, Integer limit) {
 
         TypedQuery<ServiceCategory> query = getEntityManager().createNamedQuery(ServiceCategory.FIND_BY_KEYWORD, ServiceCategory.class);
         query.setParameter("keyword", "%" + keyword + "%");
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -87,13 +87,13 @@ public class ServiceCategoryFacade extends AbstractFacade<ServiceCategory> imple
     }
 
     @Override
-    public List<ServiceCategory> findBySuperCategory(ServiceCategory superCategory, Integer start, Integer offset) {
+    public List<ServiceCategory> findBySuperCategory(ServiceCategory superCategory, Integer start, Integer limit) {
 
         TypedQuery<ServiceCategory> query = getEntityManager().createNamedQuery(ServiceCategory.FIND_BY_SUPER_CATEGORY, ServiceCategory.class);
         query.setParameter("super_category", superCategory);
-        if(start != null && offset != null)  {
+        if(start != null && limit != null)  {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -104,14 +104,14 @@ public class ServiceCategoryFacade extends AbstractFacade<ServiceCategory> imple
     }
 
     @Override
-    public List<ServiceCategory> findByKeywordInCategory(ServiceCategory superCategory, String keyword, Integer start, Integer offset) {
+    public List<ServiceCategory> findByKeywordInCategory(ServiceCategory superCategory, String keyword, Integer start, Integer limit) {
 
         TypedQuery<ServiceCategory> query = getEntityManager().createNamedQuery(ServiceCategory.FIND_BY_KEYWORD_IN_CATEGORY, ServiceCategory.class);
         query.setParameter("keyword", "%" + keyword + "%");
         query.setParameter("super_category", superCategory);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }

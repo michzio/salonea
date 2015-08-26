@@ -42,12 +42,12 @@ public class NaturalPersonFacade extends AbstractFacade<NaturalPerson> implement
     }
 
     @Override
-    public List<NaturalPerson> findByFirstName(String firstName, int start, int offset) {
+    public List<NaturalPerson> findByFirstName(String firstName, int start, int limit) {
 
         TypedQuery<NaturalPerson> query = getEntityManager().createNamedQuery(NaturalPerson.FIND_BY_FIRST_NAME, NaturalPerson.class);
         query.setParameter("fname", firstName);
         query.setFirstResult(start);
-        query.setMaxResults(offset);
+        query.setMaxResults(limit);
         return query.getResultList();
     }
 
@@ -59,12 +59,12 @@ public class NaturalPersonFacade extends AbstractFacade<NaturalPerson> implement
     }
 
     @Override
-    public List<NaturalPerson> findByLastName(String lastName, int start, int offset) {
+    public List<NaturalPerson> findByLastName(String lastName, int start, int limit) {
 
         TypedQuery<NaturalPerson> query = getEntityManager().createNamedQuery(NaturalPerson.FIND_BY_LAST_NAME, NaturalPerson.class);
         query.setParameter("lname", lastName);
         query.setFirstResult(start);
-        query.setMaxResults(offset);
+        query.setMaxResults(limit);
         return query.getResultList();
     }
 
@@ -78,13 +78,13 @@ public class NaturalPersonFacade extends AbstractFacade<NaturalPerson> implement
     }
 
     @Override
-    public List<NaturalPerson> findByNames(String firstName, String lastName, int start, int offset) {
+    public List<NaturalPerson> findByNames(String firstName, String lastName, int start, int limit) {
 
         TypedQuery<NaturalPerson> query = getEntityManager().createNamedQuery(NaturalPerson.FIND_BY_NAMES, NaturalPerson.class);
         query.setParameter("fname", firstName);
         query.setParameter("lname", lastName);
         query.setFirstResult(start);
-        query.setMaxResults(offset);
+        query.setMaxResults(limit);
         return query.getResultList();
     }
 
@@ -97,12 +97,12 @@ public class NaturalPersonFacade extends AbstractFacade<NaturalPerson> implement
     }
 
     @Override
-    public List<NaturalPerson> findBornAfter(Date date, int start, int offset) {
+    public List<NaturalPerson> findBornAfter(Date date, int start, int limit) {
 
         TypedQuery<NaturalPerson> query = getEntityManager().createNamedQuery(Client.FIND_BORN_AFTER, NaturalPerson.class);
         query.setParameter("date", date);
         query.setFirstResult(start);
-        query.setMaxResults(offset);
+        query.setMaxResults(limit);
         return query.getResultList();
     }
 
@@ -114,12 +114,12 @@ public class NaturalPersonFacade extends AbstractFacade<NaturalPerson> implement
     }
 
     @Override
-    public List<NaturalPerson> findBornBefore(Date date, int start, int offset) {
+    public List<NaturalPerson> findBornBefore(Date date, int start, int limit) {
 
         TypedQuery<NaturalPerson> query = getEntityManager().createNamedQuery(NaturalPerson.FIND_BORN_BEFORE, NaturalPerson.class);
         query.setParameter("date", date);
         query.setFirstResult(start);
-        query.setMaxResults(offset);
+        query.setMaxResults(limit);
         return query.getResultList();
     }
 
@@ -133,13 +133,13 @@ public class NaturalPersonFacade extends AbstractFacade<NaturalPerson> implement
     }
 
     @Override
-    public List<NaturalPerson> findBornBetween(Date startDate, Date endDate, int start, int offset) {
+    public List<NaturalPerson> findBornBetween(Date startDate, Date endDate, int start, int limit) {
 
         TypedQuery<NaturalPerson> query = getEntityManager().createNamedQuery(NaturalPerson.FIND_BORN_BEFORE, NaturalPerson.class);
         query.setParameter("start_date", startDate);
         query.setParameter("end_date", endDate);
         query.setFirstResult(start);
-        query.setMaxResults(offset);
+        query.setMaxResults(limit);
         return query.getResultList();
     }
 
@@ -156,7 +156,7 @@ public class NaturalPersonFacade extends AbstractFacade<NaturalPerson> implement
     }
 
     @Override
-    public List<NaturalPerson> findOlderThan(Integer age, int start, int offset) {
+    public List<NaturalPerson> findOlderThan(Integer age, int start, int limit) {
 
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.YEAR, -age);
@@ -165,7 +165,7 @@ public class NaturalPersonFacade extends AbstractFacade<NaturalPerson> implement
         TypedQuery<NaturalPerson> query = getEntityManager().createNamedQuery(NaturalPerson.FIND_BORN_BEFORE, NaturalPerson.class);
         query.setParameter("date", youngestBirthDate);
         query.setFirstResult(start);
-        query.setMaxResults(offset);
+        query.setMaxResults(limit);
         return  query.getResultList();
     }
 
@@ -182,7 +182,7 @@ public class NaturalPersonFacade extends AbstractFacade<NaturalPerson> implement
     }
 
     @Override
-    public List<NaturalPerson> findYoungerThan(Integer age, int start, int offset) {
+    public List<NaturalPerson> findYoungerThan(Integer age, int start, int limit) {
 
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.YEAR, -age);
@@ -191,7 +191,7 @@ public class NaturalPersonFacade extends AbstractFacade<NaturalPerson> implement
         TypedQuery<NaturalPerson> query = getEntityManager().createNamedQuery(NaturalPerson.FIND_BORN_AFTER, NaturalPerson.class);
         query.setParameter("date", oldestBirthDate);
         query.setFirstResult(start);
-        query.setMaxResults(offset);
+        query.setMaxResults(limit);
         return query.getResultList();
     }
 
@@ -201,7 +201,7 @@ public class NaturalPersonFacade extends AbstractFacade<NaturalPerson> implement
     }
 
     @Override
-    public List<NaturalPerson> findBetweenAge(Integer youngestAge, Integer oldestAge, Integer start, Integer offset) {
+    public List<NaturalPerson> findBetweenAge(Integer youngestAge, Integer oldestAge, Integer start, Integer limit) {
 
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.YEAR, -youngestAge);
@@ -213,9 +213,9 @@ public class NaturalPersonFacade extends AbstractFacade<NaturalPerson> implement
         TypedQuery<NaturalPerson> query = getEntityManager().createNamedQuery(NaturalPerson.FIND_BORN_BETWEEN, NaturalPerson.class);
         query.setParameter("start_date", oldestBirthDate);
         query.setParameter("end_date", youngestBirthDate);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -226,9 +226,9 @@ public class NaturalPersonFacade extends AbstractFacade<NaturalPerson> implement
     }
 
     @Override
-    public List<NaturalPerson> findByLocation(String city, String state, String country, String street, String zipCode, Integer start, Integer offset) {
+    public List<NaturalPerson> findByLocation(String city, String state, String country, String street, String zipCode, Integer start, Integer limit) {
 
-        return findByAddress(NaturalPerson.FIND_BY_LOCATION, city, state, country, street, zipCode, start, offset);
+        return findByAddress(NaturalPerson.FIND_BY_LOCATION, city, state, country, street, zipCode, start, limit);
     }
 
     @Override
@@ -238,11 +238,11 @@ public class NaturalPersonFacade extends AbstractFacade<NaturalPerson> implement
     }
 
     @Override
-    public List<NaturalPerson> findByDelivery(String city, String state, String country, String street, String zipCode, Integer start, Integer offset) {
-        return findByAddress(NaturalPerson.FIND_BY_DELIVERY, city, state, country, street, zipCode, start, offset);
+    public List<NaturalPerson> findByDelivery(String city, String state, String country, String street, String zipCode, Integer start, Integer limit) {
+        return findByAddress(NaturalPerson.FIND_BY_DELIVERY, city, state, country, street, zipCode, start, limit);
     }
 
-    private List<NaturalPerson> findByAddress(String queryName, String city, String state, String country, String street, String zipCode, Integer start, Integer offset) {
+    private List<NaturalPerson> findByAddress(String queryName, String city, String state, String country, String street, String zipCode, Integer start, Integer limit) {
 
         TypedQuery<NaturalPerson> query = getEntityManager().createNamedQuery(queryName, NaturalPerson.class);
         if(city == null) city = "";
@@ -255,9 +255,9 @@ public class NaturalPersonFacade extends AbstractFacade<NaturalPerson> implement
         query.setParameter("street", "%" + street + "%");
         if(zipCode == null) zipCode = "";
         query.setParameter("zip_code", "%" + zipCode + "%");
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -268,13 +268,13 @@ public class NaturalPersonFacade extends AbstractFacade<NaturalPerson> implement
     }
 
     @Override
-    public List<NaturalPerson> findByGender(Gender gender, Integer start, Integer offset) {
+    public List<NaturalPerson> findByGender(Gender gender, Integer start, Integer limit) {
 
         TypedQuery<NaturalPerson> query = getEntityManager().createNamedQuery(NaturalPerson.FIND_BY_GENDER, NaturalPerson.class);
         query.setParameter("gender", gender);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }

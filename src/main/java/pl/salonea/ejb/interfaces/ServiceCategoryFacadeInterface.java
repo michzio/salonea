@@ -11,15 +11,15 @@ public interface ServiceCategoryFacadeInterface extends AbstractFacadeInterface<
 
     // concrete interface
     List<ServiceCategory> findByName(String name);
-    List<ServiceCategory> findByName(String name, Integer start, Integer offset);
+    List<ServiceCategory> findByName(String name, Integer start, Integer limit);
     List<ServiceCategory> findByDescription(String description);
-    List<ServiceCategory> findByDescription(String description, Integer start, Integer offset);
+    List<ServiceCategory> findByDescription(String description, Integer start, Integer limit);
     List<ServiceCategory> findByKeyword(String keyword);
-    List<ServiceCategory> findByKeyword(String keyword, Integer start, Integer offset);
+    List<ServiceCategory> findByKeyword(String keyword, Integer start, Integer limit);
     List<ServiceCategory> findBySuperCategory(ServiceCategory superCategory);
-    List<ServiceCategory> findBySuperCategory(ServiceCategory superCategory, Integer start, Integer offset);
+    List<ServiceCategory> findBySuperCategory(ServiceCategory superCategory, Integer start, Integer limit);
     List<ServiceCategory> findByKeywordInCategory(ServiceCategory superCategory, String keyword);
-    List<ServiceCategory> findByKeywordInCategory(ServiceCategory superCategory, String keyword, Integer start, Integer offset);
+    List<ServiceCategory> findByKeywordInCategory(ServiceCategory superCategory, String keyword, Integer start, Integer limit);
     Integer deleteByName(String name);
     Integer deleteBySuperCategory(ServiceCategory superCategory);
 

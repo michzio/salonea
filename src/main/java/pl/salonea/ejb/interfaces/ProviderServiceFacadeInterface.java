@@ -11,33 +11,33 @@ public interface ProviderServiceFacadeInterface extends AbstractFacadeInterface<
 
     // concrete interface
     List<ProviderService> findByProvider(Provider provider);
-    List<ProviderService> findByProvider(Provider provider, Integer start, Integer offset);
+    List<ProviderService> findByProvider(Provider provider, Integer start, Integer limit);
     List<ProviderService> findByService(Service service);
-    List<ProviderService> findByService(Service service, Integer start, Integer offset);
+    List<ProviderService> findByService(Service service, Integer start, Integer limit);
     List<ProviderService> findByServiceCategory(ServiceCategory serviceCategory);
-    List<ProviderService> findByServiceCategory(ServiceCategory serviceCategory, Integer start, Integer offset);
+    List<ProviderService> findByServiceCategory(ServiceCategory serviceCategory, Integer start, Integer limit);
     List<ProviderService> findByProviderAndServiceCategory(Provider provider, ServiceCategory serviceCategory);
-    List<ProviderService> findByProviderAndServiceCategory(Provider provider, ServiceCategory serviceCategory, Integer start, Integer offset);
+    List<ProviderService> findByProviderAndServiceCategory(Provider provider, ServiceCategory serviceCategory, Integer start, Integer limit);
     List<ProviderService> findByDescription(String description);
-    List<ProviderService> findByDescription(String description, Integer start, Integer offset);
+    List<ProviderService> findByDescription(String description, Integer start, Integer limit);
     List<ProviderService> findByProviderAndDescription(Provider provider, String description);
-    List<ProviderService> findByProviderAndDescription(Provider provider, String description, Integer start, Integer offset);
+    List<ProviderService> findByProviderAndDescription(Provider provider, String description, Integer start, Integer limit);
     List<ProviderService> findByServiceAndDescription(Service service, String description);
-    List<ProviderService> findByServiceAndDescription(Service service, String description, Integer start, Integer offset);
+    List<ProviderService> findByServiceAndDescription(Service service, String description, Integer start, Integer limit);
     List<ProviderService> findByServiceAndPrice(Service service, Double minPrice, Double maxPrice);
-    List<ProviderService> findByServiceAndPrice(Service service, Double minPrice, Double maxPrice, Integer start, Integer offset);
+    List<ProviderService> findByServiceAndPrice(Service service, Double minPrice, Double maxPrice, Integer start, Integer limit);
     List<ProviderService> findByServiceAndDiscountedPrice(Service service, Double minPrice, Double maxPrice);
-    List<ProviderService> findByServiceAndDiscountedPrice(Service service, Double minPrice, Double maxPrice, Integer start, Integer offset);
+    List<ProviderService> findByServiceAndDiscountedPrice(Service service, Double minPrice, Double maxPrice, Integer start, Integer limit);
     List<ProviderService> findByServiceAndDiscount(Service service, Short minDiscount, Short maxDiscount);
-    List<ProviderService> findByServiceAndDiscount(Service service, Short minDiscount, Short maxDiscount, Integer start, Integer offset);
+    List<ProviderService> findByServiceAndDiscount(Service service, Short minDiscount, Short maxDiscount, Integer start, Integer limit);
     List<ProviderService> findByProviderAndDiscount(Provider provider, Short minDiscount, Short maxDiscount);
-    List<ProviderService> findByProviderAndDiscount(Provider provider, Short minDiscount, Short maxDiscount, Integer start, Integer offset);
+    List<ProviderService> findByProviderAndDiscount(Provider provider, Short minDiscount, Short maxDiscount, Integer start, Integer limit);
     List<ProviderService> findByWorkStation(WorkStation workStation);
-    List<ProviderService> findByWorkStation(WorkStation workStation, Integer start, Integer offset);
+    List<ProviderService> findByWorkStation(WorkStation workStation, Integer start, Integer limit);
     List<ProviderService> findByEmployee(Employee employee);
-    List<ProviderService> findByEmployee(Employee employee, Integer start, Integer offset);
+    List<ProviderService> findByEmployee(Employee employee, Integer start, Integer limit);
     List<ProviderService> findByProviderAndEmployee(Provider provider, Employee employee);
-    List<ProviderService> findByProviderAndEmployee(Provider provider, Employee employee, Integer start, Integer offset);
+    List<ProviderService> findByProviderAndEmployee(Provider provider, Employee employee, Integer start, Integer limit);
     List<ProviderService> findByMultipleCriteria(List<Provider> providers, List<Service> services, List<ServiceCategory> serviceCategories,
                                                  String description, Double minPrice, Double maxPrice, Boolean includeDiscounts,
                                                  Short minDiscount, Short maxDiscount, List<WorkStation> workStations, List<Employee> employees);

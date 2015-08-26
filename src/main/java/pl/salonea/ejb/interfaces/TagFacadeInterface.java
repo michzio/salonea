@@ -13,15 +13,15 @@ public interface TagFacadeInterface extends AbstractFacadeInterface<Tag> {
 
     // concrete interface
     List<Tag> findByTagName(String tagName);
-    List<Tag> findByTagName(String tagName, Integer start, Integer offset);
+    List<Tag> findByTagName(String tagName, Integer start, Integer limit);
     List<Tag> findByServicePointPhoto(ServicePointPhoto servicePointPhoto);
-    List<Tag> findByServicePointPhoto(ServicePointPhoto servicePointPhoto, Integer start, Integer offset);
+    List<Tag> findByServicePointPhoto(ServicePointPhoto servicePointPhoto, Integer start, Integer limit);
     List<Tag> findByServicePointPhotoAndTagName(ServicePointPhoto servicePointPhoto, String tagName);
-    List<Tag> findByServicePointPhotoAndTagName(ServicePointPhoto servicePointPhoto, String tagName, Integer start, Integer offset);
+    List<Tag> findByServicePointPhotoAndTagName(ServicePointPhoto servicePointPhoto, String tagName, Integer start, Integer limit);
     List<Tag> findByVirtualTour(VirtualTour virtualTour);
-    List<Tag> findByVirtualTour(VirtualTour virtualTour, Integer start, Integer offset);
+    List<Tag> findByVirtualTour(VirtualTour virtualTour, Integer start, Integer limit);
     List<Tag> findByVirtualTourAndTagName(VirtualTour virtualTour, String tagName);
-    List<Tag> findByVirtualTourAndTagName(VirtualTour virtualTour, String tagName, Integer start, Integer offset);
+    List<Tag> findByVirtualTourAndTagName(VirtualTour virtualTour, String tagName, Integer start, Integer limit);
     List<Tag> findByMultipleCriteria(List<String> tagNames, List<ServicePointPhoto> pointPhotos, List<VirtualTour> virtualTours);
 
     @javax.ejb.Local

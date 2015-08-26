@@ -45,13 +45,13 @@ public class TransactionFacade extends AbstractFacade<Transaction>
     }
 
     @Override
-    public List<Transaction> findByClient(Client client, Integer start, Integer offset) {
+    public List<Transaction> findByClient(Client client, Integer start, Integer limit) {
 
         TypedQuery<Transaction> query = getEntityManager().createNamedQuery(Transaction.FIND_BY_CLIENT, Transaction.class);
         query.setParameter("client", client);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -62,15 +62,15 @@ public class TransactionFacade extends AbstractFacade<Transaction>
     }
 
     @Override
-    public List<Transaction> findByClientAndTransactionTime(Client client, Date startTime, Date endTime, Integer start, Integer offset) {
+    public List<Transaction> findByClientAndTransactionTime(Client client, Date startTime, Date endTime, Integer start, Integer limit) {
 
         TypedQuery<Transaction> query = getEntityManager().createNamedQuery(Transaction.FIND_BY_CLIENT_AND_TRANSACTION_TIME, Transaction.class);
         query.setParameter("client", client);
         query.setParameter("start_time", startTime);
         query.setParameter("end_time", endTime);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -81,15 +81,15 @@ public class TransactionFacade extends AbstractFacade<Transaction>
     }
 
     @Override
-    public List<Transaction> findByClientAndBookedTime(Client client, Date startTime, Date endTime, Integer start, Integer offset) {
+    public List<Transaction> findByClientAndBookedTime(Client client, Date startTime, Date endTime, Integer start, Integer limit) {
 
         TypedQuery<Transaction> query = getEntityManager().createNamedQuery(Transaction.FIND_BY_CLIENT_AND_BOOKED_TIME, Transaction.class);
         query.setParameter("client", client);
         query.setParameter("start_time", startTime);
         query.setParameter("end_time", endTime);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -100,13 +100,13 @@ public class TransactionFacade extends AbstractFacade<Transaction>
     }
 
     @Override
-    public List<Transaction> findByClientOnlyPaid(Client client, Integer start, Integer offset) {
+    public List<Transaction> findByClientOnlyPaid(Client client, Integer start, Integer limit) {
 
         TypedQuery<Transaction> query = getEntityManager().createNamedQuery(Transaction.FIND_BY_CLIENT_ONLY_PAID, Transaction.class);
         query.setParameter("client", client);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -117,13 +117,13 @@ public class TransactionFacade extends AbstractFacade<Transaction>
     }
 
     @Override
-    public List<Transaction> findByClientOnlyUnpaid(Client client, Integer start, Integer offset) {
+    public List<Transaction> findByClientOnlyUnpaid(Client client, Integer start, Integer limit) {
 
         TypedQuery<Transaction> query = getEntityManager().createNamedQuery(Transaction.FIND_BY_CLIENT_ONLY_UNPAID, Transaction.class);
         query.setParameter("client", client);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -134,15 +134,15 @@ public class TransactionFacade extends AbstractFacade<Transaction>
     }
 
     @Override
-    public List<Transaction> findByClientAndPriceRange(Client client, Double minPrice, Double maxPrice, Integer start, Integer offset) {
+    public List<Transaction> findByClientAndPriceRange(Client client, Double minPrice, Double maxPrice, Integer start, Integer limit) {
 
         TypedQuery<Transaction> query = getEntityManager().createNamedQuery(Transaction.FIND_BY_CLIENT_AND_PRICE_RANGE, Transaction.class);
         query.setParameter("client", client);
         query.setParameter("min_price", minPrice);
         query.setParameter("max_price", maxPrice);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -153,14 +153,14 @@ public class TransactionFacade extends AbstractFacade<Transaction>
     }
 
     @Override
-    public List<Transaction> findByClientAndCurrencyCode(Client client, CurrencyCode currencyCode, Integer start, Integer offset) {
+    public List<Transaction> findByClientAndCurrencyCode(Client client, CurrencyCode currencyCode, Integer start, Integer limit) {
 
         TypedQuery<Transaction> query = getEntityManager().createNamedQuery(Transaction.FIND_BY_CLIENT_AND_CURRENCY_CODE, Transaction.class);
         query.setParameter("client", client);
         query.setParameter("currency_code", currencyCode);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -171,16 +171,16 @@ public class TransactionFacade extends AbstractFacade<Transaction>
     }
 
     @Override
-    public List<Transaction> findByClientAndPriceRangeAndCurrencyCode(Client client, Double minPrice, Double maxPrice, CurrencyCode currencyCode, Integer start, Integer offset) {
+    public List<Transaction> findByClientAndPriceRangeAndCurrencyCode(Client client, Double minPrice, Double maxPrice, CurrencyCode currencyCode, Integer start, Integer limit) {
 
         TypedQuery<Transaction> query = getEntityManager().createNamedQuery(Transaction.FIND_BY_CLIENT_AND_PRICE_RANGE_AND_CURRENCY_CODE, Transaction.class);
         query.setParameter("client", client);
         query.setParameter("min_price", minPrice);
         query.setParameter("max_price", maxPrice);
         query.setParameter("currency_code", currencyCode);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -191,14 +191,14 @@ public class TransactionFacade extends AbstractFacade<Transaction>
     }
 
     @Override
-    public List<Transaction> findByClientAndPaymentMethod(Client client, PaymentMethod paymentMethod, Integer start, Integer offset) {
+    public List<Transaction> findByClientAndPaymentMethod(Client client, PaymentMethod paymentMethod, Integer start, Integer limit) {
 
         TypedQuery<Transaction> query = getEntityManager().createNamedQuery(Transaction.FIND_BY_CLIENT_AND_PAYMENT_METHOD, Transaction.class);
         query.setParameter("client", client);
         query.setParameter("payment_method", paymentMethod);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -209,14 +209,14 @@ public class TransactionFacade extends AbstractFacade<Transaction>
     }
 
     @Override
-    public List<Transaction> findByClientAndProvider(Client client, Provider provider, Integer start, Integer offset) {
+    public List<Transaction> findByClientAndProvider(Client client, Provider provider, Integer start, Integer limit) {
 
         TypedQuery<Transaction> query = getEntityManager().createNamedQuery(Transaction.FIND_BY_CLIENT_AND_PROVIDER, Transaction.class);
         query.setParameter("client", client);
         query.setParameter("provider", provider);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -227,14 +227,14 @@ public class TransactionFacade extends AbstractFacade<Transaction>
     }
 
     @Override
-    public List<Transaction> findByClientAndService(Client client, Service service, Integer start, Integer offset) {
+    public List<Transaction> findByClientAndService(Client client, Service service, Integer start, Integer limit) {
 
         TypedQuery<Transaction> query = getEntityManager().createNamedQuery(Transaction.FIND_BY_CLIENT_AND_SERVICE, Transaction.class);
         query.setParameter("client", client);
         query.setParameter("service", service);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
 
         return query.getResultList();
@@ -246,14 +246,14 @@ public class TransactionFacade extends AbstractFacade<Transaction>
     }
 
     @Override
-    public List<Transaction> findByClientAndEmployee(Client client, Employee employee, Integer start, Integer offset) {
+    public List<Transaction> findByClientAndEmployee(Client client, Employee employee, Integer start, Integer limit) {
 
         TypedQuery<Transaction> query = getEntityManager().createNamedQuery(Transaction.FIND_BY_CLIENT_AND_EMPLOYEE, Transaction.class);
         query.setParameter("client", client);
         query.setParameter("employee", employee);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -264,14 +264,14 @@ public class TransactionFacade extends AbstractFacade<Transaction>
     }
 
     @Override
-    public List<Transaction> findByClientAndWorkStation(Client client, WorkStation workStation, Integer start, Integer offset) {
+    public List<Transaction> findByClientAndWorkStation(Client client, WorkStation workStation, Integer start, Integer limit) {
 
         TypedQuery<Transaction> query = getEntityManager().createNamedQuery(Transaction.FIND_BY_CLIENT_AND_WORK_STATION, Transaction.class);
         query.setParameter("client", client);
         query.setParameter("work_station", workStation);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -282,14 +282,14 @@ public class TransactionFacade extends AbstractFacade<Transaction>
     }
 
     @Override
-    public List<Transaction> findByClientAndServicePoint(Client client, ServicePoint servicePoint, Integer start, Integer offset) {
+    public List<Transaction> findByClientAndServicePoint(Client client, ServicePoint servicePoint, Integer start, Integer limit) {
 
         TypedQuery<Transaction> query = getEntityManager().createNamedQuery(Transaction.FIND_BY_CLIENT_AND_SERVICE_POINT, Transaction.class);
         query.setParameter("client", client);
         query.setParameter("service_point", servicePoint);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -300,14 +300,14 @@ public class TransactionFacade extends AbstractFacade<Transaction>
     }
 
     @Override
-    public List<Transaction> findByTransactionTime(Date startTime, Date endTime, Integer start, Integer offset) {
+    public List<Transaction> findByTransactionTime(Date startTime, Date endTime, Integer start, Integer limit) {
 
         TypedQuery<Transaction> query = getEntityManager().createNamedQuery(Transaction.FIND_BY_TRANSACTION_TIME, Transaction.class);
         query.setParameter("start_time", startTime);
         query.setParameter("end_time", endTime);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -318,14 +318,14 @@ public class TransactionFacade extends AbstractFacade<Transaction>
     }
 
     @Override
-    public List<Transaction> findByBookedTime(Date startTime, Date endTime, Integer start, Integer offset) {
+    public List<Transaction> findByBookedTime(Date startTime, Date endTime, Integer start, Integer limit) {
 
         TypedQuery<Transaction> query = getEntityManager().createNamedQuery(Transaction.FIND_BY_BOOKED_TIME, Transaction.class);
         query.setParameter("start_time", startTime);
         query.setParameter("end_time", endTime);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -336,12 +336,12 @@ public class TransactionFacade extends AbstractFacade<Transaction>
     }
 
     @Override
-    public List<Transaction> findOnlyPaid(Integer start, Integer offset) {
+    public List<Transaction> findOnlyPaid(Integer start, Integer limit) {
 
         TypedQuery<Transaction> query = getEntityManager().createNamedQuery(Transaction.FIND_ONLY_PAID, Transaction.class);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -352,12 +352,12 @@ public class TransactionFacade extends AbstractFacade<Transaction>
     }
 
     @Override
-    public List<Transaction> findOnlyUnpaid(Integer start, Integer offset) {
+    public List<Transaction> findOnlyUnpaid(Integer start, Integer limit) {
 
         TypedQuery<Transaction> query = getEntityManager().createNamedQuery(Transaction.FIND_ONLY_UNPAID, Transaction.class);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -368,14 +368,14 @@ public class TransactionFacade extends AbstractFacade<Transaction>
     }
 
     @Override
-    public List<Transaction> findByPriceRange(Double minPrice, Double maxPrice, Integer start, Integer offset) {
+    public List<Transaction> findByPriceRange(Double minPrice, Double maxPrice, Integer start, Integer limit) {
 
         TypedQuery<Transaction> query = getEntityManager().createNamedQuery(Transaction.FIND_BY_PRICE_RANGE, Transaction.class);
         query.setParameter("min_price", minPrice);
         query.setParameter("max_price", maxPrice);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -386,13 +386,13 @@ public class TransactionFacade extends AbstractFacade<Transaction>
     }
 
     @Override
-    public List<Transaction> findByCurrencyCode(CurrencyCode currencyCode, Integer start, Integer offset) {
+    public List<Transaction> findByCurrencyCode(CurrencyCode currencyCode, Integer start, Integer limit) {
 
         TypedQuery<Transaction> query = getEntityManager().createNamedQuery(Transaction.FIND_BY_CURRENCY_CODE, Transaction.class);
         query.setParameter("currency_code", currencyCode);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -403,15 +403,15 @@ public class TransactionFacade extends AbstractFacade<Transaction>
     }
 
     @Override
-    public List<Transaction> findByPriceRangeAndCurrencyCode(Double minPrice, Double maxPrice, CurrencyCode currencyCode, Integer start, Integer offset) {
+    public List<Transaction> findByPriceRangeAndCurrencyCode(Double minPrice, Double maxPrice, CurrencyCode currencyCode, Integer start, Integer limit) {
 
         TypedQuery<Transaction> query = getEntityManager().createNamedQuery(Transaction.FIND_BY_PRICE_RANGE_AND_CURRENCY_CODE, Transaction.class);
         query.setParameter("min_price", minPrice);
         query.setParameter("max_price", maxPrice);
         query.setParameter("currency_code", currencyCode);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -422,13 +422,13 @@ public class TransactionFacade extends AbstractFacade<Transaction>
     }
 
     @Override
-    public List<Transaction> findByPaymentMethod(PaymentMethod paymentMethod, Integer start, Integer offset) {
+    public List<Transaction> findByPaymentMethod(PaymentMethod paymentMethod, Integer start, Integer limit) {
 
         TypedQuery<Transaction> query = getEntityManager().createNamedQuery(Transaction.FIND_BY_PAYMENT_METHOD, Transaction.class);
         query.setParameter("payment_method", paymentMethod);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -439,13 +439,13 @@ public class TransactionFacade extends AbstractFacade<Transaction>
     }
 
     @Override
-    public List<Transaction> findByProvider(Provider provider, Integer start, Integer offset) {
+    public List<Transaction> findByProvider(Provider provider, Integer start, Integer limit) {
 
         TypedQuery<Transaction> query = getEntityManager().createNamedQuery(Transaction.FIND_BY_PROVIDER, Transaction.class);
         query.setParameter("provider", provider);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -456,13 +456,13 @@ public class TransactionFacade extends AbstractFacade<Transaction>
     }
 
     @Override
-    public List<Transaction> findByService(Service service, Integer start, Integer offset) {
+    public List<Transaction> findByService(Service service, Integer start, Integer limit) {
 
         TypedQuery<Transaction> query = getEntityManager().createNamedQuery(Transaction.FIND_BY_SERVICE, Transaction.class);
         query.setParameter("service", service);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -473,13 +473,13 @@ public class TransactionFacade extends AbstractFacade<Transaction>
     }
 
     @Override
-    public List<Transaction> findByEmployee(Employee employee, Integer start, Integer offset) {
+    public List<Transaction> findByEmployee(Employee employee, Integer start, Integer limit) {
 
         TypedQuery<Transaction> query = getEntityManager().createNamedQuery(Transaction.FIND_BY_EMPLOYEE, Transaction.class);
         query.setParameter("employee", employee);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -490,13 +490,13 @@ public class TransactionFacade extends AbstractFacade<Transaction>
     }
 
     @Override
-    public List<Transaction> findByWorkStation(WorkStation workStation, Integer start, Integer offset) {
+    public List<Transaction> findByWorkStation(WorkStation workStation, Integer start, Integer limit) {
 
         TypedQuery<Transaction> query = getEntityManager().createNamedQuery(Transaction.FIND_BY_WORK_STATION, Transaction.class);
         query.setParameter("work_station", workStation);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -507,13 +507,13 @@ public class TransactionFacade extends AbstractFacade<Transaction>
     }
 
     @Override
-    public List<Transaction> findByServicePoint(ServicePoint servicePoint, Integer start, Integer offset) {
+    public List<Transaction> findByServicePoint(ServicePoint servicePoint, Integer start, Integer limit) {
 
         TypedQuery<Transaction> query = getEntityManager().createNamedQuery(Transaction.FIND_BY_SERVICE_POINT, Transaction.class);
         query.setParameter("service_point", servicePoint);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -525,7 +525,7 @@ public class TransactionFacade extends AbstractFacade<Transaction>
 
     @Override
     public List<Transaction> findByMultipleCriteria(List<Client> clients, List<Provider> providers, List<Service> services, List<ServicePoint> servicePoints, List<WorkStation> workStations, List<Employee> employees, List<ProviderService> providerServices, Period transactionTimePeriod, Period bookedTimePeriod,
-                                                    PriceRange priceRange, List<CurrencyCode> currencyCodes, List<PaymentMethod> paymentMethods, Boolean paid, Integer start, Integer offset) {
+                                                    PriceRange priceRange, List<CurrencyCode> currencyCodes, List<PaymentMethod> paymentMethods, Boolean paid, Integer start, Integer limit) {
 
         CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
         CriteriaQuery<Transaction> criteriaQuery = criteriaBuilder.createQuery(Transaction.class);
@@ -633,9 +633,9 @@ public class TransactionFacade extends AbstractFacade<Transaction>
         criteriaQuery.where(predicates.toArray(new Predicate[] { }));
 
         TypedQuery<Transaction> query = getEntityManager().createQuery(criteriaQuery);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }

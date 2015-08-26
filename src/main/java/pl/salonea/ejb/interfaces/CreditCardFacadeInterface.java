@@ -16,17 +16,17 @@ public interface CreditCardFacadeInterface extends AbstractFacadeInterface<Credi
 
     // concrete interface
     List<CreditCard> findByType(CreditCardType cardType);
-    List<CreditCard> findByType(CreditCardType cardType, Integer start, Integer offset);
+    List<CreditCard> findByType(CreditCardType cardType, Integer start, Integer limit);
     List<CreditCard> findExpired();
-    List<CreditCard> findExpired(Integer start, Integer offset);
+    List<CreditCard> findExpired(Integer start, Integer limit);
     List<CreditCard> findNotExpired();
-    List<CreditCard> findNotExpired(Integer start, Integer offset);
+    List<CreditCard> findNotExpired(Integer start, Integer limit);
     List<CreditCard> findExpirationDateAfter(Date date);
-    List<CreditCard> findExpirationDateAfter(Date date, Integer start, Integer offset);
+    List<CreditCard> findExpirationDateAfter(Date date, Integer start, Integer limit);
     List<CreditCard> findExpirationDateBefore(Date date);
-    List<CreditCard> findExpirationDateBefore(Date date, Integer start, Integer offset);
+    List<CreditCard> findExpirationDateBefore(Date date, Integer start, Integer limit);
     List<CreditCard> findExpirationDateBetween(Date startDate, Date endDate);
-    List<CreditCard> findExpirationDateBetween(Date startDate, Date endDate, Integer start, Integer offset);
+    List<CreditCard> findExpirationDateBetween(Date startDate, Date endDate, Integer start, Integer limit);
     Integer deleteWithExpirationDateBefore(Date date);
     Integer deleteWithExpirationDateAfter(Date date);
     Integer deleteWithExpirationDateBetween(Date startDate, Date endDate);

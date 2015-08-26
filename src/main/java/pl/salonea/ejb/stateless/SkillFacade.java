@@ -38,13 +38,13 @@ public class SkillFacade extends AbstractFacade<Skill> implements SkillFacadeInt
     }
 
     @Override
-    public List<Skill> findByName(String skillName, Integer start, Integer offset) {
+    public List<Skill> findByName(String skillName, Integer start, Integer limit) {
 
         TypedQuery<Skill> query = getEntityManager().createNamedQuery(Skill.FIND_BY_NAME, Skill.class);
         query.setParameter("skill_name", "%" + skillName + "%");
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -55,13 +55,13 @@ public class SkillFacade extends AbstractFacade<Skill> implements SkillFacadeInt
     }
 
     @Override
-    public List<Skill> findByDescription(String description, Integer start, Integer offset) {
+    public List<Skill> findByDescription(String description, Integer start, Integer limit) {
 
         TypedQuery<Skill> query = getEntityManager().createNamedQuery(Skill.FIND_BY_DESCRIPTION, Skill.class);
         query.setParameter("description", "%" + description + "%");
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -72,13 +72,13 @@ public class SkillFacade extends AbstractFacade<Skill> implements SkillFacadeInt
     }
 
     @Override
-    public List<Skill> findByKeyword(String keyword, Integer start, Integer offset) {
+    public List<Skill> findByKeyword(String keyword, Integer start, Integer limit) {
 
         TypedQuery<Skill> query = getEntityManager().createNamedQuery(Skill.FIND_BY_KEYWORD, Skill.class);
         query.setParameter("keyword", "%" + keyword + "%");
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -89,13 +89,13 @@ public class SkillFacade extends AbstractFacade<Skill> implements SkillFacadeInt
     }
 
     @Override
-    public List<Skill> findByEmployee(Employee employee, Integer start, Integer offset) {
+    public List<Skill> findByEmployee(Employee employee, Integer start, Integer limit) {
 
         TypedQuery<Skill> query = getEntityManager().createNamedQuery(Skill.FIND_BY_EMPLOYEE, Skill.class);
         query.setParameter("employee", employee);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -106,14 +106,14 @@ public class SkillFacade extends AbstractFacade<Skill> implements SkillFacadeInt
     }
 
     @Override
-    public List<Skill> findByEmployeeAndKeyword(Employee employee, String keyword, Integer start, Integer offset) {
+    public List<Skill> findByEmployeeAndKeyword(Employee employee, String keyword, Integer start, Integer limit) {
 
         TypedQuery<Skill> query = getEntityManager().createNamedQuery(Skill.FIND_BY_EMPLOYEE_AND_KEYWORD, Skill.class);
         query.setParameter("employee", employee);
         query.setParameter("keyword", "%" + keyword + "%");
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }

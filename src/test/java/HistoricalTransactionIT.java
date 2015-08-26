@@ -10,10 +10,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import pl.salonea.embeddables.Address;
 import pl.salonea.entities.*;
-import pl.salonea.enums.CurrencyCode;
-import pl.salonea.enums.Gender;
-import pl.salonea.enums.ProviderType;
-import pl.salonea.enums.WorkStationType;
+import pl.salonea.enums.*;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
@@ -151,7 +148,7 @@ public class HistoricalTransactionIT {
                 = new HistoricalTransaction(myTransaction.getClient(),
                 myTransaction.getTransactionNumber(), myTransaction.getPrice(), myTransaction.getPriceCurrencyCode(),
                 myTransaction.getTransactionTime(),myTransaction.getBookedTime(), true,
-                myTransaction.getService(), myTransaction.getWorkStation(), myTransaction.getPaymentMethod(), myTransaction.getTerm(), true);
+                myTransaction.getService(), myTransaction.getWorkStation(), myTransaction.getPaymentMethod(), myTransaction.getTerm(), TransactionCompletionStatus.COMPLETED);
 
         historicalTransaction.setEmployees(myTransaction.getEmployees());
 

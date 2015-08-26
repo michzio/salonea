@@ -45,13 +45,13 @@ public class PaymentMethodFacade extends AbstractFacade<PaymentMethod> implement
     }
 
     @Override
-    public List<PaymentMethod> findByName(String name, Integer start, Integer offset) {
+    public List<PaymentMethod> findByName(String name, Integer start, Integer limit) {
 
         TypedQuery<PaymentMethod> query = getEntityManager().createNamedQuery(PaymentMethod.FIND_BY_NAME, PaymentMethod.class);
         query.setParameter("name", "%" + name + "%");
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -62,13 +62,13 @@ public class PaymentMethodFacade extends AbstractFacade<PaymentMethod> implement
     }
 
     @Override
-    public List<PaymentMethod> findInAdvance(Boolean inAdvance, Integer start, Integer offset) {
+    public List<PaymentMethod> findInAdvance(Boolean inAdvance, Integer start, Integer limit) {
 
         TypedQuery<PaymentMethod> query = getEntityManager().createNamedQuery(PaymentMethod.FIND_IN_ADVANCE, PaymentMethod.class);
         query.setParameter("in_advance", inAdvance);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -79,14 +79,14 @@ public class PaymentMethodFacade extends AbstractFacade<PaymentMethod> implement
     }
 
     @Override
-    public List<PaymentMethod> findByNameAndInAdvance(String name, Boolean inAdvance, Integer start, Integer offset) {
+    public List<PaymentMethod> findByNameAndInAdvance(String name, Boolean inAdvance, Integer start, Integer limit) {
 
         TypedQuery<PaymentMethod> query = getEntityManager().createNamedQuery(PaymentMethod.FIND_BY_NAME_AND_IN_ADVANCE, PaymentMethod.class);
         query.setParameter("name", "%" + name + "%");
         query.setParameter("in_advance", inAdvance);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -97,13 +97,13 @@ public class PaymentMethodFacade extends AbstractFacade<PaymentMethod> implement
     }
 
     @Override
-    public List<PaymentMethod> findByProvider(Provider provider, Integer start, Integer offset) {
+    public List<PaymentMethod> findByProvider(Provider provider, Integer start, Integer limit) {
 
         TypedQuery<PaymentMethod> query = getEntityManager().createNamedQuery(PaymentMethod.FIND_BY_PROVIDER, PaymentMethod.class);
         query.setParameter("provider", provider);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }

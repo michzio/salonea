@@ -13,13 +13,13 @@ public interface CorporationFacadeInterface extends AbstractFacadeInterface<Corp
 
     // concrete interface
     List<Corporation> findByAddress(String city, String state, String country, String street, String zipCode);
-    List<Corporation> findByAddress(String city, String state, String country, String street, String zipCode, Integer start, Integer offset);
+    List<Corporation> findByAddress(String city, String state, String country, String street, String zipCode, Integer start, Integer limit);
     List<Corporation> findByName(String name);
-    List<Corporation> findByName(String name, Integer start, Integer offset);
+    List<Corporation> findByName(String name, Integer start, Integer limit);
     List<Corporation> findOpenAfter(Date date);
-    List<Corporation> findOpenAfter(Date date, Integer start, Integer offset);
+    List<Corporation> findOpenAfter(Date date, Integer start, Integer limit);
     List<Corporation> findOpenBefore(Date date);
-    List<Corporation> findOpenBefore(Date date, Integer start, Integer offset);
+    List<Corporation> findOpenBefore(Date date, Integer start, Integer limit);
 
     @javax.ejb.Remote
     interface Remote extends CorporationFacadeInterface { }

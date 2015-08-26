@@ -41,8 +41,8 @@ public class TermFacade extends AbstractFacade<Term>
     }
 
     @Override
-    public List<Term> findByPeriod(Date startTime, Date endTime, Integer start, Integer offset) {
-        return findByPeriod(new Period(startTime, endTime), start, offset);
+    public List<Term> findByPeriod(Date startTime, Date endTime, Integer start, Integer limit) {
+        return findByPeriod(new Period(startTime, endTime), start, limit);
     }
 
     @Override
@@ -51,14 +51,14 @@ public class TermFacade extends AbstractFacade<Term>
     }
 
     @Override
-    public List<Term> findByPeriod(Period period, Integer start, Integer offset) {
+    public List<Term> findByPeriod(Period period, Integer start, Integer limit) {
 
         TypedQuery<Term> query = getEntityManager().createNamedQuery(Term.FIND_BY_PERIOD, Term.class);
         query.setParameter("start_time", period.getStartTime());
         query.setParameter("end_time", period.getEndTime());
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -69,8 +69,8 @@ public class TermFacade extends AbstractFacade<Term>
     }
 
     @Override
-    public List<Term> findByPeriodStrict(Date startTime, Date endTime, Integer start, Integer offset) {
-        return findByPeriodStrict(new Period(startTime, endTime), start, offset);
+    public List<Term> findByPeriodStrict(Date startTime, Date endTime, Integer start, Integer limit) {
+        return findByPeriodStrict(new Period(startTime, endTime), start, limit);
     }
 
     @Override
@@ -79,14 +79,14 @@ public class TermFacade extends AbstractFacade<Term>
     }
 
     @Override
-    public List<Term> findByPeriodStrict(Period period, Integer start, Integer offset) {
+    public List<Term> findByPeriodStrict(Period period, Integer start, Integer limit) {
 
         TypedQuery<Term> query = getEntityManager().createNamedQuery(Term.FIND_BY_PERIOD_STRICT, Term.class);
         query.setParameter("start_time", period.getStartTime());
         query.setParameter("end_time", period.getEndTime());
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -97,13 +97,13 @@ public class TermFacade extends AbstractFacade<Term>
     }
 
     @Override
-    public List<Term> findAfter(Date time, Integer start, Integer offset) {
+    public List<Term> findAfter(Date time, Integer start, Integer limit) {
 
         TypedQuery<Term> query = getEntityManager().createNamedQuery(Term.FIND_AFTER, Term.class);
         query.setParameter("time", time);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -114,13 +114,13 @@ public class TermFacade extends AbstractFacade<Term>
     }
 
     @Override
-    public List<Term> findAfterStrict(Date time, Integer start, Integer offset) {
+    public List<Term> findAfterStrict(Date time, Integer start, Integer limit) {
 
         TypedQuery<Term> query = getEntityManager().createNamedQuery(Term.FIND_AFTER_STRICT, Term.class);
         query.setParameter("time", time);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -131,13 +131,13 @@ public class TermFacade extends AbstractFacade<Term>
     }
 
     @Override
-    public List<Term> findBefore(Date time, Integer start, Integer offset) {
+    public List<Term> findBefore(Date time, Integer start, Integer limit) {
 
         TypedQuery<Term> query = getEntityManager().createNamedQuery(Term.FIND_BEFORE, Term.class);
         query.setParameter("time", time);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -148,13 +148,13 @@ public class TermFacade extends AbstractFacade<Term>
     }
 
     @Override
-    public List<Term> findBeforeStrict(Date time, Integer start, Integer offset) {
+    public List<Term> findBeforeStrict(Date time, Integer start, Integer limit) {
 
         TypedQuery<Term> query = getEntityManager().createNamedQuery(Term.FIND_BEFORE_STRICT, Term.class);
         query.setParameter("time", time);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -165,13 +165,13 @@ public class TermFacade extends AbstractFacade<Term>
     }
 
     @Override
-    public List<Term> findByEmployee(Employee employee, Integer start, Integer offset) {
+    public List<Term> findByEmployee(Employee employee, Integer start, Integer limit) {
 
         TypedQuery<Term> query = getEntityManager().createNamedQuery(Term.FIND_BY_EMPLOYEE, Term.class);
         query.setParameter("employee", employee);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -182,13 +182,13 @@ public class TermFacade extends AbstractFacade<Term>
     }
 
     @Override
-    public List<Term> findByWorkStation(WorkStation workStation, Integer start, Integer offset) {
+    public List<Term> findByWorkStation(WorkStation workStation, Integer start, Integer limit) {
 
         TypedQuery<Term> query = getEntityManager().createNamedQuery(Term.FIND_BY_WORK_STATION, Term.class);
         query.setParameter("work_station", workStation);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -199,13 +199,13 @@ public class TermFacade extends AbstractFacade<Term>
     }
 
     @Override
-    public List<Term> findByService(Service service, Integer start, Integer offset) {
+    public List<Term> findByService(Service service, Integer start, Integer limit) {
 
         TypedQuery<Term> query = getEntityManager().createNamedQuery(Term.FIND_BY_SERVICE, Term.class);
         query.setParameter("service", service);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -216,13 +216,13 @@ public class TermFacade extends AbstractFacade<Term>
     }
 
     @Override
-    public List<Term> findByProviderService(ProviderService providerService, Integer start, Integer offset) {
+    public List<Term> findByProviderService(ProviderService providerService, Integer start, Integer limit) {
 
         TypedQuery<Term> query = getEntityManager().createNamedQuery(Term.FIND_BY_PROVIDER_SERVICE, Term.class);
         query.setParameter("provider_service", providerService);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -233,14 +233,14 @@ public class TermFacade extends AbstractFacade<Term>
     }
 
     @Override
-    public List<Term> findByServiceAndEmployee(Service service, Employee employee, Integer start, Integer offset) {
+    public List<Term> findByServiceAndEmployee(Service service, Employee employee, Integer start, Integer limit) {
 
         TypedQuery<Term> query = getEntityManager().createNamedQuery(Term.FIND_BY_SERVICE_AND_EMPLOYEE, Term.class);
         query.setParameter("service", service);
         query.setParameter("employee", employee);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -251,14 +251,14 @@ public class TermFacade extends AbstractFacade<Term>
     }
 
     @Override
-    public List<Term> findByProviderServiceAndEmployee(ProviderService providerService, Employee employee, Integer start, Integer offset) {
+    public List<Term> findByProviderServiceAndEmployee(ProviderService providerService, Employee employee, Integer start, Integer limit) {
 
         TypedQuery<Term> query = getEntityManager().createNamedQuery(Term.FIND_BY_PROVIDER_SERVICE_AND_EMPLOYEE, Term.class);
         query.setParameter("provider_service", providerService);
         query.setParameter("employee", employee);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -269,14 +269,14 @@ public class TermFacade extends AbstractFacade<Term>
     }
 
     @Override
-    public List<Term> findByWorkStationAndEmployee(WorkStation workStation, Employee employee, Integer start, Integer offset) {
+    public List<Term> findByWorkStationAndEmployee(WorkStation workStation, Employee employee, Integer start, Integer limit) {
 
         TypedQuery<Term> query = getEntityManager().createNamedQuery(Term.FIND_BY_WORK_STATION_AND_EMPLOYEE, Term.class);
         query.setParameter("work_station", workStation);
         query.setParameter("employee", employee);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -287,14 +287,14 @@ public class TermFacade extends AbstractFacade<Term>
     }
 
     @Override
-    public List<Term> findByWorkStationAndService(WorkStation workStation, Service service, Integer start, Integer offset) {
+    public List<Term> findByWorkStationAndService(WorkStation workStation, Service service, Integer start, Integer limit) {
 
         TypedQuery<Term> query = getEntityManager().createNamedQuery(Term.FIND_BY_WORK_STATION_AND_SERVICE, Term.class);
         query.setParameter("work_station", workStation);
         query.setParameter("service", service);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -305,14 +305,14 @@ public class TermFacade extends AbstractFacade<Term>
     }
 
     @Override
-    public List<Term> findByWorkStationAndProviderService(WorkStation workStation, ProviderService providerService, Integer start, Integer offset) {
+    public List<Term> findByWorkStationAndProviderService(WorkStation workStation, ProviderService providerService, Integer start, Integer limit) {
 
         TypedQuery<Term> query = getEntityManager().createNamedQuery(Term.FIND_BY_WORK_STATION_AND_PROVIDER_SERVICE, Term.class);
         query.setParameter("work_station", workStation);
         query.setParameter("provider_service", providerService);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -323,15 +323,15 @@ public class TermFacade extends AbstractFacade<Term>
     }
 
     @Override
-    public List<Term> findByWorkStationAndServiceAndEmployee(WorkStation workStation, Service service, Employee employee, Integer start, Integer offset) {
+    public List<Term> findByWorkStationAndServiceAndEmployee(WorkStation workStation, Service service, Employee employee, Integer start, Integer limit) {
 
         TypedQuery<Term> query = getEntityManager().createNamedQuery(Term.FIND_BY_WORK_STATION_AND_SERVICE_AND_EMPLOYEE, Term.class);
         query.setParameter("work_station", workStation);
         query.setParameter("service", service);
         query.setParameter("employee", employee);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -342,15 +342,15 @@ public class TermFacade extends AbstractFacade<Term>
     }
 
     @Override
-    public List<Term> findByWorkStationAndProviderServiceAndEmployee(WorkStation workStation, ProviderService providerService, Employee employee, Integer start, Integer offset) {
+    public List<Term> findByWorkStationAndProviderServiceAndEmployee(WorkStation workStation, ProviderService providerService, Employee employee, Integer start, Integer limit) {
 
         TypedQuery<Term> query = getEntityManager().createNamedQuery(Term.FIND_BY_WORK_STATION_AND_PROVIDER_SERVICE_AND_EMPLOYEE, Term.class);
         query.setParameter("work_station", workStation);
         query.setParameter("provider_service", providerService);
         query.setParameter("employee", employee);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -361,13 +361,13 @@ public class TermFacade extends AbstractFacade<Term>
     }
 
     @Override
-    public List<Term> findByServicePoint(ServicePoint servicePoint, Integer start, Integer offset) {
+    public List<Term> findByServicePoint(ServicePoint servicePoint, Integer start, Integer limit) {
 
         TypedQuery<Term> query = getEntityManager().createNamedQuery(Term.FIND_BY_SERVICE_POINT, Term.class);
         query.setParameter("service_point", servicePoint);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -378,14 +378,14 @@ public class TermFacade extends AbstractFacade<Term>
     }
 
     @Override
-    public List<Term> findByServicePointAndEmployee(ServicePoint servicePoint, Employee employee, Integer start, Integer offset) {
+    public List<Term> findByServicePointAndEmployee(ServicePoint servicePoint, Employee employee, Integer start, Integer limit) {
 
         TypedQuery<Term> query = getEntityManager().createNamedQuery(Term.FIND_BY_SERVICE_POINT_AND_EMPLOYEE, Term.class);
         query.setParameter("service_point", servicePoint);
         query.setParameter("employee", employee);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -396,14 +396,14 @@ public class TermFacade extends AbstractFacade<Term>
     }
 
     @Override
-    public List<Term> findByServicePointAndService(ServicePoint servicePoint, Service service, Integer start, Integer offset) {
+    public List<Term> findByServicePointAndService(ServicePoint servicePoint, Service service, Integer start, Integer limit) {
 
         TypedQuery<Term> query = getEntityManager().createNamedQuery(Term.FIND_BY_SERVICE_POINT_AND_SERVICE, Term.class);
         query.setParameter("service_point", servicePoint);
         query.setParameter("service", service);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -414,14 +414,14 @@ public class TermFacade extends AbstractFacade<Term>
     }
 
     @Override
-    public List<Term> findByServicePointAndProviderService(ServicePoint servicePoint, ProviderService providerService, Integer start, Integer offset) {
+    public List<Term> findByServicePointAndProviderService(ServicePoint servicePoint, ProviderService providerService, Integer start, Integer limit) {
 
         TypedQuery<Term> query = getEntityManager().createNamedQuery(Term.FIND_BY_SERVICE_POINT_AND_PROVIDER_SERVICE, Term.class);
         query.setParameter("service_point", servicePoint);
         query.setParameter("provider_service", providerService);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -432,15 +432,15 @@ public class TermFacade extends AbstractFacade<Term>
     }
 
     @Override
-    public List<Term> findByServicePointAndServiceAndEmployee(ServicePoint servicePoint, Service service, Employee employee, Integer start, Integer offset) {
+    public List<Term> findByServicePointAndServiceAndEmployee(ServicePoint servicePoint, Service service, Employee employee, Integer start, Integer limit) {
 
         TypedQuery<Term> query = getEntityManager().createNamedQuery(Term.FIND_BY_SERVICE_POINT_AND_SERVICE_AND_EMPLOYEE, Term.class);
         query.setParameter("service_point", servicePoint);
         query.setParameter("service", service);
         query.setParameter("employee", employee);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -451,15 +451,15 @@ public class TermFacade extends AbstractFacade<Term>
     }
 
     @Override
-    public List<Term> findByServicePointAndProviderServiceAndEmployee(ServicePoint servicePoint, ProviderService providerService, Employee employee, Integer start, Integer offset) {
+    public List<Term> findByServicePointAndProviderServiceAndEmployee(ServicePoint servicePoint, ProviderService providerService, Employee employee, Integer start, Integer limit) {
 
         TypedQuery<Term> query = getEntityManager().createNamedQuery(Term.FIND_BY_SERVICE_POINT_AND_PROVIDER_SERVICE_AND_EMPLOYEE, Term.class);
         query.setParameter("service_point", servicePoint);
         query.setParameter("provider_service", providerService);
         query.setParameter("employee", employee);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -470,7 +470,7 @@ public class TermFacade extends AbstractFacade<Term>
     }
 
     @Override
-    public List<Term> findByMultipleCriteria(List<ServicePoint> servicePoints, List<WorkStation> workStations, List<Employee> employees, List<Service> services, List<ProviderService> providerServices, Period period, Boolean strictTerm, Integer start, Integer offset) {
+    public List<Term> findByMultipleCriteria(List<ServicePoint> servicePoints, List<WorkStation> workStations, List<Employee> employees, List<Service> services, List<ProviderService> providerServices, Period period, Boolean strictTerm, Integer start, Integer limit) {
 
         CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
         CriteriaQuery<Term> criteriaQuery = criteriaBuilder.createQuery(Term.class);
@@ -561,9 +561,9 @@ public class TermFacade extends AbstractFacade<Term>
         criteriaQuery.where(predicates.toArray(new Predicate[] { }));
 
         TypedQuery<Term> query = getEntityManager().createQuery(criteriaQuery);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }

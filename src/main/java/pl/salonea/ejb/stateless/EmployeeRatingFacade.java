@@ -39,13 +39,13 @@ public class EmployeeRatingFacade extends AbstractFacade<EmployeeRating>
     }
 
     @Override
-    public List<EmployeeRating> findByClient(Client client, Integer start, Integer offset) {
+    public List<EmployeeRating> findByClient(Client client, Integer start, Integer limit) {
 
         TypedQuery<EmployeeRating> query = getEntityManager().createNamedQuery(EmployeeRating.FIND_BY_CLIENT, EmployeeRating.class);
         query.setParameter("client", client);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -56,13 +56,13 @@ public class EmployeeRatingFacade extends AbstractFacade<EmployeeRating>
     }
 
     @Override
-    public List<EmployeeRating> findByEmployee(Employee employee, Integer start, Integer offset) {
+    public List<EmployeeRating> findByEmployee(Employee employee, Integer start, Integer limit) {
 
         TypedQuery<EmployeeRating> query = getEntityManager().createNamedQuery(EmployeeRating.FIND_BY_EMPLOYEE, EmployeeRating.class);
         query.setParameter("employee", employee);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -73,14 +73,14 @@ public class EmployeeRatingFacade extends AbstractFacade<EmployeeRating>
     }
 
     @Override
-    public List<EmployeeRating> findForEmployeeByRating(Employee employee, Short rating, Integer start, Integer offset) {
+    public List<EmployeeRating> findForEmployeeByRating(Employee employee, Short rating, Integer start, Integer limit) {
 
         TypedQuery<EmployeeRating> query = getEntityManager().createNamedQuery(EmployeeRating.FIND_FOR_EMPLOYEE_BY_RATING, EmployeeRating.class);
         query.setParameter("employee", employee);
         query.setParameter("rating", rating);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -91,14 +91,14 @@ public class EmployeeRatingFacade extends AbstractFacade<EmployeeRating>
     }
 
     @Override
-    public List<EmployeeRating> findForEmployeeAboveRating(Employee employee, Short minRating, Integer start, Integer offset) {
+    public List<EmployeeRating> findForEmployeeAboveRating(Employee employee, Short minRating, Integer start, Integer limit) {
 
         TypedQuery<EmployeeRating> query = getEntityManager().createNamedQuery(EmployeeRating.FIND_FOR_EMPLOYEE_ABOVE_RATING, EmployeeRating.class);
         query.setParameter("employee", employee);
         query.setParameter("min_rating", minRating);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -109,14 +109,14 @@ public class EmployeeRatingFacade extends AbstractFacade<EmployeeRating>
     }
 
     @Override
-    public List<EmployeeRating> findForEmployeeBelowRating(Employee employee, Short maxRating, Integer start, Integer offset) {
+    public List<EmployeeRating> findForEmployeeBelowRating(Employee employee, Short maxRating, Integer start, Integer limit) {
 
         TypedQuery<EmployeeRating> query = getEntityManager().createNamedQuery(EmployeeRating.FIND_FOR_EMPLOYEE_BELOW_RATING, EmployeeRating.class);
         query.setParameter("employee", employee);
         query.setParameter("max_rating", maxRating);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -127,14 +127,14 @@ public class EmployeeRatingFacade extends AbstractFacade<EmployeeRating>
     }
 
     @Override
-    public List<EmployeeRating> findFromClientByRating(Client client, Short rating, Integer start, Integer offset) {
+    public List<EmployeeRating> findFromClientByRating(Client client, Short rating, Integer start, Integer limit) {
 
         TypedQuery<EmployeeRating> query = getEntityManager().createNamedQuery(EmployeeRating.FIND_FROM_CLIENT_BY_RATING, EmployeeRating.class);
         query.setParameter("client", client);
         query.setParameter("rating", rating);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -145,14 +145,14 @@ public class EmployeeRatingFacade extends AbstractFacade<EmployeeRating>
     }
 
     @Override
-    public List<EmployeeRating> findFromClientAboveRating(Client client, Short minRating, Integer start, Integer offset) {
+    public List<EmployeeRating> findFromClientAboveRating(Client client, Short minRating, Integer start, Integer limit) {
 
         TypedQuery<EmployeeRating> query = getEntityManager().createNamedQuery(EmployeeRating.FIND_FROM_CLIENT_ABOVE_RATING, EmployeeRating.class);
         query.setParameter("client", client);
         query.setParameter("min_rating", minRating);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -163,14 +163,14 @@ public class EmployeeRatingFacade extends AbstractFacade<EmployeeRating>
     }
 
     @Override
-    public List<EmployeeRating> findFromClientBelowRating(Client client, Short maxRating, Integer start, Integer offset) {
+    public List<EmployeeRating> findFromClientBelowRating(Client client, Short maxRating, Integer start, Integer limit) {
 
         TypedQuery<EmployeeRating> query = getEntityManager().createNamedQuery(EmployeeRating.FIND_FROM_CLIENT_BELOW_RATING, EmployeeRating.class);
         query.setParameter("client", client);
         query.setParameter("max_rating", maxRating);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }

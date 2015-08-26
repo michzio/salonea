@@ -44,11 +44,11 @@ public class ClientFacade extends AbstractFacade<Client> implements ClientFacade
     }
 
     @Override
-    public List<Client> findByFirstName(String firstName, int start, int offset) {
+    public List<Client> findByFirstName(String firstName, int start, int limit) {
         TypedQuery<Client> query = getEntityManager().createNamedQuery(Client.FIND_BY_FIRST_NAME, Client.class);
         query.setParameter("fname", firstName);
         query.setFirstResult(start);
-        query.setMaxResults(offset);
+        query.setMaxResults(limit);
         return query.getResultList();
     }
 
@@ -60,12 +60,12 @@ public class ClientFacade extends AbstractFacade<Client> implements ClientFacade
     }
 
     @Override
-    public List<Client> findByLastName(String lastName, int start, int offset) {
+    public List<Client> findByLastName(String lastName, int start, int limit) {
 
         TypedQuery<Client> query = getEntityManager().createNamedQuery(Client.FIND_BY_LAST_NAME, Client.class);
         query.setParameter("lname", lastName);
         query.setFirstResult(start);
-        query.setMaxResults(offset);
+        query.setMaxResults(limit);
         return query.getResultList();
     }
 
@@ -79,13 +79,13 @@ public class ClientFacade extends AbstractFacade<Client> implements ClientFacade
     }
 
     @Override
-    public List<Client> findByNames(String firstName, String lastName, int start, int offset) {
+    public List<Client> findByNames(String firstName, String lastName, int start, int limit) {
 
         TypedQuery<Client> query = getEntityManager().createNamedQuery(Client.FIND_BY_NAMES, Client.class);
         query.setParameter("fname", firstName);
         query.setParameter("lname", lastName);
         query.setFirstResult(start);
-        query.setMaxResults(offset);
+        query.setMaxResults(limit);
         return query.getResultList();
     }
 
@@ -98,12 +98,12 @@ public class ClientFacade extends AbstractFacade<Client> implements ClientFacade
     }
 
     @Override
-    public List<Client> findBornAfter(Date date, int start, int offset) {
+    public List<Client> findBornAfter(Date date, int start, int limit) {
 
         TypedQuery<Client> query = getEntityManager().createNamedQuery(Client.FIND_BORN_AFTER, Client.class);
         query.setParameter("date", date);
         query.setFirstResult(start);
-        query.setMaxResults(offset);
+        query.setMaxResults(limit);
         return query.getResultList();
     }
 
@@ -116,12 +116,12 @@ public class ClientFacade extends AbstractFacade<Client> implements ClientFacade
     }
 
     @Override
-    public List<Client> findBornBefore(Date date, int start, int offset) {
+    public List<Client> findBornBefore(Date date, int start, int limit) {
 
         TypedQuery<Client> query = getEntityManager().createNamedQuery(Client.FIND_BORN_BEFORE, Client.class);
         query.setParameter("date", date);
         query.setFirstResult(start);
-        query.setMaxResults(offset);
+        query.setMaxResults(limit);
         return query.getResultList();
     }
 
@@ -135,13 +135,13 @@ public class ClientFacade extends AbstractFacade<Client> implements ClientFacade
     }
 
     @Override
-    public List<Client> findBornBetween(Date startDate, Date endDate, int start, int offset) {
+    public List<Client> findBornBetween(Date startDate, Date endDate, int start, int limit) {
 
         TypedQuery<Client> query = getEntityManager().createNamedQuery(Client.FIND_BORN_BEFORE, Client.class);
         query.setParameter("start_date", startDate);
         query.setParameter("end_date", endDate);
         query.setFirstResult(start);
-        query.setMaxResults(offset);
+        query.setMaxResults(limit);
         return query.getResultList();
     }
 
@@ -158,7 +158,7 @@ public class ClientFacade extends AbstractFacade<Client> implements ClientFacade
     }
 
     @Override
-    public List<Client> findOlderThan(Integer age, int start, int offset) {
+    public List<Client> findOlderThan(Integer age, int start, int limit) {
 
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.YEAR, -age);
@@ -167,7 +167,7 @@ public class ClientFacade extends AbstractFacade<Client> implements ClientFacade
         TypedQuery<Client> query = getEntityManager().createNamedQuery(Client.FIND_BORN_BEFORE, Client.class);
         query.setParameter("date", youngestBirthDate);
         query.setFirstResult(start);
-        query.setMaxResults(offset);
+        query.setMaxResults(limit);
         return  query.getResultList();
     }
 
@@ -184,7 +184,7 @@ public class ClientFacade extends AbstractFacade<Client> implements ClientFacade
     }
 
     @Override
-    public List<Client> findYoungerThan(Integer age, int start, int offset) {
+    public List<Client> findYoungerThan(Integer age, int start, int limit) {
 
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.YEAR, -age);
@@ -193,7 +193,7 @@ public class ClientFacade extends AbstractFacade<Client> implements ClientFacade
         TypedQuery<Client> query = getEntityManager().createNamedQuery(Client.FIND_BORN_AFTER, Client.class);
         query.setParameter("date", oldestBirthDate);
         query.setFirstResult(start);
-        query.setMaxResults(offset);
+        query.setMaxResults(limit);
         return query.getResultList();
     }
 
@@ -203,7 +203,7 @@ public class ClientFacade extends AbstractFacade<Client> implements ClientFacade
     }
 
     @Override
-    public List<Client> findBetweenAge(Integer youngestAge, Integer oldestAge, Integer start, Integer offset) {
+    public List<Client> findBetweenAge(Integer youngestAge, Integer oldestAge, Integer start, Integer limit) {
 
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.YEAR, -youngestAge);
@@ -215,9 +215,9 @@ public class ClientFacade extends AbstractFacade<Client> implements ClientFacade
         TypedQuery<Client> query = getEntityManager().createNamedQuery(Client.FIND_BORN_BETWEEN, Client.class);
         query.setParameter("start_date", oldestBirthDate);
         query.setParameter("end_date", youngestBirthDate);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -228,9 +228,9 @@ public class ClientFacade extends AbstractFacade<Client> implements ClientFacade
     }
 
     @Override
-    public List<Client> findByLocation(String city, String state, String country, String street, String zipCode, Integer start, Integer offset) {
+    public List<Client> findByLocation(String city, String state, String country, String street, String zipCode, Integer start, Integer limit) {
 
-        return findByAddress(Client.FIND_BY_LOCATION, city, state, country, street, zipCode, start, offset);
+        return findByAddress(Client.FIND_BY_LOCATION, city, state, country, street, zipCode, start, limit);
     }
 
     @Override
@@ -240,11 +240,11 @@ public class ClientFacade extends AbstractFacade<Client> implements ClientFacade
     }
 
     @Override
-    public List<Client> findByDelivery(String city, String state, String country, String street, String zipCode, Integer start, Integer offset) {
-        return findByAddress(Client.FIND_BY_DELIVERY, city, state, country, street, zipCode, start, offset);
+    public List<Client> findByDelivery(String city, String state, String country, String street, String zipCode, Integer start, Integer limit) {
+        return findByAddress(Client.FIND_BY_DELIVERY, city, state, country, street, zipCode, start, limit);
     }
 
-    private List<Client> findByAddress(String queryName, String city, String state, String country, String street, String zipCode, Integer start, Integer offset) {
+    private List<Client> findByAddress(String queryName, String city, String state, String country, String street, String zipCode, Integer start, Integer limit) {
 
         TypedQuery<Client> query = getEntityManager().createNamedQuery(queryName, Client.class);
         if(city == null) city = "";
@@ -257,9 +257,9 @@ public class ClientFacade extends AbstractFacade<Client> implements ClientFacade
         query.setParameter("street", "%" + street + "%");
         if(zipCode == null) zipCode = "";
         query.setParameter("zip_code", "%" + zipCode + "%");
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -270,13 +270,13 @@ public class ClientFacade extends AbstractFacade<Client> implements ClientFacade
     }
 
     @Override
-    public List<Client> findByGender(Gender gender, Integer start, Integer offset) {
+    public List<Client> findByGender(Gender gender, Integer start, Integer limit) {
 
         TypedQuery<Client> query = getEntityManager().createNamedQuery(Client.FIND_BY_GENDER, Client.class);
         query.setParameter("gender", gender);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -287,13 +287,13 @@ public class ClientFacade extends AbstractFacade<Client> implements ClientFacade
     }
 
     @Override
-    public List<Client> findRatingProvider(Provider provider, Integer start, Integer offset) {
+    public List<Client> findRatingProvider(Provider provider, Integer start, Integer limit) {
 
         TypedQuery<Client> query = getEntityManager().createNamedQuery(Client.FIND_RATING_PROVIDER, Client.class);
         query.setParameter("provider", provider);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }

@@ -43,13 +43,13 @@ public class TagFacade extends AbstractFacade<Tag> implements TagFacadeInterface
     }
 
     @Override
-    public List<Tag> findByTagName(String tagName, Integer start, Integer offset) {
+    public List<Tag> findByTagName(String tagName, Integer start, Integer limit) {
 
         TypedQuery<Tag> query = getEntityManager().createNamedQuery(Tag.FIND_BY_TAG_NAME, Tag.class);
         query.setParameter("tag_name", "%" + tagName + "%");
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -60,13 +60,13 @@ public class TagFacade extends AbstractFacade<Tag> implements TagFacadeInterface
     }
 
     @Override
-    public List<Tag> findByServicePointPhoto(ServicePointPhoto servicePointPhoto, Integer start, Integer offset) {
+    public List<Tag> findByServicePointPhoto(ServicePointPhoto servicePointPhoto, Integer start, Integer limit) {
 
         TypedQuery<Tag> query = getEntityManager().createNamedQuery(Tag.FIND_BY_SERVICE_POINT_PHOTO, Tag.class);
         query.setParameter("service_point_photo", servicePointPhoto);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -77,14 +77,14 @@ public class TagFacade extends AbstractFacade<Tag> implements TagFacadeInterface
     }
 
     @Override
-    public List<Tag> findByServicePointPhotoAndTagName(ServicePointPhoto servicePointPhoto, String tagName, Integer start, Integer offset) {
+    public List<Tag> findByServicePointPhotoAndTagName(ServicePointPhoto servicePointPhoto, String tagName, Integer start, Integer limit) {
 
         TypedQuery<Tag> query = getEntityManager().createNamedQuery(Tag.FIND_BY_SERVICE_POINT_PHOTO_AND_TAG_NAME, Tag.class);
         query.setParameter("service_point_photo", servicePointPhoto);
         query.setParameter("tag_name", "%" + tagName + "%");
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -95,13 +95,13 @@ public class TagFacade extends AbstractFacade<Tag> implements TagFacadeInterface
     }
 
     @Override
-    public List<Tag> findByVirtualTour(VirtualTour virtualTour, Integer start, Integer offset) {
+    public List<Tag> findByVirtualTour(VirtualTour virtualTour, Integer start, Integer limit) {
 
         TypedQuery<Tag> query = getEntityManager().createNamedQuery(Tag.FIND_BY_VIRTUAL_TOUR, Tag.class);
         query.setParameter("virtual_tour", virtualTour);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -113,14 +113,14 @@ public class TagFacade extends AbstractFacade<Tag> implements TagFacadeInterface
     }
 
     @Override
-    public List<Tag> findByVirtualTourAndTagName(VirtualTour virtualTour, String tagName, Integer start, Integer offset) {
+    public List<Tag> findByVirtualTourAndTagName(VirtualTour virtualTour, String tagName, Integer start, Integer limit) {
 
         TypedQuery<Tag> query = getEntityManager().createNamedQuery(Tag.FIND_BY_VIRTUAL_TOUR_AND_TAG_NAME, Tag.class);
         query.setParameter("virtual_tour", virtualTour);
         query.setParameter("tag_name", "%" + tagName + "%");
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }

@@ -38,13 +38,13 @@ public class VirtualTourFacade extends AbstractFacade<VirtualTour> implements Vi
     }
 
     @Override
-    public List<VirtualTour> findByFileName(String fileName, Integer start, Integer offset) {
+    public List<VirtualTour> findByFileName(String fileName, Integer start, Integer limit) {
 
         TypedQuery<VirtualTour> query = getEntityManager().createNamedQuery(VirtualTour.FIND_BY_FILE_NAME, VirtualTour.class);
         query.setParameter("file_name", "%" + fileName + "%");
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -55,13 +55,13 @@ public class VirtualTourFacade extends AbstractFacade<VirtualTour> implements Vi
     }
 
     @Override
-    public List<VirtualTour> findByDescription(String description, Integer start, Integer offset) {
+    public List<VirtualTour> findByDescription(String description, Integer start, Integer limit) {
 
         TypedQuery<VirtualTour> query = getEntityManager().createNamedQuery(VirtualTour.FIND_BY_DESCRIPTION, VirtualTour.class);
         query.setParameter("description", "%" + description + "%");
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -72,14 +72,14 @@ public class VirtualTourFacade extends AbstractFacade<VirtualTour> implements Vi
     }
 
     @Override
-    public List<VirtualTour> findByFileNameAndDescription(String fileName, String description, Integer start, Integer offset) {
+    public List<VirtualTour> findByFileNameAndDescription(String fileName, String description, Integer start, Integer limit) {
 
         TypedQuery<VirtualTour> query = getEntityManager().createNamedQuery(VirtualTour.FIND_BY_FILE_NAME_AND_DESCRIPTION, VirtualTour.class);
         query.setParameter("file_name", "%" + fileName + "%");
         query.setParameter("description", "%" + description + "%");
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -90,13 +90,13 @@ public class VirtualTourFacade extends AbstractFacade<VirtualTour> implements Vi
     }
 
     @Override
-    public List<VirtualTour> findByKeyword(String keyword, Integer start, Integer offset) {
+    public List<VirtualTour> findByKeyword(String keyword, Integer start, Integer limit) {
 
         TypedQuery<VirtualTour> query = getEntityManager().createNamedQuery(VirtualTour.FIND_BY_KEYWORD, VirtualTour.class);
         query.setParameter("keyword", "%" + keyword + "%");
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -107,13 +107,13 @@ public class VirtualTourFacade extends AbstractFacade<VirtualTour> implements Vi
     }
 
     @Override
-    public List<VirtualTour> findByTagName(String tagName, Integer start, Integer offset) {
+    public List<VirtualTour> findByTagName(String tagName, Integer start, Integer limit) {
 
         TypedQuery<VirtualTour> query = getEntityManager().createNamedQuery(VirtualTour.FIND_BY_TAG_NAME, VirtualTour.class);
         query.setParameter("tag_name", "%" + tagName + "%");
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -124,13 +124,13 @@ public class VirtualTourFacade extends AbstractFacade<VirtualTour> implements Vi
     }
 
     @Override
-    public List<VirtualTour> findByAnyTagNames(List<String> tagNames, Integer start, Integer offset) {
+    public List<VirtualTour> findByAnyTagNames(List<String> tagNames, Integer start, Integer limit) {
 
         TypedQuery<VirtualTour> query = getEntityManager().createNamedQuery(VirtualTour.FIND_BY_ANY_TAG_NAMES, VirtualTour.class);
         query.setParameter("tag_names", tagNames);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -141,7 +141,7 @@ public class VirtualTourFacade extends AbstractFacade<VirtualTour> implements Vi
     }
 
     @Override
-    public List<VirtualTour> findByAllTags(List<Tag> tags, Integer start, Integer offset) {
+    public List<VirtualTour> findByAllTags(List<Tag> tags, Integer start, Integer limit) {
 
         CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
         CriteriaQuery<VirtualTour> criteriaQuery = criteriaBuilder.createQuery(VirtualTour.class);
@@ -170,14 +170,14 @@ public class VirtualTourFacade extends AbstractFacade<VirtualTour> implements Vi
     }
 
     @Override
-    public List<VirtualTour> findByAllTagNames(List<String> tagNames, Integer start, Integer offset) {
+    public List<VirtualTour> findByAllTagNames(List<String> tagNames, Integer start, Integer limit) {
 
         TypedQuery<VirtualTour> query = getEntityManager().createNamedQuery(VirtualTour.FIND_BY_ALL_TAG_NAMES, VirtualTour.class);
         query.setParameter("tag_names", tagNames);
         query.setParameter("tag_count",  Long.valueOf(tagNames.size()));
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -188,13 +188,13 @@ public class VirtualTourFacade extends AbstractFacade<VirtualTour> implements Vi
     }
 
     @Override
-    public List<VirtualTour> findByKeywordIncludingTags(String keyword, Integer start, Integer offset) {
+    public List<VirtualTour> findByKeywordIncludingTags(String keyword, Integer start, Integer limit) {
 
         TypedQuery<VirtualTour> query = getEntityManager().createNamedQuery(VirtualTour.FIND_BY_KEYWORD_INCLUDING_TAGS, VirtualTour.class);
         query.setParameter("keyword", keyword);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -205,13 +205,13 @@ public class VirtualTourFacade extends AbstractFacade<VirtualTour> implements Vi
     }
 
     @Override
-    public List<VirtualTour> findByServicePoint(ServicePoint servicePoint, Integer start, Integer offset) {
+    public List<VirtualTour> findByServicePoint(ServicePoint servicePoint, Integer start, Integer limit) {
 
         TypedQuery<VirtualTour> query = getEntityManager().createNamedQuery(VirtualTour.FIND_BY_SERVICE_POINT, VirtualTour.class);
         query.setParameter("service_point", servicePoint);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -222,13 +222,13 @@ public class VirtualTourFacade extends AbstractFacade<VirtualTour> implements Vi
     }
 
     @Override
-    public List<VirtualTour> findByProvider(Provider provider, Integer start, Integer offset) {
+    public List<VirtualTour> findByProvider(Provider provider, Integer start, Integer limit) {
 
         TypedQuery<VirtualTour> query = getEntityManager().createNamedQuery(VirtualTour.FIND_BY_PROVIDER, VirtualTour.class);
         query.setParameter("provider", provider);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -239,13 +239,13 @@ public class VirtualTourFacade extends AbstractFacade<VirtualTour> implements Vi
     }
 
     @Override
-    public List<VirtualTour> findByCorporation(Corporation corporation, Integer start, Integer offset) {
+    public List<VirtualTour> findByCorporation(Corporation corporation, Integer start, Integer limit) {
 
         TypedQuery<VirtualTour> query = getEntityManager().createNamedQuery(VirtualTour.FIND_BY_CORPORATION, VirtualTour.class);
         query.setParameter("corporation", corporation);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }

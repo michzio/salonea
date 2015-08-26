@@ -38,13 +38,13 @@ public class ProviderRatingFacade extends AbstractFacade<ProviderRating> impleme
     }
 
     @Override
-    public List<ProviderRating> findByClient(Client client, Integer start, Integer offset) {
+    public List<ProviderRating> findByClient(Client client, Integer start, Integer limit) {
 
         TypedQuery<ProviderRating> query = getEntityManager().createNamedQuery(ProviderRating.FIND_BY_CLIENT, ProviderRating.class);
         query.setParameter("client", client);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -55,13 +55,13 @@ public class ProviderRatingFacade extends AbstractFacade<ProviderRating> impleme
     }
 
     @Override
-    public List<ProviderRating> findByProvider(Provider provider, Integer start, Integer offset) {
+    public List<ProviderRating> findByProvider(Provider provider, Integer start, Integer limit) {
 
         TypedQuery<ProviderRating> query = getEntityManager().createNamedQuery(ProviderRating.FIND_BY_PROVIDER, ProviderRating.class);
         query.setParameter("provider", provider);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -72,14 +72,14 @@ public class ProviderRatingFacade extends AbstractFacade<ProviderRating> impleme
     }
 
     @Override
-    public List<ProviderRating> findForProviderByRating(Provider provider, Short rating, Integer start, Integer offset) {
+    public List<ProviderRating> findForProviderByRating(Provider provider, Short rating, Integer start, Integer limit) {
 
         TypedQuery<ProviderRating> query = getEntityManager().createNamedQuery(ProviderRating.FIND_FOR_PROVIDER_BY_RATING, ProviderRating.class);
         query.setParameter("provider", provider);
         query.setParameter("rating", rating);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -90,14 +90,14 @@ public class ProviderRatingFacade extends AbstractFacade<ProviderRating> impleme
     }
 
     @Override
-    public List<ProviderRating> findForProviderAboveRating(Provider provider, Short minRating, Integer start, Integer offset) {
+    public List<ProviderRating> findForProviderAboveRating(Provider provider, Short minRating, Integer start, Integer limit) {
 
         TypedQuery<ProviderRating> query = getEntityManager().createNamedQuery(ProviderRating.FIND_FOR_PROVIDER_ABOVE_RATING, ProviderRating.class);
         query.setParameter("provider", provider);
         query.setParameter("min_rating", minRating);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -108,14 +108,14 @@ public class ProviderRatingFacade extends AbstractFacade<ProviderRating> impleme
     }
 
     @Override
-    public List<ProviderRating> findForProviderBelowRating(Provider provider, Short maxRating, Integer start, Integer offset) {
+    public List<ProviderRating> findForProviderBelowRating(Provider provider, Short maxRating, Integer start, Integer limit) {
 
         TypedQuery<ProviderRating> query = getEntityManager().createNamedQuery(ProviderRating.FIND_FOR_PROVIDER_BELOW_RATING, ProviderRating.class);
         query.setParameter("provider", provider);
         query.setParameter("max_rating", maxRating);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -126,14 +126,14 @@ public class ProviderRatingFacade extends AbstractFacade<ProviderRating> impleme
     }
 
     @Override
-    public List<ProviderRating> findFromClientByRating(Client client, Short rating, Integer start, Integer offset) {
+    public List<ProviderRating> findFromClientByRating(Client client, Short rating, Integer start, Integer limit) {
 
         TypedQuery<ProviderRating> query = getEntityManager().createNamedQuery(ProviderRating.FIND_FROM_CLIENT_BY_RATING, ProviderRating.class);
         query.setParameter("client", client);
         query.setParameter("rating", rating);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -144,14 +144,14 @@ public class ProviderRatingFacade extends AbstractFacade<ProviderRating> impleme
     }
 
     @Override
-    public List<ProviderRating> findFromClientAboveRating(Client client, Short minRating, Integer start, Integer offset) {
+    public List<ProviderRating> findFromClientAboveRating(Client client, Short minRating, Integer start, Integer limit) {
 
         TypedQuery<ProviderRating> query = getEntityManager().createNamedQuery(ProviderRating.FIND_FROM_CLIENT_ABOVE_RATING, ProviderRating.class);
         query.setParameter("client", client);
         query.setParameter("min_rating", minRating);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -162,14 +162,14 @@ public class ProviderRatingFacade extends AbstractFacade<ProviderRating> impleme
     }
 
     @Override
-    public List<ProviderRating> findFromClientBelowRating(Client client, Short maxRating, Integer start, Integer offset) {
+    public List<ProviderRating> findFromClientBelowRating(Client client, Short maxRating, Integer start, Integer limit) {
 
         TypedQuery<ProviderRating> query = getEntityManager().createNamedQuery(ProviderRating.FIND_FROM_CLIENT_BELOW_RATING, ProviderRating.class);
         query.setParameter("client", client);
         query.setParameter("max_rating", maxRating);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }

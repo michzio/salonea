@@ -46,13 +46,13 @@ public class IndustryFacade extends AbstractFacade<Industry> implements Industry
     }
 
     @Override
-    public List<Industry> findByName(String name, Integer start, Integer offset) {
+    public List<Industry> findByName(String name, Integer start, Integer limit) {
 
         TypedQuery<Industry> query = getEntityManager().createNamedQuery(Industry.FIND_BY_NAME, Industry.class);
         query.setParameter("name", "%" + name + "%");
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -63,13 +63,13 @@ public class IndustryFacade extends AbstractFacade<Industry> implements Industry
     }
 
     @Override
-    public List<Industry> findByProvider(Provider provider, Integer start, Integer offset) {
+    public List<Industry> findByProvider(Provider provider, Integer start, Integer limit) {
 
         TypedQuery<Industry> query = getEntityManager().createNamedQuery(Industry.FIND_BY_PROVIDER, Industry.class);
         query.setParameter("provider", provider);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }

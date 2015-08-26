@@ -37,12 +37,12 @@ public class UserAccountFacade extends AbstractFacade<UserAccount> implements Us
     }
 
     @Override
-    public List<UserAccount> findAllNotActivated(Integer start, Integer offset) {
+    public List<UserAccount> findAllNotActivated(Integer start, Integer limit) {
 
         TypedQuery<UserAccount> query = getEntityManager().createNamedQuery(UserAccount.FIND_ALL_NOT_ACTIVATED, UserAccount.class);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -53,12 +53,12 @@ public class UserAccountFacade extends AbstractFacade<UserAccount> implements Us
     }
 
     @Override
-    public List<UserAccount> findAllActivated(Integer start, Integer offset) {
+    public List<UserAccount> findAllActivated(Integer start, Integer limit) {
 
         TypedQuery<UserAccount> query = getEntityManager().createNamedQuery(UserAccount.FIND_ALL_ACTIVATED, UserAccount.class);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -69,13 +69,13 @@ public class UserAccountFacade extends AbstractFacade<UserAccount> implements Us
     }
 
     @Override
-    public List<UserAccount> findByEmail(String email, Integer start, Integer offset) {
+    public List<UserAccount> findByEmail(String email, Integer start, Integer limit) {
 
         TypedQuery<UserAccount> query = getEntityManager().createNamedQuery(UserAccount.FIND_BY_EMAIL, UserAccount.class);
         query.setParameter("email", "%" + email + "%");
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -86,13 +86,13 @@ public class UserAccountFacade extends AbstractFacade<UserAccount> implements Us
     }
 
     @Override
-    public List<UserAccount> findByLogin(String login, Integer start, Integer offset) {
+    public List<UserAccount> findByLogin(String login, Integer start, Integer limit) {
 
         TypedQuery<UserAccount> query = getEntityManager().createNamedQuery(UserAccount.FIND_BY_LOGIN, UserAccount.class);
         query.setParameter("login", "%" + login + "%");
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -102,14 +102,14 @@ public class UserAccountFacade extends AbstractFacade<UserAccount> implements Us
     }
 
     @Override
-    public List<UserAccount> findCreatedBetween(Date startDate, Date endDate, Integer start, Integer offset) {
+    public List<UserAccount> findCreatedBetween(Date startDate, Date endDate, Integer start, Integer limit) {
 
         TypedQuery<UserAccount> query = getEntityManager().createNamedQuery(UserAccount.FIND_CREATED_BETWEEN, UserAccount.class);
         query.setParameter("start_date", startDate);
         query.setParameter("end_date", endDate);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -120,14 +120,14 @@ public class UserAccountFacade extends AbstractFacade<UserAccount> implements Us
     }
 
     @Override
-    public List<UserAccount> findLastLoggedBetween(Date startDate, Date endDate, Integer start, Integer offset) {
+    public List<UserAccount> findLastLoggedBetween(Date startDate, Date endDate, Integer start, Integer limit) {
 
         TypedQuery<UserAccount> query = getEntityManager().createNamedQuery(UserAccount.FIND_LAST_LOGGED_BETWEEN, UserAccount.class);
         query.setParameter("start_date", startDate);
         query.setParameter("end_date", endDate);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return  query.getResultList();
     }
@@ -138,14 +138,14 @@ public class UserAccountFacade extends AbstractFacade<UserAccount> implements Us
     }
 
     @Override
-    public List<UserAccount> findLastFailedLoginBetween(Date startDate, Date endDate, Integer start, Integer offset) {
+    public List<UserAccount> findLastFailedLoginBetween(Date startDate, Date endDate, Integer start, Integer limit) {
 
         TypedQuery<UserAccount> query = getEntityManager().createNamedQuery(UserAccount.FIND_LAST_FAILED_LOGIN_BETWEEN, UserAccount.class);
         query.setParameter("start_date", startDate);
         query.setParameter("end_date", endDate);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }

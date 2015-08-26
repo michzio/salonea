@@ -38,13 +38,13 @@ public class EducationFacade extends AbstractFacade<Education> implements Educat
     }
 
     @Override
-    public List<Education> findByDegree(String degree, Integer start, Integer offset) {
+    public List<Education> findByDegree(String degree, Integer start, Integer limit) {
 
         TypedQuery<Education> query = getEntityManager().createNamedQuery(Education.FIND_BY_DEGREE, Education.class);
         query.setParameter("degree", "%" + degree + "%");
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -55,13 +55,13 @@ public class EducationFacade extends AbstractFacade<Education> implements Educat
     }
 
     @Override
-    public List<Education> findBySchool(String school, Integer start, Integer offset) {
+    public List<Education> findBySchool(String school, Integer start, Integer limit) {
 
         TypedQuery<Education> query = getEntityManager().createNamedQuery(Education.FIND_BY_SCHOOL, Education.class);
         query.setParameter("school", "%" + school + "%");
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -72,14 +72,14 @@ public class EducationFacade extends AbstractFacade<Education> implements Educat
     }
 
     @Override
-    public List<Education> findByDegreeAndSchool(String degree, String school, Integer start, Integer offset) {
+    public List<Education> findByDegreeAndSchool(String degree, String school, Integer start, Integer limit) {
 
         TypedQuery<Education> query = getEntityManager().createNamedQuery(Education.FIND_BY_DEGREE_AND_SCHOOL, Education.class);
         query.setParameter("degree", "%" + degree + "%");
         query.setParameter("school", "%" + school + "%");
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -90,13 +90,13 @@ public class EducationFacade extends AbstractFacade<Education> implements Educat
     }
 
     @Override
-    public List<Education> findByKeyword(String keyword, Integer start, Integer offset) {
+    public List<Education> findByKeyword(String keyword, Integer start, Integer limit) {
 
         TypedQuery<Education> query = getEntityManager().createNamedQuery(Education.FIND_BY_KEYWORD, Education.class);
         query.setParameter("keyword", "%" + keyword + "%");
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -107,13 +107,13 @@ public class EducationFacade extends AbstractFacade<Education> implements Educat
     }
 
     @Override
-    public List<Education> findByEmployee(Employee employee, Integer start, Integer offset) {
+    public List<Education> findByEmployee(Employee employee, Integer start, Integer limit) {
 
         TypedQuery<Education> query = getEntityManager().createNamedQuery(Education.FIND_BY_EMPLOYEE, Education.class);
         query.setParameter("employee", employee);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -124,14 +124,14 @@ public class EducationFacade extends AbstractFacade<Education> implements Educat
     }
 
     @Override
-    public List<Education> findByEmployeeAndKeyword(Employee employee, String keyword, Integer start, Integer offset) {
+    public List<Education> findByEmployeeAndKeyword(Employee employee, String keyword, Integer start, Integer limit) {
 
         TypedQuery<Education> query = getEntityManager().createNamedQuery(Education.FIND_BY_EMPLOYEE_AND_KEYWORD, Education.class);
         query.setParameter("employee", employee);
         query.setParameter("keyword", "%" + keyword + "%");
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }

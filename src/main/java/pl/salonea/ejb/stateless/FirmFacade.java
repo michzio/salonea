@@ -36,13 +36,13 @@ public class FirmFacade extends AbstractFacade<Firm> implements FirmFacadeInterf
     }
 
     @Override
-    public List<Firm> findByName(String name, Integer start, Integer offset) {
+    public List<Firm> findByName(String name, Integer start, Integer limit) {
 
         TypedQuery<Firm> query = getEntityManager().createNamedQuery(Firm.FIND_BY_NAME, Firm.class);
         query.setParameter("firm_name", "%" + name + "%");
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -91,7 +91,7 @@ public class FirmFacade extends AbstractFacade<Firm> implements FirmFacadeInterf
     }
 
     @Override
-    public List<Firm> findByAddress(String city, String state, String country, String street, String zipCode, Integer start, Integer offset) {
+    public List<Firm> findByAddress(String city, String state, String country, String street, String zipCode, Integer start, Integer limit) {
 
         TypedQuery<Firm> query = getEntityManager().createNamedQuery(Firm.FIND_BY_ADDRESS, Firm.class);
         if(city == null) city = "";
@@ -104,9 +104,9 @@ public class FirmFacade extends AbstractFacade<Firm> implements FirmFacadeInterf
         query.setParameter("street", "%" + street + "%");
         if(zipCode == null) zipCode = "";
         query.setParameter("zip_code", "%" + zipCode + "%");
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }

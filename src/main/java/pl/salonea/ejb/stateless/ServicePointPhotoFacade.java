@@ -38,13 +38,13 @@ public class ServicePointPhotoFacade extends AbstractFacade<ServicePointPhoto>
     }
 
     @Override
-    public List<ServicePointPhoto> findByFileName(String fileName, Integer start, Integer offset) {
+    public List<ServicePointPhoto> findByFileName(String fileName, Integer start, Integer limit) {
 
         TypedQuery<ServicePointPhoto> query = getEntityManager().createNamedQuery(ServicePointPhoto.FIND_BY_FILE_NAME, ServicePointPhoto.class);
         query.setParameter("file_name", "%" + fileName + "%");
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -55,13 +55,13 @@ public class ServicePointPhotoFacade extends AbstractFacade<ServicePointPhoto>
     }
 
     @Override
-    public List<ServicePointPhoto> findByDescription(String description, Integer start, Integer offset) {
+    public List<ServicePointPhoto> findByDescription(String description, Integer start, Integer limit) {
 
         TypedQuery<ServicePointPhoto> query = getEntityManager().createNamedQuery(ServicePointPhoto.FIND_BY_DESCRIPTION, ServicePointPhoto.class);
         query.setParameter("description", "%" + description + "%");
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -72,14 +72,14 @@ public class ServicePointPhotoFacade extends AbstractFacade<ServicePointPhoto>
     }
 
     @Override
-    public List<ServicePointPhoto> findByFileNameAndDescription(String fileName, String description, Integer start, Integer offset) {
+    public List<ServicePointPhoto> findByFileNameAndDescription(String fileName, String description, Integer start, Integer limit) {
 
         TypedQuery<ServicePointPhoto> query = getEntityManager().createNamedQuery(ServicePointPhoto.FIND_BY_FILE_NAME_AND_DESCRIPTION, ServicePointPhoto.class);
         query.setParameter("file_name", "%" + fileName + "%");
         query.setParameter("description", "%" + description + "%");
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -90,13 +90,13 @@ public class ServicePointPhotoFacade extends AbstractFacade<ServicePointPhoto>
     }
 
     @Override
-    public List<ServicePointPhoto> findByKeyword(String keyword, Integer start, Integer offset) {
+    public List<ServicePointPhoto> findByKeyword(String keyword, Integer start, Integer limit) {
 
         TypedQuery<ServicePointPhoto> query = getEntityManager().createNamedQuery(ServicePointPhoto.FIND_BY_KEYWORD, ServicePointPhoto.class);
         query.setParameter("keyword", "%" + keyword + "%");
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -107,13 +107,13 @@ public class ServicePointPhotoFacade extends AbstractFacade<ServicePointPhoto>
     }
 
     @Override
-    public List<ServicePointPhoto> findByTagName(String tagName, Integer start, Integer offset) {
+    public List<ServicePointPhoto> findByTagName(String tagName, Integer start, Integer limit) {
 
         TypedQuery<ServicePointPhoto> query = getEntityManager().createNamedQuery(ServicePointPhoto.FIND_BY_TAG_NAME, ServicePointPhoto.class);
         query.setParameter("tag_name", "%" + tagName + "%");
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -124,13 +124,13 @@ public class ServicePointPhotoFacade extends AbstractFacade<ServicePointPhoto>
     }
 
     @Override
-    public List<ServicePointPhoto> findByAnyTagNames(List<String> tagNames, Integer start, Integer offset) {
+    public List<ServicePointPhoto> findByAnyTagNames(List<String> tagNames, Integer start, Integer limit) {
 
         TypedQuery<ServicePointPhoto> query = getEntityManager().createNamedQuery(ServicePointPhoto.FIND_BY_ANY_TAG_NAMES, ServicePointPhoto.class);
         query.setParameter("tag_names", tagNames);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -141,7 +141,7 @@ public class ServicePointPhotoFacade extends AbstractFacade<ServicePointPhoto>
     }
 
     @Override
-    public List<ServicePointPhoto> findByAllTags(List<Tag> tags, Integer start, Integer offset) {
+    public List<ServicePointPhoto> findByAllTags(List<Tag> tags, Integer start, Integer limit) {
 
         CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
         CriteriaQuery<ServicePointPhoto> criteriaQuery = criteriaBuilder.createQuery(ServicePointPhoto.class);
@@ -170,14 +170,14 @@ public class ServicePointPhotoFacade extends AbstractFacade<ServicePointPhoto>
     }
 
     @Override
-    public List<ServicePointPhoto> findByAllTagNames(List<String> tagNames, Integer start, Integer offset) {
+    public List<ServicePointPhoto> findByAllTagNames(List<String> tagNames, Integer start, Integer limit) {
 
         TypedQuery<ServicePointPhoto> query = getEntityManager().createNamedQuery(ServicePointPhoto.FIND_BY_ALL_TAG_NAMES, ServicePointPhoto.class);
         query.setParameter("tag_names", tagNames);
         query.setParameter("tag_count",  Long.valueOf(tagNames.size()));
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -188,13 +188,13 @@ public class ServicePointPhotoFacade extends AbstractFacade<ServicePointPhoto>
     }
 
     @Override
-    public List<ServicePointPhoto> findByKeywordIncludingTags(String keyword, Integer start, Integer offset) {
+    public List<ServicePointPhoto> findByKeywordIncludingTags(String keyword, Integer start, Integer limit) {
 
         TypedQuery<ServicePointPhoto> query = getEntityManager().createNamedQuery(ServicePointPhoto.FIND_BY_KEYWORD_INCLUDING_TAGS, ServicePointPhoto.class);
         query.setParameter("keyword", keyword);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -205,13 +205,13 @@ public class ServicePointPhotoFacade extends AbstractFacade<ServicePointPhoto>
     }
 
     @Override
-    public List<ServicePointPhoto> findByServicePoint(ServicePoint servicePoint, Integer start, Integer offset) {
+    public List<ServicePointPhoto> findByServicePoint(ServicePoint servicePoint, Integer start, Integer limit) {
 
         TypedQuery<ServicePointPhoto> query = getEntityManager().createNamedQuery(ServicePointPhoto.FIND_BY_SERVICE_POINT, ServicePointPhoto.class);
         query.setParameter("service_point", servicePoint);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -222,13 +222,13 @@ public class ServicePointPhotoFacade extends AbstractFacade<ServicePointPhoto>
     }
 
     @Override
-    public List<ServicePointPhoto> findByProvider(Provider provider, Integer start, Integer offset) {
+    public List<ServicePointPhoto> findByProvider(Provider provider, Integer start, Integer limit) {
 
         TypedQuery<ServicePointPhoto> query = getEntityManager().createNamedQuery(ServicePointPhoto.FIND_BY_PROVIDER, ServicePointPhoto.class);
         query.setParameter("provider", provider);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }
@@ -239,13 +239,13 @@ public class ServicePointPhotoFacade extends AbstractFacade<ServicePointPhoto>
     }
 
     @Override
-    public List<ServicePointPhoto> findByCorporation(Corporation corporation, Integer start, Integer offset) {
+    public List<ServicePointPhoto> findByCorporation(Corporation corporation, Integer start, Integer limit) {
 
         TypedQuery<ServicePointPhoto> query = getEntityManager().createNamedQuery(ServicePointPhoto.FIND_BY_CORPORATION, ServicePointPhoto.class);
         query.setParameter("corporation", corporation);
-        if(start != null && offset != null) {
+        if(start != null && limit != null) {
             query.setFirstResult(start);
-            query.setMaxResults(offset);
+            query.setMaxResults(limit);
         }
         return query.getResultList();
     }

@@ -12,17 +12,17 @@ public interface EducationFacadeInterface extends AbstractFacadeInterface<Educat
 
     // concrete interface
     List<Education> findByDegree(String degree);
-    List<Education> findByDegree(String degree, Integer start, Integer offset);
+    List<Education> findByDegree(String degree, Integer start, Integer limit);
     List<Education> findBySchool(String school);
-    List<Education> findBySchool(String school, Integer start, Integer offset);
+    List<Education> findBySchool(String school, Integer start, Integer limit);
     List<Education> findByDegreeAndSchool(String degree, String school);
-    List<Education> findByDegreeAndSchool(String degree, String school, Integer start, Integer offset);
+    List<Education> findByDegreeAndSchool(String degree, String school, Integer start, Integer limit);
     List<Education> findByKeyword(String keyword);
-    List<Education> findByKeyword(String keyword, Integer start, Integer offset);
+    List<Education> findByKeyword(String keyword, Integer start, Integer limit);
     List<Education> findByEmployee(Employee employee);
-    List<Education> findByEmployee(Employee employee, Integer start, Integer offset);
+    List<Education> findByEmployee(Employee employee, Integer start, Integer limit);
     List<Education> findByEmployeeAndKeyword(Employee employee, String keyword);
-    List<Education> findByEmployeeAndKeyword(Employee employee, String keyword, Integer start, Integer offset);
+    List<Education> findByEmployeeAndKeyword(Employee employee, String keyword, Integer start, Integer limit);
     Integer deleteByDegree(String degree);
     Integer deleteBySchool(String school);
     Integer deleteByDegreeAndSchool(String degree, String school);
