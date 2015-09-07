@@ -2,6 +2,8 @@ package pl.salonea.ejb.stateless;
 
 import pl.salonea.ejb.interfaces.UserAccountFacadeInterface;
 import pl.salonea.entities.UserAccount;
+import pl.salonea.entities.UserAccount_;
+import pl.salonea.utils.Period;
 
 import javax.ejb.LocalBean;
 import javax.ejb.Stateless;
@@ -9,6 +11,10 @@ import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import javax.persistence.TypedQuery;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
 import java.util.Date;
 import java.util.List;
 
@@ -97,6 +103,23 @@ public class UserAccountFacade extends AbstractFacade<UserAccount> implements Us
         return query.getResultList();
     }
 
+    @Override
+    public List<UserAccount> findByAccountType(String accountType) {
+        return findByAccountType(accountType, null, null);
+    }
+
+    @Override
+    public List<UserAccount> findByAccountType(String accountType, Integer start, Integer limit) {
+
+        TypedQuery<UserAccount> query = getEntityManager().createNamedQuery(UserAccount.FIND_BY_ACCOUNT_TYPE, UserAccount.class);
+        query.setParameter("account_type", accountType);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
     public List<UserAccount> findCreatedBetween(Date startDate, Date endDate) {
         return findCreatedBetween(startDate, endDate, null, null);
     }
@@ -151,10 +174,86 @@ public class UserAccountFacade extends AbstractFacade<UserAccount> implements Us
     }
 
     @Override
-    public Integer deleteOldNotActivated(Date oldestDate) {
+    public List<UserAccount> findByMultipleCriteria(String login, String email, Boolean activated, Period createdBetween, Period lastLoggedBetween, Period lastFailedLoginBetween) {
+        return findByMultipleCriteria(login, email, activated, createdBetween, lastLoggedBetween, lastFailedLoginBetween, null, null);
+    }
+
+    @Override
+    public List<UserAccount> findByMultipleCriteria(String login, String email, Boolean activated, Period createdBetween, Period lastLoggedBetween, Period lastFailedLoginBetween, Integer start, Integer limit) {
+
+        CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
+        CriteriaQuery<UserAccount> criteriaQuery = criteriaBuilder.createQuery(UserAccount.class);
+        // FROM
+        Root<UserAccount> userAccount = criteriaQuery.from(UserAccount.class);
+        // SELECT
+        criteriaQuery.select(userAccount);
+
+        // WHERE PREDICATES
+        List<Predicate> predicates = new java.util.ArrayList<>();
+
+        if(login != null) {
+            predicates.add( criteriaBuilder.like(userAccount.get(UserAccount_.login), "%" + login + "%") );
+        }
+
+        if(email != null) {
+            predicates.add( criteriaBuilder.like(userAccount.get(UserAccount_.email), "%" + email + "%") );
+        }
+
+        if(activated != null) {
+            if(activated) {
+                // get only activated user accounts i.e. activationCode is null
+                predicates.add( criteriaBuilder.isNull(userAccount.get(UserAccount_.activationCode)) );
+            } else {
+                // get only not activated user accounts i.e. activationCode is not null
+                predicates.add( criteriaBuilder.isNotNull(userAccount.get(UserAccount_.activationCode)) );
+            }
+        } // otherwise get both activated and not activated user accounts i.e. no predicate is needed
+
+        if(createdBetween != null) {
+            // limit user accounts to registration date between specified period of time
+            if(createdBetween.getStartTime() != null) {
+                predicates.add(criteriaBuilder.greaterThanOrEqualTo(userAccount.<Date>get(UserAccount_.registrationDate), new Date(createdBetween.getStartTime().getTime())) );
+            }
+
+            if(createdBetween.getEndTime() != null)
+                predicates.add( criteriaBuilder.lessThanOrEqualTo(userAccount.<Date>get(UserAccount_.registrationDate), new Date(createdBetween.getEndTime().getTime())) );
+        }
+
+        if(lastLoggedBetween != null) {
+            // limit user accounts to last logged between specified period of time
+            if(lastLoggedBetween.getStartTime() != null)
+                predicates.add( criteriaBuilder.greaterThanOrEqualTo(userAccount.get(UserAccount_.lastLogged), new Date(lastLoggedBetween.getStartTime().getTime())) );
+
+            if(lastLoggedBetween.getEndTime() != null)
+                predicates.add( criteriaBuilder.lessThanOrEqualTo(userAccount.get(UserAccount_.lastLogged), new Date(lastLoggedBetween.getEndTime().getTime())) );
+        }
+
+        if(lastFailedLoginBetween != null) {
+            // limit user accounts to last failed login between specified period of time
+            if(lastFailedLoginBetween.getStartTime() != null)
+                predicates.add( criteriaBuilder.greaterThanOrEqualTo(userAccount.get(UserAccount_.lastFailedLogin), new Date(lastFailedLoginBetween.getStartTime().getTime())) );
+
+            if(lastFailedLoginBetween.getEndTime() != null)
+                predicates.add( criteriaBuilder.lessThanOrEqualTo(userAccount.get(UserAccount_.lastFailedLogin), new Date(lastFailedLoginBetween.getEndTime().getTime())) );
+        }
+
+        // WHERE predicate1 AND predicate2 AND ... AND predicateN
+        criteriaQuery.where(predicates.toArray(new Predicate[] { }));
+
+        TypedQuery<UserAccount> query = getEntityManager().createQuery(criteriaQuery);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+
+        return query.getResultList();
+    }
+
+    @Override
+    public Integer deleteOldNotActivated(Date youngestDate) {
 
         Query query = getEntityManager().createNamedQuery(UserAccount.DELETE_OLD_NOT_ACTIVATED);
-        query.setParameter("oldest_date", oldestDate);
+        query.setParameter("youngest_date", youngestDate);
         return query.executeUpdate();
     }
 

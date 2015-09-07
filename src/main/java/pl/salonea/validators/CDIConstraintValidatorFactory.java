@@ -55,7 +55,7 @@ public class CDIConstraintValidatorFactory implements ConstraintValidatorFactory
         }
     }
 
-    @Override
+    // @Override
     public void releaseInstance(ConstraintValidator<?, ?> instance) {
 
     }

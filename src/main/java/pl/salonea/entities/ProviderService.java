@@ -38,8 +38,8 @@ import java.util.Set;
         @NamedQuery(name = ProviderService.FIND_BY_PROVIDER_AND_EMPLOYEE, query = "SELECT ps FROM ProviderService ps WHERE ps.provider = :provider AND :employee MEMBER OF ps.supplyingEmployees"),
         @NamedQuery(name = ProviderService.UPDATE_DISCOUNT_FOR_PROVIDER_AND_SERVICE_CATEGORY, query = "UPDATE ProviderService ps SET ps.discount = :new_discount WHERE ps.provider = :provider AND ps.service IN (SELECT s FROM Service s WHERE s.serviceCategory = :service_category)"),
         @NamedQuery(name = ProviderService.UPDATE_DISCOUNT_FOR_PROVIDER_AND_EMPLOYEE, query = "UPDATE ProviderService ps SET ps.discount = :new_discount WHERE ps.provider = :provider AND :employee MEMBER OF ps.supplyingEmployees"),
-        @NamedQuery(name = ProviderService.DELETE_FOR_ONLY_WORK_STATION, query = "DELETE FROM ProviderService ps WHERE :work_station MEMBER OF ps.workStations AND ps.workStations.size = 1"),
-        @NamedQuery(name = ProviderService.DELETE_FOR_PROVIDER_AND_ONLY_EMPLOYEE, query = "DELETE FROM ProviderService ps WHERE ps.provider = :provider AND :employee MEMBER OF ps.supplyingEmployees AND ps.supplyingEmployees.size = 1"),
+        @NamedQuery(name = ProviderService.DELETE_FOR_ONLY_WORK_STATION, query = "DELETE FROM ProviderService ps WHERE :work_station MEMBER OF ps.workStations AND SIZE(ps.workStations) = 1"),
+        @NamedQuery(name = ProviderService.DELETE_FOR_PROVIDER_AND_ONLY_EMPLOYEE, query = "DELETE FROM ProviderService ps WHERE ps.provider = :provider AND :employee MEMBER OF ps.supplyingEmployees AND SIZE(ps.supplyingEmployees)= 1"),
         @NamedQuery(name = ProviderService.DELETE_FOR_PROVIDER_AND_SERVICE_CATEGORY, query = "DELETE FROM ProviderService ps WHERE ps.provider = :provider AND ps.service IN (SELECT s FROM Service s WHERE s.serviceCategory = :service_category)"),
         @NamedQuery(name = ProviderService.DELETE_FOR_PROVIDER, query = "DELETE FROM ProviderService ps WHERE ps.provider = :provider"),
         @NamedQuery(name = ProviderService.DELETE_FOR_SERVICE, query = "DELETE FROM ProviderService ps WHERE ps.service = :service")

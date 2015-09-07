@@ -100,13 +100,13 @@ public class EducationIT {
         // create instance of Education entity
         Education education = new Education("Stanford University", "Master's Degree in Computer Science");
 
+        // wire up Education entity to Employee entity
+        employee.getEducations().add(education);
+        education.getEducatedEmployees().add(employee);
+
         transaction.begin();
         em.persist(employee);
         em.persist(education);
-        Set<Education> educations = new HashSet<>();
-        educations.add(education);
-        employee.setEducations(educations);
-        em.refresh(education);
         transaction.commit();
 
         assertNotNull("Employee id can not be null.", employee.getUserId());

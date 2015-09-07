@@ -10,6 +10,7 @@ import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
 import javax.persistence.criteria.*;
+import javax.persistence.metamodel.SingularAttribute;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -290,7 +291,8 @@ public class EmployeeFacade extends AbstractFacade<Employee> implements Employee
         List<Predicate> predicates = new ArrayList<>();
 
         if(description != null) {
-            predicates.add(criteriaBuilder.like(employee.get(Employee_.description), "%" + description + "%"));
+            SingularAttribute<Employee, String> descriptionAttr = Employee_.description;
+            predicates.add(criteriaBuilder.like(employee.get(descriptionAttr), "%" + description + "%"));
         }
 
         if(jobPositions != null && jobPositions.size() > 0) {

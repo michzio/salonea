@@ -1,0 +1,35 @@
+<component name="ArtifactManager">
+  <artifact type="exploded-war" name="Gradle : pl.salonea:salonea : salonea-1.0.war (exploded)">
+    <output-path>$PROJECT_DIR$/out/artifacts/salonea/exploded/salonea-1.0.war</output-path>
+    <properties id="gradle-properties">
+      <options external-project-path="$PROJECT_DIR$" />
+    </properties>
+    <root id="root">
+      <element id="javaee-facet-resources" facet="salonea/web/Web Gradle : salonea-1.0.war" />
+      <element id="directory" name="WEB-INF">
+        <element id="directory" name="classes">
+          <element id="module-output" name="salonea" />
+          <element id="dir-copy" path="$PROJECT_DIR$/build/classes/main" />
+        </element>
+        <element id="directory" name="lib">
+          <element id="library" level="project" name="Gradle: mysql:mysql-connector-java:5.1.35" />
+          <element id="library" level="project" name="Gradle: javax.el:javax.el-api:3.0.0" />
+          <element id="library" level="project" name="Gradle: javax.enterprise:cdi-api:1.2" />
+          <element id="library" level="project" name="Gradle: javax.interceptor:javax.interceptor-api:1.2" />
+          <element id="library" level="project" name="Gradle: javax.inject:javax.inject:1" />
+          <element id="library" level="project" name="Gradle: org.apache.commons:commons-lang3:3.4" />
+          <element id="library" level="project" name="Gradle: org.glassfish.jaxb:jaxb-runtime:2.2.11" />
+          <element id="library" level="project" name="Gradle: org.glassfish.jaxb:jaxb-core:2.2.11" />
+          <element id="library" level="project" name="Gradle: org.jvnet.staxex:stax-ex:1.7.7" />
+          <element id="library" level="project" name="Gradle: com.sun.xml.fastinfoset:FastInfoset:1.2.13" />
+          <element id="library" level="project" name="Gradle: javax.xml.bind:jaxb-api:2.2.12-b140109.1041" />
+          <element id="library" level="project" name="Gradle: org.glassfish.jaxb:txw2:2.2.11" />
+          <element id="library" level="project" name="Gradle: com.sun.istack:istack-commons-runtime:2.21" />
+        </element>
+      </element>
+      <element id="directory" name="META-INF">
+        <element id="file-copy" path="$PROJECT_DIR$/out/artifacts/salonea/exploded/salonea-1.0.war/META-INF/MANIFEST.MF" />
+      </element>
+    </root>
+  </artifact>
+</component>

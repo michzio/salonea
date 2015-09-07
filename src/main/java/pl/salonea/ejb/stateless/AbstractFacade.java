@@ -54,20 +54,27 @@ public abstract class AbstractFacade<T> {
     }
 
     public List<T> findAll() {
-        CriteriaQuery<T> criteriaQuery = getEntityManager().getCriteriaBuilder().createQuery(entityClass);
-        Root<T> e = criteriaQuery.from(entityClass);
-        criteriaQuery.select(e);
-        return getEntityManager().createQuery(criteriaQuery).getResultList();
+        return findAll(null, null);
     }
 
-    public List<T> findRange(int[] range) {
+    public List<T> findAll(Integer start, Integer limit) {
+        return findRange(start, limit);
+    }
+
+    public List<T> findRange(Integer start, Integer limit) {
         CriteriaQuery<T> criteriaQuery = getEntityManager().getCriteriaBuilder().createQuery(entityClass);
         Root<T> e = criteriaQuery.from(entityClass);
         criteriaQuery.select(e);
         Query query = getEntityManager().createQuery(criteriaQuery);
-        query.setMaxResults(range[1] - range[0]);
-        query.setFirstResult(range[0]);
+        if(start != null && limit != null) {
+            query.setMaxResults(limit);
+            query.setFirstResult(start);
+        }
         return query.getResultList();
+    }
+
+    public List<T> findRange(int[] range) {
+        return findRange(range[0], range[1] - range[0]);
     }
 
     public Long count() {

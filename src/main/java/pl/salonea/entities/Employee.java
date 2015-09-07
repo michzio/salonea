@@ -98,8 +98,8 @@ public class Employee extends NaturalPerson {
 
     @ManyToMany
     @JoinTable(name = "employee_education",
-        joinColumns = @JoinColumn(name = "employee_id"),
-        inverseJoinColumns = @JoinColumn(name = "education_id")
+            joinColumns = @JoinColumn(name = "employee_id"),
+            inverseJoinColumns = @JoinColumn(name = "education_id")
     )
     public Set<Education> getEducations() {
         return educations;

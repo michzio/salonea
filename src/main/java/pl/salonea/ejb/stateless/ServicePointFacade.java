@@ -2,7 +2,7 @@ package pl.salonea.ejb.stateless;
 
 import pl.salonea.ejb.interfaces.ServicePointFacadeInterface;
 import pl.salonea.embeddables.Address;
-import pl.salonea.embeddables.Address_;
+import pl.salonea.embeddables.*;
 import pl.salonea.entities.*;
 import pl.salonea.utils.CoordinatesCircle;
 import pl.salonea.utils.CoordinatesSquare;

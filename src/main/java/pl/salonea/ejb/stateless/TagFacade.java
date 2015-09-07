@@ -3,7 +3,7 @@ package pl.salonea.ejb.stateless;
 import pl.salonea.ejb.interfaces.TagFacadeInterface;
 import pl.salonea.entities.ServicePointPhoto;
 import pl.salonea.entities.Tag;
-import pl.salonea.entities.Tag_;
+import pl.salonea.entities.*;
 import pl.salonea.entities.VirtualTour;
 
 import javax.ejb.LocalBean;

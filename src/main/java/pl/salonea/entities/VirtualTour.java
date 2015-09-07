@@ -64,7 +64,7 @@ public class VirtualTour implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Basic(optional = false)
-    @Column(name = "virtual_tour_id", nullable = false, columnDefinition = "BIGINT UNSIGNED")
+    @Column(name = "virtual_tour_id", nullable = false /*, columnDefinition = "BIGINT UNSIGNED"*/)
     public Long getTourId() {
         return tourId;
     }

@@ -43,7 +43,7 @@ public class Industry implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Basic(optional = false)
-    @Column(name = "industry_id", nullable = false, columnDefinition = "BIGINT UNSIGNED")
+    @Column(name = "industry_id", nullable = false /*, columnDefinition = "BIGINT UNSIGNED" */)
     public Long getIndustryId() {
         return industryId;
     }

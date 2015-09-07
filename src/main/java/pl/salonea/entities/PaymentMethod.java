@@ -54,7 +54,7 @@ public class PaymentMethod implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Basic(optional = false)
-    @Column(name = "payment_method_id", nullable = false, columnDefinition = "INT UNSIGNED")
+    @Column(name = "payment_method_id", nullable = false /*, columnDefinition = "INT UNSIGNED" */)
     public Integer getId() {
         return id;
     }

@@ -56,7 +56,8 @@ public class CreditCardIT {
         cal.add(Calendar.YEAR, 1);
 
         // create instance of CreditCard entity
-        CreditCard creditCard = new CreditCard(client, "4129239494949494", cal.getTime(), "Michał Ziobro", CreditCardType.VISA);
+        CreditCard creditCard = new CreditCard(client, "4539345259115377", cal.getTime(), "Michał Ziobro", CreditCardType.VISA);
+        client.getCreditCards().add(creditCard);
 
         transaction.begin();
         em.persist(client);

@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="Gradle: org.jboss.arquillian.testenricher:arquillian-testenricher-resource:1.0.0.Final">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jboss.arquillian.testenricher/arquillian-testenricher-resource/1.0.0.Final/5d71dd0251b23526c8e915271325fb649caaf34d/arquillian-testenricher-resource-1.0.0.Final.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jboss.arquillian.testenricher/arquillian-testenricher-resource/1.0.0.Final/49def4a75e1b455e6a80107dc0d3168b565ff261/arquillian-testenricher-resource-1.0.0.Final-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

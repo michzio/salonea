@@ -104,7 +104,7 @@ public class Term  implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Basic(optional = false)  // runtime scoped not null, whereas nullable references only to table
-    @Column(name = "term_id", nullable = false, columnDefinition = "BIGINT UNSIGNED")
+    @Column(name = "term_id", nullable = false /*, columnDefinition = "BIGINT UNSIGNED" */)
     public Long getTermId() {
         return termId;
     }

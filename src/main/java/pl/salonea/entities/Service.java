@@ -68,7 +68,7 @@ public class Service {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Basic(optional = false) // runtime scoped not null, whereas nullable references only to table
-    @Column(name = "service_id", nullable = false, columnDefinition = "INT UNSIGNED")
+    @Column(name = "service_id", nullable = false /*, columnDefinition = "INT UNSIGNED" */)
     public Integer getServiceId() {
         return serviceId;
     }

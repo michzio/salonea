@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="Gradle: org.jboss.arquillian.container:arquillian-glassfish-embedded-3.1:1.0.0.CR4">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jboss.arquillian.container/arquillian-glassfish-embedded-3.1/1.0.0.CR4/6cc4a514218e0e513b19911a7c23c1ecbc1e9d6/arquillian-glassfish-embedded-3.1-1.0.0.CR4.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jboss.arquillian.container/arquillian-glassfish-embedded-3.1/1.0.0.CR4/f747aae310bc2c8f25882b92f0787c0baae9d358/arquillian-glassfish-embedded-3.1-1.0.0.CR4-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

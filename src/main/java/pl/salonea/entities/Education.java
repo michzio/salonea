@@ -26,8 +26,7 @@ import java.util.Set;
         @NamedQuery(name = Education.DELETE_BY_DEGREE, query = "DELETE FROM Education e WHERE e.degree = :degree"),
         @NamedQuery(name = Education.DELETE_BY_SCHOOL, query = "DELETE FROM Education e WHERE e.school = :school"),
         @NamedQuery(name = Education.DELETE_BY_DEGREE_AND_SCHOOL, query = "DELETE FROM Education e WHERE e.degree = :degree AND e.school = :school"),
-        @NamedQuery(name = Education.DELETE_BY_EDUCATIONS, query = "DELETE FROM Education e WHERE e IN :educations")
-
+        // @NamedQuery(name = Education.DELETE_BY_EDUCATIONS, query = "DELETE FROM Education e WHERE e IN :educations"), deprecated -- don't work in EclipseLink
 })
 public class Education implements Serializable {
 
@@ -40,7 +39,7 @@ public class Education implements Serializable {
     public static final String DELETE_BY_DEGREE = "Education.deleteByDegree";
     public static final String DELETE_BY_SCHOOL = "Education.deleteBySchool";
     public static final String DELETE_BY_DEGREE_AND_SCHOOL = "Education.deleteByDegreeAndSchool";
-    public static final String DELETE_BY_EDUCATIONS = "Education.deleteByEducations";
+    //public static final String DELETE_BY_EDUCATIONS = "Education.deleteByEducations"; deprecated -- don't work in EclipseLink
 
     private Long educationId;
     private String degree; // composite business key
@@ -62,7 +61,7 @@ public class Education implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Basic(optional = false) // runtime scoped not null, whereas nullable references only to table
-    @Column(name = "education_id", nullable = false, columnDefinition = "BIGINT UNSIGNED")
+    @Column(name = "education_id", nullable = false /*,  columnDefinition = "BIGINT UNSIGNED" */)
     public Long getEducationId() {
         return educationId;
     }

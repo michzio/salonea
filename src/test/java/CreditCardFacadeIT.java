@@ -79,18 +79,24 @@ public class CreditCardFacadeIT {
         utx.begin();
         clientFacade.create(client);
         cardFacade.create(creditCard);
+        utx.commit();
 
-
+        assertTrue("There should be one CreditCard persisted in database.", cardFacade.count() == 1);
+        assertTrue("There should be one Client persisted in database.", clientFacade.count() == 1);
         assertNotNull("Should assign new Credit Card to existing Client.", client.getCreditCards());
         assertTrue(client.getCreditCards().contains(creditCard));
 
+        utx.begin();
+        creditCard = cardFacade.find(new CreditCardId(client.getClientId(), creditCard.getCreditCardNumber(), creditCard.getExpirationDate()));
         cardFacade.remove(creditCard);
+        utx.commit();
 
         assertTrue(cardFacade.count() == 0);
 
         client.getCreditCards().remove(creditCard);
+        utx.begin();
+        client = clientFacade.find(client.getClientId());
         clientFacade.remove(client);
-
         utx.commit();
     }
 
@@ -116,6 +122,14 @@ public class CreditCardFacadeIT {
         CreditCard card5 = new CreditCard(client3, "5266864683957747", cal.getTime(), "Anna Kwiatkowska", CreditCardType.VISA);
         cal.add(Calendar.MONTH, -10);
         CreditCard card6 = new CreditCard(client3, "4445800819641026", cal.getTime(), "Anna Kwiatkowska", CreditCardType.VISA);
+
+        // setting other side of bidirectional relationship
+        client1.getCreditCards().add(card1);
+        client1.getCreditCards().add(card2);
+        client2.getCreditCards().add(card3);
+        client2.getCreditCards().add(card4);
+        client3.getCreditCards().add(card5);
+        client3.getCreditCards().add(card6);
 
         utx.begin();
         clientFacade.create(client1);
@@ -148,9 +162,17 @@ public class CreditCardFacadeIT {
         cardFacade.deleteWithExpirationDateAfter(cal.getTime());
         assertTrue("There should left only two cards.", cardFacade.count() == 2);
 
+        // refreshing client entities to enforce CascadeType.REMOVE to work correctly
+        utx.begin();
+        client1 = clientFacade.find(client1.getClientId());
+        client2 = clientFacade.find(client2.getClientId());
+        client3 = clientFacade.find(client3.getClientId());
         clientFacade.remove(client1);
         clientFacade.remove(client2);
         clientFacade.remove(client3);
+        utx.commit();
+
+        assertTrue("There should not remain any Credit Card persisted in database.", cardFacade.count() == 0);
 
     }
 

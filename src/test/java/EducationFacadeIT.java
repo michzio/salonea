@@ -13,6 +13,7 @@ import pl.salonea.entities.Employee;
 import pl.salonea.enums.Gender;
 
 import javax.inject.Inject;
+import javax.transaction.UserTransaction;
 import java.io.File;
 import java.util.Calendar;
 import java.util.Date;
@@ -58,6 +59,9 @@ public class EducationFacadeIT {
 
     @Inject
     private EmployeeFacadeInterface.Local employeeFacade;
+
+    @Inject
+    private UserTransaction utx;
 
     @Test
     public void shouldCreateNewEducation() {
@@ -132,7 +136,7 @@ public class EducationFacadeIT {
     }
 
     @Test
-    public void shouldFindEducationByEmployee() {
+    public void shouldFindEducationByEmployee() throws Exception {
 
         // create some instances of Employee entity
         Date dateOfBirth1 = new GregorianCalendar(1988, Calendar.OCTOBER, 3).getTime();
@@ -152,17 +156,17 @@ public class EducationFacadeIT {
         Education santaClaraUniversity = new Education("Santa Clara University", "Master of Computer Science");
 
         // wire up both Employee and Education entities
-        employee1.getEducations().add(santaClaraUniversity);
-        employee1.getEducations().add(stanfordUniversity);
-        employee2.getEducations().add(massachusettsInstituteOfTechnology);
-        employee3.getEducations().add(massachusettsInstituteOfTechnology);
-
         santaClaraUniversity.getEducatedEmployees().add(employee1);
         stanfordUniversity.getEducatedEmployees().add(employee1);
         massachusettsInstituteOfTechnology.getEducatedEmployees().add(employee2);
         massachusettsInstituteOfTechnology.getEducatedEmployees().add(employee3);
 
+        employee1.getEducations().add(santaClaraUniversity);
+        employee1.getEducations().add(stanfordUniversity);
+        employee2.getEducations().add(massachusettsInstituteOfTechnology);
+        employee3.getEducations().add(massachusettsInstituteOfTechnology);
         // persist employees and educations in database
+        utx.begin();
         educationFacade.create(stanfordUniversity);
         educationFacade.create(santaClaraUniversity);
         educationFacade.create(massachusettsInstituteOfTechnology);
@@ -170,6 +174,7 @@ public class EducationFacadeIT {
         employeeFacade.create(employee1);
         employeeFacade.create(employee2);
         employeeFacade.create(employee3);
+        utx.commit();
 
         assertTrue("There should be three Employee entities in database.", employeeFacade.count() == 3);
         assertTrue("There should be three Education entities in database.", educationFacade.count() == 3);
@@ -183,7 +188,8 @@ public class EducationFacadeIT {
         assertTrue(employeeEdu.contains(santaClaraUniversity));
 
         // removing Education entities
-        assertTrue(educationFacade.deleteByEmployee(employee1) == 2);
+        Integer deletedEducation = educationFacade.deleteByEmployee(employee1);
+        assertTrue(deletedEducation == 2);
         assertTrue("There should remain only one Education entity in database.", educationFacade.count() == 1);
 
         assertTrue(educationFacade.deleteByEmployee(employee2) == 1);

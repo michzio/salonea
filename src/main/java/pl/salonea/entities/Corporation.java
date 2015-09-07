@@ -4,6 +4,7 @@ import pl.salonea.constraints.ImageName;
 import pl.salonea.constraints.PhoneNumber;
 import pl.salonea.constraints.SkypeName;
 import pl.salonea.embeddables.Address;
+import pl.salonea.mapped_superclasses.UUIDEntity;
 
 import javax.persistence.*;
 import javax.validation.Valid;
@@ -75,7 +76,7 @@ public class Corporation extends UUIDEntity implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Basic(optional = false)
-    @Column(name = "corporation_id", nullable = false, columnDefinition = "BIGINT UNSIGNED")
+    @Column(name = "corporation_id", nullable = false /*, columnDefinition = "BIGINT UNSIGNED" */)
     public Long getCorporationId() {
         return corporationId;
     }

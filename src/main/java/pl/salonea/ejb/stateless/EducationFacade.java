@@ -173,8 +173,16 @@ public class EducationFacade extends AbstractFacade<Education> implements Educat
     @Override
     public Integer deleteByEducations(List<Education> educations) {
 
-        Query query = getEntityManager().createNamedQuery(Education.DELETE_BY_EDUCATIONS);
-        query.setParameter("educations", educations);
-        return query.executeUpdate();
+        Integer deletedCount = 0;
+        for(Education education : educations) {
+            getEntityManager().remove(education);
+            deletedCount++;
+        }
+        return deletedCount;
+
+        /* Query query = getEntityManager().createNamedQuery(Education.DELETE_BY_EDUCATIONS);
+            query.setParameter("educations", educations);
+            return query.executeUpdate();
+         */
     }
 }

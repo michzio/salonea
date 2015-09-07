@@ -3,7 +3,6 @@ package pl.salonea.ejb.stateless;
 import pl.salonea.ejb.interfaces.TransactionFacadeInterface;
 import pl.salonea.entities.*;
 import pl.salonea.enums.CurrencyCode;
-import pl.salonea.mapped_superclasses.AbstractTransaction_;
 import pl.salonea.utils.Period;
 import pl.salonea.utils.PriceRange;
 
@@ -14,7 +13,6 @@ import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 import javax.persistence.criteria.*;
-import javax.persistence.metamodel.SetAttribute;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;

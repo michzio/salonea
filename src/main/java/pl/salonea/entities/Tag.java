@@ -50,7 +50,7 @@ public class Tag implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Basic(optional = false)
-    @Column(name = "tag_id", nullable = false, columnDefinition = "BIGINT UNSIGNED")
+    @Column(name = "tag_id", nullable = false /*, columnDefinition = "BIGINT UNSIGNED"*/)
     public Long getTagId() {
         return tagId;
     }

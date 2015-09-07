@@ -6,20 +6,28 @@ import pl.salonea.constraints.ChronologicalAccountDates;
 import pl.salonea.constraints.Email;
 import pl.salonea.constraints.EmailAvailability;
 import pl.salonea.constraints.StrongPassword;
+import pl.salonea.jaxrs.utils.hateoas.Link;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Past;
 import javax.validation.constraints.Size;
+import javax.xml.bind.annotation.*;
 import java.io.Serializable;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.Format;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+@XmlRootElement(name = "user-account")
+@XmlAccessorType(XmlAccessType.PROPERTY)
+@XmlType(propOrder = { "userId", "email", "login", "password", "activationCode", "registrationDate", "lastLogged", "lastFailedLogin", "accountType", "links"})
 
 @Entity
 @Inheritance(strategy = InheritanceType.JOINED)
@@ -33,10 +41,11 @@ import java.util.logging.Logger;
         @NamedQuery(name= UserAccount.FIND_ALL_ACTIVATED, query="SELECT u FROM UserAccount u WHERE u.activationCode IS NULL"),
         @NamedQuery(name= UserAccount.FIND_BY_EMAIL, query="SELECT u FROM UserAccount u WHERE u.email LIKE :email"),
         @NamedQuery(name= UserAccount.FIND_BY_LOGIN, query="SELECT u FROM UserAccount u WHERE u.login LIKE :login"),
+        @NamedQuery(name= UserAccount.FIND_BY_ACCOUNT_TYPE, query = "SELECT u FROM UserAccount u WHERE u.accountType = :account_type"),
         @NamedQuery(name= UserAccount.FIND_CREATED_BETWEEN, query="SELECT u FROM UserAccount u WHERE u.registrationDate >= :start_date AND u.registrationDate <= :end_date"),
         @NamedQuery(name= UserAccount.FIND_LAST_LOGGED_BETWEEN, query="SELECT u FROM UserAccount u WHERE u.lastLogged >= :start_date AND u.lastLogged <= :end_date"),
         @NamedQuery(name= UserAccount.FIND_LAST_FAILED_LOGIN_BETWEEN, query="SELECT u FROM UserAccount u WHERE u.lastFailedLogin >= :start_date AND u.lastFailedLogin <= :end_date"),
-        @NamedQuery(name= UserAccount.DELETE_OLD_NOT_ACTIVATED, query= "DELETE FROM UserAccount u WHERE u.activationCode IS NOT NULL AND u.registrationDate <= :oldest_date"),
+        @NamedQuery(name= UserAccount.DELETE_OLD_NOT_ACTIVATED, query= "DELETE FROM UserAccount u WHERE u.activationCode IS NOT NULL AND u.registrationDate <= :youngest_date"),
         @NamedQuery(name= UserAccount.UPDATE_ACTIVATE_ALL, query="UPDATE UserAccount u SET u.activationCode = NULL WHERE u.activationCode IS NOT NULL")
 })
 @ChronologicalAccountDates
@@ -46,6 +55,7 @@ public class UserAccount implements Serializable {
     public final static String FIND_ALL_ACTIVATED = "UserAccount.findAllActivated";
     public final static String FIND_BY_EMAIL = "UserAccount.findByEmail";
     public final static String FIND_BY_LOGIN = "UserAccount.findByLogin";
+    public final static String FIND_BY_ACCOUNT_TYPE = "UserAccount.findByAccountType";
     public final static String FIND_CREATED_BETWEEN = "UserAccount.findCreatedBetween";
     public final static String FIND_LAST_LOGGED_BETWEEN = "UserAccount.findLastLoggedBetween";
     public final static String FIND_LAST_FAILED_LOGIN_BETWEEN = "UserAccount.findLastFailedLoginBetween";
@@ -65,6 +75,9 @@ public class UserAccount implements Serializable {
 
     private String accountType; // discriminator
 
+    // HATEOAS support for RESTFul web service in JAX-RS
+    private List<Link> links = new ArrayList<>();
+
     /* Constructors */
     public UserAccount() {
     }
@@ -83,7 +96,7 @@ public class UserAccount implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Basic(optional = false) // runtime scoped not null, whereas nullable references only to table
-    @Column(name = "user_id", nullable = false, columnDefinition = "BIGINT UNSIGNED")
+    @Column(name = "user_id", nullable = false /*, columnDefinition = "BIGINT UNSIGNED"*/)
     public Long getUserId() {
         return userId;
     }
@@ -218,5 +231,16 @@ public class UserAccount implements Serializable {
                 // if deriving: appendSuper(super.equals(obj)).
                 append(getEmail(), rhs.getEmail()).
                 isEquals();
+    }
+
+    @Transient
+    @XmlElementWrapper(name = "links")
+    @XmlElement(name = "link")
+    public List<Link> getLinks() {
+        return links;
+    }
+
+    public void setLinks(List<Link> links) {
+        this.links = links;
     }
 }

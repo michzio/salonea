@@ -1,6 +1,6 @@
 package pl.salonea.entities;
 
-import org.codehaus.groovy.util.HashCodeHelper;
+
 import pl.salonea.constraints.CorporateOwner;
 import pl.salonea.embeddables.Address;
 import pl.salonea.enums.ProviderType;
@@ -8,7 +8,6 @@ import pl.salonea.enums.ProviderType;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
-import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -23,8 +22,8 @@ import java.util.Set;
         @NamedQuery(name = Provider.FIND_BY_INDUSTRY, query = "SELECT p FROM Provider p WHERE :industry MEMBER OF p.industries"),
         @NamedQuery(name = Provider.FIND_BY_PAYMENT_METHOD, query = "SELECT p FROM Provider p WHERE :payment_method MEMBER OF p.acceptedPaymentMethods"),
         @NamedQuery(name = Provider.FIND_BY_SUPPLIED_SERVICE, query = "SELECT p FROM Provider p INNER JOIN p.suppliedServiceOffers ps WHERE ps.service = :service"),
-        @NamedQuery(name = Provider.FIND_RATED, query = "SELECT p FROM Provider p WHERE p.receivedRatings.size > 0"),
-        @NamedQuery(name = Provider.FIND_UNRATED, query = "SELECT p FROM Provider p WHERE p.receivedRatings.size = 0"),
+        @NamedQuery(name = Provider.FIND_RATED, query = "SELECT p FROM Provider p WHERE SIZE(p.receivedRatings) > 0"),
+        @NamedQuery(name = Provider.FIND_UNRATED, query = "SELECT p FROM Provider p WHERE SIZE(p.receivedRatings) = 0"),
         @NamedQuery(name = Provider.FIND_ON_AVG_RATED_ABOVE, query = "SELECT p FROM Provider p INNER JOIN p.receivedRatings pr GROUP BY p HAVING AVG(pr.clientRating) >= :avg_rating"),
         @NamedQuery(name = Provider.FIND_ON_AVG_RATED_BELOW, query = "SELECT p FROM Provider p INNER JOIN p.receivedRatings pr GROUP BY p HAVING AVG(pr.clientRating) <= :avg_rating"),
         @NamedQuery(name = Provider.FIND_RATED_BY_CLIENT, query = "SELECT p FROM Provider p INNER JOIN p.receivedRatings pr WHERE pr.client = :client"),

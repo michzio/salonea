@@ -1,6 +1,7 @@
 package pl.salonea.entities;
 
 import pl.salonea.constraints.NaturalPersonOrFirm;
+import pl.salonea.mapped_superclasses.UUIDEntity;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -47,8 +48,8 @@ public class Client extends UUIDEntity implements Serializable{
 
     // one-to-many relationships with:
     private Set<CreditCard> creditCards = new HashSet<>();
-    private Set<ProviderRating> providerRatings;
-    private Set<EmployeeRating> employeeRatings;
+    private Set<ProviderRating> providerRatings = new HashSet<>();
+    private Set<EmployeeRating> employeeRatings = new HashSet<>();
 
     /* constructor */
 
@@ -64,7 +65,7 @@ public class Client extends UUIDEntity implements Serializable{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Basic(optional = false) // runtime scoped not null, whereas nullable references only to table
-    @Column(name = "client_id", nullable = false, columnDefinition = "BIGINT UNSIGNED")
+    @Column(name = "client_id", nullable = false /*, columnDefinition = "BIGINT UNSIGNED" */ )
     public Long getClientId() {
         return clientId;
     }

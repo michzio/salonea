@@ -1,3 +1,20 @@
+/**
+ * This configuration file enable to run application integration tests
+ * with Arquillian on several configurations:
+ * 1) GlassFish/EclipseLink/Jersey
+ * 2) WildFly/Hibernate/RestEasy
+ * In order to run application on first configuration 1) GlassFish/EclipseLink/Jersey
+ * - make adjustments in persistence.xml file by uncommenting EclipseLink Provider
+ *   and GlassFish specific data source JNDI name
+ * In order to run application on second configuration 2) WildFly/Hibernate/RestEasy
+ * - make adjustments in persistence.xml file by uncommencing Hibernate Provider
+ *   and WildFly specific data source JNDI nam,
+ *   make sure that embedded (WildFLy standalone in JBOSS_HOME) or remote WildFly
+ *   application server has defined in standalone.xml (or by administration console)
+ *   suitable JDBC data source.
+ * Moreover to run application on remote server it needs to be started manually before. 
+ */
+
 group 'pl.salonea'
 version '1.0'
 
@@ -5,60 +22,160 @@ apply plugin: 'groovy'
 apply plugin: 'java'
 apply plugin: 'war'
 
-sourceCompatibility = 1.8
+sourceCompatibility = JavaVersion.VERSION_1_8
+targetCompatibility = JavaVersion.VERSION_1_8
+
+ext.jbossHome = hasProperty('jbossHome') ? jbossHome : '/usr/local/opt/wildfly-9.0.0.Final'
 
 repositories {
+    maven { url "https://plugins.gradle.org/m2/" }
     maven { url 'https://repository.jboss.org/nexus/content/groups/public-jboss' }
     maven { url 'https://repository.jboss.org/nexus/content/repositories' }
     maven { url 'https://repository.jboss.org/nexus/content/repositories/thirdparty-releases' }
 
     mavenCentral()
+    jcenter()
 }
+
 
 dependencies {
 
-    compile 'org.codehaus.groovy:groovy-all:2.3.11'
-    compile 'org.hibernate.javax.persistence:hibernate-jpa-2.1-api:1.0.0.Final'
-    compile 'org.hibernate:hibernate-entitymanager:5.0.0.CR1'
     compile 'mysql:mysql-connector-java:5.1.35'
-    compile 'org.hibernate:hibernate-validator:5.2.0.CR1'
     compile 'javax.el:javax.el-api:3.0.0'
     compile 'javax.enterprise:cdi-api:1.2'
-
-    compile 'org.wildfly:wildfly-spec-api:9.0.0.Final'
-    compile 'org.slf4j:slf4j-simple:1.7.7'
-
     compile 'org.apache.commons:commons-lang3:3.4'
+    compile 'org.glassfish.jaxb:jaxb-runtime:2.2.11'
 
-    // JPA metamodel
-    testCompile 'org.hibernate:hibernate-jpamodelgen:5.0.0.CR2'
+    //compile 'org.hibernate:hibernate-jpamodelgen:5.0.0.CR2'  // JPA metamodel
+    //compile 'org.eclipse.persistence:org.eclipse.persistence.jpa.modelgen.processor:2.6.0' // EclipseLink JPA metamodel
 
-    testCompile group: 'junit', name: 'junit', version: '4.12'
+    providedCompile 'javax:javaee-api:7.0'
 
-    testCompile 'org.jboss.shrinkwrap.resolver:shrinkwrap-resolver-depchain:2.1.0'
-    testCompile 'org.jboss.arquillian:arquillian-bom:1.1.2.Final-wildfly-1'
-    testCompile 'org.jboss.arquillian.junit:arquillian-junit-container:1.1.2.Final-wildfly-1'
+    /*if (project.hasProperty('jboss')) {
+        compile 'org.wildfly:wildfly-spec-api:9.0.0.Final' // <-- Widfly 9.0 Final server
+    } else {
+        compile 'org.glassfish.main.extras:glassfish-embedded-all:4.1' // <-- GlassFish 4.1 server
+    }*/
+
+
+    if( project.hasProperty('jboss') ) {
+        println 'using jboss'
+        makePersistenceXml('hibernate')
+        makeWebXml('wildfly')
+
+        // JPA/Hibernate
+        compile 'org.hibernate.javax.persistence:hibernate-jpa-2.1-api:1.0.0.Final'
+        compile 'org.hibernate:hibernate-entitymanager:5.0.0.CR1'
+        compile 'org.hibernate:hibernate-validator:5.2.0.CR1'
+
+        compile 'org.slf4j:slf4j-simple:1.7.7'
+        testRuntime 'org.jboss.logging:jboss-logging:3.1.4.GA'
+
+        // JAX-RS RestEasy RESTful web services
+        compile 'org.jboss.resteasy:resteasy-jaxrs:3.0.12.Final'
+        compile 'org.jboss.resteasy:resteasy-jaxb-provider:3.0.12.Final'
+        compile 'org.jboss.resteasy:resteasy-jackson-provider:3.0.12.Final'
+        compile 'org.jboss.resteasy:jaxrs-api:3.0.12.Final'
+        compile 'org.apache.httpcomponents:httpclient:4.5'
+
+        if( project.hasProperty('remote') ) {
+            println 'using wildfly remote'
+            testRuntime 'org.wildfly:wildfly-arquillian-container-remote:8.2.1.Final'
+        } else {
+            // not working.
+            println 'using wildfly embedded'
+            makeArquillianXml( 'wildfly-embedded' )
+            testRuntime 'org.wildfly:wildfly-embedded:9.0.0.Final'
+            //Embedded means it runs in the same JVM, it still needs the full installation
+            testRuntime 'org.wildfly:wildfly-arquillian-container-embedded:8.2.1.Final'
+
+            test {
+                // Installation of JBOSS to use for testing, this can be set here or in the arquillian.xml.
+                environment 'JBOSS_HOME', rootProject.jbossHome
+                // WildFly embedded default logging
+                systemProperty 'java.util.logging.manager', 'org.jboss.logmanager.LogManager'
+            }
+        }
+
+    } else {
+        println 'using glassfish'
+        makePersistenceXml('eclipselink')
+        makeWebXml('glassfish')
+
+        // JAX-RS Jersey RESTful web services
+        // compile 'org.glassfish.jersey.containers:jersey-container-servlet:2.21'
+
+        if( project.hasProperty('remote') ) {
+            println 'using glassfish remote'
+            testRuntime 'org.jboss.arquillian.container:arquillian-glassfish-remote-3.1:1.0.0.CR4'
+        } else {
+            println 'using glassfish embedded'
+            makeArquillianXml( 'glassfish-embedded' )
+            testRuntime 'org.jboss.arquillian.container:arquillian-glassfish-embedded-3.1:1.0.0.CR4'
+            providedCompile 'org.glassfish.main.extras:glassfish-embedded-all:4.1'
+
+        }
+    }
+
+    testCompile 'org.jboss.arquillian:arquillian-bom:1.1.8.Final'
+    testCompile 'junit:junit:4.12'
+    testCompile 'org.jboss.arquillian.junit:arquillian-junit-container:1.1.8.Final'
     testCompile 'org.jboss.arquillian.extension:arquillian-transaction-api:1.0.1.Final'
+    testCompile 'org.jboss.shrinkwrap.resolver:shrinkwrap-resolver-depchain:2.1.0'
 
-    testRuntime 'org.jboss.logging:jboss-logging:3.1.4.GA'
-    /**
-     * Embedded means it runs in the same JVM, it still needs the full installation
-     */
-    testRuntime 'org.wildfly:wildfly-arquillian-container-embedded:8.2.0.Final'
+
+    // testCompile 'org.codehaus.groovy:groovy-all:2.3.11'
+    // testCompile 'org.jboss.arquillian.protocol:arquillian-protocol-servlet:1.1.8.Final'
+
 }
 
-test {
+void makeArquillianXml( String name ) {
+    String fromDir = 'src/test/resources/arquillian-xml'
+    String toFile = 'src/test/resources/arquillian.xml'
+    new File( toFile ).text = new File( "${fromDir}/arquillian-${name}.xml").text
+    println "Created ${toFile} from ${fromDir}/arquillian-${name}.xml"
+}
 
-    /**
-     * Installation of JBOSS to use for testing, this can be set here
-     * or in the arquillian.xml.
-     */
-    environment 'JBOSS_HOME', '/usr/local/opt/wildfly-8.2.0.Final'
-    /**
-     * WildFly embedded default logging
-     */
-    systemProperty 'java.util.logging.manager', 'org.jboss.logmanager.LogManager'
+void makePersistenceXml( String name ) {
+    String fromDir = 'src/main/resources/META-INF/persistence-xml'
+    String toFile = 'src/main/resources/META-INF/persistence.xml'
+    new File( toFile ).text = new File( "${fromDir}/persistence-${name}.xml").text
+    println "Created ${toFile} from ${fromDir}/persistence-${name}.xml"
+}
+
+void makeWebXml( String name ) {
+    String fromDir = 'src/main/webapp/WEB-INF/web-xml'
+    String toFile = 'src/main/webapp/WEB-INF/web.xml'
+    new File( toFile ).text = new File( "${fromDir}/web-${name}.xml").text
+    println "Created ${toFile} from ${fromDir}/web-${name}.xml"
+}
+
+
+tasks.withType( Test ) {
+    testLogging.showStandardStreams = true
+    testLogging.events 'passed', 'skipped', 'failed'
+
+    outputs.upToDateWhen { false }
+    maxParallelForks = project.hasProperty( 'fork' ) ? project.fork.toInteger() : 1
 }
 
 sourceSets.main.output.resourcesDir = sourceSets.main.output.classesDir
 compileJava.dependsOn(processResources)
+
+if(hasProperty('jboss')) {
+    sourceSets {
+        main {
+            java {
+                srcDir 'target/generated-sources/'
+            }
+        }
+    }
+} else {
+    sourceSets {
+        main {
+            java {
+                srcDir 'target/generated-sources-eclipselink/'
+            }
+        }
+    }
+}
