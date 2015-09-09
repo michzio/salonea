@@ -1,15 +1,20 @@
 package pl.salonea.ejb.stateless;
 
 import pl.salonea.ejb.interfaces.NaturalPersonFacadeInterface;
-import pl.salonea.entities.Client;
+import pl.salonea.embeddables.Address;
+import pl.salonea.embeddables.Address_;
 import pl.salonea.entities.NaturalPerson;
+import pl.salonea.entities.NaturalPerson_;
 import pl.salonea.enums.Gender;
+import pl.salonea.utils.Period;
 
 import javax.ejb.LocalBean;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
+import javax.persistence.criteria.*;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -35,163 +40,143 @@ public class NaturalPersonFacade extends AbstractFacade<NaturalPerson> implement
 
     @Override
     public List<NaturalPerson> findByFirstName(String firstName) {
-
-        TypedQuery<NaturalPerson> query = getEntityManager().createNamedQuery(NaturalPerson.FIND_BY_FIRST_NAME, NaturalPerson.class);
-        query.setParameter("fname", firstName);
-        return query.getResultList();
+        return findByFirstName(firstName, null, null);
     }
 
     @Override
-    public List<NaturalPerson> findByFirstName(String firstName, int start, int limit) {
+    public List<NaturalPerson> findByFirstName(String firstName, Integer start, Integer limit) {
 
         TypedQuery<NaturalPerson> query = getEntityManager().createNamedQuery(NaturalPerson.FIND_BY_FIRST_NAME, NaturalPerson.class);
-        query.setParameter("fname", firstName);
-        query.setFirstResult(start);
-        query.setMaxResults(limit);
+        query.setParameter("fname", "%" + firstName + "%");
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
         return query.getResultList();
     }
 
     @Override
     public List<NaturalPerson> findByLastName(String lastName) {
-        TypedQuery<NaturalPerson> query = getEntityManager().createNamedQuery(NaturalPerson.FIND_BY_LAST_NAME, NaturalPerson.class);
-        query.setParameter("lname", lastName);
-        return query.getResultList();
+        return findByLastName(lastName, null, null);
     }
 
     @Override
-    public List<NaturalPerson> findByLastName(String lastName, int start, int limit) {
+    public List<NaturalPerson> findByLastName(String lastName, Integer start, Integer limit) {
 
         TypedQuery<NaturalPerson> query = getEntityManager().createNamedQuery(NaturalPerson.FIND_BY_LAST_NAME, NaturalPerson.class);
-        query.setParameter("lname", lastName);
-        query.setFirstResult(start);
-        query.setMaxResults(limit);
+        query.setParameter("lname", "%" + lastName + "%");
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
         return query.getResultList();
     }
 
     @Override
     public List<NaturalPerson> findByNames(String firstName, String lastName) {
-
-        TypedQuery<NaturalPerson> query = getEntityManager().createNamedQuery(NaturalPerson.FIND_BY_NAMES, NaturalPerson.class);
-        query.setParameter("fname", firstName);
-        query.setParameter("lname", lastName);
-        return query.getResultList();
+        return findByNames(firstName, lastName, null, null);
     }
 
     @Override
-    public List<NaturalPerson> findByNames(String firstName, String lastName, int start, int limit) {
+    public List<NaturalPerson> findByNames(String firstName, String lastName, Integer start, Integer limit) {
 
         TypedQuery<NaturalPerson> query = getEntityManager().createNamedQuery(NaturalPerson.FIND_BY_NAMES, NaturalPerson.class);
-        query.setParameter("fname", firstName);
-        query.setParameter("lname", lastName);
-        query.setFirstResult(start);
-        query.setMaxResults(limit);
+        query.setParameter("fname", "%" + firstName + "%");
+        query.setParameter("lname", "%" + lastName + "%");
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
         return query.getResultList();
     }
 
     @Override
     public List<NaturalPerson> findBornAfter(Date date) {
-
-        TypedQuery<NaturalPerson> query = getEntityManager().createNamedQuery(NaturalPerson.FIND_BORN_AFTER, NaturalPerson.class);
-        query.setParameter("date", date);
-        return query.getResultList();
+        return findBornAfter(date, null, null);
     }
 
     @Override
-    public List<NaturalPerson> findBornAfter(Date date, int start, int limit) {
+    public List<NaturalPerson> findBornAfter(Date date, Integer start, Integer limit) {
 
-        TypedQuery<NaturalPerson> query = getEntityManager().createNamedQuery(Client.FIND_BORN_AFTER, NaturalPerson.class);
+        TypedQuery<NaturalPerson> query = getEntityManager().createNamedQuery(NaturalPerson.FIND_BORN_AFTER, NaturalPerson.class);
         query.setParameter("date", date);
-        query.setFirstResult(start);
-        query.setMaxResults(limit);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
         return query.getResultList();
     }
 
     @Override
     public List<NaturalPerson> findBornBefore(Date date) {
-        TypedQuery<NaturalPerson> query = getEntityManager().createNamedQuery(NaturalPerson.FIND_BORN_BEFORE, NaturalPerson.class);
-        query.setParameter("date", date);
-        return query.getResultList();
+        return findBornBefore(date, null, null);
     }
 
     @Override
-    public List<NaturalPerson> findBornBefore(Date date, int start, int limit) {
+    public List<NaturalPerson> findBornBefore(Date date, Integer start, Integer limit) {
 
         TypedQuery<NaturalPerson> query = getEntityManager().createNamedQuery(NaturalPerson.FIND_BORN_BEFORE, NaturalPerson.class);
         query.setParameter("date", date);
-        query.setFirstResult(start);
-        query.setMaxResults(limit);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
         return query.getResultList();
     }
 
     @Override
     public List<NaturalPerson> findBornBetween(Date startDate, Date endDate) {
+        return findBornBetween(startDate, endDate, null, null);
+    }
+
+    @Override
+    public List<NaturalPerson> findBornBetween(Date startDate, Date endDate, Integer start, Integer limit) {
 
         TypedQuery<NaturalPerson> query = getEntityManager().createNamedQuery(NaturalPerson.FIND_BORN_BETWEEN, NaturalPerson.class);
         query.setParameter("start_date", startDate);
         query.setParameter("end_date", endDate);
-        return query.getResultList();
-    }
-
-    @Override
-    public List<NaturalPerson> findBornBetween(Date startDate, Date endDate, int start, int limit) {
-
-        TypedQuery<NaturalPerson> query = getEntityManager().createNamedQuery(NaturalPerson.FIND_BORN_BEFORE, NaturalPerson.class);
-        query.setParameter("start_date", startDate);
-        query.setParameter("end_date", endDate);
-        query.setFirstResult(start);
-        query.setMaxResults(limit);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
         return query.getResultList();
     }
 
     @Override
     public List<NaturalPerson> findOlderThan(Integer age) {
-
-        Calendar calendar = Calendar.getInstance();
-        calendar.add(Calendar.YEAR, -age);
-        Date youngestBirthDate = calendar.getTime();
-
-        TypedQuery<NaturalPerson> query = getEntityManager().createNamedQuery(NaturalPerson.FIND_BORN_BEFORE, NaturalPerson.class);
-        query.setParameter("date", youngestBirthDate);
-        return query.getResultList();
+       return findOlderThan(age, null, null);
     }
 
     @Override
-    public List<NaturalPerson> findOlderThan(Integer age, int start, int limit) {
+    public List<NaturalPerson> findOlderThan(Integer age, Integer start, Integer limit) {
 
-        Calendar calendar = Calendar.getInstance();
-        calendar.add(Calendar.YEAR, -age);
-        Date youngestBirthDate = calendar.getTime();
+        Date youngestBirthDate = convertAgeToBirthDate(age);
 
         TypedQuery<NaturalPerson> query = getEntityManager().createNamedQuery(NaturalPerson.FIND_BORN_BEFORE, NaturalPerson.class);
         query.setParameter("date", youngestBirthDate);
-        query.setFirstResult(start);
-        query.setMaxResults(limit);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
         return  query.getResultList();
     }
 
     @Override
     public List<NaturalPerson> findYoungerThan(Integer age) {
-
-        Calendar calendar = Calendar.getInstance();
-        calendar.add(Calendar.YEAR, -age);
-        Date oldestBirthDate = calendar.getTime();
-
-        TypedQuery<NaturalPerson> query = getEntityManager().createNamedQuery(NaturalPerson.FIND_BORN_AFTER, NaturalPerson.class);
-        query.setParameter("date", oldestBirthDate);
-        return query.getResultList();
+        return findYoungerThan(age, null, null);
     }
 
     @Override
-    public List<NaturalPerson> findYoungerThan(Integer age, int start, int limit) {
+    public List<NaturalPerson> findYoungerThan(Integer age, Integer start, Integer limit) {
 
-        Calendar calendar = Calendar.getInstance();
-        calendar.add(Calendar.YEAR, -age);
-        Date oldestBirthDate = calendar.getTime();
+        Date oldestBirthDate = convertAgeToBirthDate(age);
 
         TypedQuery<NaturalPerson> query = getEntityManager().createNamedQuery(NaturalPerson.FIND_BORN_AFTER, NaturalPerson.class);
         query.setParameter("date", oldestBirthDate);
-        query.setFirstResult(start);
-        query.setMaxResults(limit);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
         return query.getResultList();
     }
 
@@ -203,12 +188,8 @@ public class NaturalPersonFacade extends AbstractFacade<NaturalPerson> implement
     @Override
     public List<NaturalPerson> findBetweenAge(Integer youngestAge, Integer oldestAge, Integer start, Integer limit) {
 
-        Calendar calendar = Calendar.getInstance();
-        calendar.add(Calendar.YEAR, -youngestAge);
-        Date youngestBirthDate = calendar.getTime();
-        calendar.setTime(new Date());
-        calendar.add(Calendar.YEAR, -oldestAge);
-        Date oldestBirthDate = calendar.getTime();
+        Date youngestBirthDate = convertAgeToBirthDate(youngestAge);
+        Date oldestBirthDate = convertAgeToBirthDate(oldestAge);
 
         TypedQuery<NaturalPerson> query = getEntityManager().createNamedQuery(NaturalPerson.FIND_BORN_BETWEEN, NaturalPerson.class);
         query.setParameter("start_date", oldestBirthDate);
@@ -277,5 +258,133 @@ public class NaturalPersonFacade extends AbstractFacade<NaturalPerson> implement
             query.setMaxResults(limit);
         }
         return query.getResultList();
+    }
+
+    @Override
+    public List<NaturalPerson> findByMultipleCriteria(String firstName, String lastName, Gender gender, Period bornBetween, Integer oldestAge, Integer youngestAge, Address location, Address delivery) {
+        return findByMultipleCriteria(firstName, lastName, gender, bornBetween, oldestAge, youngestAge, location, delivery, null, null);
+    }
+
+    @Override
+    public List<NaturalPerson> findByMultipleCriteria(String firstName, String lastName, Gender gender, Period bornBetween, Integer oldestAge, Integer youngestAge, Address location, Address delivery, Integer start, Integer limit) {
+
+        CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
+        CriteriaQuery<NaturalPerson> criteriaQuery = criteriaBuilder.createQuery(NaturalPerson.class);
+        // FROM
+        Root<NaturalPerson> naturalPerson = criteriaQuery.from(NaturalPerson.class);
+        // SELECT
+        criteriaQuery.select(naturalPerson);
+
+        // WHERE PREDICATES
+        List<Predicate> predicates = new ArrayList<>();
+
+        if( firstName != null ) {
+            predicates.add( criteriaBuilder.like(naturalPerson.get(NaturalPerson_.firstName), "%" + firstName + "%") );
+        }
+
+        if( lastName != null ) {
+            predicates.add( criteriaBuilder.like(naturalPerson.get(NaturalPerson_.lastName), "%" + lastName + "%") );
+        }
+
+        if(gender != null) {
+            predicates.add( criteriaBuilder.equal(naturalPerson.get(NaturalPerson_.gender), gender) );
+        }
+
+        Date oldestBirthDate = null;
+        Date youngestBirthDate = null;
+
+        if(bornBetween != null) {
+            oldestBirthDate = bornBetween.getStartTime();
+            youngestBirthDate = bornBetween.getEndTime();
+        }
+
+        if(oldestAge != null) {
+            Date birthDate = convertAgeToBirthDate(oldestAge);
+            oldestBirthDate = (oldestBirthDate != null && birthDate.before(oldestBirthDate)) ? oldestBirthDate : birthDate;
+        }
+
+        if(youngestAge != null) {
+            Date birthDate = convertAgeToBirthDate(youngestAge);
+            youngestBirthDate = (youngestBirthDate != null && birthDate.after(youngestBirthDate)) ? youngestBirthDate : birthDate;
+        }
+
+        if(oldestBirthDate != null) {
+            predicates.add( criteriaBuilder.greaterThanOrEqualTo(naturalPerson.<Date>get(NaturalPerson_.birthDate), new Date(oldestBirthDate.getTime())) );
+        }
+
+        if(youngestBirthDate != null) {
+            predicates.add( criteriaBuilder.lessThanOrEqualTo(naturalPerson.<Date>get(NaturalPerson_.birthDate), new Date(youngestBirthDate.getTime())) );
+        }
+
+        if(location != null) {
+
+            Path<Address> address = naturalPerson.get(NaturalPerson_.homeAddress);
+
+            if(location.getCity() != null)
+                predicates.add( criteriaBuilder.like(address.get(Address_.city), "%" + location.getCity() + "%") );
+
+            if(location.getState() != null)
+                predicates.add( criteriaBuilder.like(address.get(Address_.state), "%" + location.getState() + "%") );
+
+            if(location.getCountry() != null)
+                predicates.add( criteriaBuilder.like(address.get(Address_.country), "%" + location.getCountry() + "%") );
+
+            if(location.getStreet() != null)
+                predicates.add( criteriaBuilder.like(address.get(Address_.street), "%" + location.getStreet() + "%") );
+
+            if(location.getZipCode() != null)
+                predicates.add( criteriaBuilder.like(address.get(Address_.zipCode), "%" + location.getZipCode() + "%") );
+
+            if(location.getFlatNumber() != null)
+                predicates.add( criteriaBuilder.like(address.get(Address_.flatNumber), "%" + location.getFlatNumber() + "%") );
+
+            if(location.getHouseNumber() != null)
+                predicates.add( criteriaBuilder.like(address.get(Address_.houseNumber), "%" + location.getHouseNumber() + "%") );
+        }
+
+        if(delivery != null) {
+
+            Path<Address> address = naturalPerson.get(NaturalPerson_.deliveryAddress);
+
+            if(delivery.getCity() != null)
+                predicates.add( criteriaBuilder.like(address.get(Address_.city), "%" + delivery.getCity() + "%") );
+
+            if(delivery.getState() != null)
+                predicates.add( criteriaBuilder.like(address.get(Address_.state), "%" + delivery.getState() + "%") );
+
+            if(delivery.getCountry() != null)
+                predicates.add( criteriaBuilder.like(address.get(Address_.country), "%" + delivery.getCountry() + "%") );
+
+            if(delivery.getStreet() != null)
+                predicates.add( criteriaBuilder.like(address.get(Address_.street), "%" + delivery.getStreet() + "%") );
+
+            if(delivery.getZipCode() != null)
+                predicates.add( criteriaBuilder.like(address.get(Address_.zipCode), "%" + delivery.getZipCode() + "%") );
+
+            if(delivery.getFlatNumber() != null)
+                predicates.add( criteriaBuilder.like(address.get(Address_.flatNumber), "%" + delivery.getFlatNumber() + "%") );
+
+            if(delivery.getHouseNumber() != null)
+                predicates.add( criteriaBuilder.like(address.get(Address_.houseNumber), "%" + delivery.getHouseNumber() + "%") );
+
+        }
+
+        // WHERE predicate1 AND predicate2 AND ... AND predicateN
+        criteriaQuery.where(predicates.toArray(new Predicate[] { }));
+
+        TypedQuery<NaturalPerson> query = getEntityManager().createQuery(criteriaQuery);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+
+        return query.getResultList();
+    }
+
+    private Date convertAgeToBirthDate(Integer age) {
+
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.YEAR, -age);
+        return  calendar.getTime();
     }
 }

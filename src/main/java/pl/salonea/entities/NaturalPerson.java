@@ -10,8 +10,14 @@ import pl.salonea.enums.Gender;
 import javax.persistence.*;
 import javax.validation.Valid;
 import javax.validation.constraints.*;
+import javax.xml.bind.annotation.*;
 import java.util.Calendar;
-import java.util.Date;
+import java.util.Date;;
+
+@XmlRootElement(name = "natural-person")
+@XmlAccessorType(XmlAccessType.PROPERTY)
+@XmlType(propOrder = {"firstName", "lastName", "birthDate", "gender", "homePhoneNumber", "workPhoneNumber",
+                        "skypeName", "homeAddress", "deliveryAsHome", "deliveryAddress", "age", "client"})
 
 @Entity
 @DiscriminatorValue("natural_person")
@@ -275,4 +281,5 @@ public class NaturalPerson extends UserAccount {
             age--;
         }
     }
+
 }

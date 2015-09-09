@@ -1,11 +1,13 @@
 package pl.salonea.jaxrs;
 
 import pl.salonea.ejb.stateless.UserAccountFacade;
+import pl.salonea.entities.NaturalPerson;
 import pl.salonea.entities.UserAccount;
-import pl.salonea.jaxrs.bean_params.DateBetweenBeanParam;
-import pl.salonea.jaxrs.bean_params.OlderThanBeanParam;
-import pl.salonea.jaxrs.bean_params.PaginationBeanParam;
-import pl.salonea.jaxrs.bean_params.UserAccountBeanParam;
+import pl.salonea.jaxrs.bean_params.*;
+import pl.salonea.jaxrs.exceptions.*;
+import pl.salonea.jaxrs.exceptions.BadRequestException;
+import pl.salonea.jaxrs.exceptions.ForbiddenException;
+import pl.salonea.jaxrs.exceptions.NotFoundException;
 import pl.salonea.jaxrs.utils.ResourceList;
 import pl.salonea.jaxrs.utils.ResponseWrapper;
 
@@ -22,10 +24,6 @@ import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import pl.salonea.jaxrs.utils.hateoas.Link;
-import pl.salonea.jaxrs.exceptions.NotFoundException;
-import pl.salonea.jaxrs.exceptions.BadRequestException;
-import pl.salonea.jaxrs.exceptions.ForbiddenException;
-import pl.salonea.jaxrs.exceptions.UnprocessableEntityException;
 import pl.salonea.utils.Period;
 
 /**
@@ -48,7 +46,7 @@ public class UserAccountResource {
     public Response getUserAccounts(@BeanParam UserAccountBeanParam params) throws ForbiddenException {
 
         if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
-        logger.log(Level.INFO, "returning all UserAccounts by executing UserAccountResource.getUserAccounts() method of REST API");
+        logger.log(Level.INFO, "returning all User Accounts by executing UserAccountResource.getUserAccounts() method of REST API");
 
         // calculate number of filter query params
         Integer noOfParams = params.getUriInfo().getQueryParameters().size();
@@ -74,7 +72,7 @@ public class UserAccountResource {
         }
 
         // result resources need to be populated with hypermedia links to enable resource discovery
-        populateWithHATEOSLinks(userAccounts, params.getUriInfo(), params.getOffset(), params.getLimit());
+        populateWithHATEOASLinks(userAccounts, params.getUriInfo(), params.getOffset(), params.getLimit());
 
         return Response.status(Status.OK).entity(userAccounts).build();
     }
@@ -86,10 +84,9 @@ public class UserAccountResource {
     @Path("/{userId : \\d+}")  // catch only numeric identifiers
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public Response getUserAccount( @PathParam("userId") Long userId,
-                                    @HeaderParam("authToken") String authToken,
-                                    @Context UriInfo uriInfo) throws NotFoundException, ForbiddenException {
+                                    @BeanParam GenericBeanParam params) throws NotFoundException, ForbiddenException {
 
-        if(authToken == null) throw new ForbiddenException("Unauthorized access to web service.");
+        if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
         logger.log(Level.INFO, "returning given UserAccount by executing UserAccountResource.getUserAccount(userId) method of REST API");
 
         UserAccount foundUserAccount = userAccountFacade.find(userId);
@@ -97,7 +94,7 @@ public class UserAccountResource {
             throw new NotFoundException("Could not find user account for id " + userId + ".");
 
         // adding hypermedia links to user account resource
-        populateWithHATEOSLinks(foundUserAccount, uriInfo);
+        populateWithHATEOASLinks(foundUserAccount, params.getUriInfo());
 
         return Response.status(Status.OK).entity(foundUserAccount).build();
     }
@@ -109,10 +106,9 @@ public class UserAccountResource {
     @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public Response createUserAccount(UserAccount userAccount,
-                                      @Context UriInfo uriInfo,
-                                      @HeaderParam("authToken") String authToken) throws ForbiddenException, UnprocessableEntityException, InternalServerErrorException {
+                                      @BeanParam GenericBeanParam params) throws ForbiddenException, UnprocessableEntityException, InternalServerErrorException {
 
-        if(authToken == null) throw new ForbiddenException("Unauthorized access to web service.");
+        if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
         logger.log(Level.INFO, "creating new UserAccount by executing UserAccountResource.createUserAccount(userAccount) method of REST API");
 
         if(userAccount.getRegistrationDate() == null) {
@@ -128,18 +124,18 @@ public class UserAccountResource {
             createdUserAccount = userAccountFacade.create(userAccount);
 
             // populate created resource with hypermedia links
-            populateWithHATEOSLinks(createdUserAccount, uriInfo);
+            populateWithHATEOASLinks(createdUserAccount, params.getUriInfo());
 
             // construct link to newly created resource to return in HTTP Header
             String createdUserAccountId = String.valueOf(createdUserAccount.getUserId());
-            locationURI = uriInfo.getBaseUriBuilder().path(UserAccountResource.class).path(createdUserAccountId).build();
+            locationURI = params.getUriInfo().getBaseUriBuilder().path(UserAccountResource.class).path(createdUserAccountId).build();
 
         } catch(EJBTransactionRolledbackException ex) {
-            handleEJBTransactionRolledbackException(ex);
+            ExceptionHandler.handleEJBTransactionRolledbackException(ex);
         } catch(EJBException ex) {
-            handleEJBException(ex);
+            ExceptionHandler.handleEJBException(ex);
         } catch(Exception ex) {
-            throw new InternalServerErrorException("Some error occurred while trying to create new entity instance.");
+            throw new InternalServerErrorException(ExceptionHandler.ENTITY_CREATION_ERROR_MESSAGE);
         }
 
         return Response.created(locationURI).entity(createdUserAccount).build();
@@ -155,10 +151,9 @@ public class UserAccountResource {
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public Response updateUserAccount( @PathParam("userId") Long userId,
                                        UserAccount userAccount,
-                                       @Context UriInfo uriInfo,
-                                       @HeaderParam("authToken") String authToken) throws ForbiddenException, UnprocessableEntityException, InternalServerErrorException {
+                                       @BeanParam GenericBeanParam params) throws ForbiddenException, UnprocessableEntityException, InternalServerErrorException {
 
-        if(authToken == null) throw new ForbiddenException("Unauthorized access to web service.");
+        if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
         logger.log(Level.INFO, "updating existing UserAccount by executing UserAccountResource.updateUserAccount(userAccount) method of REST API");
 
         // set resource ID passed in path param on updated resource object
@@ -169,14 +164,14 @@ public class UserAccountResource {
             // reflect updated resource object in database
             updatedUserAccount = userAccountFacade.update(userAccount);
             // populate created resource with hypermedia links
-            populateWithHATEOSLinks(updatedUserAccount, uriInfo);
+            populateWithHATEOASLinks(updatedUserAccount, params.getUriInfo());
 
         } catch(EJBTransactionRolledbackException ex) {
-            handleEJBTransactionRolledbackException(ex);
+            ExceptionHandler.handleEJBTransactionRolledbackException(ex);
         } catch(EJBException ex) {
-            handleEJBException(ex);
+            ExceptionHandler.handleEJBException(ex);
         } catch(Exception ex) {
-            throw new InternalServerErrorException("Some error occurred while trying to update existing entity instance.");
+            throw new InternalServerErrorException(ExceptionHandler.ENTITY_UPDATE_ERROR_MESSAGE);
         }
 
         return Response.status(Status.OK).entity(updatedUserAccount).build();
@@ -250,10 +245,10 @@ public class UserAccountResource {
 
         // find user accounts by given criteria
         ResourceList<UserAccount> userAccounts =  new ResourceList<>( userAccountFacade.findCreatedBetween(params.getStartDate(),
-                                                                                        params.getEndDate(), params.getOffset(), params.getLimit()) );
+                params.getEndDate(), params.getOffset(), params.getLimit()) );
 
         // result resources need to be populated with hypermedia links to enable resource discovery
-        populateWithHATEOSLinks(userAccounts, params.getUriInfo(), params.getOffset(), params.getLimit());
+        populateWithHATEOASLinks(userAccounts, params.getUriInfo(), params.getOffset(), params.getLimit());
 
         // GenericEntity<List<UserAccount>> entity = new GenericEntity<List<UserAccount>>( userAccounts ) { };
         return Response.status(Status.OK).entity(userAccounts).build();
@@ -274,7 +269,7 @@ public class UserAccountResource {
         ResourceList<UserAccount> userAccounts = new ResourceList<>( userAccountFacade.findAllNotActivated(params.getOffset(), params.getLimit()) );
 
         // result resources need to be populated with hypermedia links to enable resource discovery
-        populateWithHATEOSLinks(userAccounts, params.getUriInfo(), params.getOffset(), params.getLimit());
+        populateWithHATEOASLinks(userAccounts, params.getUriInfo(), params.getOffset(), params.getLimit());
 
         return Response.status(Status.OK).entity(userAccounts).build();
     }
@@ -294,7 +289,7 @@ public class UserAccountResource {
         ResourceList<UserAccount> userAccounts = new ResourceList<>( userAccountFacade.findAllActivated(params.getOffset(), params.getLimit()) );
 
         // result resources need to be populated with hypermedia links to enable resource discovery
-        populateWithHATEOSLinks(userAccounts, params.getUriInfo(), params.getOffset(), params.getLimit());
+        populateWithHATEOASLinks(userAccounts, params.getUriInfo(), params.getOffset(), params.getLimit());
 
         return Response.status(Status.OK).entity(userAccounts).build();
     }
@@ -314,7 +309,7 @@ public class UserAccountResource {
         ResourceList<UserAccount> userAccounts = new ResourceList<>( userAccountFacade.findByEmail(email, params.getOffset(), params.getLimit()) );
 
         // result resources need to be populated with hypermedia links to enable resource discovery
-        populateWithHATEOSLinks(userAccounts, params.getUriInfo(), params.getOffset(), params.getLimit());
+        populateWithHATEOASLinks(userAccounts, params.getUriInfo(), params.getOffset(), params.getLimit());
 
         return Response.status(Status.OK).entity(userAccounts).build();
     }
@@ -334,7 +329,7 @@ public class UserAccountResource {
         ResourceList<UserAccount> userAccounts = new ResourceList<>( userAccountFacade.findByLogin(login, params.getOffset(), params.getLimit()) );
 
         // result resources need to be populated with hypermedia links to enable resource discovery
-        populateWithHATEOSLinks(userAccounts, params.getUriInfo(), params.getOffset(), params.getLimit());
+        populateWithHATEOASLinks(userAccounts, params.getUriInfo(), params.getOffset(), params.getLimit());
 
         return Response.status(Status.OK).entity(userAccounts).build();
     }
@@ -354,7 +349,7 @@ public class UserAccountResource {
         ResourceList<UserAccount> userAccounts = new ResourceList<>( userAccountFacade.findByAccountType(accountType, params.getOffset(), params.getLimit()) );
 
         // result resources need to be populated with hypermedia links to enable resource discovery
-        populateWithHATEOSLinks(userAccounts, params.getUriInfo(), params.getOffset(), params.getLimit());
+        populateWithHATEOASLinks(userAccounts, params.getUriInfo(), params.getOffset(), params.getLimit());
 
         return Response.status(Status.OK).entity(userAccounts).build();
     }
@@ -384,7 +379,7 @@ public class UserAccountResource {
                 params.getEndDate(), params.getOffset(), params.getLimit()) );
 
         // result resources need to be populated with hypermedia links to enable resource discovery
-        populateWithHATEOSLinks(userAccounts, params.getUriInfo(), params.getOffset(), params.getLimit());
+        populateWithHATEOASLinks(userAccounts, params.getUriInfo(), params.getOffset(), params.getLimit());
 
         // GenericEntity<List<UserAccount>> entity = new GenericEntity<List<UserAccount>>( userAccounts ) { };
         return Response.status(Status.OK).entity(userAccounts).build();
@@ -415,7 +410,7 @@ public class UserAccountResource {
                 params.getEndDate(), params.getOffset(), params.getLimit()) );
 
         // result resources need to be populated with hypermedia links to enable resource discovery
-        populateWithHATEOSLinks(userAccounts, params.getUriInfo(), params.getOffset(), params.getLimit());
+        populateWithHATEOASLinks(userAccounts, params.getUriInfo(), params.getOffset(), params.getLimit());
 
         return Response.status(Status.OK).entity(userAccounts).build();
     }
@@ -469,7 +464,7 @@ public class UserAccountResource {
     /**
      * This method enables to populate list of resources and each individual resource on list with hypermedia links
      */
-    private void populateWithHATEOSLinks(ResourceList<UserAccount> userAccounts, UriInfo uriInfo, Integer offset, Integer limit) {
+    private void populateWithHATEOASLinks(ResourceList<UserAccount> userAccounts, UriInfo uriInfo, Integer offset, Integer limit) {
 
         // navigation links through collection of resources
         if(offset != null && limit != null) {
@@ -488,13 +483,16 @@ public class UserAccountResource {
             userAccounts.getLinks().add( Link.fromUri(uriInfo.getAbsolutePath()).rel("self").build() );
         }
 
-        // count resources in collection hypermedia link
-        userAccounts.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(UserAccountResource.class).path("count").build()).rel("count").build() );
-        // get all resources hypermedia link
-        userAccounts.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(UserAccountResource.class).build()).rel("user-accounts").build() );
-
-        // get subset of resources hypermedia links
         try {
+
+            // count resources hypermedia link
+            Method countMethod = UserAccountResource.class.getMethod("countUserAccounts", String.class);
+            userAccounts.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(UserAccountResource.class).path(countMethod).build()).rel("count").build() );
+
+            // get all resources hypermedia link
+            userAccounts.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(UserAccountResource.class).build()).rel("user-accounts").build() );
+
+            // get subset of resources hypermedia links
             // created-between
             Method createdBetweenMethod = UserAccountResource.class.getMethod("getUserAccountsCreatedBetween", DateBetweenBeanParam.class);
             userAccounts.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder().path(UserAccountResource.class).path(createdBetweenMethod).build()).rel("created-between").build());
@@ -534,56 +532,40 @@ public class UserAccountResource {
         }
 
         for(UserAccount userAccount : userAccounts.getResources()) {
-            populateWithHATEOSLinks(userAccount, uriInfo);
+            populateWithHATEOASLinks(userAccount, uriInfo);
         }
     }
 
     /**
      * This method enables to populate each individual resource with hypermedia links
      */
-    private void populateWithHATEOSLinks(UserAccount userAccount, UriInfo uriInfo) {
+    private void populateWithHATEOASLinks(UserAccount userAccount, UriInfo uriInfo) {
+
+        Class resourceClass = null;
+        if(userAccount.getAccountType().equals("natural_person")) {
+            resourceClass = NaturalPersonResource.class;
+        } else if(userAccount.getAccountType().equals("firm")) {
+            //resourceClass = FirmResource.class;
+        } else if(userAccount.getAccountType().equals("provider")) {
+            //resourceClass = ProviderResource.class;
+        } else if(userAccount.getAccountType().equals("employee")) {
+            //resourceClass = EmployeeResource.class;
+        } else {
+            resourceClass = UserAccountResource.class;
+        }
 
         // self link with pattern: http://localhost:port/app/rest/resources/{id}
-        userAccount.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
-                                                        .path(UserAccountResource.class)
-                                                        .path(userAccount.getUserId().toString())
-                                                        .build())
-                                        .rel("self").build() );
+        userAccount.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                .path(resourceClass)
+                .path(userAccount.getUserId().toString())
+                .build())
+                .rel("self").build());
 
         // collection link with pattern: http://localhost:port/app/rest/resources
-        userAccount.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
-                                                        .path(UserAccountResource.class)
-                                                        .build())
-                                        .rel("user-accounts").build());
+        userAccount.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                .path(UserAccountResource.class)
+                .build())
+                .rel("user-accounts").build());
     }
 
-    private void handleEJBException(EJBException ex) throws UnprocessableEntityException {
-
-        Throwable t = ex;
-        while ((t.getCause() != null) && !(t instanceof ConstraintViolationException)) {
-            t = t.getCause();
-        }
-
-        if (t instanceof ConstraintViolationException) {
-            // Here you're sure you have a ConstraintViolationException, you can handle it
-            throw new UnprocessableEntityException("Some constraints have been violated during entity instance persistence: " + t.getMessage());
-        }
-
-        throw new UnprocessableEntityException("Transaction aimed at persisting entity instance has been rolled back: "  + t.getMessage());
-    }
-
-    private void handleEJBTransactionRolledbackException(EJBTransactionRolledbackException ex) throws UnprocessableEntityException {
-
-        Throwable t = ex;
-        while ((t.getCause() != null) && !(t instanceof ConstraintViolationException)) {
-            t = t.getCause();
-        }
-
-        if (t instanceof ConstraintViolationException) {
-            // Here you're sure you have a ConstraintViolationException, you can handle it
-            throw new UnprocessableEntityException("Some constraints have been violated during entity instance persistence: " + t.getMessage());
-        }
-
-        throw new UnprocessableEntityException("Transaction aimed at persisting entity instance has been rolled back: " + t.getMessage());
-    }
 }
