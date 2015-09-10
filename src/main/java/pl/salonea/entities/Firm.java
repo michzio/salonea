@@ -8,7 +8,15 @@ import javax.persistence.*;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlType;
 
+
+@XmlRootElement(name = "firm")
+@XmlAccessorType(XmlAccessType.PROPERTY)
+@XmlType(propOrder = {"vatin", "name", "companyNumber", "statisticNumber", "address", "phoneNumber", "skypeName", "client" } )
 
 @Entity
 @Table(name="firm")

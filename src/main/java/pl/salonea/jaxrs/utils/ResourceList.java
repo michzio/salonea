@@ -1,6 +1,7 @@
 package pl.salonea.jaxrs.utils;
 
 
+import pl.salonea.entities.Firm;
 import pl.salonea.entities.NaturalPerson;
 import pl.salonea.entities.UserAccount;
 import pl.salonea.jaxrs.utils.hateoas.Link;
@@ -35,6 +36,7 @@ public class ResourceList<T> {
     @XmlElements({
             @XmlElement(name = "user-account", type = UserAccount.class),
             @XmlElement(name = "natural-person", type = NaturalPerson.class),
+            @XmlElement(name = "firm", type = Firm.class)
     })
     public List<T> getResources() {
         return resources;

@@ -1,8 +1,10 @@
 package pl.salonea.ejb.singleton;
 
+import pl.salonea.ejb.stateless.FirmFacade;
 import pl.salonea.ejb.stateless.NaturalPersonFacade;
 import pl.salonea.ejb.stateless.UserAccountFacade;
 import pl.salonea.embeddables.Address;
+import pl.salonea.entities.Firm;
 import pl.salonea.entities.NaturalPerson;
 import pl.salonea.entities.UserAccount;
 import pl.salonea.enums.Gender;
@@ -41,6 +43,8 @@ public class StartupBean {
     private UserAccountFacade userAccountFacade;
     @Inject
     private NaturalPersonFacade naturalPersonFacade;
+    @Inject
+    private FirmFacade firmFacade;
 
     public StartupBean() { }
 
@@ -69,5 +73,17 @@ public class StartupBean {
 
         naturalPersonFacade.create(naturalPerson1);
         naturalPersonFacade.create(naturalPerson2);
+
+        Firm firm1 = new Firm("firma@allegro.pl", "allegro", "aAle2@", "Allegro Ltd.");
+        Firm firm2 = new Firm("firma@fryzjer.pl", "fryzjer", "fRyZj2@", "Fryzjer Sp. z o.o.");
+        firm1.setAddress(new Address("Poznańska", "15", "29-100", "Poznań", "Wielkopolska", "Poland"));
+        firm2.setAddress(new Address("Wrocławska", "50", "30-150", "Kraków", "Małopolska", "Poland"));
+        firm1.setVatin("1234567890");
+        firm2.setVatin("2234567890");
+        firm1.setCompanyNumber("1234567890");
+        firm2.setCompanyNumber("2234567890");
+
+        firmFacade.create(firm1);
+        firmFacade.create(firm2);
     }
 }

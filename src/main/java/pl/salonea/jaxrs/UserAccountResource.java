@@ -1,6 +1,7 @@
 package pl.salonea.jaxrs;
 
 import pl.salonea.ejb.stateless.UserAccountFacade;
+import pl.salonea.entities.Firm;
 import pl.salonea.entities.NaturalPerson;
 import pl.salonea.entities.UserAccount;
 import pl.salonea.jaxrs.bean_params.*;
@@ -545,7 +546,31 @@ public class UserAccountResource {
         if(userAccount.getAccountType().equals("natural_person")) {
             resourceClass = NaturalPersonResource.class;
         } else if(userAccount.getAccountType().equals("firm")) {
-            //resourceClass = FirmResource.class;
+            resourceClass = FirmResource.class;
+
+            // additional firm related hypermedia links
+            try {
+                // vatin link with pattern: http://localhost:port/app/rest/resources/vatin/{vatin}
+                Method vatinMethod = FirmResource.class.getMethod("getFirmByVATIN", String.class, GenericBeanParam.class);
+                userAccount.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                        .path(FirmResource.class)
+                        .path(vatinMethod)
+                        .resolveTemplate("vatin", ((Firm) userAccount).getVatin())
+                        .build())
+                        .rel("vatin").build());
+
+                // company-number link with pattern: http://localhost:port/app/rest/resources/company-number/{companyNumber}
+                Method companyNumberMethod = FirmResource.class.getMethod("getFirmByCompanyNumber", String.class, GenericBeanParam.class);
+                userAccount.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                        .path(FirmResource.class)
+                        .path(companyNumberMethod)
+                        .resolveTemplate("companyNumber", ((Firm) userAccount).getCompanyNumber())
+                        .build())
+                        .rel("company-number").build());
+            } catch(NoSuchMethodException e) {
+                e.printStackTrace();
+            }
+
         } else if(userAccount.getAccountType().equals("provider")) {
             //resourceClass = ProviderResource.class;
         } else if(userAccount.getAccountType().equals("employee")) {

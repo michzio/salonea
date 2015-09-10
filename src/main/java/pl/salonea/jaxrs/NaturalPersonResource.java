@@ -118,7 +118,7 @@ public class NaturalPersonResource {
         logger.log(Level.INFO, "creating new NaturalPerson by executing NaturalPersonResource.createNaturalPerson(naturalPerson) method of REST API");
 
         if(naturalPerson.getRegistrationDate() == null) {
-            // if registration date of newly created natural person hasn't been set by NaturalPerson set it now to the current datetime value
+            // if registration date of newly created natural person hasn't been set by Client set it now to the current datetime value
             naturalPerson.setRegistrationDate(new Date());
         }
 
@@ -515,7 +515,7 @@ public class NaturalPersonResource {
         return Response.status(Status.OK).entity(naturalPersons).build();
     }
 
-    // private helper methods e.g. to populates resources/resource lists with HATEOAS links
+    // private helper methods e.g. to populate resources/resource lists with HATEOAS links
 
     /**
      * This method enables to populate list of resources and each individual resource on list with hypermedia links
