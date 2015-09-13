@@ -14,6 +14,8 @@ public interface AbstractFacadeInterface<T> {
         void remove(T entity);
         T find(Object obj);
         List<T> findAll();
+        List<T> findAll(Integer start, Integer limit);
+        List<T> findRange(Integer start, Integer limit);
         List<T> findRange(int[] range);
         Long count();
 }

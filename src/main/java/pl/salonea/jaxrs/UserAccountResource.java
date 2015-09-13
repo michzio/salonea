@@ -572,7 +572,60 @@ public class UserAccountResource {
             }
 
         } else if(userAccount.getAccountType().equals("provider")) {
-            //resourceClass = ProviderResource.class;
+            resourceClass = ProviderResource.class;
+
+            // additional provider related hypermedia links
+            // i.e. associated collections links with pattern: http://localhost:port/app/rest/{resources}/{id}/{relationship}
+            try {
+                // industries relationship
+                Method industriesMethod = ProviderResource.class.getMethod("getIndustryResource");
+                userAccount.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                        .path(ProviderResource.class)
+                        .path(industriesMethod)
+                        .resolveTemplate("userId", userAccount.getUserId().toString())
+                        .build())
+                        .rel("industries").build());
+
+                // payment-methods relationship
+                Method paymentMethodsMethod = ProviderResource.class.getMethod("getPaymentMethodResource");
+                userAccount.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                        .path(ProviderResource.class)
+                        .path(paymentMethodsMethod)
+                        .resolveTemplate("userId", userAccount.getUserId().toString())
+                        .build())
+                        .rel("payment-methods").build());
+
+                // service-points relationship
+                Method servicePointsMethod = ProviderResource.class.getMethod("getServicePointResource");
+                userAccount.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                        .path(ProviderResource.class)
+                        .path(servicePointsMethod)
+                        .resolveTemplate("userId", userAccount.getUserId().toString())
+                        .build())
+                        .rel("service-points").build());
+
+                // provider-services
+                Method providerServicesMethod = ProviderResource.class.getMethod("getProviderServiceResource");
+                userAccount.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                        .path(ProviderResource.class)
+                        .path(providerServicesMethod)
+                        .resolveTemplate("userId", userAccount.getUserId().toString())
+                        .build())
+                        .rel("provider-services").build());
+
+                // provider-ratings
+                Method providerRatingsMethod = ProviderResource.class.getMethod("getProviderRatingResource");
+                userAccount.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                        .path(ProviderResource.class)
+                        .path(providerRatingsMethod)
+                        .resolveTemplate("userId", userAccount.getUserId().toString())
+                        .build())
+                        .rel("provider-ratings").build());
+
+            } catch(NoSuchMethodException e) {
+                e.printStackTrace();
+            }
+
         } else if(userAccount.getAccountType().equals("employee")) {
             //resourceClass = EmployeeResource.class;
         } else {

@@ -8,8 +8,13 @@ import pl.salonea.enums.ProviderType;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import javax.xml.bind.annotation.*;
 import java.util.HashSet;
 import java.util.Set;
+
+@XmlRootElement(name = "provider")
+@XmlAccessorType(XmlAccessType.PROPERTY)
+@XmlType(propOrder = { "providerName", "description", "type", "corporation", /* "industries", "acceptedPaymentMethods", "servicePoints", "suppliedServiceOffers", "receivedRatings" */ })
 
 @Entity
 @DiscriminatorValue("provider")
@@ -17,6 +22,10 @@ import java.util.Set;
 @PrimaryKeyJoinColumn(name = "provider_id")
 @Access(AccessType.PROPERTY)
 @NamedQueries({
+        @NamedQuery(name = Provider.FIND_ALL_EAGERLY, query = "SELECT p FROM Provider p LEFT JOIN FETCH p.industries LEFT JOIN FETCH p.acceptedPaymentMethods LEFT JOIN FETCH p.servicePoints " +
+                "LEFT JOIN FETCH p.suppliedServiceOffers LEFT JOIN FETCH p.receivedRatings "),
+        @NamedQuery(name = Provider.FIND_BY_ID_EAGERLY, query = "SELECT p FROM Provider p LEFT JOIN FETCH p.industries LEFT JOIN FETCH p.acceptedPaymentMethods LEFT JOIN FETCH p.servicePoints " +
+                "LEFT JOIN FETCH p.suppliedServiceOffers LEFT JOIN FETCH p.receivedRatings WHERE p.userId = :providerId" ),
         @NamedQuery(name = Provider.FIND_BY_CORPORATION, query = "SELECT p FROM Provider p WHERE p.corporation = :corporation"),
         @NamedQuery(name = Provider.FIND_BY_TYPE, query = "SELECT p FROM Provider p WHERE p.type = :provider_type"),
         @NamedQuery(name = Provider.FIND_BY_INDUSTRY, query = "SELECT p FROM Provider p WHERE :industry MEMBER OF p.industries"),
@@ -31,6 +40,8 @@ import java.util.Set;
 @CorporateOwner
 public class Provider extends Firm {
 
+    public static final String FIND_ALL_EAGERLY = "Provider.findAllEagerly";
+    public static final String FIND_BY_ID_EAGERLY = "Provider.findByIdEagerly";
     public static final String FIND_BY_CORPORATION = "Provider.findByCorporation";
     public static final String FIND_BY_TYPE = "Provider.findByType";
     public static final String FIND_BY_INDUSTRY = "Provider.findByIndustry";
@@ -121,7 +132,8 @@ public class Provider extends Firm {
         this.corporation = corporation;
     }
 
-    @ManyToMany(mappedBy = "providers")
+    @XmlTransient
+    @ManyToMany(mappedBy = "providers", fetch = FetchType.LAZY)  // temporarily EAGER
     public Set<Industry> getIndustries() {
         return industries;
     }
@@ -130,7 +142,8 @@ public class Provider extends Firm {
         this.industries = industries;
     }
 
-    @ManyToMany
+    @XmlTransient
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "accepted_payment_method",
         joinColumns = @JoinColumn(name = "provider_id"),
         inverseJoinColumns = @JoinColumn(name = "payment_method_id")
@@ -143,6 +156,7 @@ public class Provider extends Firm {
         this.acceptedPaymentMethods = acceptedPaymentMethods;
     }
 
+    @XmlTransient
     @OneToMany(mappedBy = "provider", fetch = FetchType.LAZY, cascade = { CascadeType.REMOVE })
     public Set<ServicePoint> getServicePoints() {
         return servicePoints;
@@ -152,6 +166,7 @@ public class Provider extends Firm {
         this.servicePoints = servicePoints;
     }
 
+    @XmlTransient
     @OneToMany(mappedBy = "provider", fetch = FetchType.LAZY, cascade = { CascadeType.REMOVE })
     public Set<ProviderService> getSuppliedServiceOffers() {
         return suppliedServiceOffers;
@@ -161,6 +176,7 @@ public class Provider extends Firm {
         this.suppliedServiceOffers = suppliedServiceOffers;
     }
 
+    @XmlTransient
     @OneToMany(mappedBy = "provider", fetch = FetchType.LAZY, cascade = { CascadeType.PERSIST, CascadeType.REMOVE })
     public Set<ProviderRating> getReceivedRatings() {
         return receivedRatings;

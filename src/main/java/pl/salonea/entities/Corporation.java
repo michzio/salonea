@@ -11,10 +11,15 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Past;
 import javax.validation.constraints.Size;
+import javax.xml.bind.annotation.*;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
+
+@XmlRootElement(name = "corporation")
+@XmlAccessorType(XmlAccessType.PROPERTY)
+@XmlType(propOrder = {"corporationId", "corporationName", "logo", "description", "openingDate", "history", "address", "phoneNumber", "skypeName" })
 
 @Entity
 @Table(name = "corporation")
@@ -188,6 +193,7 @@ public class Corporation extends UUIDEntity implements Serializable {
 
     /* one-to-many relationship with providers */
 
+    @XmlTransient
     // TODO: Corporation should have on update CASCADE_UPDATE, on delete SET_NULL
     @OneToMany(mappedBy = "corporation", fetch = FetchType.LAZY)
     // @OrderBy("providerName ASC") Hibernate + MySQL error

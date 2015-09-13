@@ -8,6 +8,8 @@ import javax.ejb.LocalBean;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
+import javax.persistence.NonUniqueResultException;
 import javax.persistence.TypedQuery;
 import java.util.List;
 
@@ -27,6 +29,34 @@ public class ProviderFacade extends AbstractFacade<Provider> implements Provider
     }
 
     public ProviderFacade() { super(Provider.class); }
+
+    @Override
+    public List<Provider> findAllEagerly() {
+        return findAllEagerly(null, null);
+    }
+
+    @Override
+    public List<Provider> findAllEagerly(Integer start, Integer limit) {
+
+        TypedQuery<Provider> query = getEntityManager().createNamedQuery(Provider.FIND_ALL_EAGERLY, Provider.class);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
+    public Provider findByIdEagerly(Long providerId) {
+
+        TypedQuery<Provider> query = getEntityManager().createNamedQuery(Provider.FIND_BY_ID_EAGERLY, Provider.class);
+        query.setParameter("providerId", providerId);
+        try {
+            return query.getSingleResult();
+        } catch(NoResultException | NonUniqueResultException ex) {
+            return null;
+        }
+    }
 
     @Override
     public List<Provider> findByCorporation(Corporation corporation) {

@@ -12,7 +12,10 @@ import java.util.List;
 public interface ProviderFacadeInterface extends AbstractFacadeInterface<Provider> {
 
     // concrete interface
-    List<Provider> findByCorporation(Corporation corporation); // solve lazy loading problem
+    List<Provider> findAllEagerly();
+    List<Provider> findAllEagerly(Integer start, Integer limit);
+    Provider findByIdEagerly(Long providerId);
+    List<Provider> findByCorporation(Corporation corporation);
     List<Provider> findByCorporation(Corporation corporation, Integer start, Integer limit);
     List<Provider> findByType(ProviderType providerType);
     List<Provider> findByType(ProviderType providerType, Integer start, Integer limit);

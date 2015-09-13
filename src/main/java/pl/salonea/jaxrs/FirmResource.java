@@ -200,7 +200,7 @@ public class FirmResource {
         Firm toDeleteFirm = firmFacade.find(userId);
         // throw exception if entity hasn't been found
         if(toDeleteFirm == null)
-            throw new NotFoundException("Could not found firm to delete for given id: " + userId + ".");
+            throw new NotFoundException("Could not find firm to delete for given id: " + userId + ".");
 
         // remove entity form database
         firmFacade.remove(toDeleteFirm);
@@ -404,6 +404,9 @@ public class FirmResource {
             // named
             firms.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(FirmResource.class).path("named").build()).rel("named").build() );
 
+            // located
+            Method locatedMethod = FirmResource.class.getMethod("getFirmsByAddress", AddressBeanParam.class);
+            firms.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(FirmResource.class).path(locatedMethod).build()).rel("located").build() );
 
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
@@ -439,7 +442,7 @@ public class FirmResource {
                                                      .path(FirmResource.class)
                                                      .path(vatinMethod)
                                                      .resolveTemplate("vatin", firm.getVatin())
-                    .build())
+                                                     .build())
                                     .rel("vatin").build() );
 
             // company-number link with pattern: http://localhost:port/app/rest/resources/company-number/{companyNumber}

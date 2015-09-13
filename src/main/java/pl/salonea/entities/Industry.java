@@ -2,13 +2,20 @@ package pl.salonea.entities;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import pl.salonea.jaxrs.utils.hateoas.Link;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import javax.xml.bind.annotation.*;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+
+@XmlRootElement
+@XmlAccessorType(XmlAccessType.PROPERTY)
 
 @Entity
 @Table(name="industry")
@@ -29,6 +36,9 @@ public class Industry implements Serializable {
     private String description;
 
     private Set<Provider> providers = new HashSet<>();
+
+    // HATEOAS support for RESTFul web service in JAX-RS
+    private Set<Link> links = new HashSet<>();
 
     /* constructors */
 
@@ -74,7 +84,7 @@ public class Industry implements Serializable {
     }
 
     /* many-to-many relationship */
-
+    @XmlTransient
     @ManyToMany
     @JoinTable(name = "provider_industry",
         joinColumns = @JoinColumn(name = "industry_id"),
@@ -110,5 +120,16 @@ public class Industry implements Serializable {
                 // if deriving: appendSuper(super.equals(obj)).
                         append(getName(), rhs.getName()).
                 isEquals();
+    }
+
+    @XmlElementWrapper(name = "links")
+    @XmlElement(name = "link")
+    @Transient
+    public Set<Link> getLinks() {
+        return links;
+    }
+
+    public void setLinks(Set<Link> links) {
+        this.links = links;
     }
 }

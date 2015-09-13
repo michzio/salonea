@@ -3,10 +3,14 @@ package pl.salonea.entities;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import pl.salonea.jaxrs.utils.hateoas.Link;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlElementWrapper;
+import javax.xml.bind.annotation.XmlTransient;
 import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
@@ -35,6 +39,9 @@ public class PaymentMethod implements Serializable {
     private Boolean inAdvance;
 
     private Set<Provider> acceptingProviders = new HashSet<>();
+
+    // HATEOAS support for RESTFul web service in JAX-RS
+    private Set<Link> links = new HashSet<>();
 
     /* constructors */
 
@@ -95,6 +102,7 @@ public class PaymentMethod implements Serializable {
 
     /* many-to-many relationships to providers that accept this payment method */
 
+    @XmlTransient
     @ManyToMany(mappedBy = "acceptedPaymentMethods")
     public Set<Provider> getAcceptingProviders() {
         return acceptingProviders;
@@ -125,5 +133,16 @@ public class PaymentMethod implements Serializable {
                 // if deriving: appendSuper(super.equals(obj)).
                 append(getName(), rhs.getName()).
                 isEquals();
+    }
+
+    @XmlElementWrapper(name = "links")
+    @XmlElement(name = "link")
+    @Transient
+    public Set<Link> getLinks() {
+        return links;
+    }
+
+    public void setLinks(Set<Link> links) {
+        this.links = links;
     }
 }

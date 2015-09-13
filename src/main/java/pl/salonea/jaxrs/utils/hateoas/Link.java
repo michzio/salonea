@@ -1,5 +1,8 @@
 package pl.salonea.jaxrs.utils.hateoas;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
@@ -89,4 +92,30 @@ public class Link {
             return new Link(uri, rel);
         }
     }
+
+    @Override
+    public int hashCode() {
+
+        return new HashCodeBuilder(17, 31) // two randomly chosen prime numbers
+                // if deriving: .appendSuper(super.hashCode())
+                .append(getUri())
+                .append(getRel())
+                .toHashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null || !(obj instanceof Link))
+            return false;
+        if (obj == this)
+            return true;
+
+        Link rhs = (Link) obj;
+        return new EqualsBuilder()
+                // if deriving: .appendSuper(super.equals(obj))
+                .append(getUri(), rhs.getUri())
+                .append(getRel(), rhs.getRel())
+                .isEquals();
+    }
+
 }
