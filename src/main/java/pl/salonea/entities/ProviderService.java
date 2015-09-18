@@ -14,8 +14,15 @@ import javax.validation.constraints.Digits;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
 import java.util.HashSet;
 import java.util.Set;
+
+@XmlRootElement(name = "provider-service")
+@XmlAccessorType(XmlAccessType.PROPERTY)
 
 @Entity
 @IdClass(ProviderServiceId.class)
@@ -189,8 +196,9 @@ public class ProviderService {
         this.discount = discount;
     }
 
-    /* one-to-many relationships */
+    /* many-to-many relationships */
 
+    @XmlTransient
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "service_supply",
             joinColumns = {
@@ -207,6 +215,7 @@ public class ProviderService {
         this.supplyingEmployees = supplyingEmployees;
     }
 
+    @XmlTransient
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "service_provided_on",
             joinColumns = {

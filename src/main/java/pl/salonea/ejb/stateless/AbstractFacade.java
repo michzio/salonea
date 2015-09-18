@@ -1,5 +1,7 @@
 package pl.salonea.ejb.stateless;
 
+import pl.salonea.entities.ServicePoint_;
+
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.ejb.TransactionManagement;
@@ -10,6 +12,7 @@ import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
 import javax.validation.constraints.NotNull;
+import javax.ws.rs.QueryParam;
 import java.util.List;
 
 /**
@@ -51,6 +54,16 @@ public abstract class AbstractFacade<T> {
 
     public T find(Object id) {
         return getEntityManager().find(entityClass, id);
+    }
+
+    public List<T> find(List<Object> list) {
+
+        CriteriaQuery<T> criteriaQuery = getEntityManager().getCriteriaBuilder().createQuery(entityClass);
+        Root<T> e = criteriaQuery.from(entityClass);
+        criteriaQuery.select(e);
+        criteriaQuery.where(e.get(e.getModel().getId(e.getModel().getIdType().getJavaType())).in(list));
+        Query query = getEntityManager().createQuery(criteriaQuery);
+        return query.getResultList();
     }
 
     public List<T> findAll() {

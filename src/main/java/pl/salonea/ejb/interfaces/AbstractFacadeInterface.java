@@ -13,6 +13,7 @@ public interface AbstractFacadeInterface<T> {
         void refresh(T entity); // works only with attached entity, if entity is detached need to find it again
         void remove(T entity);
         T find(Object obj);
+        List<T> find(List<Object> list);
         List<T> findAll();
         List<T> findAll(Integer start, Integer limit);
         List<T> findRange(Integer start, Integer limit);

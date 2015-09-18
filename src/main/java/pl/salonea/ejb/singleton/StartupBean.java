@@ -50,6 +50,14 @@ public class StartupBean {
     private CorporationFacade corporationFacade;
     @Inject
     private PaymentMethodFacade paymentMethodFacade;
+    @Inject
+    private ServiceFacade serviceFacade;
+    @Inject
+    private ProviderServiceFacade providerServiceFacade;
+    @Inject
+    private ClientFacade clientFacade;
+    @Inject
+    private ProviderRatingFacade providerRatingFacade;
 
     public StartupBean() { }
 
@@ -146,6 +154,17 @@ public class StartupBean {
         cash.getAcceptingProviders().add(provider1);
         cash.getAcceptingProviders().add(provider4);
 
+        Service hairCut = new Service("Hair cut");
+        Service dentalFilling = new Service("Dental filling");
+
+        ProviderService prov1DentalFilling = new ProviderService(provider1, dentalFilling, 1800000L /* 30 min */);
+        ProviderService prov3HairCut = new ProviderService(provider3, hairCut, 1800000L /* 30 min */);
+
+        Client client1 = new Client("some client");
+
+        ProviderRating prov1Rating = new ProviderRating(provider1, client1, (short) 5);
+        ProviderRating prov2Rating = new ProviderRating(provider2, client1, (short) 6);
+
         providerFacade.create(provider1);
         providerFacade.create(provider2);
         providerFacade.create(provider3);
@@ -154,6 +173,13 @@ public class StartupBean {
         corporationFacade.create(corporation1);
         corporationFacade.create(corporation2);
         paymentMethodFacade.create(cash);
+        serviceFacade.create(hairCut);
+        serviceFacade.create(dentalFilling);
+        providerServiceFacade.create(prov1DentalFilling);
+        providerServiceFacade.create(prov3HairCut);
+        clientFacade.create(client1);
+        providerRatingFacade.create(prov1Rating);
+        providerRatingFacade.create(prov2Rating);
 
     }
 

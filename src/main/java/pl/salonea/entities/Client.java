@@ -4,9 +4,16 @@ import pl.salonea.constraints.NaturalPersonOrFirm;
 import pl.salonea.mapped_superclasses.UUIDEntity;
 
 import javax.persistence.*;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
 import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
+
+@XmlRootElement(name = "client")
+@XmlAccessorType(XmlAccessType.PROPERTY)
 
 @Entity
 @Table(name="client")
@@ -102,6 +109,7 @@ public class Client extends UUIDEntity implements Serializable{
         this.firm = firm;
     }
 
+    @XmlTransient
     @OneToMany(mappedBy = "client", fetch = FetchType.LAZY, cascade = { CascadeType.REMOVE })
     public Set<CreditCard> getCreditCards() {
         return creditCards;
@@ -111,6 +119,7 @@ public class Client extends UUIDEntity implements Serializable{
         this.creditCards = creditCards;
     }
 
+    @XmlTransient
     @OneToMany(mappedBy = "client", fetch = FetchType.LAZY, cascade = { CascadeType.PERSIST, CascadeType.REMOVE })
     public Set<ProviderRating> getProviderRatings() {
         return providerRatings;
@@ -120,6 +129,7 @@ public class Client extends UUIDEntity implements Serializable{
         this.providerRatings = providerRatings;
     }
 
+    @XmlTransient
     @OneToMany(mappedBy = "client", fetch = FetchType.LAZY)
     public Set<EmployeeRating> getEmployeeRatings() {
         return employeeRatings;

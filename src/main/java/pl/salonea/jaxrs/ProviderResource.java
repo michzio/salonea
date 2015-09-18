@@ -1,13 +1,7 @@
 package pl.salonea.jaxrs;
 
-import pl.salonea.ejb.stateless.CorporationFacade;
-import pl.salonea.ejb.stateless.IndustryFacade;
-import pl.salonea.ejb.stateless.PaymentMethodFacade;
-import pl.salonea.ejb.stateless.ProviderFacade;
-import pl.salonea.entities.Corporation;
-import pl.salonea.entities.Industry;
-import pl.salonea.entities.PaymentMethod;
-import pl.salonea.entities.Provider;
+import pl.salonea.ejb.stateless.*;
+import pl.salonea.entities.*;
 import pl.salonea.enums.ProviderType;
 import pl.salonea.jaxrs.bean_params.GenericBeanParam;
 import pl.salonea.jaxrs.bean_params.PaginationBeanParam;
@@ -56,6 +50,12 @@ public class ProviderResource {
     @Inject
     private PaymentMethodFacade paymentMethodFacade;
 
+    @Inject
+    private ServiceFacade serviceFacade;
+
+    @Inject
+    private ClientFacade clientFacade;
+
     /**
      * Method returns all Provider resources
      * They can be additionally filtered or paginated by @QueryParams
@@ -78,7 +78,12 @@ public class ProviderResource {
             logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
 
             // get providers filtered by criteria provided in query params
-            // TODO
+            providers = new ResourceList<>(
+                            providerFacade.findByMultipleCriteria(params.getCorporations(), params.getProviderTypes(),
+                                    params.getIndustries(), params.getPaymentMethods(), params.getServices(), params.getRated(),
+                                    params.getMinAvgRating(), params.getMaxAvgRating(), params.getRatingClients(), params.getProviderName(),
+                                    params.getDescription(), params.getOffset(), params.getLimit())
+            );
 
         } else {
             logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
@@ -96,7 +101,7 @@ public class ProviderResource {
     @GET
     @Path("/eagerly")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getProvidersEagerly(@BeanParam ProviderBeanParam params) {
+    public Response getProvidersEagerly(@BeanParam ProviderBeanParam params) throws ForbiddenException, NotFoundException {
 
         if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
         logger.log(Level.INFO, "returning all Providers eagerly by executing ProviderResource.getProvidersEagerly() method of REST API");
@@ -112,7 +117,14 @@ public class ProviderResource {
             logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
 
             // get providers filtered by criteria provided in query params
-            // TODO
+            providers = new ResourceList<>(
+                    ProviderWrapper.wrap(
+                        providerFacade.findByMultipleCriteriaEagerly(params.getCorporations(), params.getProviderTypes(),
+                                params.getIndustries(), params.getPaymentMethods(), params.getServices(), params.getRated(),
+                                params.getMinAvgRating(), params.getMaxAvgRating(), params.getRatingClients(), params.getProviderName(),
+                                params.getDescription(), params.getOffset(), params.getLimit())
+                    )
+            );
 
         } else {
             logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
@@ -394,7 +406,7 @@ public class ProviderResource {
                                                         @BeanParam PaginationBeanParam params) throws ForbiddenException, NotFoundException {
 
         if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
-        logger.log(Level.INFO, "returning providers for given payment method using ProviderResource.getProvidersAcceptingPaymentMethod(paymentMethodId) method of REST API ");
+        logger.log(Level.INFO, "returning providers for given payment method using ProviderResource.getProvidersAcceptingPaymentMethod(paymentMethodId) method of REST API");
 
         // get payment method for which to look for providers
         PaymentMethod paymentMethod = paymentMethodFacade.find(paymentMethodId);
@@ -403,6 +415,144 @@ public class ProviderResource {
 
         // find providers by given criteria
         ResourceList<Provider> providers = new ResourceList<>( providerFacade.findByPaymentMethod(paymentMethod, params.getOffset(), params.getLimit()) );
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        ProviderResource.populateWithHATEOASLinks(providers, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(providers).build();
+    }
+
+    /**
+     * Method returns subset of Provider entities for given Service entity.
+     * The service id is passed through path param.
+     */
+    @GET
+    @Path("/supplying-service/{serviceId : \\d+}")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getProvidersSupplyingService( @PathParam("serviceId") Integer serviceId,
+                                                  @BeanParam PaginationBeanParam params) throws ForbiddenException, NotFoundException {
+
+        if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+        logger.log(Level.INFO, "returning providers for given service using ProviderResource.getProvidersSupplyingService(serviceId) method of REST API");
+
+        // get service for which to look for providers
+        Service service = serviceFacade.find(serviceId);
+        if(service == null)
+            throw new NotFoundException("Could not find service for which to look for providers.");
+
+        // find providers by given criteria
+        ResourceList<Provider> providers = new ResourceList<>( providerFacade.findBySuppliedService(service, params.getOffset(), params.getLimit()) );
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        ProviderResource.populateWithHATEOASLinks(providers, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(providers).build();
+    }
+
+    /**
+     * Method returns subset of Provider entities that have been rated
+     */
+    @GET
+    @Path("/rated")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getProvidersRated( @BeanParam PaginationBeanParam params ) throws ForbiddenException {
+
+        if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+        logger.log(Level.INFO, "returning providers that have been rated using ProviderResource.getProvidersRated() method of REST API");
+
+        // find providers by given criteria
+        ResourceList<Provider> providers = new ResourceList<>( providerFacade.findRated(params.getOffset(), params.getLimit()) );
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        ProviderResource.populateWithHATEOASLinks(providers, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(providers).build();
+    }
+
+    /**
+     * Method returns subset of Provider entities that haven't been rated (unrated)
+     */
+    @GET
+    @Path("/unrated")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getProvidersUnrated( @BeanParam PaginationBeanParam params ) throws ForbiddenException {
+
+        if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+        logger.log(Level.INFO, "returning providers that haven't been rated (unrated) using ProviderResource.getProvidersUnrated() method of REST API");
+
+        // find providers by given criteria
+        ResourceList<Provider> providers = new ResourceList<>( providerFacade.findUnrated(params.getOffset(), params.getLimit()) );
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        ProviderResource.populateWithHATEOASLinks(providers, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(providers).build();
+    }
+
+    /**
+     * Method returns subset of Provider entities that have been rated above given value.
+     * The min avg rating is passed through path param.
+     */
+    @GET
+    @Path("/rated-above/{minAvgRating :  \\d+(\\.\\d+)?}") // catch only unsigned double numbers
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getProvidersOnAverageRatedAbove( @PathParam("minAvgRating") Double minAvgRating,
+                                                     @BeanParam PaginationBeanParam params) throws ForbiddenException {
+
+        if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+        logger.log(Level.INFO, "returning providers on average rated above given minimal value using ProviderResource.getProvidersOnAverageRatedAbove(minAvgRating) method of REST API");
+
+        // find providers by given criteria
+        ResourceList<Provider> providers = new ResourceList<>( providerFacade.findOnAvgRatedAbove(minAvgRating, params.getOffset(), params.getLimit()) );
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        ProviderResource.populateWithHATEOASLinks(providers, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(providers).build();
+    }
+
+    /**
+     * Method returns subset of Provider entities that have been rated below given value.
+     * The max avg rating is passed through path param.
+     */
+    @GET
+    @Path("/rated-below/{maxAvgRating :  \\d+(\\.\\d+)?}") // catch only unsigned double numbers
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getProvidersOnAverageRatedBelow( @PathParam("maxAvgRating") Double maxAvgRating,
+                                                     @BeanParam PaginationBeanParam params) throws ForbiddenException {
+
+        if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+        logger.log(Level.INFO, "returning providers on average rated below given maximal value using ProviderResource.getProvidersOnAverageRatedBelow(maxAvgRating) method of REST API");
+
+        // find providers by given criteria
+        ResourceList<Provider> providers = new ResourceList<>( providerFacade.findOnAvgRatedBelow(maxAvgRating, params.getOffset(), params.getLimit()) );
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        ProviderResource.populateWithHATEOASLinks(providers, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(providers).build();
+    }
+
+    /**
+     * Method returns subset of Provider entities that have been rated by given Client
+     * The client id is passed through path param.
+     */
+    @GET
+    @Path("/rated-by/{clientId : \\d+}")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getProvidersRatedByClient( @PathParam("clientId") Long clientId,
+                                               @BeanParam PaginationBeanParam params) throws ForbiddenException, NotFoundException {
+
+        if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+        logger.log(Level.INFO, "returning providers rated by given client using ProviderResource.getProvidersRatedByClient(clientId) method of REST API");
+
+        // get client for which to look for providers
+        Client client = clientFacade.find(clientId);
+        if(client == null)
+            throw new NotFoundException("Could not find client for which to look for providers.");
+
+        // find providers by given criteria
+        ResourceList<Provider> providers = new ResourceList<>( providerFacade.findRatedByClient(client, params.getOffset(), params.getLimit()) );
 
         // result resources need to be populated with hypermedia links to enable resource discovery
         ProviderResource.populateWithHATEOASLinks(providers, params.getUriInfo(), params.getOffset(), params.getLimit());
@@ -485,6 +635,29 @@ public class ProviderResource {
 
             // industry
             providers.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(ProviderResource.class).path("industry").build()).rel("industry").build() );
+
+            // accepting-payment-method
+            providers.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(ProviderResource.class).path("accepting-payment-method").build()).rel("accepting-payment-method").build() );
+
+            // supplying-service
+            providers.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(ProviderResource.class).path("supplying-service").build()).rel("supplying-service").build() );
+
+            // rated
+            Method ratedMethod = ProviderResource.class.getMethod("getProvidersRated", PaginationBeanParam.class);
+            providers.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(ProviderResource.class).path(ratedMethod).build()).rel("rated").build() );
+
+            // unrated
+            Method unratedMethod = ProviderResource.class.getMethod("getProvidersUnrated", PaginationBeanParam.class);
+            providers.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(ProviderResource.class).path(unratedMethod).build()).rel("unrated").build() );
+
+            // rated-above
+            providers.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(ProviderResource.class).path("rated-above").build()).rel("rated-above").build() );
+
+            // rated-below
+            providers.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(ProviderResource.class).path("rated-below").build()).rel("rated-below").build() );
+
+            // rated-by
+            providers.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(ProviderResource.class).path("rated-by").build()).rel("rated-by").build() );
 
         } catch(NoSuchMethodException e) {
             e.printStackTrace();
