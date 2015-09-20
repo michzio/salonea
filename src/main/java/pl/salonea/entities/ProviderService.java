@@ -8,17 +8,17 @@ import pl.salonea.constraints.PriceTypeDependentDuration;
 import pl.salonea.entities.idclass.ProviderServiceId;
 import pl.salonea.enums.CurrencyCode;
 import pl.salonea.enums.PriceType;
+import pl.salonea.jaxrs.utils.hateoas.Link;
 
 import javax.persistence.*;
 import javax.validation.constraints.Digits;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlTransient;
+import javax.xml.bind.annotation.*;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @XmlRootElement(name = "provider-service")
@@ -91,6 +91,9 @@ public class ProviderService {
     /* many-to-many relationships */
     private Set<Employee> supplyingEmployees = new HashSet<>();
     private Set<WorkStation> workStations = new HashSet<>();
+
+    // HATEOAS support for RESTFul web service in JAX-RS
+    private List<Link> links = new ArrayList<>();
 
     /* constructors */
 
@@ -259,5 +262,16 @@ public class ProviderService {
                 .append(getProvider(), rhs.getProvider())
                 .append(getService(), rhs.getService())
                 .isEquals();
+    }
+
+    @Transient
+    @XmlElementWrapper(name = "links")
+    @XmlElement(name = "link")
+    public List<Link> getLinks() {
+        return links;
+    }
+
+    public void setLinks(List<Link> links) {
+        this.links = links;
     }
 }

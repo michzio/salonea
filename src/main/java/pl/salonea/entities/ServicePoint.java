@@ -6,12 +6,20 @@ import pl.salonea.constraints.PhoneNumber;
 import pl.salonea.constraints.SkypeName;
 import pl.salonea.embeddables.Address;
 import pl.salonea.entities.idclass.ServicePointId;
+import pl.salonea.jaxrs.utils.hateoas.Link;
 
 import javax.persistence.*;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+import javax.xml.bind.annotation.*;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
+
+@XmlRootElement(name = "service-point")
+@XmlAccessorType(XmlAccessType.PROPERTY)
+@XmlType(propOrder = { "servicePointNumber", "provider", "address", "phoneNumber", "skypeName", "latitudeWGS84", "longitudeWGS84"  })
 
 @Entity
 @IdClass(ServicePointId.class)
@@ -67,6 +75,9 @@ public class ServicePoint implements Serializable {
 
     /* ServicePoint can have many WorkStations */
     private Set<WorkStation> workStations;
+
+    // HATEOAS support for RESTFul web service in JAX-RS
+    private List<Link> links = new ArrayList<>();
 
     /* constructors */
 
@@ -173,6 +184,7 @@ public class ServicePoint implements Serializable {
         this.longitudeWGS84 = longitudeWGS84;
     }
 
+    @XmlTransient
     @OneToMany(mappedBy = "servicePoint", fetch = FetchType.LAZY, cascade = { CascadeType.REMOVE })
     public Set<ServicePointPhoto> getPhotos() {
         return photos;
@@ -182,6 +194,7 @@ public class ServicePoint implements Serializable {
         this.photos = photos;
     }
 
+    @XmlTransient
     @OneToMany(mappedBy = "servicePoint", fetch = FetchType.LAZY, cascade = { CascadeType.REMOVE })
     public Set<VirtualTour> getVirtualTours() {
         return virtualTours;
@@ -191,6 +204,7 @@ public class ServicePoint implements Serializable {
         this.virtualTours = virtualTours;
     }
 
+    @XmlTransient
     @OneToMany(mappedBy = "servicePoint", fetch = FetchType.LAZY, cascade = { CascadeType.REMOVE })
     public Set<WorkStation> getWorkStations() {
         return workStations;
@@ -223,5 +237,16 @@ public class ServicePoint implements Serializable {
                 .append(getProvider(), rhs.getProvider())
                 .append(getServicePointNumber(), rhs.getServicePointNumber())
                 .isEquals();
+    }
+
+    @Transient
+    @XmlElementWrapper(name = "links")
+    @XmlElement(name = "link")
+    public List<Link> getLinks() {
+        return links;
+    }
+
+    public void setLinks(List<Link> links) {
+        this.links = links;
     }
 }

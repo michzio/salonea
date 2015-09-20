@@ -1,10 +1,7 @@
 package pl.salonea.jaxrs.utils;
 
 
-import pl.salonea.entities.Firm;
-import pl.salonea.entities.NaturalPerson;
-import pl.salonea.entities.Provider;
-import pl.salonea.entities.UserAccount;
+import pl.salonea.entities.*;
 import pl.salonea.jaxrs.utils.hateoas.Link;
 import pl.salonea.jaxrs.wrappers.ProviderWrapper;
 
@@ -40,7 +37,9 @@ public class ResourceList<T> {
             @XmlElement(name = "natural-person", type = NaturalPerson.class),
             @XmlElement(name = "firm", type = Firm.class),
             @XmlElement(name = "provider", type = Provider.class),
-            @XmlElement(name = "provider", type = ProviderWrapper.class)
+            @XmlElement(name = "provider", type = ProviderWrapper.class),
+            @XmlElement(name = "industry", type = Industry.class),
+            @XmlElement(name = "service-point", type = ServicePoint.class )
     })
     public List<T> getResources() {
         return resources;

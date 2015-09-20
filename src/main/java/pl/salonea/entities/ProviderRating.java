@@ -3,11 +3,16 @@ package pl.salonea.entities;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import pl.salonea.entities.idclass.ProviderRatingId;
+import pl.salonea.jaxrs.utils.hateoas.Link;
 
 import javax.persistence.*;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlElementWrapper;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @IdClass(ProviderRatingId.class)
@@ -50,6 +55,9 @@ public class ProviderRating {
     private Short clientRating;
     private String clientComment;
     private String providerDementi;
+
+    // HATEOAS support for RESTFul web service in JAX-RS
+    private List<Link> links = new ArrayList<>();
 
     /* constructors */
 
@@ -148,5 +156,16 @@ public class ProviderRating {
                  append(getClient(), rhs.getClient())
                 .append(getProvider(), rhs.getProvider())
                 .isEquals();
+    }
+
+    @Transient
+    @XmlElementWrapper(name = "links")
+    @XmlElement(name = "link")
+    public List<Link> getLinks() {
+        return links;
+    }
+
+    public void setLinks(List<Link> links) {
+        this.links = links;
     }
 }

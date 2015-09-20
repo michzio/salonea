@@ -300,7 +300,12 @@ public class ServicePointFacade extends AbstractFacade<ServicePoint> implements 
 
     @Override
     public List<ServicePoint> findByMultipleCriteria(List<Provider> providers, List<Service> services, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories) {
-        return findByMultipleCriteria(providers, services, employees, corporations, industries, serviceCategories, null, null, null);
+        return findByMultipleCriteria(providers, services, employees, corporations, industries, serviceCategories, null, null);
+    }
+
+    @Override
+    public List<ServicePoint> findByMultipleCriteria(List<Provider> providers, List<Service> services, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, Integer start, Integer limit) {
+        return findByMultipleCriteria(providers, services, employees, corporations, industries, serviceCategories, null, null, null, start, limit);
     }
 
     @Override
@@ -309,16 +314,31 @@ public class ServicePointFacade extends AbstractFacade<ServicePoint> implements 
     }
 
     @Override
+    public List<ServicePoint> findByMultipleCriteria(List<Provider> providers, List<Service> services, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, Address address, Integer start, Integer limit) {
+        return findByMultipleCriteria(providers, services, employees, corporations, industries, serviceCategories, address, null, null, start, limit);
+    }
+
+    @Override
     public List<ServicePoint> findByMultipleCriteria(List<Provider> providers, List<Service> services, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, CoordinatesSquare coordinatesSquare) {
-        return findByMultipleCriteria(providers, services, employees, corporations, industries, serviceCategories, null, coordinatesSquare, null);
+        return findByMultipleCriteria(providers, services, employees, corporations, industries, serviceCategories, coordinatesSquare, null, null);
+    }
+
+    @Override
+    public List<ServicePoint> findByMultipleCriteria(List<Provider> providers, List<Service> services, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, CoordinatesSquare coordinatesSquare, Integer start, Integer limit) {
+        return findByMultipleCriteria(providers, services, employees, corporations, industries, serviceCategories, null, coordinatesSquare, null, start, limit);
     }
 
     @Override
     public List<ServicePoint> findByMultipleCriteria(List<Provider> providers, List<Service> services, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, CoordinatesCircle coordinatesCircle) {
-        return findByMultipleCriteria(providers, services, employees, corporations, industries, serviceCategories, null, null, coordinatesCircle);
+        return findByMultipleCriteria(providers, services, employees, corporations, industries, serviceCategories, coordinatesCircle, null, null);
     }
 
-    private List<ServicePoint> findByMultipleCriteria(List<Provider> providers, List<Service> services, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, Address address, CoordinatesSquare coordinatesSquare, CoordinatesCircle coordinatesCircle) {
+    @Override
+    public List<ServicePoint> findByMultipleCriteria(List<Provider> providers, List<Service> services, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, CoordinatesCircle coordinatesCircle, Integer start, Integer limit) {
+        return findByMultipleCriteria(providers, services, employees, corporations, industries, serviceCategories, null, null, coordinatesCircle, start, limit);
+    }
+
+    private List<ServicePoint> findByMultipleCriteria(List<Provider> providers, List<Service> services, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, Address address, CoordinatesSquare coordinatesSquare, CoordinatesCircle coordinatesCircle, Integer start, Integer limit) {
 
         CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
         CriteriaQuery<ServicePoint> criteriaQuery = criteriaBuilder.createQuery(ServicePoint.class);
@@ -406,6 +426,10 @@ public class ServicePointFacade extends AbstractFacade<ServicePoint> implements 
                 predicates.add( criteriaBuilder.like(servicePointAddress.get(Address_.zipCode), "%" + address.getZipCode() + "%"));
             if(address.getStreet() != null)
                 predicates.add( criteriaBuilder.like(servicePointAddress.get(Address_.street), "%" + address.getStreet() + "%"));
+            if(address.getHouseNumber() != null)
+                predicates.add( criteriaBuilder.like(servicePointAddress.get(Address_.houseNumber), "%" + address.getHouseNumber() + "%"));
+            if(address.getFlatNumber() != null)
+                predicates.add( criteriaBuilder.like(servicePointAddress.get(Address_.flatNumber), "%" + address.getFlatNumber() + "%"));
 
         }
 
@@ -442,6 +466,10 @@ public class ServicePointFacade extends AbstractFacade<ServicePoint> implements 
         // WHERE predicate1 AND predicate2 AND ... AND predicateN
         criteriaQuery.where(predicates.toArray(new Predicate[] { }));
         TypedQuery<ServicePoint> query = getEntityManager().createQuery(criteriaQuery);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
 
         return query.getResultList();
     }

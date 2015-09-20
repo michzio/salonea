@@ -11,6 +11,8 @@ public class AddressBeanParam extends PaginationBeanParam {
     private @QueryParam("state") String state;
     private @QueryParam("country") String country;
     private @QueryParam("street") String street;
+    private @QueryParam("houseNumber") String houseNumber;
+    private @QueryParam("flatNumber") String flatNumber;
     private @QueryParam("zipCode") String zipCode;
 
     public String getCity() {
@@ -51,5 +53,21 @@ public class AddressBeanParam extends PaginationBeanParam {
 
     public void setZipCode(String zipCode) {
         this.zipCode = zipCode;
+    }
+
+    public String getHouseNumber() {
+        return houseNumber;
+    }
+
+    public void setHouseNumber(String houseNumber) {
+        this.houseNumber = houseNumber;
+    }
+
+    public String getFlatNumber() {
+        return flatNumber;
+    }
+
+    public void setFlatNumber(String flatNumber) {
+        this.flatNumber = flatNumber;
     }
 }

@@ -58,6 +58,8 @@ public class StartupBean {
     private ClientFacade clientFacade;
     @Inject
     private ProviderRatingFacade providerRatingFacade;
+    @Inject
+    private ServicePointFacade servicePointFacade;
 
     public StartupBean() { }
 
@@ -165,6 +167,16 @@ public class StartupBean {
         ProviderRating prov1Rating = new ProviderRating(provider1, client1, (short) 5);
         ProviderRating prov2Rating = new ProviderRating(provider2, client1, (short) 6);
 
+        Address address11 = new Address("Poznańska", "15", "29-100", "Poznań", "Wielkopolska", "Poland");
+        Address address12 = new Address("Pomorska", "109", "30-102", "Luboń", "Wielkopolska", "Poland");
+        ServicePoint point11 = new ServicePoint(provider1, 1, address11);
+                     point11.setLongitudeWGS84(16.908212f);
+                     point11.setLatitudeWGS84(52.413730f);
+        ServicePoint point12 = new ServicePoint(provider1, 2, address12);
+                     point12.setLongitudeWGS84(16.916990f);
+                     point12.setLatitudeWGS84(52.417640f);
+
+
         providerFacade.create(provider1);
         providerFacade.create(provider2);
         providerFacade.create(provider3);
@@ -180,6 +192,8 @@ public class StartupBean {
         clientFacade.create(client1);
         providerRatingFacade.create(prov1Rating);
         providerRatingFacade.create(prov2Rating);
+        servicePointFacade.create(point11);
+        servicePointFacade.create(point12);
 
     }
 

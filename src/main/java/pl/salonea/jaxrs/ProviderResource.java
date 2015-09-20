@@ -6,6 +6,7 @@ import pl.salonea.enums.ProviderType;
 import pl.salonea.jaxrs.bean_params.GenericBeanParam;
 import pl.salonea.jaxrs.bean_params.PaginationBeanParam;
 import pl.salonea.jaxrs.bean_params.ProviderBeanParam;
+import pl.salonea.jaxrs.bean_params.ServicePointBeanParam;
 import pl.salonea.jaxrs.exceptions.ExceptionHandler;
 import pl.salonea.jaxrs.exceptions.ForbiddenException;
 import pl.salonea.jaxrs.exceptions.NotFoundException;
@@ -26,7 +27,9 @@ import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 import java.lang.reflect.Method;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -55,6 +58,9 @@ public class ProviderResource {
 
     @Inject
     private ClientFacade clientFacade;
+
+    @Inject
+    private ServicePointFacade servicePointFacade;
 
     /**
      * Method returns all Provider resources
@@ -684,7 +690,15 @@ public class ProviderResource {
 
         for(PaymentMethod paymentMethod : providerWrapper.getAcceptedPaymentMethods())
             pl.salonea.jaxrs.PaymentMethodResource.populateWithHATEOASLinks(paymentMethod, uriInfo);
-        // TODO other associated entity collection link population
+
+        for(ServicePoint servicePoint : providerWrapper.getServicePoints())
+            pl.salonea.jaxrs.ServicePointResource.populateWithHATEOASLinks(servicePoint, uriInfo);
+
+        for(ProviderService providerService : providerWrapper.getSuppliedServiceOffers())
+            ProviderServiceResource.populateWithHATEOASLinks(providerService, uriInfo);
+
+        for(ProviderRating providerRating : providerWrapper.getReceivedRatings())
+            ProviderRatingResource.populateWithHATEOASLinks(providerRating, uriInfo);
     }
 
     /**
@@ -770,20 +784,145 @@ public class ProviderResource {
 
     public class IndustryResource {
 
+        /**
+         * Method returns subset of Industry entities for given Provider.
+         * The provider id is passed through path param.
+         * They can be additionally paginated by @QueryParams
+         */
         @GET
-        @Produces(MediaType.TEXT_PLAIN)
-        public String get() {
-            return "dogs";
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getProviderIndustries( @PathParam("userId") Long userId,
+                                               @BeanParam PaginationBeanParam params) throws NotFoundException, ForbiddenException {
+
+            if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            logger.log(Level.INFO, "returning subset of Industry entities for given Provider using ProviderResource.IndustryResource.getProviderIndustries(userId) method of REST API");
+
+            // find provider entity for which to get associated industries
+            Provider provider = providerFacade.find(userId);
+            if(provider == null)
+                throw new NotFoundException("Could not find provider for id " + userId + ".");
+
+            // get industries for given provider
+            ResourceList<Industry> industries = new ResourceList<>( industryFacade.findByProvider(provider, params.getOffset(), params.getLimit()) );
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.IndustryResource.populateWithHATEOASLinks(industries, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(industries).build();
         }
     }
 
     public class PaymentMethodResource {
 
+        /**
+         * Method returns subset of PaymentMethod entities for given Provider.
+         * The provider id is passed through path param.
+         * They can be additionally paginated by @QueryParams
+         */
         @GET
-        @Produces(MediaType.TEXT_PLAIN)
-        public String get() {
-            return "dogs";
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getProviderPaymentMethods( @PathParam("userId") Long userId,
+                                                   @BeanParam PaginationBeanParam params) throws NotFoundException, ForbiddenException {
+
+            if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            logger.log(Level.INFO, "returning subset of PaymentMethod entities for given Provider using ProviderResource.PaymentMethodResource.getProviderPaymentMethods(userId) method of REST API");
+
+            // find provider entity for which to get associated payment methods
+            Provider provider = providerFacade.find(userId);
+            if(provider == null)
+                throw new NotFoundException("Could not find provider for id " + userId + ".");
+
+            // get payment methods for given provider
+            ResourceList<PaymentMethod> paymentMethods = new ResourceList<>( paymentMethodFacade.findByProvider(provider, params.getOffset(), params.getLimit()) );
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.PaymentMethodResource.populateWithHATEOASLinks(paymentMethods, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(paymentMethods).build();
         }
+
+    }
+
+    public class ServicePointResource {
+
+        /**
+         * Method returns subset of ServicePoint entities for given Provider
+         * The provider id is passed through path param.
+         * They can be additionally paginated by @QueryParams
+         */
+        @GET
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getProviderServicePoints( @PathParam("userId") Long userId,
+                                                  @BeanParam ServicePointBeanParam params) throws NotFoundException, ForbiddenException {
+
+            if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            logger.log(Level.INFO, "returning subset of ServicePoint entities for given Provider using ProviderResource.ServicePointResource.getProviderServicePoints(userId) method of REST API");
+
+            // find provider entity for which to get associated service points
+            Provider provider = providerFacade.find(userId);
+            if(provider == null)
+                throw new NotFoundException("Could not find provider for id " + userId + ".");
+
+            // calculate number of filter query params
+            Integer noOfParams = params.getUriInfo().getQueryParameters().size();
+            if(params.getOffset() != null) noOfParams -= 1;
+            if(params.getLimit() != null) noOfParams -= 1;
+
+            ResourceList<ServicePoint> servicePoints = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Provider> providers = new ArrayList<>();
+                providers.add(provider);
+
+                if(params.getAddress() != null) {
+                    if(params.getCoordinatesSquare() != null || params.getCoordinatesCircle() != null)
+                        throw new BadRequestException("Query params cannot include address params and coordinates square params or coordinates circle params at the same time.");
+                    // only address params
+                    servicePoints = new ResourceList<>(
+                        servicePointFacade.findByMultipleCriteria(providers, params.getServices(), params.getEmployees(),
+                                params.getCorporations(), params.getIndustries(), params.getServiceCategories(), params.getAddress(), params.getOffset(), params.getLimit())
+                    );
+
+                } else if(params.getCoordinatesSquare() != null) {
+                    if(params.getAddress() != null || params.getCoordinatesCircle() != null)
+                        throw new BadRequestException("Query params cannot include coordinates square params and address params or coordinates circle params at the same time.");
+                    // only coordinates square params
+                    servicePoints = new ResourceList<>(
+                            servicePointFacade.findByMultipleCriteria(providers, params.getServices(), params.getEmployees(),
+                                    params.getCorporations(), params.getIndustries(), params.getServiceCategories(), params.getCoordinatesSquare(), params.getOffset(), params.getLimit())
+                    );
+
+                } else if(params.getCoordinatesCircle() != null) {
+                    if(params.getAddress() != null || params.getCoordinatesSquare() != null)
+                        throw new BadRequestException("Query params cannot include coordinates circle params and address params or coordinates square params at the same time.");
+                    // only coordinates circle params
+                    servicePoints = new ResourceList<>(
+                            servicePointFacade.findByMultipleCriteria(providers, params.getServices(), params.getEmployees(),
+                                    params.getCorporations(), params.getIndustries(), params.getServiceCategories(), params.getCoordinatesCircle(), params.getOffset(), params.getLimit())
+                    );
+
+                } else {
+                    // no location params
+                    servicePoints = new ResourceList<>(
+                            servicePointFacade.findByMultipleCriteria(providers, params.getServices(), params.getEmployees(),
+                                    params.getCorporations(), params.getIndustries(), params.getServiceCategories(), params.getOffset(), params.getLimit())
+                    );
+                }
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                servicePoints = new ResourceList<>( servicePointFacade.findByProvider(provider, params.getOffset(), params.getLimit()) );
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.ServicePointResource.populateWithHATEOASLinks(servicePoints, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(servicePoints).build();
+        }
+
     }
 
 }
