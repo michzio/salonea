@@ -20,6 +20,8 @@ public interface PaymentMethodFacadeInterface extends AbstractFacadeInterface<Pa
     List<PaymentMethod> findByNameAndInAdvance(String name, Boolean inAdvance, Integer start, Integer limit);
     List<PaymentMethod> findByProvider(Provider provider);
     List<PaymentMethod> findByProvider(Provider provider, Integer start, Integer limit);
+    List<PaymentMethod> findByMultipleCriteria(List<Provider> providers, String name, String description, Boolean inAdvance);
+    List<PaymentMethod> findByMultipleCriteria(List<Provider> providers, String name, String description, Boolean inAdvance, Integer start, Integer limit);
 
     @javax.ejb.Remote
     interface Remote extends PaymentMethodFacadeInterface { }

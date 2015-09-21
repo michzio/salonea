@@ -8,6 +8,9 @@ import javax.ejb.*;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Root;
 import java.lang.reflect.Type;
 import java.util.List;
 
@@ -72,5 +75,26 @@ public class IndustryFacade extends AbstractFacade<Industry> implements Industry
             query.setMaxResults(limit);
         }
         return query.getResultList();
+    }
+
+    @Override
+    public List<Industry> findByMultipleCriteria(List<Provider> providers, String name, String description) {
+        return findByMultipleCriteria(providers, name, description, null, null);
+    }
+
+    @Override
+    public List<Industry> findByMultipleCriteria(List<Provider> providers, String name, String description, Integer start, Integer limit) {
+
+        CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
+        CriteriaQuery<Industry> criteriaQuery = criteriaBuilder.createQuery(Industry.class);
+        // FROM
+        Root<Industry> industry = criteriaQuery.from(Industry.class);
+        // SELECT
+        criteriaQuery.select(industry).distinct(true);
+
+        // INNER JOIN-s
+
+
+        return null;
     }
 }

@@ -3,10 +3,7 @@ package pl.salonea.jaxrs;
 import pl.salonea.ejb.stateless.*;
 import pl.salonea.entities.*;
 import pl.salonea.enums.ProviderType;
-import pl.salonea.jaxrs.bean_params.GenericBeanParam;
-import pl.salonea.jaxrs.bean_params.PaginationBeanParam;
-import pl.salonea.jaxrs.bean_params.ProviderBeanParam;
-import pl.salonea.jaxrs.bean_params.ServicePointBeanParam;
+import pl.salonea.jaxrs.bean_params.*;
 import pl.salonea.jaxrs.exceptions.ExceptionHandler;
 import pl.salonea.jaxrs.exceptions.ForbiddenException;
 import pl.salonea.jaxrs.exceptions.NotFoundException;
@@ -787,12 +784,12 @@ public class ProviderResource {
         /**
          * Method returns subset of Industry entities for given Provider.
          * The provider id is passed through path param.
-         * They can be additionally paginated by @QueryParams
+         * They can be additionally filtered and paginated by @QueryParams
          */
         @GET
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
         public Response getProviderIndustries( @PathParam("userId") Long userId,
-                                               @BeanParam PaginationBeanParam params) throws NotFoundException, ForbiddenException {
+                                               @BeanParam IndustryBeanParam params) throws NotFoundException, ForbiddenException {
 
             if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
             logger.log(Level.INFO, "returning subset of Industry entities for given Provider using ProviderResource.IndustryResource.getProviderIndustries(userId) method of REST API");
@@ -802,8 +799,31 @@ public class ProviderResource {
             if(provider == null)
                 throw new NotFoundException("Could not find provider for id " + userId + ".");
 
-            // get industries for given provider
-            ResourceList<Industry> industries = new ResourceList<>( industryFacade.findByProvider(provider, params.getOffset(), params.getLimit()) );
+            // calculate number of filter query params
+            Integer noOfParams = params.getUriInfo().getQueryParameters().size();
+            if(params.getOffset() != null) noOfParams -= 1;
+            if(params.getLimit() != null) noOfParams -= 1;
+
+            ResourceList<Industry> industries = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Provider> providers = new ArrayList<>();
+                providers.add(provider);
+
+                // get industries for given provider filtered by given params
+                industries = new ResourceList<>(
+                        industryFacade.findByMultipleCriteria(providers, params.getName(), params.getDescription(),
+                                params.getOffset(), params.getLimit())
+                );
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get industries for given provider
+                industries = new ResourceList<>(industryFacade.findByProvider(provider, params.getOffset(), params.getLimit()));
+            }
 
             // result resources need to be populated with hypermedia links to enable resource discovery
             pl.salonea.jaxrs.IndustryResource.populateWithHATEOASLinks(industries, params.getUriInfo(), params.getOffset(), params.getLimit());
@@ -817,12 +837,12 @@ public class ProviderResource {
         /**
          * Method returns subset of PaymentMethod entities for given Provider.
          * The provider id is passed through path param.
-         * They can be additionally paginated by @QueryParams
+         * They can be additionally filtered and paginated by @QueryParams
          */
         @GET
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
         public Response getProviderPaymentMethods( @PathParam("userId") Long userId,
-                                                   @BeanParam PaginationBeanParam params) throws NotFoundException, ForbiddenException {
+                                                   @BeanParam PaymentMethodBeanParam params) throws NotFoundException, ForbiddenException {
 
             if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
             logger.log(Level.INFO, "returning subset of PaymentMethod entities for given Provider using ProviderResource.PaymentMethodResource.getProviderPaymentMethods(userId) method of REST API");
@@ -832,8 +852,31 @@ public class ProviderResource {
             if(provider == null)
                 throw new NotFoundException("Could not find provider for id " + userId + ".");
 
-            // get payment methods for given provider
-            ResourceList<PaymentMethod> paymentMethods = new ResourceList<>( paymentMethodFacade.findByProvider(provider, params.getOffset(), params.getLimit()) );
+            // calculate number of filter query params
+            Integer noOfParams = params.getUriInfo().getQueryParameters().size();
+            if(params.getOffset() != null) noOfParams -= 1;
+            if(params.getLimit() != null) noOfParams -= 1;
+
+            ResourceList<PaymentMethod> paymentMethods = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Provider> providers = new ArrayList<>();
+                providers.add(provider);
+
+                paymentMethods = new ResourceList<>(
+                        paymentMethodFacade.findByMultipleCriteria(providers, params.getName(), params.getDescription(),
+                                params.getInAdvance(), params.getOffset(), params.getLimit())
+
+                );
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get payment methods for given provider
+                paymentMethods = new ResourceList<>(paymentMethodFacade.findByProvider(provider, params.getOffset(), params.getLimit()));
+            }
 
             // result resources need to be populated with hypermedia links to enable resource discovery
             pl.salonea.jaxrs.PaymentMethodResource.populateWithHATEOASLinks(paymentMethods, params.getUriInfo(), params.getOffset(), params.getLimit());
@@ -848,7 +891,7 @@ public class ProviderResource {
         /**
          * Method returns subset of ServicePoint entities for given Provider
          * The provider id is passed through path param.
-         * They can be additionally paginated by @QueryParams
+         * They can be additionally filtered and paginated by @QueryParams
          */
         @GET
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
