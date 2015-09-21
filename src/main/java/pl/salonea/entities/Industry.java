@@ -21,15 +21,21 @@ import java.util.Set;
 @Table(name="industry")
 @Access(AccessType.PROPERTY)
 @NamedQueries({
+        @NamedQuery(name = Industry.FIND_ALL_EAGERLY, query = "SELECT i FROM Industry i LEFT JOIN FETCH i.providers"),
+        @NamedQuery(name = Industry.FIND_BY_ID_EAGERLY, query = "SELECT i FROM Industry i LEFT JOIN FETCH i.providers WHERE i.industryId = :industryId"),
         @NamedQuery(name = Industry.FIND_FOR_NAME, query = "SELECT i FROM Industry i WHERE i.name = :name"),
         @NamedQuery(name = Industry.FIND_BY_NAME, query = "SELECT i FROM Industry i WHERE i.name LIKE :name"),
-        @NamedQuery(name = Industry.FIND_BY_PROVIDER, query = "SELECT i FROM Industry i WHERE :provider MEMBER OF i.providers")
+        @NamedQuery(name = Industry.FIND_BY_PROVIDER, query = "SELECT i FROM Industry i WHERE :provider MEMBER OF i.providers"),
+        @NamedQuery(name = Industry.FIND_BY_PROVIDER_EAGERLY, query = "SELECT i FROM Industry i INNER JOIN FETCH i.providers p  WHERE p = :provider")
 })
 public class Industry implements Serializable {
 
+    public static final String FIND_ALL_EAGERLY = "Industry.findAllEagerly";
+    public static final String FIND_BY_ID_EAGERLY = "Industry.findByIdEagerly";
     public static final String FIND_FOR_NAME = "Industry.findForName";
     public static final String FIND_BY_NAME = "Industry.findByName";
     public static final String FIND_BY_PROVIDER = "Industry.findByProvider";
+    public static final String FIND_BY_PROVIDER_EAGERLY = "Industry.findByProviderEagerly";
 
     private Long industryId;
     private String name;

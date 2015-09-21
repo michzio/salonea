@@ -1,9 +1,11 @@
 package pl.salonea.jaxrs;
 
 import pl.salonea.entities.Industry;
+import pl.salonea.entities.Provider;
 import pl.salonea.jaxrs.exceptions.ForbiddenException;
 import pl.salonea.jaxrs.utils.ResourceList;
 import pl.salonea.jaxrs.utils.hateoas.Link;
+import pl.salonea.jaxrs.wrappers.IndustryWrapper;
 
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.Path;
@@ -33,7 +35,7 @@ public class IndustryResource {
     /**
      * This method enables to populate list of resources and each individual resource on list with hypermedia links
      */
-    public static void populateWithHATEOASLinks(ResourceList<Industry> industries, UriInfo uriInfo, Integer offset, Integer limit) {
+    public static void populateWithHATEOASLinks(ResourceList industries, UriInfo uriInfo, Integer offset, Integer limit) {
 
         // navigation links through collection of resources
         if(offset != null && limit != null) {
@@ -70,10 +72,21 @@ public class IndustryResource {
         for(Object object : industries.getResources()) {
             if(object instanceof Industry) {
                 IndustryResource.populateWithHATEOASLinks((Industry) object, uriInfo);
-            } /* TODO else if(object instanceof IndustryWrapper) {
-                ProviderResource.populateWithHATEOASLinks( (IndustryWrapper) object, uriInfo);
-            } */
+            }  else if(object instanceof IndustryWrapper) {
+                IndustryResource.populateWithHATEOASLinks( (IndustryWrapper) object, uriInfo);
+            }
         }
+    }
+
+    /**
+     * This method enables to populate each individual resource wrapper with hypermedia links
+     */
+    public static void populateWithHATEOASLinks(IndustryWrapper industryWrapper, UriInfo uriinfo) {
+
+        IndustryResource.populateWithHATEOASLinks(industryWrapper.getIndustry(), uriinfo);
+
+        for(Provider provider : industryWrapper.getProviders())
+            ProviderResource.populateWithHATEOASLinks(provider, uriinfo);
     }
 
     /**

@@ -11,6 +11,7 @@ import pl.salonea.jaxrs.exceptions.UnprocessableEntityException;
 import pl.salonea.jaxrs.utils.ResourceList;
 import pl.salonea.jaxrs.utils.ResponseWrapper;
 import pl.salonea.jaxrs.utils.hateoas.Link;
+import pl.salonea.jaxrs.wrappers.IndustryWrapper;
 import pl.salonea.jaxrs.wrappers.ProviderWrapper;
 
 
@@ -823,6 +824,53 @@ public class ProviderResource {
 
                 // get industries for given provider
                 industries = new ResourceList<>(industryFacade.findByProvider(provider, params.getOffset(), params.getLimit()));
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.IndustryResource.populateWithHATEOASLinks(industries, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(industries).build();
+        }
+
+        @GET
+        @Path("/eagerly")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getProviderIndustriesEagerly( @PathParam("userId") Long userId,
+                                                      @BeanParam IndustryBeanParam params ) throws NotFoundException, ForbiddenException {
+
+            if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            logger.log(Level.INFO, "returning subset of Industry entities for given Provider eagerly using ProviderResource.IndustryResource.getProviderIndustriesEagerly(userId) method of REST API");
+
+            // find provider entity for which to get associated industries
+            Provider provider = providerFacade.find(userId);
+            if(provider == null)
+                throw new NotFoundException("Could not find provider for id " + userId + ".");
+
+            // calculate number of filter query params
+            Integer noOfParams = params.getUriInfo().getQueryParameters().size();
+            if(params.getOffset() != null) noOfParams -= 1;
+            if(params.getLimit() != null) noOfParams -= 1;
+
+            ResourceList<IndustryWrapper> industries = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Provider> providers = new ArrayList<>();
+                providers.add(provider);
+
+                // get industries for given provider eagerly filtered by given params
+                industries = new ResourceList<>(
+                        IndustryWrapper.wrap(
+                                industryFacade.findByMultipleCriteriaEagerly(providers, params.getName(), params.getDescription(),
+                                        params.getOffset(), params.getLimit())
+                        )
+                );
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get industries for given provider eagerly without filtering (eventually paginated)
+                industries = new ResourceList<>( IndustryWrapper.wrap(industryFacade.findByProviderEagerly(provider, params.getOffset(), params.getLimit())) );
             }
 
             // result resources need to be populated with hypermedia links to enable resource discovery

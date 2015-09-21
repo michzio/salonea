@@ -8,6 +8,8 @@ import pl.salonea.entities.Provider;
 import javax.ejb.*;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
+import javax.persistence.NonUniqueResultException;
 import javax.persistence.TypedQuery;
 import javax.persistence.criteria.*;
 import java.lang.reflect.Type;
@@ -33,6 +35,34 @@ public class IndustryFacade extends AbstractFacade<Industry> implements Industry
 
     public IndustryFacade() {
         super(Industry.class);
+    }
+
+    @Override
+    public List<Industry> findAllEagerly() {
+        return findAllEagerly(null, null);
+    }
+
+    @Override
+    public List<Industry> findAllEagerly(Integer start, Integer limit) {
+
+        TypedQuery<Industry> query = getEntityManager().createNamedQuery(Industry.FIND_ALL_EAGERLY, Industry.class);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
+    public Industry findByIdEagerly(Long industryId) {
+
+        TypedQuery<Industry> query = getEntityManager().createNamedQuery(Industry.FIND_BY_ID_EAGERLY, Industry.class);
+        query.setParameter("industryId", industryId);
+        try {
+            return query.getSingleResult();
+        } catch(NoResultException | NonUniqueResultException ex) {
+            return null;
+        }
     }
 
     @Override
@@ -78,12 +108,43 @@ public class IndustryFacade extends AbstractFacade<Industry> implements Industry
     }
 
     @Override
+    public List<Industry> findByProviderEagerly(Provider provider) {
+        return findByProviderEagerly(provider, null, null);
+    }
+
+    @Override
+    public List<Industry> findByProviderEagerly(Provider provider, Integer start, Integer limit) {
+
+        TypedQuery<Industry> query = getEntityManager().createNamedQuery(Industry.FIND_BY_PROVIDER_EAGERLY, Industry.class);
+        query.setParameter("provider", provider);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
     public List<Industry> findByMultipleCriteria(List<Provider> providers, String name, String description) {
         return findByMultipleCriteria(providers, name, description, null, null);
     }
 
     @Override
     public List<Industry> findByMultipleCriteria(List<Provider> providers, String name, String description, Integer start, Integer limit) {
+        return findByMultipleCriteria(providers, name, description, false, start, limit);
+    }
+
+    @Override
+    public List<Industry> findByMultipleCriteriaEagerly(List<Provider> providers, String name, String description) {
+        return findByMultipleCriteriaEagerly(providers, name, description, null, null);
+    }
+
+    @Override
+    public List<Industry> findByMultipleCriteriaEagerly(List<Provider> providers, String name, String description, Integer start, Integer limit) {
+        return findByMultipleCriteria(providers, name, description, true, start, limit);
+    }
+
+    private List<Industry> findByMultipleCriteria(List<Provider> providers, String name, String description, Boolean eagerly, Integer start, Integer limit) {
 
         CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
         CriteriaQuery<Industry> criteriaQuery = criteriaBuilder.createQuery(Industry.class);
@@ -103,6 +164,14 @@ public class IndustryFacade extends AbstractFacade<Industry> implements Industry
             if(provider == null) provider = industry.join(Industry_.providers);
 
             predicates.add( provider.in(providers) );
+
+            if(eagerly) {
+                // then fetch associated collection of entities
+                industry.fetch("providers", JoinType.INNER);
+            }
+        } else if(eagerly) {
+            // then left fetch associated collection of entities
+            industry.fetch("providers", JoinType.LEFT);
         }
 
         if(name != null) {

@@ -19,19 +19,25 @@ import java.util.Set;
 @Table(name = "payment_method")
 @Access(AccessType.PROPERTY)
 @NamedQueries({
+        @NamedQuery(name = PaymentMethod.FIND_ALL_EAGERLY, query = "SELECT pm FROM PaymentMethod pm LEFT JOIN FETCH pm.acceptingProviders"),
+        @NamedQuery(name = PaymentMethod.FIND_BY_ID_EAGERLY, query = "SELECT pm FROM PaymentMethod pm LEFT JOIN FETCH pm.acceptingProviders WHERE pm.id = :paymentMethodId"),
         @NamedQuery(name = PaymentMethod.FIND_FOR_NAME, query = "SELECT pm FROM PaymentMethod pm WHERE pm.name = :name"),
         @NamedQuery(name = PaymentMethod.FIND_BY_NAME, query = "SELECT pm FROM PaymentMethod pm WHERE pm.name LIKE :name"),
         @NamedQuery(name = PaymentMethod.FIND_IN_ADVANCE, query = "SELECT pm FROM PaymentMethod pm WHERE pm.inAdvance = :in_advance"),
         @NamedQuery(name = PaymentMethod.FIND_BY_NAME_AND_IN_ADVANCE, query = "SELECT pm FROM PaymentMethod pm WHERE pm.name LIKE :name AND pm.inAdvance = :in_advance"),
         @NamedQuery(name = PaymentMethod.FIND_BY_PROVIDER, query = "SELECT pm FROM PaymentMethod pm WHERE :provider MEMBER OF pm.acceptingProviders"),
+        @NamedQuery(name = PaymentMethod.FIND_BY_PROVIDER_EAGERLY, query = "SELECT pm FROM PaymentMethod pm INNER JOIN FETCH pm.acceptingProviders p WHERE p = :provider")
 })
 public class PaymentMethod implements Serializable {
 
+    public static final String FIND_ALL_EAGERLY = "PaymentMethod.findAllEagerly";
+    public static final String FIND_BY_ID_EAGERLY = "PaymentMethod.findByIdEagerly";
     public static final String FIND_FOR_NAME = "PaymentMethod.findForName";
     public static final String FIND_BY_NAME = "PaymentMethod.findByName";
     public static final String FIND_IN_ADVANCE = "PaymentMethod.findInAdvance";
     public static final String FIND_BY_NAME_AND_IN_ADVANCE = "PaymentMethod.findByNameAndInAdvance";
     public static final String FIND_BY_PROVIDER = "PaymentMethod.findByProvider";
+    public static final String FIND_BY_PROVIDER_EAGERLY = "PaymentMethod.findByProvider";
 
     private Integer id;
     private String name;
