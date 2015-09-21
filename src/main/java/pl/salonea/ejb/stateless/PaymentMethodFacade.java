@@ -9,6 +9,8 @@ import javax.ejb.LocalBean;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
+import javax.persistence.NonUniqueResultException;
 import javax.persistence.TypedQuery;
 import javax.persistence.criteria.*;
 import java.util.ArrayList;
@@ -33,6 +35,34 @@ public class PaymentMethodFacade extends AbstractFacade<PaymentMethod> implement
         super(PaymentMethod.class);
     }
 
+
+    @Override
+    public List<PaymentMethod> findAllEagerly() {
+        return findAllEagerly(null, null);
+    }
+
+    @Override
+    public List<PaymentMethod> findAllEagerly(Integer start, Integer limit) {
+
+        TypedQuery<PaymentMethod> query = getEntityManager().createNamedQuery(PaymentMethod.FIND_ALL_EAGERLY, PaymentMethod.class);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
+    public PaymentMethod findByIdEagerly(Long paymentMethodId) {
+
+        TypedQuery<PaymentMethod> query = getEntityManager().createNamedQuery(PaymentMethod.FIND_BY_ID_EAGERLY, PaymentMethod.class);
+        query.setParameter("paymentMethodId", paymentMethodId);
+        try {
+            return query.getSingleResult();
+        } catch(NoResultException | NonUniqueResultException ex) {
+            return null;
+        }
+    }
 
     @Override
     public PaymentMethod findForName(String name) {
@@ -118,6 +148,20 @@ public class PaymentMethodFacade extends AbstractFacade<PaymentMethod> implement
 
     @Override
     public List<PaymentMethod> findByMultipleCriteria(List<Provider> providers, String name, String description, Boolean inAdvance, Integer start, Integer limit) {
+        return findByMultipleCriteria(providers, name, description, inAdvance, false, start, limit);
+    }
+
+    @Override
+    public List<PaymentMethod> findByMultipleCriteriaEagerly(List<Provider> providers, String name, String description, Boolean inAdvance) {
+        return findByMultipleCriteriaEagerly(providers, name, description, inAdvance, null, null);
+    }
+
+    @Override
+    public List<PaymentMethod> findByMultipleCriteriaEagerly(List<Provider> providers, String name, String description, Boolean inAdvance, Integer start, Integer limit) {
+        return findByMultipleCriteria(providers, name, description, inAdvance, true, start, limit);
+    }
+
+    private List<PaymentMethod> findByMultipleCriteria(List<Provider> providers, String name, String description, Boolean inAdvance, Boolean eagerly, Integer start, Integer limit) {
 
         CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
         CriteriaQuery<PaymentMethod> criteriaQuery = criteriaBuilder.createQuery(PaymentMethod.class);
@@ -135,7 +179,16 @@ public class PaymentMethodFacade extends AbstractFacade<PaymentMethod> implement
         if(providers != null && providers.size() > 0) {
 
             if(provider == null) provider = paymentMethod.join(PaymentMethod_.acceptingProviders);
+
             predicates.add(provider.in(providers));
+
+            if(eagerly) {
+                // then fetch associated collection of entities
+                paymentMethod.fetch("acceptingProviders", JoinType.INNER);
+            }
+        } else if(eagerly) {
+            // then left fetch associated collection of entities
+            paymentMethod.fetch("acceptingProviders", JoinType.LEFT);
         }
 
         if(name != null) {
@@ -161,4 +214,5 @@ public class PaymentMethodFacade extends AbstractFacade<PaymentMethod> implement
 
         return query.getResultList();
     }
+
 }

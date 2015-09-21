@@ -11,6 +11,9 @@ import java.util.List;
 public interface PaymentMethodFacadeInterface extends AbstractFacadeInterface<PaymentMethod> {
 
     // concrete interface
+    List<PaymentMethod> findAllEagerly();
+    List<PaymentMethod> findAllEagerly(Integer start, Integer limit);
+    PaymentMethod findByIdEagerly(Long paymentMethodId);
     PaymentMethod findForName(String name);
     List<PaymentMethod> findByName(String name);
     List<PaymentMethod> findByName(String name, Integer start, Integer limit);
@@ -22,6 +25,8 @@ public interface PaymentMethodFacadeInterface extends AbstractFacadeInterface<Pa
     List<PaymentMethod> findByProvider(Provider provider, Integer start, Integer limit);
     List<PaymentMethod> findByMultipleCriteria(List<Provider> providers, String name, String description, Boolean inAdvance);
     List<PaymentMethod> findByMultipleCriteria(List<Provider> providers, String name, String description, Boolean inAdvance, Integer start, Integer limit);
+    List<PaymentMethod> findByMultipleCriteriaEagerly(List<Provider> providers, String name, String description, Boolean inAdvance);
+    List<PaymentMethod> findByMultipleCriteriaEagerly(List<Provider> providers, String name, String description, Boolean inAdvance, Integer start, Integer limit);
 
     @javax.ejb.Remote
     interface Remote extends PaymentMethodFacadeInterface { }
