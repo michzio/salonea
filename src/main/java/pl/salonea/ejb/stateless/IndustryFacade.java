@@ -2,16 +2,16 @@ package pl.salonea.ejb.stateless;
 
 import pl.salonea.ejb.interfaces.IndustryFacadeInterface;
 import pl.salonea.entities.Industry;
+import pl.salonea.entities.Industry_;
 import pl.salonea.entities.Provider;
 
 import javax.ejb.*;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Root;
+import javax.persistence.criteria.*;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -93,8 +93,35 @@ public class IndustryFacade extends AbstractFacade<Industry> implements Industry
         criteriaQuery.select(industry).distinct(true);
 
         // INNER JOIN-s
+        Join<Industry, Provider> provider = null;
 
+        // WHERE PREDICATES
+        List<Predicate> predicates = new ArrayList<>();
 
-        return null;
+        if(providers != null && providers.size() > 0) {
+
+            if(provider == null) provider = industry.join(Industry_.providers);
+
+            predicates.add( provider.in(providers) );
+        }
+
+        if(name != null) {
+            predicates.add( criteriaBuilder.like(industry.get(Industry_.name), "%" + name + "%") );
+        }
+
+        if(description != null) {
+            predicates.add( criteriaBuilder.like(industry.get(Industry_.description), "%" + description + "%") );
+        }
+
+        // WHERE predicate1 AND predicate2 AND ... AND predicateN
+        criteriaQuery.where(predicates.toArray(new Predicate[] {}));
+
+        TypedQuery<Industry> query = getEntityManager().createQuery(criteriaQuery);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+
+        return query.getResultList();
     }
 }
