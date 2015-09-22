@@ -142,6 +142,23 @@ public class PaymentMethodFacade extends AbstractFacade<PaymentMethod> implement
     }
 
     @Override
+    public List<PaymentMethod> findByProviderEagerly(Provider provider) {
+        return findByProviderEagerly(provider, null, null);
+    }
+
+    @Override
+    public List<PaymentMethod> findByProviderEagerly(Provider provider, Integer start, Integer limit) {
+
+        TypedQuery<PaymentMethod> query = getEntityManager().createNamedQuery(PaymentMethod.FIND_BY_PROVIDER_EAGERLY, PaymentMethod.class);
+        query.setParameter("provider", provider);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
     public List<PaymentMethod> findByMultipleCriteria(List<Provider> providers, String name, String description, Boolean inAdvance) {
         return findByMultipleCriteria(providers, name, description, inAdvance, null, null);
     }

@@ -7,6 +7,8 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -25,6 +27,16 @@ public class PaymentMethodWrapper {
     public PaymentMethodWrapper(PaymentMethod paymentMethod) {
         this.paymentMethod = paymentMethod;
         this.providers = paymentMethod.getAcceptingProviders();
+    }
+
+    public static List<PaymentMethodWrapper> wrap(List<PaymentMethod> paymentMethods) {
+
+        List<PaymentMethodWrapper> wrappedPaymentMethods = new ArrayList<>();
+
+        for(PaymentMethod paymentMethod : paymentMethods)
+            wrappedPaymentMethods.add(new PaymentMethodWrapper(paymentMethod));
+
+        return wrappedPaymentMethods;
     }
 
     @XmlElement(name = "entity", nillable = true)

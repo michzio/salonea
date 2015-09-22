@@ -15,6 +15,8 @@ public interface ServicePointFacadeInterface extends AbstractFacadeInterface<Ser
     // concrete interface
     List<ServicePoint> findByProvider(Provider provider);
     List<ServicePoint> findByProvider(Provider provider, Integer start, Integer limit);
+    List<ServicePoint> findByProviderEagerly(Provider provider);
+    List<ServicePoint> findByProviderEagerly(Provider provider, Integer start, Integer limit);
     List<ServicePoint> findByAddress(String city, String state, String country, String street, String zipCode);
     List<ServicePoint> findByAddress(String city, String state, String country, String street, String zipCode, Integer start, Integer limit);
     List<ServicePoint> findByCoordinatesSquare(Float minLongitudeWGS84,Float minLatitudeWGS84, Float maxLongitudeWGS84, Float maxLatitudeWGS84);
@@ -49,6 +51,16 @@ public interface ServicePointFacadeInterface extends AbstractFacadeInterface<Ser
     List<ServicePoint> findByMultipleCriteria(List<Provider> providers, List<Service> services, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, CoordinatesSquare coordinatesSquare, Integer start, Integer limit);
     List<ServicePoint> findByMultipleCriteria(List<Provider> providers, List<Service> services, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, CoordinatesCircle coordinatesCircle);
     List<ServicePoint> findByMultipleCriteria(List<Provider> providers, List<Service> services, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, CoordinatesCircle coordinatesCircle, Integer start, Integer limit);
+
+    List<ServicePoint> findByMultipleCriteriaEagerly(List<Provider> providers, List<Service> services, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories);
+    List<ServicePoint> findByMultipleCriteriaEagerly(List<Provider> providers, List<Service> services, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, Integer start, Integer limit);
+    List<ServicePoint> findByMultipleCriteriaEagerly(List<Provider> providers, List<Service> services, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, Address address);
+    List<ServicePoint> findByMultipleCriteriaEagerly(List<Provider> providers, List<Service> services, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, Address address, Integer start, Integer limit);
+    List<ServicePoint> findByMultipleCriteriaEagerly(List<Provider> providers, List<Service> services, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, CoordinatesSquare coordinatesSquare);
+    List<ServicePoint> findByMultipleCriteriaEagerly(List<Provider> providers, List<Service> services, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, CoordinatesSquare coordinatesSquare, Integer start, Integer limit);
+    List<ServicePoint> findByMultipleCriteriaEagerly(List<Provider> providers, List<Service> services, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, CoordinatesCircle coordinatesCircle);
+    List<ServicePoint> findByMultipleCriteriaEagerly(List<Provider> providers, List<Service> services, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, CoordinatesCircle coordinatesCircle, Integer start, Integer limit);
+
 
     @javax.ejb.Local
     interface Local extends ServicePointFacadeInterface { }

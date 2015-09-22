@@ -7,6 +7,7 @@ import pl.salonea.jaxrs.utils.ResourceList;
 import pl.salonea.jaxrs.utils.hateoas.Link;
 import pl.salonea.jaxrs.wrappers.IndustryWrapper;
 
+import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -21,6 +22,7 @@ import java.lang.reflect.Method;
 @Path("/industries")
 public class IndustryResource {
 
+    @GET
     @Path("/count")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public Response countIndustries( @HeaderParam("authToken") String authToken ) throws ForbiddenException {
@@ -86,7 +88,7 @@ public class IndustryResource {
         IndustryResource.populateWithHATEOASLinks(industryWrapper.getIndustry(), uriinfo);
 
         for(Provider provider : industryWrapper.getProviders())
-            ProviderResource.populateWithHATEOASLinks(provider, uriinfo);
+            pl.salonea.jaxrs.ProviderResource.populateWithHATEOASLinks(provider, uriinfo);
     }
 
     /**

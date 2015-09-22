@@ -12,7 +12,9 @@ import pl.salonea.jaxrs.utils.ResourceList;
 import pl.salonea.jaxrs.utils.ResponseWrapper;
 import pl.salonea.jaxrs.utils.hateoas.Link;
 import pl.salonea.jaxrs.wrappers.IndustryWrapper;
+import pl.salonea.jaxrs.wrappers.PaymentMethodWrapper;
 import pl.salonea.jaxrs.wrappers.ProviderWrapper;
+import pl.salonea.jaxrs.wrappers.ServicePointWrapper;
 
 
 import javax.ejb.EJBException;
@@ -913,6 +915,7 @@ public class ProviderResource {
                 List<Provider> providers = new ArrayList<>();
                 providers.add(provider);
 
+                // get payment methods for given provider filtered by given params
                 paymentMethods = new ResourceList<>(
                         paymentMethodFacade.findByMultipleCriteria(providers, params.getName(), params.getDescription(),
                                 params.getInAdvance(), params.getOffset(), params.getLimit())
@@ -924,6 +927,53 @@ public class ProviderResource {
 
                 // get payment methods for given provider
                 paymentMethods = new ResourceList<>(paymentMethodFacade.findByProvider(provider, params.getOffset(), params.getLimit()));
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.PaymentMethodResource.populateWithHATEOASLinks(paymentMethods, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(paymentMethods).build();
+        }
+
+        @GET
+        @Path("/eagerly")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getProviderPaymentMethodsEagerly( @PathParam("userId") Long userId,
+                                                          @BeanParam PaymentMethodBeanParam params ) throws NotFoundException, ForbiddenException {
+            if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            logger.log(Level.INFO, "returning subset of PaymentMethod entities for given Provider eagerly using ProviderResource.PaymentMethodResource.getProviderPaymentMethodsEagerly(userId) method of REST API");
+
+            // find provider entity for which to get associated payment methods
+            Provider provider = providerFacade.find(userId);
+            if(provider == null)
+                throw new NotFoundException("Could not find provider for id " + userId + ".");
+
+            // calculate number of filter query params
+            Integer noOfParams = params.getUriInfo().getQueryParameters().size();
+            if(params.getOffset() != null) noOfParams -= 1;
+            if(params.getLimit() != null) noOfParams -= 1;
+
+            ResourceList<PaymentMethodWrapper> paymentMethods = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Provider> providers = new ArrayList<>();
+                providers.add(provider);
+
+                // get payment methods for given provider eagerly filtered by given params
+                paymentMethods = new ResourceList<>(
+                        PaymentMethodWrapper.wrap(
+                                paymentMethodFacade.findByMultipleCriteriaEagerly(providers, params.getName(), params.getDescription(), params.getInAdvance(),
+                                        params.getOffset(), params.getLimit())
+                        )
+                );
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get payment methods for given provider eagerly without filtering (eventually paginated)
+                paymentMethods = new ResourceList<>( PaymentMethodWrapper.wrap(paymentMethodFacade.findByProviderEagerly(provider, params.getOffset(), params.getLimit())) );
             }
 
             // result resources need to be populated with hypermedia links to enable resource discovery
@@ -944,7 +994,7 @@ public class ProviderResource {
         @GET
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
         public Response getProviderServicePoints( @PathParam("userId") Long userId,
-                                                  @BeanParam ServicePointBeanParam params) throws NotFoundException, ForbiddenException {
+                                                  @BeanParam ServicePointBeanParam params) throws NotFoundException, ForbiddenException, BadRequestException {
 
             if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
             logger.log(Level.INFO, "returning subset of ServicePoint entities for given Provider using ProviderResource.ServicePointResource.getProviderServicePoints(userId) method of REST API");
@@ -1006,6 +1056,88 @@ public class ProviderResource {
                 logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
 
                 servicePoints = new ResourceList<>( servicePointFacade.findByProvider(provider, params.getOffset(), params.getLimit()) );
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.ServicePointResource.populateWithHATEOASLinks(servicePoints, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(servicePoints).build();
+        }
+
+        @GET
+        @Path("/eagerly")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getProviderServicePointsEagerly( @PathParam("userId") Long userId,
+                                                         @BeanParam ServicePointBeanParam params ) throws NotFoundException, ForbiddenException, BadRequestException {
+
+            if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            logger.log(Level.INFO, "returning subset of ServicePoint entities for given Provider eagerly using ProviderResource.ServicePointResource.getProviderServicePointsEagerly(userId) method of REST API");
+
+            // find provider entity for which to get associated service points
+            Provider provider = providerFacade.find(userId);
+            if(provider == null)
+                throw new NotFoundException("Could not find provider id " + userId + ".");
+
+            // calculate number of filter query params
+            Integer noOfParams = params.getUriInfo().getQueryParameters().size();
+            if(params.getOffset() != null) noOfParams -= 1;
+            if(params.getLimit() != null) noOfParams -= 1;
+
+            ResourceList<ServicePointWrapper> servicePoints = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Provider> providers = new ArrayList<>();
+                providers.add(provider);
+
+                if(params.getAddress() != null) {
+                    if(params.getCoordinatesSquare() != null || params.getCoordinatesCircle() != null)
+                        throw new BadRequestException("Query params cannot include address params and coordinates square params or coordinates circle params at the same time.");
+                    // only address params
+                    servicePoints = new ResourceList<>(
+                            ServicePointWrapper.wrap(
+                                    servicePointFacade.findByMultipleCriteriaEagerly(providers, params.getServices(), params.getEmployees(),
+                                        params.getCorporations(), params.getIndustries(), params.getServiceCategories(), params.getAddress(), params.getOffset(), params.getLimit())
+                            )
+                    );
+
+                } else if(params.getCoordinatesSquare() != null) {
+                    if(params.getAddress() != null || params.getCoordinatesCircle() != null)
+                        throw new BadRequestException("Query params cannot include coordinates square params and address params or coordinates circle params at the same time.");
+                    // only coordinates square params
+                    servicePoints = new ResourceList<>(
+                            ServicePointWrapper.wrap(
+                                    servicePointFacade.findByMultipleCriteriaEagerly(providers, params.getServices(), params.getEmployees(),
+                                            params.getCorporations(), params.getIndustries(), params.getServiceCategories(), params.getCoordinatesSquare(), params.getOffset(), params.getLimit())
+                            )
+                    );
+
+                } else if(params.getCoordinatesCircle() != null) {
+                    if(params.getAddress() != null || params.getCoordinatesSquare() != null)
+                        throw new BadRequestException("Query params cannot include coordinates circle params and address params or coordinates square params at the same time.");
+                    // only coordinates circle params
+                    servicePoints = new ResourceList<>(
+                            ServicePointWrapper.wrap(
+                                    servicePointFacade.findByMultipleCriteriaEagerly(providers, params.getServices(), params.getEmployees(),
+                                            params.getCorporations(), params.getIndustries(), params.getServiceCategories(), params.getCoordinatesCircle(), params.getOffset(), params.getLimit())
+                            )
+                    );
+
+                } else {
+                    // no location params
+                    servicePoints = new ResourceList<>(
+                            ServicePointWrapper.wrap(
+                                    servicePointFacade.findByMultipleCriteriaEagerly(providers, params.getServices(), params.getEmployees(),
+                                            params.getCorporations(), params.getIndustries(), params.getServiceCategories(), params.getOffset(), params.getLimit())
+                            )
+                    );
+                }
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                servicePoints = new ResourceList<>( ServicePointWrapper.wrap( servicePointFacade.findByProviderEagerly(provider, params.getOffset(), params.getLimit()) ) );
             }
 
             // result resources need to be populated with hypermedia links to enable resource discovery

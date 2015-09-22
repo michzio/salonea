@@ -37,7 +37,7 @@ public class PaymentMethod implements Serializable {
     public static final String FIND_IN_ADVANCE = "PaymentMethod.findInAdvance";
     public static final String FIND_BY_NAME_AND_IN_ADVANCE = "PaymentMethod.findByNameAndInAdvance";
     public static final String FIND_BY_PROVIDER = "PaymentMethod.findByProvider";
-    public static final String FIND_BY_PROVIDER_EAGERLY = "PaymentMethod.findByProvider";
+    public static final String FIND_BY_PROVIDER_EAGERLY = "PaymentMethod.findByProviderEagerly";
 
     private Integer id;
     private String name;
