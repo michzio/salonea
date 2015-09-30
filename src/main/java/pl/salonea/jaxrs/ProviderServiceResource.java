@@ -1,26 +1,92 @@
 package pl.salonea.jaxrs;
 
-import pl.salonea.entities.ProviderService;
-import pl.salonea.entities.ServicePoint;
-import pl.salonea.jaxrs.utils.hateoas.Link;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
+import pl.salonea.entities.ProviderService;
+import pl.salonea.jaxrs.exceptions.ForbiddenException;
+import pl.salonea.jaxrs.utils.ResourceList;
+import pl.salonea.jaxrs.utils.hateoas.Link;
+import pl.salonea.jaxrs.wrappers.ProviderServiceWrapper;
+
+import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.lang.reflect.Method;
+import java.util.logging.Logger;
 
 /**
  * Created by michzio on 12/09/2015.
  */
-@Path("/")
+@Path("/provider-services")
 public class ProviderServiceResource {
 
+    private static final Logger logger = Logger.getLogger(ProviderServiceResource.class.getName());
+
     @GET
-    @Produces(MediaType.TEXT_PLAIN)
-    public String get() {
-        return "dogs";
+    @Path("/count")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response countProviderServices(  @HeaderParam("authToken") String authToken ) throws ForbiddenException {
+
+        if(authToken == null) throw new ForbiddenException("Unauthorized access to web service.");
+
+        return null;
+    }
+
+    /**
+     * This method enables to populate list of resources and each individual resource on list
+     * with hypermedia links
+     */
+    public static void populateWithHATEOASLinks(ResourceList providerServices, UriInfo uriInfo, Integer offset, Integer limit) {
+
+        // navigation links through collection of resources
+        if(offset != null && limit != null) {
+            // self collection link
+            providerServices.getLinks().add( Link.fromUri(uriInfo.getAbsolutePathBuilder().queryParam("offset", offset).queryParam("limit", limit).build()).rel("self").build() );
+            // prev collection link
+            Integer prevOffset = (offset - limit) < 0 ? 0 : offset - limit;
+            Integer prevLimit = offset - prevOffset;
+            if(prevLimit > 0)
+                providerServices.getLinks().add( Link.fromUri(uriInfo.getAbsolutePathBuilder().queryParam("offset", prevOffset).queryParam("limit", prevLimit).build()).rel("prev").build() );
+            else
+                providerServices.getLinks().add( Link.fromUri("").rel("prev").build() );
+            // next collection link
+            providerServices.getLinks().add( Link.fromUri(uriInfo.getAbsolutePathBuilder().queryParam("offset", (offset+limit)).queryParam("limit", limit).build()).rel("next").build() );
+        } else {
+            providerServices.getLinks().add( Link.fromUri(uriInfo.getAbsolutePath()).rel("self").build() );
+        }
+
+        try {
+            // count resources hypermedia link
+            Method countMethod = ProviderServiceResource.class.getMethod("countProviderServices", String.class);
+            providerServices.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(ProviderServiceResource.class).path(countMethod).build()).rel("count").build() );
+
+            // get all resources hypermedia link
+            providerServices.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(ProviderServiceResource.class).build()).rel("provider-services").build() );
+
+            // TODO
+
+        } catch(NoSuchMethodException e) {
+            e.printStackTrace();
+        }
+
+        for(Object object : providerServices.getResources()) {
+            if(object instanceof ProviderService) {
+                ProviderServiceResource.populateWithHATEOASLinks((ProviderService) object, uriInfo);
+            } else if(object instanceof ProviderServiceWrapper) {
+                ProviderServiceResource.populateWithHATEOASLinks( (ProviderServiceWrapper) object, uriInfo);
+            }
+        }
+
+    }
+
+    /**
+     * This method enables to populate each individual resource wrapper with hypermedia links
+     */
+    public static void populateWithHATEOASLinks(ProviderServiceWrapper providerServiceWrapper, UriInfo uriInfo) {
+
+        ProviderServiceResource.populateWithHATEOASLinks(providerServiceWrapper.getProviderService(), uriInfo);
+
+        // TODO
     }
 
     /**
@@ -38,6 +104,20 @@ public class ProviderServiceResource {
                     .resolveTemplate("userId", providerService.getProvider().getUserId().toString())
                     .build())
                     .rel("self").build());
+
+            // sub-collection link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}
+            providerService.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ProviderResource.class)
+                    .path(providerServicesMethod)
+                    .resolveTemplate("userId", providerService.getProvider().getUserId().toString())
+                    .build())
+                    .rel("provider-provider-services").build());
+
+            // collection link with pattern: http://localhost:port/app/rest/{resources}
+            providerService.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ProviderServiceResource.class)
+                    .build())
+                    .rel("provider-services").build());
 
         } catch (NoSuchMethodException e) {
             e.printStackTrace();

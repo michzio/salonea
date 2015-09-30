@@ -2,6 +2,7 @@ package pl.salonea.ejb.stateless;
 
 import pl.salonea.ejb.interfaces.WorkStationFacadeInterface;
 import pl.salonea.entities.*;
+import pl.salonea.entities.idclass.WorkStationId;
 import pl.salonea.enums.WorkStationType;
 import pl.salonea.utils.Period;
 
@@ -35,6 +36,48 @@ public class WorkStationFacade extends AbstractFacade<WorkStation> implements Wo
         super(WorkStation.class);
     }
 
+    @Override
+    public List<WorkStation> find(List<Object> workStationIds) {
+
+        if(workStationIds == null || workStationIds.size() == 0)
+            throw new IllegalArgumentException("The workStationIds argument must be not empty list.");
+
+        CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
+        CriteriaQuery<WorkStation> criteriaQuery = criteriaBuilder.createQuery(WorkStation.class);
+        // FROM
+        Root<WorkStation> workStation = criteriaQuery.from(WorkStation.class);
+        // SELECT
+        criteriaQuery.select(workStation);
+
+        // INNER JOIN
+        Join<WorkStation, ServicePoint> servicePoint = workStation.join(WorkStation_.servicePoint);
+        Join<ServicePoint, Provider> provider = servicePoint.join(ServicePoint_.provider);
+
+        // WHERE PREDICATES on composite primary key
+        List<Predicate> orPredicates = new ArrayList<>();
+
+        for( Object object : workStationIds ) {
+
+            if( !(object instanceof WorkStationId) )
+                throw new IllegalArgumentException("The workStationIds argument should be list of WorkStationId typed objects.");
+
+            WorkStationId workStationId = (WorkStationId) object;
+
+            Predicate[] andPredicates = new Predicate[3];
+            andPredicates[0] = criteriaBuilder.equal( provider.get(Provider_.userId), workStationId.getServicePoint().getProvider() );
+            andPredicates[1] = criteriaBuilder.equal( servicePoint.get(ServicePoint_.servicePointNumber), workStationId.getServicePoint().getServicePointNumber() );
+            andPredicates[2] = criteriaBuilder.equal( workStation.get(WorkStation_.workStationNumber), workStationId.getWorkStationNumber() );
+
+            orPredicates.add( criteriaBuilder.and(andPredicates) );
+
+        }
+
+        // WHERE compositePK1 OR compositePK2 OR ... OR compositePK3
+        criteriaQuery.where( criteriaBuilder.or(orPredicates.toArray(new Predicate[] {})) );
+
+        TypedQuery<WorkStation> query = getEntityManager().createQuery(criteriaQuery);
+        return query.getResultList();
+    }
 
     @Override
     public List<WorkStation> findByServicePoint(ServicePoint servicePoint) {

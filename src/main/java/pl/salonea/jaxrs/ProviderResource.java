@@ -2,19 +2,17 @@ package pl.salonea.jaxrs;
 
 import pl.salonea.ejb.stateless.*;
 import pl.salonea.entities.*;
+import pl.salonea.entities.idclass.ServicePointId;
 import pl.salonea.enums.ProviderType;
 import pl.salonea.jaxrs.bean_params.*;
-import pl.salonea.jaxrs.exceptions.ExceptionHandler;
+import pl.salonea.jaxrs.exceptions.*;
 import pl.salonea.jaxrs.exceptions.ForbiddenException;
 import pl.salonea.jaxrs.exceptions.NotFoundException;
-import pl.salonea.jaxrs.exceptions.UnprocessableEntityException;
+import pl.salonea.jaxrs.exceptions.BadRequestException;
 import pl.salonea.jaxrs.utils.ResourceList;
 import pl.salonea.jaxrs.utils.ResponseWrapper;
 import pl.salonea.jaxrs.utils.hateoas.Link;
-import pl.salonea.jaxrs.wrappers.IndustryWrapper;
-import pl.salonea.jaxrs.wrappers.PaymentMethodWrapper;
-import pl.salonea.jaxrs.wrappers.ProviderWrapper;
-import pl.salonea.jaxrs.wrappers.ServicePointWrapper;
+import pl.salonea.jaxrs.wrappers.*;
 
 
 import javax.ejb.EJBException;
@@ -61,6 +59,9 @@ public class ProviderResource {
 
     @Inject
     private ServicePointFacade servicePointFacade;
+
+    @Inject
+    private ProviderServiceFacade providerServiceFacade;
 
     /**
      * Method returns all Provider resources
@@ -298,7 +299,7 @@ public class ProviderResource {
         if(toDeleteProvider == null)
             throw new NotFoundException("Could not find provider to delete for given id: " + userId + ".");
 
-        // remove entity form database
+        // remove entity from database
         providerFacade.remove(toDeleteProvider);
 
         return  Response.status(Status.NO_CONTENT).build();
@@ -695,10 +696,10 @@ public class ProviderResource {
             pl.salonea.jaxrs.ServicePointResource.populateWithHATEOASLinks(servicePoint, uriInfo);
 
         for(ProviderService providerService : providerWrapper.getSuppliedServiceOffers())
-            ProviderServiceResource.populateWithHATEOASLinks(providerService, uriInfo);
+            pl.salonea.jaxrs.ProviderServiceResource.populateWithHATEOASLinks(providerService, uriInfo);
 
         for(ProviderRating providerRating : providerWrapper.getReceivedRatings())
-            ProviderRatingResource.populateWithHATEOASLinks(providerRating, uriInfo);
+            pl.salonea.jaxrs.ProviderRatingResource.populateWithHATEOASLinks(providerRating, uriInfo);
     }
 
     /**
@@ -986,6 +987,8 @@ public class ProviderResource {
 
     public class ServicePointResource {
 
+        public ServicePointResource() { }
+
         /**
          * Method returns subset of ServicePoint entities for given Provider
          * The provider id is passed through path param.
@@ -1076,7 +1079,7 @@ public class ProviderResource {
             // find provider entity for which to get associated service points
             Provider provider = providerFacade.find(userId);
             if(provider == null)
-                throw new NotFoundException("Could not find provider id " + userId + ".");
+                throw new NotFoundException("Could not find provider for id " + userId + ".");
 
             // calculate number of filter query params
             Integer noOfParams = params.getUriInfo().getQueryParameters().size();
@@ -1098,7 +1101,7 @@ public class ProviderResource {
                     servicePoints = new ResourceList<>(
                             ServicePointWrapper.wrap(
                                     servicePointFacade.findByMultipleCriteriaEagerly(providers, params.getServices(), params.getEmployees(),
-                                        params.getCorporations(), params.getIndustries(), params.getServiceCategories(), params.getAddress(), params.getOffset(), params.getLimit())
+                                            params.getCorporations(), params.getIndustries(), params.getServiceCategories(), params.getAddress(), params.getOffset(), params.getLimit())
                             )
                     );
 
@@ -1137,7 +1140,7 @@ public class ProviderResource {
             } else {
                 logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
 
-                servicePoints = new ResourceList<>( ServicePointWrapper.wrap( servicePointFacade.findByProviderEagerly(provider, params.getOffset(), params.getLimit()) ) );
+                servicePoints = new ResourceList<>( ServicePointWrapper.wrap(servicePointFacade.findByProviderEagerly(provider, params.getOffset(), params.getLimit())) );
             }
 
             // result resources need to be populated with hypermedia links to enable resource discovery
@@ -1145,6 +1148,419 @@ public class ProviderResource {
 
             return Response.status(Status.OK).entity(servicePoints).build();
         }
+
+        /**
+         * Method matches specific Service Point resource by composite identifier and returns its instance.
+         */
+        @GET
+        @Path("/{servicePointNumber : \\d+}")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getServicePoint( @PathParam("userId") Long userId,
+                                         @PathParam("servicePointNumber") Integer servicePointNumber,
+                                         @BeanParam GenericBeanParam params) throws NotFoundException, ForbiddenException {
+
+            if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            logger.log(Level.INFO, "returning given Service Point by executing ProviderResource.ServicePointResource.getServicePoint(userId, servicePointNumber) method of REST API");
+
+            ServicePoint foundServicePoint = servicePointFacade.find( new ServicePointId(userId, servicePointNumber) );
+            if(foundServicePoint == null)
+                throw new NotFoundException("Could not find service point for id (" + userId + "," + servicePointNumber + ").");
+
+            // adding hypermedia links to service point resource
+            pl.salonea.jaxrs.ServicePointResource.populateWithHATEOASLinks(foundServicePoint, params.getUriInfo());
+
+            return Response.status(Status.OK).entity(foundServicePoint).build();
+        }
+
+        /**
+         * Method matches specific Service Point resource by composite identifier and returns its instance fetching it eagerly
+         */
+        @GET
+        @Path("{servicePointNumber : \\d+}/eagerly")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getServicePointEagerly( @PathParam("userId") Long userId,
+                                                @PathParam("servicePointNumber") Integer servicePointNumber,
+                                                @BeanParam GenericBeanParam params) throws NotFoundException, ForbiddenException {
+
+            if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            logger.log(Level.INFO, "returning given Service Point eagerly by executing ProviderResource.ServicePointResource.getServicePointEagerly(userId, servicePointNumber) method of REST API");
+
+            ServicePoint foundServicePoint = servicePointFacade.findByIdEagerly(new ServicePointId(userId, servicePointNumber));
+            if(foundServicePoint == null)
+                throw new NotFoundException("Could not find service point for id (" + userId + "," + servicePointNumber + ").");
+
+            // wrapping ServicePoint into ServicePointWrapper in order to marshall eagerly fetched associated collection of entities
+            ServicePointWrapper wrappedServicePoint = new ServicePointWrapper(foundServicePoint);
+
+            // adding hypermedia links to wrapped service point resource
+            pl.salonea.jaxrs.ServicePointResource.populateWithHATEOASLinks(wrappedServicePoint, params.getUriInfo());
+
+            return Response.status(Status.OK).entity(wrappedServicePoint).build();
+        }
+
+        /**
+         * Method that takes Service Point as XML or JSON and creates its new instance in database
+         */
+        @POST
+        @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response createServicePoint( @PathParam("userId") Long providerId,
+                                            ServicePoint servicePoint,
+                                            @BeanParam GenericBeanParam params ) throws ForbiddenException, UnprocessableEntityException, InternalServerErrorException {
+
+            if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            logger.log(Level.INFO, "creating new ServicePoint by executing ProviderResource.ServicePointResource.createServicePoint(servicePoint) method of REST API");
+
+            ServicePoint createdServicePoint = null;
+            URI locationURI = null;
+
+            try {
+                // persist new resource in database
+                createdServicePoint = servicePointFacade.createForProvider(providerId, servicePoint);
+
+                // populate created resource with hypermedia links
+                pl.salonea.jaxrs.ServicePointResource.populateWithHATEOASLinks(createdServicePoint, params.getUriInfo());
+
+                // construct link to newly created resource to return in HTTP Header
+                String userId = String.valueOf(createdServicePoint.getProvider().getUserId());
+                String servicePointNumber = String.valueOf(createdServicePoint.getServicePointNumber());
+
+                Method servicePointsMethod = ProviderResource.class.getMethod("getServicePointResource");
+                locationURI = params.getUriInfo().getBaseUriBuilder()
+                        .path(ProviderResource.class)
+                        .path(servicePointsMethod)
+                        .path(servicePointNumber)
+                        .resolveTemplate("userId", userId)
+                        .build();
+
+            } catch (EJBTransactionRolledbackException ex) {
+                ExceptionHandler.handleEJBTransactionRolledbackException(ex);
+            } catch (EJBException ex) {
+                ExceptionHandler.handleEJBException(ex);
+            } catch (NoSuchMethodException ex) {
+                ex.printStackTrace();
+            } catch (Exception ex) {
+                throw new InternalServerErrorException(ExceptionHandler.ENTITY_CREATION_ERROR_MESSAGE);
+            }
+
+            return Response.created(locationURI).entity(createdServicePoint).build();
+        }
+
+        /**
+         * Method that takes updated Service Point as XML or JSON and its composite ID as path params.
+         * It updates Service Point in database for provided composite ID.
+         */
+        @PUT
+        @Path("/{servicePointNumber : \\d+}")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response updateServicePoint( @PathParam("userId") Long userId,
+                                            @PathParam("servicePointNumber") Integer servicePointNumber,
+                                            ServicePoint servicePoint,
+                                            @BeanParam GenericBeanParam params) throws ForbiddenException, UnprocessableEntityException, InternalServerErrorException {
+
+            if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            logger.log(Level.INFO, "updating existing Service Point by executing ProviderResource.ServicePointResource.updateServicePoint(servicePoint) method of REST API");
+
+            // create composite ID based on path params
+            ServicePointId servicePointId = new ServicePointId(userId, servicePointNumber);
+
+            ServicePoint updatedServicePoint = null;
+            try {
+                // reflect updated resource object in database
+                updatedServicePoint = servicePointFacade.update(servicePointId, servicePoint);
+                // populate created resource with hypermedia links
+                pl.salonea.jaxrs.ServicePointResource.populateWithHATEOASLinks(updatedServicePoint, params.getUriInfo());
+
+            } catch (EJBTransactionRolledbackException ex) {
+                ExceptionHandler.handleEJBTransactionRolledbackException(ex);
+            } catch (EJBException ex) {
+                ExceptionHandler.handleEJBException(ex);
+            } catch(Exception ex) {
+                throw new InternalServerErrorException(ExceptionHandler.ENTITY_UPDATE_ERROR_MESSAGE);
+            }
+
+            return Response.status(Status.OK).entity(updatedServicePoint).build();
+        }
+
+        /**
+         * Method that removes subset of Service Point entities from database for given Provider.
+         * The provider id is passed through path param.
+         */
+        @DELETE
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response removeProviderServicePoints( @PathParam("userId") Long userId,
+                                                     @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            logger.log(Level.INFO, "removing subset of Service Point entities for given Provider by executing ProviderResource.ServicePointResource.removeProviderServicePoints(userId) method of REST API");
+
+            // find provider entity for which to remove service points
+            Provider provider = providerFacade.find(userId);
+            if(provider == null)
+                throw new NotFoundException("Could not find provider for id " + userId + ".");
+
+            // remove all specified entities from database
+            Integer noOfDeleted = servicePointFacade.deleteByProvider(provider);
+
+            // create response returning number of deleted entities
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(noOfDeleted), 200, "number of deleted service points for provider with id " + userId);
+
+            return Response.status(Status.OK).entity(responseEntity).build();
+        }
+
+        /**
+         * Method that removes Service Point entity from database for given ID.
+         * The service point composite id is passed through path param.
+         */
+        @DELETE
+        @Path("/{servicePointNumber : \\d+}")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response removeServicePoint( @PathParam("userId") Long userId,
+                                            @PathParam("servicePointNumber") Integer servicePointNumber,
+                                            @BeanParam GenericBeanParam params) throws ForbiddenException, NotFoundException {
+
+            if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            logger.log(Level.INFO, "removing given Service Point by executing ProviderResource.ServicePointResource.removeServicePoint(userId, servicePointNumber) method of REST API");
+
+            // remove entity from database
+            Integer noOfDeleted = servicePointFacade.deleteById(new ServicePointId(userId, servicePointNumber));
+
+            if(noOfDeleted == 0)
+                throw new NotFoundException("Could not find service point to delete for id (" + userId + "," + servicePointNumber + ").");
+            else if(noOfDeleted != 1)
+                throw new InternalServerErrorException("Some error occurred while trying to delete service point with id (" + userId + "," + servicePointNumber + ").");
+
+            return Response.status(Status.NO_CONTENT).build();
+        }
+
+        /**
+         * Additional methods returning subset of resources based on given criteria
+         * you can also achieve similar results by applying @QueryParams to generic method
+         * returning all resources in order to filter and limit them
+         */
+
+        /**
+         * Method that counts Service Point entities for given Provider resource
+         * The provider id is passed through path param.
+         */
+        @GET
+        @Path("/count")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response countServicePointsByProvider( @PathParam("userId") Long userId,
+                                                      @BeanParam GenericBeanParam params) throws ForbiddenException, NotFoundException {
+
+            if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            logger.log(Level.INFO, "returning number of service points for given provider by executing ProviderResource.ServicePointResource.countServicePointsByProvider() method of REST API");
+
+            // find provider entity for which to count service points
+            Provider provider = providerFacade.find(userId);
+            if(provider == null)
+                throw new NotFoundException("Could not find provider for id " + userId + ".");
+
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(servicePointFacade.countByProvider(provider)), 200, "number of service points for provider with id " + provider.getUserId());
+            return Response.status(Status.OK).entity(responseEntity).build();
+        }
+
+        /**
+         * Method returns subset of Service Point entities for given Provider entity and
+         * Address related query params. The provider id is passed through path param.
+         * Address params are passed through query params.
+         */
+        @GET
+        @Path("/address")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getProviderServicePointsByAddress( @PathParam("userId") Long userId,
+                                                           @BeanParam AddressBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            logger.log(Level.INFO, "returning service points for given provider and address related params using ProviderResource.ServicePointResource.getProviderServicePointsByAddress(userId, address) method of REST API");
+
+            // find provider entity for which to get associated service points
+            Provider provider = providerFacade.find(userId);
+            if(provider == null)
+                throw new NotFoundException("Could not find provider for id " + userId + ".");
+
+            // find service points by given criteria
+            ResourceList<ServicePoint> servicePoints = new ResourceList<>( servicePointFacade.findByProviderAndAddress(provider,
+                    params.getCity(), params.getState(), params.getCountry(), params.getStreet(), params.getZipCode(), params.getOffset(), params.getLimit()) );
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.ServicePointResource.populateWithHATEOASLinks(servicePoints, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(servicePoints).build();
+        }
+
+        /**
+         * Method returns subset of Service Point entities for given Provider entity and
+         * Coordinates Square related params. The provider id is passed through path param.
+         * Coordinates Square params are passed through query params.
+         */
+        @GET
+        @Path("/coordinates-square")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getProviderServicePointsByCoordinatesSquare( @PathParam("userId") Long userId,
+                                                                     @BeanParam CoordinatesSquareBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException {
+
+            if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            logger.log(Level.INFO, "returning service points for given provider and coordinates square related params using ProviderResource.ServicePointResource.getProviderServicePointsByCoordinatesSquare(userId, coordinatesSquare) method of REST API");
+
+            // find provider entity for which to get associated service points
+            Provider provider = providerFacade.find(userId);
+            if(provider == null)
+                throw new NotFoundException("Could not find provider for id " + userId + ".");
+
+            if(params.getMinLongitudeWGS84() == null || params.getMinLatitudeWGS84() == null ||
+                    params.getMaxLongitudeWGS84() == null || params.getMaxLatitudeWGS84() == null)
+                throw new BadRequestException("All coordinates square query params must be specified.");
+
+            // find service points by given criteria
+            ResourceList<ServicePoint> servicePoints = new ResourceList<>( servicePointFacade.findByProviderAndCoordinatesSquare(provider,
+                    params.getMinLongitudeWGS84(), params.getMinLatitudeWGS84(), params.getMaxLongitudeWGS84(), params.getMaxLatitudeWGS84(), params.getOffset(), params.getLimit()) );
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.ServicePointResource.populateWithHATEOASLinks(servicePoints, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(servicePoints).build();
+        }
+
+        /**
+         * Method returns subset of Service Point entities for given Provider entity and
+         * Coordinates Circle related params. The provider id is passed through path param.
+         * Coordinates Circle params are passed through query params.
+         */
+        @GET
+        @Path("/coordinates-circle")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getProviderServicePointsByCoordinatesCircle( @PathParam("userId") Long userId,
+                                                                     @BeanParam CoordinatesCircleBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException {
+
+            if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            logger.log(Level.INFO, "returning service points for given provider and coordinates circle related params using ProviderResource.ServicePointResource.getProviderServicePointsByCoordinatesCircle(userId, coordinatesCircle) method of REST API");
+
+            // find provider entity for which to get associated service points
+            Provider provider = providerFacade.find(userId);
+            if(provider == null)
+                throw new NotFoundException("Could not find provider for id " + userId + ".");
+
+            if(params.getLongitudeWGS84() == null || params.getLatitudeWGS84() == null || params.getRadius() == null)
+                throw new BadRequestException("All coordinates circle query params must be specified.");
+
+            // find service points by given criteria
+            ResourceList<ServicePoint> servicePoints = new ResourceList<>( servicePointFacade.findByProviderAndCoordinatesCircle(provider,
+                    params.getLongitudeWGS84(), params.getLatitudeWGS84(), params.getRadius()) );
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.ServicePointResource.populateWithHATEOASLinks(servicePoints, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(servicePoints).build();
+        }
+    }
+
+    public class ProviderServiceResource
+    {
+        /**
+         * Method returns subset of ProviderService entities for given Provider
+         * The provider id is passed through path param.
+         * They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getProviderServices( @PathParam("userId") Long userId,
+                                             @BeanParam ProviderServiceBeanParam params ) throws NotFoundException, ForbiddenException {
+
+            if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            logger.log(Level.INFO, "returning subset of ProviderService entities for given Provider using ProviderResource.ProviderServiceResource.getProviderServices(userId) method of REST API");
+
+            // find provider entity for which to get associated provider services
+            Provider provider = providerFacade.find(userId);
+            if(provider == null)
+                throw new pl.salonea.jaxrs.exceptions.NotFoundException("Could not find provider for id " + userId + ".");
+
+            // calculate number of filter query params
+            Integer noOfParams = params.getUriInfo().getQueryParameters().size();
+            if(params.getOffset() != null) noOfParams -= 1;
+            if(params.getLimit() != null) noOfParams -= 1;
+
+            ResourceList<ProviderService> providerServices = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Provider> providers = new ArrayList<>();
+                providers.add(provider);
+
+                // get provider services for given provider filtered by given params
+                providerServices = new ResourceList<>(
+                        providerServiceFacade.findByMultipleCriteria(providers, params.getServices(), params.getServiceCategories(),
+                                params.getDescription(), params.getMinPrice(), params.getMaxPrice(), params.getIncludeDiscounts(),
+                                params.getMinDiscount(), params.getMaxDiscount(), params.getWorkStations(), params.getEmployees(),
+                                params.getOffset(), params.getLimit())
+                );
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get provider services for given provider
+                providerServices = new ResourceList<>(providerServiceFacade.findByProvider(provider, params.getOffset(), params.getLimit()));
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.ProviderServiceResource.populateWithHATEOASLinks(providerServices, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Response.Status.OK).entity(providerServices).build();
+        }
+
+        @GET
+        @Path("/eagerly")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getProviderServicesEagerly( @PathParam("userId") Long userId,
+                                                    @BeanParam ProviderServiceBeanParam params ) throws NotFoundException, ForbiddenException {
+
+            if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            logger.log(Level.INFO, "returning subset of ProviderService entities for given Provider eagerly using ProviderResource.ProviderServiceResource.getProviderServicesEagerly(userId) method of REST API");
+
+            // find provider entity for which to get associated provider services
+            Provider provider = providerFacade.find(userId);
+            if(provider == null)
+                throw new NotFoundException("Could not find provider for id " + userId + ".");
+
+            // calculate number of filter query params
+            Integer noOfParams = params.getUriInfo().getQueryParameters().size();
+            if(params.getOffset() != null) noOfParams -= 1;
+            if(params.getLimit() != null) noOfParams -= 1;
+
+            ResourceList<ProviderServiceWrapper> providerServices = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Provider> providers = new ArrayList<>();
+                providers.add(provider);
+
+                // get provider services for given provider eagerly filtered by given params
+            /*    providerServices = new ResourceList<>(
+                        ProviderServiceWrapper.wrap(
+                                providerServiceFacade.findByMultipleCriteriaEagerly(providers, );
+                        )
+                ); */
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get provider services for given provider eagerly without filtering (eventually paginated)
+
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.ProviderServiceResource.populateWithHATEOASLinks(providerServices, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(providerServices).build();
+        }
+
+    }
+
+    public class ProviderRatingResource
+    {
 
     }
 

@@ -1,9 +1,7 @@
 package pl.salonea.jaxrs;
 
 import pl.salonea.entities.ServicePoint;
-import pl.salonea.entities.ServicePointPhoto;
-import pl.salonea.entities.VirtualTour;
-import pl.salonea.entities.WorkStation;
+import pl.salonea.jaxrs.bean_params.*;
 import pl.salonea.jaxrs.exceptions.ForbiddenException;
 import pl.salonea.jaxrs.utils.ResourceList;
 import pl.salonea.jaxrs.utils.hateoas.Link;
@@ -115,6 +113,17 @@ public class ServicePointResource {
                     .build())
                     .rel("self").build());
 
+            // self eagerly link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/{sub-id}/eagerly
+            Method servicePointEagerlyMethod = ProviderResource.ServicePointResource.class.getMethod("getServicePointEagerly", Long.class, Integer.class, GenericBeanParam.class);
+            servicePoint.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ProviderResource.class)
+                    .path(servicePointsMethod)
+                    .path(servicePointEagerlyMethod)
+                    .resolveTemplate("userId", servicePoint.getProvider().getUserId().toString())
+                    .resolveTemplate("servicePointNumber", servicePoint.getServicePointNumber().toString())
+                    .build())
+                    .rel("service-point-eagerly").build());
+
             // sub-collection link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}
             servicePoint.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
                     .path(ProviderResource.class)
@@ -122,6 +131,57 @@ public class ServicePointResource {
                     .resolveTemplate("userId", servicePoint.getProvider().getUserId().toString())
                     .build())
                     .rel("provider-service-points").build());
+
+            // sub-collection eagerly link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}
+            Method servicePointsEagerlyMethod = ProviderResource.ServicePointResource.class.getMethod("getProviderServicePointsEagerly", Long.class, ServicePointBeanParam.class);
+            servicePoint.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ProviderResource.class)
+                    .path(servicePointsMethod)
+                    .path(servicePointsEagerlyMethod)
+                    .resolveTemplate("userId", servicePoint.getProvider().getUserId().toString())
+                    .build())
+                    .rel("provider-service-points-eagerly").build());
+
+
+            // sub-collection count link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/count
+            Method countByProviderMethod = ProviderResource.ServicePointResource.class.getMethod("countServicePointsByProvider", Long.class, GenericBeanParam.class);
+            servicePoint.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ProviderResource.class)
+                    .path(servicePointsMethod)
+                    .path(countByProviderMethod)
+                    .resolveTemplate("userId", servicePoint.getProvider().getUserId().toString())
+                    .build())
+                    .rel("provider-service-points-count").build());
+
+            // address sub-collection link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/address
+            Method addressMethod = ProviderResource.ServicePointResource.class.getMethod("getProviderServicePointsByAddress", Long.class, AddressBeanParam.class);
+            servicePoint.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ProviderResource.class)
+                    .path(servicePointsMethod)
+                    .path(addressMethod)
+                    .resolveTemplate("userId", servicePoint.getProvider().getUserId().toString())
+                    .build())
+                    .rel("provider-service-points-address").build());
+
+            // coordinates square sub-collection link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/coordinates-square
+            Method coordinatesSquareMethod = ProviderResource.ServicePointResource.class.getMethod("getProviderServicePointsByCoordinatesSquare", Long.class, CoordinatesSquareBeanParam.class);
+            servicePoint.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ProviderResource.class)
+                    .path(servicePointsMethod)
+                    .path(coordinatesSquareMethod)
+                    .resolveTemplate("userId", servicePoint.getProvider().getUserId().toString())
+                    .build())
+                    .rel("provider-service-points-coordinates-square").build());
+
+            // coordinates circle sub-collection link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/coordinates-circle
+            Method coordinatesCircleMethod = ProviderResource.ServicePointResource.class.getMethod("getProviderServicePointsByCoordinatesCircle", Long.class, CoordinatesCircleBeanParam.class);
+            servicePoint.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ProviderResource.class)
+                    .path(servicePointsMethod)
+                    .path(coordinatesCircleMethod)
+                    .resolveTemplate("userId", servicePoint.getProvider().getUserId().toString())
+                    .build())
+                    .rel("provider-service-points-coordinates-circle").build());
 
             // collection link with pattern: http://localhost:port/app/rest/{resources}
             servicePoint.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()

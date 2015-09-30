@@ -23,7 +23,7 @@ public class ServicePointBeanParam extends PaginationBeanParam {
     private @QueryParam("employeeId") List<Long> employeeIds;
     private @QueryParam("corporationId") List<Long> corporationIds;
     private @QueryParam("industryId") List<Long> industryIds;
-    private @QueryParam("serviceCategoryId") List<Long> serviceCategoryIds;
+    private @QueryParam("serviceCategoryId") List<Integer> serviceCategoryIds;
     private @BeanParam AddressBeanParam addressParams;
     private @BeanParam CoordinatesSquareBeanParam coordinatesSquareParams;
     private @BeanParam CoordinatesCircleBeanParam coordinatesCircleParams;
@@ -131,11 +131,11 @@ public class ServicePointBeanParam extends PaginationBeanParam {
         return null;
     }
 
-    public List<Long> getServiceCategoryIds() {
+    public List<Integer> getServiceCategoryIds() {
         return serviceCategoryIds;
     }
 
-    public void setServiceCategoryIds(List<Long> serviceCategoryIds) {
+    public void setServiceCategoryIds(List<Integer> serviceCategoryIds) {
         this.serviceCategoryIds = serviceCategoryIds;
     }
 

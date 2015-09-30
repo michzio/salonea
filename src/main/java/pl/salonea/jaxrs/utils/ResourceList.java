@@ -3,9 +3,7 @@ package pl.salonea.jaxrs.utils;
 
 import pl.salonea.entities.*;
 import pl.salonea.jaxrs.utils.hateoas.Link;
-import pl.salonea.jaxrs.wrappers.IndustryWrapper;
-import pl.salonea.jaxrs.wrappers.PaymentMethodWrapper;
-import pl.salonea.jaxrs.wrappers.ProviderWrapper;
+import pl.salonea.jaxrs.wrappers.*;
 
 import javax.xml.bind.annotation.*;
 import java.util.ArrayList;
@@ -44,7 +42,10 @@ public class ResourceList<T> {
             @XmlElement(name = "industry", type = IndustryWrapper.class),
             @XmlElement(name = "payment-method", type = PaymentMethod.class),
             @XmlElement(name = "payment-method", type = PaymentMethodWrapper.class),
-            @XmlElement(name = "service-point", type = ServicePoint.class )
+            @XmlElement(name = "service-point", type = ServicePoint.class ),
+            @XmlElement(name = "service-point", type = ServicePointWrapper.class),
+            @XmlElement(name = "provider-service", type = ProviderService.class),
+            @XmlElement(name = "provider-service", type = ProviderServiceWrapper.class)
     })
     public List<T> getResources() {
         return resources;

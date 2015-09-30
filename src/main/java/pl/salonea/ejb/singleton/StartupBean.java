@@ -5,6 +5,7 @@ import pl.salonea.embeddables.Address;
 import pl.salonea.entities.*;
 import pl.salonea.enums.Gender;
 import pl.salonea.enums.ProviderType;
+import pl.salonea.enums.WorkStationType;
 
 import javax.annotation.PostConstruct;
 import javax.ejb.Singleton;
@@ -60,6 +61,8 @@ public class StartupBean {
     private ProviderRatingFacade providerRatingFacade;
     @Inject
     private ServicePointFacade servicePointFacade;
+    @Inject
+    private WorkStationFacade workStationFacade;
 
     public StartupBean() { }
 
@@ -176,6 +179,15 @@ public class StartupBean {
                      point12.setLongitudeWGS84(16.916990f);
                      point12.setLatitudeWGS84(52.417640f);
 
+        WorkStation workStation111 = new WorkStation(point11, 1, WorkStationType.ROOM);
+        WorkStation workStation112 = new WorkStation(point11, 2, WorkStationType.OFFICE);
+        WorkStation workStation121 = new WorkStation(point12, 1, WorkStationType.CHAIR);
+        WorkStation workStation122 = new WorkStation(point12, 2, WorkStationType.CHAIR);
+
+        prov1DentalFilling.getWorkStations().add(workStation111);
+        prov1DentalFilling.getWorkStations().add(workStation121);
+        workStation111.getProvidedServices().add(prov1DentalFilling);
+        workStation121.getProvidedServices().add(prov1DentalFilling);
 
         providerFacade.create(provider1);
         providerFacade.create(provider2);
@@ -194,6 +206,10 @@ public class StartupBean {
         providerRatingFacade.create(prov2Rating);
         servicePointFacade.create(point11);
         servicePointFacade.create(point12);
+        workStationFacade.create(workStation111);
+        workStationFacade.create(workStation112);
+        workStationFacade.create(workStation121);
+        workStationFacade.create(workStation122);
 
     }
 

@@ -60,4 +60,30 @@ public class WorkStationId implements Serializable{
         result = 31 * result + (servicePoint != null ? servicePoint.hashCode() : 0);
         return result;
     }
+
+    /**
+     * Allowed serialized work station id formats:
+     * [1,2,3] [1+2+3] [1-2-3]
+     * (1,2,3) (1+2+3) (1-2-3)
+     * 1,2,3   1+2+3    1-2-3
+     */
+    public static WorkStationId valueOf(String workStationIdString) {
+
+        if(!workStationIdString.matches("[(\\[]?\\d+[,+ -]{1}\\d+[,+ -]{1}\\d+[\\])]?"))
+            throw new IllegalArgumentException("Serialized work station id doesn't match specified regex pattern.");
+
+        // trim leading and trailing brackets
+        workStationIdString = workStationIdString.replaceAll("[(\\[)\\]]", "");
+        // split identifiers by several possible delimiters
+        String[] tokens = workStationIdString.split("[,+ -]", 3);
+        if(tokens.length != 3)
+            throw new IllegalArgumentException("Serialized work station id should consist of three delimited tokens ex. 1+2+3");
+
+        Long providerId = Long.valueOf(tokens[0]);
+        Integer servicePointNumber = Integer.valueOf(tokens[1]);
+        Integer workStationNumber = Integer.valueOf(tokens[2]);
+
+        // construct work station id
+        return new WorkStationId(providerId, servicePointNumber, workStationNumber);
+    }
 }

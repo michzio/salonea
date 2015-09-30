@@ -4,15 +4,14 @@ import pl.salonea.ejb.interfaces.ServicePointFacadeInterface;
 import pl.salonea.embeddables.Address;
 import pl.salonea.embeddables.*;
 import pl.salonea.entities.*;
+import pl.salonea.entities.idclass.ServicePointId;
 import pl.salonea.utils.CoordinatesCircle;
 import pl.salonea.utils.CoordinatesSquare;
 
 import javax.ejb.LocalBean;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
-import javax.persistence.EntityManager;
-import javax.persistence.Query;
-import javax.persistence.TypedQuery;
+import javax.persistence.*;
 import javax.persistence.criteria.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,12 +27,60 @@ public class ServicePointFacade extends AbstractFacade<ServicePoint> implements 
     private EntityManager em;
 
     @Override
+    public ServicePoint createForProvider(Long providerId, ServicePoint servicePoint) {
+
+        Provider foundProvider = getEntityManager().find(Provider.class, providerId);
+        servicePoint.setProvider(foundProvider);
+        getEntityManager().persist(servicePoint);
+        return servicePoint;
+    }
+
+    @Override
+    public ServicePoint update(ServicePointId servicePointId, ServicePoint servicePoint) {
+
+        Provider foundProvider = getEntityManager().find(Provider.class, servicePointId.getProvider());
+        servicePoint.setProvider(foundProvider);
+        servicePoint.setServicePointNumber(servicePointId.getServicePointNumber());
+        
+        return update(servicePoint);
+    }
+
+    @Override
     public EntityManager getEntityManager() {
         return em;
     }
 
     public ServicePointFacade() {
         super(ServicePoint.class);
+    }
+
+    @Override
+    public List<ServicePoint> findAllEagerly() {
+        return findAllEagerly(null, null);
+    }
+
+    @Override
+    public List<ServicePoint> findAllEagerly(Integer start, Integer limit) {
+
+        TypedQuery<ServicePoint> query = getEntityManager().createNamedQuery(ServicePoint.FIND_ALL_EAGERLY, ServicePoint.class);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
+    public ServicePoint findByIdEagerly(ServicePointId servicePointId) {
+
+        TypedQuery<ServicePoint> query = getEntityManager().createNamedQuery(ServicePoint.FIND_BY_ID_EAGERLY, ServicePoint.class);
+        query.setParameter("userId", servicePointId.getProvider());
+        query.setParameter("servicePointNumber", servicePointId.getServicePointNumber());
+        try {
+            return query.getSingleResult();
+        } catch (NoResultException | NonUniqueResultException ex) {
+            return null;
+        }
     }
 
     @Override
@@ -156,6 +203,33 @@ public class ServicePointFacade extends AbstractFacade<ServicePoint> implements 
     }
 
     @Override
+    public List<ServicePoint> findByProviderAndAddress(Provider provider, String city, String state, String country, String street, String zipCode) {
+        return findByProviderAndAddress(provider, city, state, country, street, zipCode, null, null);
+    }
+
+    @Override
+    public List<ServicePoint> findByProviderAndAddress(Provider provider, String city, String state, String country, String street, String zipCode, Integer start, Integer limit) {
+
+        TypedQuery<ServicePoint> query = getEntityManager().createNamedQuery(ServicePoint.FIND_BY_PROVIDER_AND_ADDRESS, ServicePoint.class);
+        query.setParameter("provider", provider);
+        if(city == null) city = "";
+        query.setParameter("city", "%" + city + "%");
+        if(state == null) state = "";
+        query.setParameter("state", "%" + state + "%");
+        if(country == null) country = "";
+        query.setParameter("country", "%" + country + "%");
+        if(street == null) street = "";
+        query.setParameter("street", "%" + street + "%");
+        if(zipCode == null) zipCode = "";
+        query.setParameter("zip_code", "%" + zipCode + "%");
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
     public List<ServicePoint> findByProviderAndCoordinatesSquare(Provider provider, Float minLongitudeWGS84, Float minLatitudeWGS84, Float maxLongitudeWGS84, Float maxLatitudeWGS84) {
 
         return findByProviderAndCoordinatesSquare(provider, minLongitudeWGS84, minLatitudeWGS84, maxLongitudeWGS84, maxLatitudeWGS84, null, null);
@@ -190,6 +264,33 @@ public class ServicePointFacade extends AbstractFacade<ServicePoint> implements 
         query.setParameter("longitude_wgs84", longitudeWGS84);
         query.setParameter("latitude_wgs84", latitudeWGS84);
         query.setParameter("radius", radius);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
+    public List<ServicePoint> findByServiceAndAddress(Service service, String city, String state, String country, String street, String zipCode) {
+        return findByServiceAndAddress(service, city, state, country, street, zipCode, null, null);
+    }
+
+    @Override
+    public List<ServicePoint> findByServiceAndAddress(Service service, String city, String state, String country, String street, String zipCode, Integer start, Integer limit) {
+
+        TypedQuery<ServicePoint> query = getEntityManager().createNamedQuery(ServicePoint.FIND_BY_SERVICE_AND_ADDRESS, ServicePoint.class);
+        query.setParameter("service", service);
+        if(city == null) city = "";
+        query.setParameter("city", "%" + city + "%");
+        if(state == null) state = "";
+        query.setParameter("state", "%" + state + "%");
+        if(country == null) country = "";
+        query.setParameter("country", "%" + country + "%");
+        if(street == null) street = "";
+        query.setParameter("street", "%" + street + "%");
+        if(zipCode == null) zipCode = "";
+        query.setParameter("zip_code", "%" + zipCode + "%");
         if(start != null && limit != null) {
             query.setFirstResult(start);
             query.setMaxResults(limit);
@@ -307,10 +408,27 @@ public class ServicePointFacade extends AbstractFacade<ServicePoint> implements 
     }
 
     @Override
+    public Long countByProvider(Provider provider) {
+
+        TypedQuery<Long> query = getEntityManager().createNamedQuery(ServicePoint.COUNT_BY_PROVIDER, Long.class);
+        query.setParameter("provider", provider);
+        return query.getSingleResult();
+    }
+
+    @Override
     public Integer deleteByProvider(Provider provider) {
 
         Query query = getEntityManager().createNamedQuery(ServicePoint.DELETE_BY_PROVIDER);
         query.setParameter("provider", provider);
+        return query.executeUpdate();
+    }
+
+    @Override
+    public Integer deleteById(ServicePointId servicePointId) {
+
+        Query query = getEntityManager().createNamedQuery(ServicePoint.DELETE_BY_ID);
+        query.setParameter("userId", servicePointId.getProvider());
+        query.setParameter("servicePointNumber", servicePointId.getServicePointNumber());
         return query.executeUpdate();
     }
 

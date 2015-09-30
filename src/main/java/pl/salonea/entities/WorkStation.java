@@ -8,6 +8,7 @@ import pl.salonea.enums.WorkStationType;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
+import java.util.HashSet;
 import java.util.Set;
 
 @Entity
@@ -94,10 +95,10 @@ public class WorkStation implements Serializable{
     private WorkStationType workStationType;
 
     /* one-to-many relationship */
-    private Set<TermEmployeeWorkOn> termsEmployeesWorkOn;
+    private Set<TermEmployeeWorkOn> termsEmployeesWorkOn = new HashSet<>();
 
     /* many-to-many relationship */
-    private Set<ProviderService> providedServices;
+    private Set<ProviderService> providedServices = new HashSet<>();
 
     /* constructors */
 
@@ -108,7 +109,7 @@ public class WorkStation implements Serializable{
         this.workStationNumber = workStationNumber;
     }
 
-    public WorkStation(ServicePoint servicePoint,Integer workStationNumber, WorkStationType workStationType) {
+    public WorkStation(ServicePoint servicePoint, Integer workStationNumber, WorkStationType workStationType) {
         this.servicePoint = servicePoint;
         this.workStationNumber = workStationNumber;
         this.workStationType = workStationType;

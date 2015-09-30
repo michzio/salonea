@@ -2,6 +2,7 @@ package pl.salonea.ejb.stateless;
 
 import pl.salonea.ejb.interfaces.ProviderServiceFacadeInterface;
 import pl.salonea.entities.*;
+import pl.salonea.entities.idclass.WorkStationId;
 
 import javax.ejb.LocalBean;
 import javax.ejb.Stateless;
@@ -350,6 +351,43 @@ public class ProviderServiceFacade extends AbstractFacade<ProviderService> imple
                                                         String description, Double minPrice, Double maxPrice, Boolean includeDiscounts,
                                                         Short minDiscount, Short maxDiscount, List<WorkStation> workStations, List<Employee> employees) {
 
+        return findByMultipleCriteria(providers, services, serviceCategories, description, minPrice, maxPrice, includeDiscounts,
+                minDiscount, maxDiscount, workStations, employees, null, null);
+    }
+
+    @Override
+    public List<ProviderService> findByMultipleCriteria(List<Provider> providers, List<Service> services, List<ServiceCategory> serviceCategories,
+                                                        String description, Double minPrice, Double maxPrice, Boolean includeDiscounts,
+                                                        Short minDiscount, Short maxDiscount, List<WorkStation> workStations, List<Employee> employees,
+                                                        Integer start, Integer limit) {
+
+        return findByMultipleCriteria(providers, services, serviceCategories, description, minPrice, maxPrice, includeDiscounts,
+                minDiscount, maxDiscount, workStations, employees, false, start, limit);
+    }
+
+    @Override
+    public List<ProviderService> findByMultipleCriteriaEagerly(List<Provider> providers, List<Service> services, List<ServiceCategory> serviceCategories,
+                                                               String description, Double minPrice, Double maxPrice, Boolean includeDiscounts,
+                                                               Short minDiscount, Short maxDiscount, List<WorkStation> workStations, List<Employee> employees) {
+
+        return findByMultipleCriteriaEagerly(providers, services, serviceCategories, description, minPrice, maxPrice, includeDiscounts,
+                minDiscount, maxDiscount, workStations, employees, null, null);
+    }
+
+    @Override
+    public List<ProviderService> findByMultipleCriteriaEagerly(List<Provider> providers, List<Service> services, List<ServiceCategory> serviceCategories,
+                                                               String description, Double minPrice, Double maxPrice, Boolean includeDiscounts,
+                                                               Short minDiscount, Short maxDiscount, List<WorkStation> workStations, List<Employee> employees,
+                                                               Integer start, Integer limit) {
+
+        return findByMultipleCriteria(providers, services, serviceCategories, description, minPrice, maxPrice, includeDiscounts,
+                minDiscount, maxDiscount, workStations, employees, true, start, limit);
+    }
+
+    private List<ProviderService> findByMultipleCriteria(List<Provider> providers, List<Service> services, List<ServiceCategory> serviceCategories,
+                                                        String description, Double minPrice, Double maxPrice, Boolean includeDiscounts,
+                                                        Short minDiscount, Short maxDiscount, List<WorkStation> workStations, List<Employee> employees,
+                                                        Boolean eagerly, Integer start, Integer limit) {
 
         CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
         CriteriaQuery<ProviderService> criteriaQuery = criteriaBuilder.createQuery(ProviderService.class);
@@ -422,23 +460,36 @@ public class ProviderServiceFacade extends AbstractFacade<ProviderService> imple
 
         if(minDiscount != null) {
 
-            predicates.add(criteriaBuilder.greaterThanOrEqualTo( providerService.get(ProviderService_.discount), minDiscount));
+            predicates.add(criteriaBuilder.greaterThanOrEqualTo(providerService.get(ProviderService_.discount), minDiscount));
         }
 
         if(maxDiscount != null) {
 
-            predicates.add(criteriaBuilder.lessThanOrEqualTo( providerService.get(ProviderService_.discount), maxDiscount));
+            predicates.add(criteriaBuilder.lessThanOrEqualTo(providerService.get(ProviderService_.discount), maxDiscount));
         }
 
         if(workStations != null) {
 
-           List<Predicate> orPredicates = new ArrayList<>();
-           for(WorkStation workStation : workStations) {
+            List<Predicate> orPredicates = new ArrayList<>();
+            for(WorkStation workStation : workStations) {
+
+                // it's needed in order to not have detached entity issue
+                workStation = getEntityManager().find(WorkStation.class, new WorkStationId( workStation.getServicePoint().getProvider().getUserId(),
+                                                                                            workStation.getServicePoint().getServicePointNumber(),
+                                                                                            workStation.getWorkStationNumber()) );
+
                 orPredicates.add( criteriaBuilder.isMember(workStation, providerService.get(ProviderService_.workStations)) );
-           }
+            }
 
-          predicates.add( criteriaBuilder.or(orPredicates.toArray(new Predicate[] {})) );
+            predicates.add(criteriaBuilder.or(orPredicates.toArray(new Predicate[]{})));
 
+            if(eagerly) {
+                // then fetch associated collection of entities
+                providerService.fetch("workStations", JoinType.INNER);
+            }
+        } else if(eagerly) {
+            // then left fetch associated collection of entities
+            providerService.fetch("workStations", JoinType.LEFT);
         }
 
         if(employees != null) {
@@ -448,13 +499,25 @@ public class ProviderServiceFacade extends AbstractFacade<ProviderService> imple
                 orPredicates.add( criteriaBuilder.isMember(employee, providerService.get(ProviderService_.supplyingEmployees)) );
             }
 
-            predicates.add( criteriaBuilder.or(orPredicates.toArray(new Predicate[] {})) );
+            predicates.add(criteriaBuilder.or(orPredicates.toArray(new Predicate[]{})));
+
+            if(eagerly) {
+                // then fetch associated collection of entities
+                providerService.fetch("supplyingEmployees", JoinType.INNER);
+            }
+        } else if(eagerly) {
+            // then left fetch associated collection of entities
+            providerService.fetch("supplyingEmployees", JoinType.LEFT);
         }
 
         // WHERE predicate1 AND predicate2 AND ... AND predicateN
         criteriaQuery.where(predicates.toArray(new Predicate[] { }));
 
         TypedQuery<ProviderService> query = getEntityManager().createQuery(criteriaQuery);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
         return query.getResultList();
     }
 

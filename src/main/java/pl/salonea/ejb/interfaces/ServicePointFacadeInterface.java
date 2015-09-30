@@ -2,6 +2,7 @@ package pl.salonea.ejb.interfaces;
 
 import pl.salonea.embeddables.Address;
 import pl.salonea.entities.*;
+import pl.salonea.entities.idclass.ServicePointId;
 import pl.salonea.utils.CoordinatesCircle;
 import pl.salonea.utils.CoordinatesSquare;
 
@@ -13,6 +14,11 @@ import java.util.List;
 public interface ServicePointFacadeInterface extends AbstractFacadeInterface<ServicePoint> {
 
     // concrete interface
+    ServicePoint createForProvider(Long providerId, ServicePoint servicePoint);
+    ServicePoint update(ServicePointId servicePointId, ServicePoint servicePoint);
+    List<ServicePoint> findAllEagerly();
+    List<ServicePoint> findAllEagerly(Integer start, Integer limit);
+    ServicePoint findByIdEagerly(ServicePointId servicePointId);
     List<ServicePoint> findByProvider(Provider provider);
     List<ServicePoint> findByProvider(Provider provider, Integer start, Integer limit);
     List<ServicePoint> findByProviderEagerly(Provider provider);
@@ -25,10 +31,14 @@ public interface ServicePointFacadeInterface extends AbstractFacadeInterface<Ser
     List<ServicePoint> findByCoordinatesCircle(Float longitudeWGS84, Float latitudeWGS84, Double radius, Integer start, Integer limit);
     List<ServicePoint> findByService(Service service);
     List<ServicePoint> findByService(Service service, Integer start, Integer limit);
+    List<ServicePoint> findByProviderAndAddress(Provider provider, String city, String state, String country, String street, String zipCode);
+    List<ServicePoint> findByProviderAndAddress(Provider provider, String city, String state, String country, String street, String zipCode, Integer start, Integer limit);
     List<ServicePoint> findByProviderAndCoordinatesSquare(Provider provider, Float minLongitudeWGS84, Float minLatitudeWGS84, Float maxLongitudeWGS84, Float maxLatitudeWGS84);
     List<ServicePoint> findByProviderAndCoordinatesSquare(Provider provider, Float minLongitudeWGS84, Float minLatitudeWGS84, Float maxLongitudeWGS84, Float maxLatitudeWGS84, Integer start, Integer limit);
     List<ServicePoint> findByProviderAndCoordinatesCircle(Provider provider, Float longitudeWGS84, Float latitudeWGS84, Double radius);
     List<ServicePoint> findByProviderAndCoordinatesCircle(Provider provider, Float longitudeWGS84, Float latitudeWGS84, Double radius, Integer start, Integer limit);
+    List<ServicePoint> findByServiceAndAddress(Service service, String city, String state, String country, String street, String zipCode);
+    List<ServicePoint> findByServiceAndAddress(Service service, String city, String state, String country, String street, String zipCode, Integer start, Integer limit);
     List<ServicePoint> findByServiceAndCoordinatesSquare(Service service, Float minLongitudeWGS84, Float minLatitudeWGS84, Float maxLongitudeWGS84, Float maxLatitudeWGS84);
     List<ServicePoint> findByServiceAndCoordinatesSquare(Service service, Float minLongitudeWGS84, Float minLatitudeWGS84, Float maxLongitudeWGS84, Float maxLatitudeWGS84, Integer start, Integer limit);
     List<ServicePoint> findByServiceAndCoordinatesCircle(Service service, Float longitudeWGS84, Float latitudeWGS84, Double radius);
@@ -41,7 +51,9 @@ public interface ServicePointFacadeInterface extends AbstractFacadeInterface<Ser
     List<ServicePoint> findByCorporation(Corporation corporation, Integer start, Integer limit);
     List<ServicePoint> findByIndustry(Industry industry);
     List<ServicePoint> findByIndustry(Industry industry, Integer start, Integer limit);
+    Long countByProvider(Provider provider);
     Integer deleteByProvider(Provider provider);
+    Integer deleteById(ServicePointId servicePointId);
     // Criteria API query methods interface
     List<ServicePoint> findByMultipleCriteria(List<Provider> providers, List<Service> services, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories);
     List<ServicePoint> findByMultipleCriteria(List<Provider> providers, List<Service> services, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, Integer start, Integer limit);

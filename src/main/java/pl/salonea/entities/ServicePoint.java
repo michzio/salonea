@@ -26,14 +26,20 @@ import java.util.Set;
 @Table(name = "service_point")
 @Access(AccessType.PROPERTY)
 @NamedQueries({
+        @NamedQuery(name = ServicePoint.FIND_ALL_EAGERLY, query = "SELECT sp FROM ServicePoint sp LEFT JOIN FETCH sp.workStations ws LEFT JOIN FETCH sp.photos ph LEFT JOIN FETCH sp.virtualTours vt"),
+        @NamedQuery(name = ServicePoint.FIND_BY_ID_EAGERLY, query = "SELECT sp FROM ServicePoint sp LEFT JOIN FETCH sp.workStations ws LEFT JOIN FETCH sp.photos ph LEFT JOIN FETCH sp.virtualTours vt WHERE sp.provider.userId = :userId AND sp.servicePointNumber = :servicePointNumber"),
         @NamedQuery(name = ServicePoint.FIND_BY_PROVIDER, query = "SELECT sp FROM ServicePoint sp WHERE sp.provider = :provider"),
         @NamedQuery(name = ServicePoint.FIND_BY_PROVIDER_EAGERLY, query = "SELECT sp FROM ServicePoint sp LEFT JOIN FETCH sp.workStations ws LEFT JOIN FETCH sp.photos ph LEFT JOIN FETCH sp.virtualTours vt WHERE sp.provider = :provider" ),
         @NamedQuery(name = ServicePoint.FIND_BY_ADDRESS, query = "SELECT sp FROM ServicePoint sp WHERE sp.address.city LIKE :city AND sp.address.state LIKE :state " +
                 "AND sp.address.country LIKE :country AND sp.address.street LIKE :street AND sp.address.zipCode LIKE :zip_code"),
         @NamedQuery(name = ServicePoint.FIND_BY_COORDINATES_SQUARE, query = "SELECT sp FROM ServicePoint sp WHERE sp.longitudeWGS84 >= :min_longitude_wgs84 AND sp.longitudeWGS84 <= :max_longitude_wgs84 AND sp.latitudeWGS84 >= :min_latitude_wgs84 AND sp.latitudeWGS84 <= :max_latitude_wgs84"),
         @NamedQuery(name = ServicePoint.FIND_BY_COORDINATES_CIRCLE, query = "SELECT sp FROM ServicePoint sp WHERE SQRT((sp.longitudeWGS84 - :longitude_wgs84)*(sp.longitudeWGS84 - :longitude_wgs84) + (sp.latitudeWGS84 - :latitude_wgs84)*(sp.latitudeWGS84 - :latitude_wgs84)) <= :radius"),
+        @NamedQuery(name = ServicePoint.FIND_BY_PROVIDER_AND_ADDRESS, query = "SELECT sp FROM ServicePoint sp WHERE sp.provider = :provider AND sp.address.city LIKE :city AND sp.address.state LIKE :state " +
+                "AND sp.address.country LIKE :country AND sp.address.street LIKE :street AND sp.address.zipCode LIKE :zip_code"),
         @NamedQuery(name = ServicePoint.FIND_BY_PROVIDER_AND_COORDINATES_SQUARE, query = "SELECT sp FROM ServicePoint sp WHERE sp.provider = :provider AND sp.longitudeWGS84 >= :min_longitude_wgs84 AND sp.longitudeWGS84 <= :max_longitude_wgs84 AND sp.latitudeWGS84 >= :min_latitude_wgs84 AND sp.latitudeWGS84 <= :max_latitude_wgs84"),
         @NamedQuery(name = ServicePoint.FIND_BY_PROVIDER_AND_COORDINATES_CIRCLE, query = "SELECT sp FROM ServicePoint sp WHERE sp.provider = :provider AND SQRT((sp.longitudeWGS84 - :longitude_wgs84)*(sp.longitudeWGS84 - :longitude_wgs84) + (sp.latitudeWGS84 - :latitude_wgs84)*(sp.latitudeWGS84 - :latitude_wgs84)) <= :radius"),
+        @NamedQuery(name = ServicePoint.FIND_BY_SERVICE_AND_ADDRESS, query = "SELECT sp FROM ServicePoint sp INNER JOIN sp.workStations ws INNER JOIN ws.providedServices ps WHERE ps.service = :service AND sp.address.city LIKE :city AND sp.address.state LIKE :state " +
+                "AND sp.address.country LIKE :country AND sp.address.street LIKE :street AND sp.address.zipCode LIKE :zip_code"),
         @NamedQuery(name = ServicePoint.FIND_BY_SERVICE_AND_COORDINATES_SQUARE, query = "SELECT sp FROM ServicePoint sp INNER JOIN sp.workStations ws INNER JOIN ws.providedServices ps WHERE ps.service = :service AND sp.longitudeWGS84 >= :min_longitude_wgs84 AND sp.longitudeWGS84 <= :max_longitude_wgs84 AND sp.latitudeWGS84 >= :min_latitude_wgs84 AND sp.latitudeWGS84 <= :max_latitude_wgs84 "),
         @NamedQuery(name = ServicePoint.FIND_BY_SERVICE_AND_COORDINATES_CIRCLE, query = "SELECT sp FROM ServicePoint sp INNER JOIN sp.workStations ws INNER JOIN ws.providedServices ps WHERE ps.service = :service AND SQRT((sp.longitudeWGS84 - :longitude_wgs84)*(sp.longitudeWGS84 - :longitude_wgs84) + (sp.latitudeWGS84 - :latitude_wgs84)*(sp.latitudeWGS84 - :latitude_wgs84)) <= :radius"),
         @NamedQuery(name = ServicePoint.FIND_BY_SERVICE, query = "SELECT DISTINCT sp FROM ServicePoint sp INNER JOIN sp.workStations ws INNER JOIN ws.providedServices ps WHERE ps.service = :service"),
@@ -41,17 +47,23 @@ import java.util.Set;
         @NamedQuery(name = ServicePoint.FIND_BY_PROVIDER_SERVICE, query = "SELECT DISTINCT sp FROM ServicePoint sp INNER JOIN sp.workStations ws WHERE :provider_service MEMBER OF ws.providedServices"),
         @NamedQuery(name = ServicePoint.FIND_BY_CORPORATION, query = "SELECT sp FROM ServicePoint sp INNER JOIN sp.provider p WHERE p.corporation = :corporation"),
         @NamedQuery(name = ServicePoint.FIND_BY_INDUSTRY, query = "SELECT sp FROM ServicePoint sp INNER JOIN sp.provider p WHERE :industry MEMBER OF p.industries"),
+        @NamedQuery(name = ServicePoint.COUNT_BY_PROVIDER, query = "SELECT COUNT(sp) FROM ServicePoint sp WHERE sp.provider = :provider"),
         @NamedQuery(name = ServicePoint.DELETE_BY_PROVIDER, query = "DELETE FROM ServicePoint sp WHERE sp.provider = :provider"),
+        @NamedQuery(name = ServicePoint.DELETE_BY_ID, query = "DELETE FROM ServicePoint sp WHERE sp.provider.userId = :userId AND sp.servicePointNumber = :servicePointNumber"),
 })
 public class ServicePoint implements Serializable {
 
+    public static final String FIND_ALL_EAGERLY = "ServicePoint.findAllEagerly";
+    public static final String FIND_BY_ID_EAGERLY = "ServicePoint.findByIdEagerly";
     public static final String FIND_BY_PROVIDER = "ServicePoint.findByProvider";
     public static final String FIND_BY_PROVIDER_EAGERLY = "ServicePoint.findByProviderEagerly";
     public static final String FIND_BY_ADDRESS = "ServicePoint.findByAddress";
     public static final String FIND_BY_COORDINATES_SQUARE = "ServicePoint.findByCoordinatesSquare";
     public static final String FIND_BY_COORDINATES_CIRCLE = "ServicePoint.findByCoordinatesCircle";
+    public static final String FIND_BY_PROVIDER_AND_ADDRESS = "ServicePoint.findByProviderAndAddress";
     public static final String FIND_BY_PROVIDER_AND_COORDINATES_SQUARE = "ServicePoint.findByProviderAndCoordinatesSquare";
     public static final String FIND_BY_PROVIDER_AND_COORDINATES_CIRCLE = "ServicePoint.findByProviderAndCoordinatesCircle";
+    public static final String FIND_BY_SERVICE_AND_ADDRESS = "ServicePoint.findByServiceAndAddress";
     public static final String FIND_BY_SERVICE_AND_COORDINATES_SQUARE = "ServicePoint.findByServiceAndCoordinatesSquare";
     public static final String FIND_BY_SERVICE_AND_COORDINATES_CIRCLE = "ServicePoint.findByServiceAndCoordinatesCircle";
     public static final String FIND_BY_SERVICE = "ServicePoint.findByService";
@@ -59,7 +71,9 @@ public class ServicePoint implements Serializable {
     public static final String FIND_BY_PROVIDER_SERVICE = "ServicePoint.findByProviderService";
     public static final String FIND_BY_CORPORATION = "ServicePoint.findByCorporation";
     public static final String FIND_BY_INDUSTRY = "ServicePoint.findByIndustry";
+    public static final String COUNT_BY_PROVIDER = "ServicePoint.countByProvider";
     public static final String DELETE_BY_PROVIDER = "ServicePoint.deleteByProvider";
+    public static final String DELETE_BY_ID = "ServicePoint.deleteById";
 
     private Integer servicePointNumber; // PK
     private Provider provider; // PK, FK
