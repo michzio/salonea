@@ -11,6 +11,8 @@ import java.util.List;
 public interface ProviderServiceFacadeInterface extends AbstractFacadeInterface<ProviderService> {
 
     // concrete interface
+    ProviderService createForProviderAndService(Long providerId, Integer serviceId, ProviderService providerService);
+    ProviderService update(ProviderServiceId providerServiceId, ProviderService providerService);
     List<ProviderService> findAllEagerly();
     List<ProviderService> findAllEagerly(Integer start, Integer limit);
     ProviderService findByIdEagerly(ProviderServiceId providerServiceId);
@@ -58,9 +60,11 @@ public interface ProviderServiceFacadeInterface extends AbstractFacadeInterface<
                                                  Short minDiscount, Short maxDiscount, List<WorkStation> workStations, List<Employee> employees, Integer start, Integer limit);
     Integer updateDiscountForProviderAndServiceCategory(Provider provider, ServiceCategory serviceCategory, Short newDiscount);
     Integer updateDiscountForProviderAndEmployee(Provider provider, Employee employee, Short newDiscount);
+    Integer deleteById(ProviderServiceId providerServiceId);
     Integer deleteForOnlyWorkStation(WorkStation workStation);
     Integer deleteForProviderAndOnlyEmployee(Provider provider, Employee employee);
     Integer deleteForProviderAndServiceCategory(Provider provider, ServiceCategory serviceCategory);
+    Integer deleteForProviderAndServiceCategoryAndOnlyEmployee(Provider provider, ServiceCategory serviceCategory, Employee employee);
     Integer deleteForProvider(Provider provider);
     Integer deleteForService(Service service);
 

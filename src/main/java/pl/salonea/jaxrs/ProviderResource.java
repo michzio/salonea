@@ -64,6 +64,12 @@ public class ProviderResource {
     @Inject
     private ProviderServiceFacade providerServiceFacade;
 
+    @Inject
+    private EmployeeFacade employeeFacade;
+
+    @Inject
+    private ServiceCategoryFacade serviceCategoryFacade;
+
     /**
      * Method returns all Provider resources
      * They can be additionally filtered or paginated by @QueryParams
@@ -1253,6 +1259,7 @@ public class ProviderResource {
          */
         @PUT
         @Path("/{servicePointNumber : \\d+}")
+        @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
         public Response updateServicePoint( @PathParam("userId") Long userId,
                                             @PathParam("servicePointNumber") Integer servicePointNumber,
@@ -1318,7 +1325,7 @@ public class ProviderResource {
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
         public Response removeServicePoint( @PathParam("userId") Long userId,
                                             @PathParam("servicePointNumber") Integer servicePointNumber,
-                                            @BeanParam GenericBeanParam params) throws ForbiddenException, NotFoundException {
+                                            @BeanParam GenericBeanParam params) throws ForbiddenException, NotFoundException, InternalServerErrorException {
 
             if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
             logger.log(Level.INFO, "removing given Service Point by executing ProviderResource.ServicePointResource.removeServicePoint(userId, servicePointNumber) method of REST API");
@@ -1610,6 +1617,197 @@ public class ProviderResource {
 
             return Response.status(Status.OK).entity(wrappedProviderService).build();
         }
+
+        /**
+         * Method that takes ProviderService as XML or JSON and creates its new instance in database
+         */
+        @POST
+        @Path("/{serviceId : \\d+}")
+        @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response createProviderService( @PathParam("userId") Long providerId,
+                                               @PathParam("serviceId") Integer serviceId,
+                                               ProviderService providerService,
+                                               @BeanParam GenericBeanParam params ) throws ForbiddenException, UnprocessableEntityException, InternalServerErrorException {
+
+            if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            logger.log(Level.INFO, "creating new ProviderService by executing ProviderResource.ProviderServiceResource.createProviderService(providerService) method of REST API");
+
+            ProviderService createdProviderService = null;
+            URI locationURI = null;
+
+            try {
+                // persist new resource in database
+                createdProviderService = providerServiceFacade.createForProviderAndService(providerId, serviceId, providerService);
+
+                // populate created resource with hypermedia links
+                pl.salonea.jaxrs.ProviderServiceResource.populateWithHATEOASLinks(createdProviderService, params.getUriInfo());
+
+                // construct link to newly created resource to return in HTTP Header
+                String uid = String.valueOf(createdProviderService.getProvider().getUserId());
+                String sid = String.valueOf(createdProviderService.getService().getServiceId());
+
+                Method providerServicesMethod = ProviderResource.class.getMethod("getProviderServiceResource");
+                locationURI = params.getUriInfo().getBaseUriBuilder()
+                        .path(ProviderResource.class)
+                        .path(providerServicesMethod)
+                        .path(sid)
+                        .resolveTemplate("userId", uid)
+                        .build();
+
+            } catch (EJBTransactionRolledbackException ex) {
+                ExceptionHandler.handleEJBTransactionRolledbackException(ex);
+            } catch (EJBException ex) {
+                ExceptionHandler.handleEJBException(ex);
+            } catch (NoSuchMethodException ex) {
+                ex.printStackTrace();
+            } catch (Exception ex) {
+                throw new InternalServerErrorException(ExceptionHandler.ENTITY_CREATION_ERROR_MESSAGE);
+            }
+
+            return Response.created(locationURI).entity(createdProviderService).build();
+        }
+
+        /**
+         * Method that takes updated Provider Service as XML or JSON and its composite ID as path param.
+         * It updates Provider Service in database for provided composite ID.
+         */
+        @PUT
+        @Path("/{serviceId : \\d+}")
+        @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response updateProviderService( @PathParam("userId") Long userId,
+                                               @PathParam("serviceId") Integer serviceId,
+                                               ProviderService providerService,
+                                               @BeanParam GenericBeanParam params) throws ForbiddenException, UnprocessableEntityException, InternalServerErrorException {
+
+            if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            logger.log(Level.INFO, "updating existing Provider Service by executing ProviderResource.ProviderServiceResource.updateProviderService(providerService) method of REST API");
+
+            // create composite ID based on path params
+            ProviderServiceId providerServiceId = new ProviderServiceId(userId, serviceId);
+
+            ProviderService updatedProviderService = null;
+            try {
+                // reflect updated resource object in database
+                updatedProviderService = providerServiceFacade.update(providerServiceId, providerService);
+                // populate created resource with hypermedia links
+                pl.salonea.jaxrs.ProviderServiceResource.populateWithHATEOASLinks(updatedProviderService, params.getUriInfo());
+
+            } catch (EJBTransactionRolledbackException ex) {
+                ExceptionHandler.handleEJBTransactionRolledbackException(ex);
+            } catch (EJBException ex) {
+                ExceptionHandler.handleEJBException(ex);
+            } catch (Exception ex) {
+                throw new InternalServerErrorException(ExceptionHandler.ENTITY_UPDATE_ERROR_MESSAGE);
+            }
+
+            return Response.status(Status.OK).entity(updatedProviderService).build();
+        }
+
+        /**
+         * Method that removes subset of Provider Service entities from database for given Provider.
+         * The provider id is passed through path param.
+         */
+        @DELETE
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response removeProviderServices( @PathParam("userId") Long userId,
+                                                @QueryParam("employeeId") Long employeeId,
+                                                @QueryParam("serviceCategoryId") Integer serviceCategoryId,
+                                                @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            logger.log(Level.INFO, "removing subset of Provider Service entities for given Provider by executing ProviderResource.ProviderServiceResource.removeProviderServices(userId) method of REST API");
+
+            // find provider entity for which to remove provider services
+            Provider provider = providerFacade.find(userId);
+            if(provider == null)
+                throw new NotFoundException("Could not find provider for id " + userId + ".");
+
+            // remove all specified entities from database
+            Integer noOfDeleted = null;
+            if(employeeId != null && serviceCategoryId != null) {
+
+                Employee employee = employeeFacade.find(employeeId);
+                if(employee == null)
+                    throw new NotFoundException("Could not find employee for id " + employeeId + ".");
+
+                ServiceCategory serviceCategory = serviceCategoryFacade.find(serviceCategoryId);
+                if(serviceCategory == null)
+                    throw new NotFoundException("Could not find service category for id " + serviceCategoryId + ".");
+
+                noOfDeleted = providerServiceFacade.deleteForProviderAndServiceCategoryAndOnlyEmployee(provider, serviceCategory, employee);
+
+            } else if(employeeId != null) {
+
+                Employee employee = employeeFacade.find(employeeId);
+                if(employee == null)
+                    throw new NotFoundException("Could not find employee for id " + employeeId + ".");
+
+                noOfDeleted = providerServiceFacade.deleteForProviderAndOnlyEmployee(provider, employee);
+
+            } else if(serviceCategoryId != null) {
+
+                ServiceCategory serviceCategory = serviceCategoryFacade.find(serviceCategoryId);
+                if(serviceCategory == null)
+                    throw new NotFoundException("Could not find service category for id " + serviceCategoryId + ".");
+
+                noOfDeleted = providerServiceFacade.deleteForProviderAndServiceCategory(provider, serviceCategory);
+
+            }  else {
+                noOfDeleted = providerServiceFacade.deleteForProvider(provider);
+            }
+
+            // create response returning number of deleted entities
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(noOfDeleted), 200, "number of deleted provider services for provider with id " + userId);
+
+            return Response.status(Status.OK).entity(responseEntity).build();
+        }
+
+        /**
+         * Method that removes Provider Service entity from database for given ID.
+         * The provider service composite id is passed through path params.
+         */
+        @DELETE
+        @Path("/{serviceId : \\d+}")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response removeProviderService( @PathParam("userId") Long userId,
+                                               @PathParam("serviceId") Integer serviceId,
+                                               @BeanParam GenericBeanParam params) throws ForbiddenException, NotFoundException, InternalServerErrorException {
+
+            if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            logger.log(Level.INFO, "removing given Provider Service by executing ProviderResource.ProviderServiceResource.removeProviderService(userId, serviceId) method of REST API");
+
+            // remove entity from database
+            Integer noOfDeleted = providerServiceFacade.deleteById(new ProviderServiceId(userId, serviceId));
+
+            if( noOfDeleted == 0)
+                throw new NotFoundException("Could not find provider service to delete for id (" + userId + "," + serviceId + ").");
+            else if(noOfDeleted != 1)
+                throw new InternalServerErrorException("Some error occurred while trying to delete provider service with id (" + userId + "," + serviceId + ").");
+
+            return Response.status(Status.NO_CONTENT).build();
+        }
+
+        /**
+         * Additional methods returning subset of resources based on given criteria
+         * you can also achieve similar results by applying @QueryParams to generic method
+         * returning all resources in order to filter and limit them
+         */
+
+        /**
+         * Method that counts Provider Service entities for given Provider resource
+         * The provider id is passed through path param.
+         */
+        @GET
+        @Path("/count")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response countProviderServicesByProvider( @PathParam("userId") Long userId,
+                                                         @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            return null;
+        }
+
     }
 
     public class ProviderRatingResource

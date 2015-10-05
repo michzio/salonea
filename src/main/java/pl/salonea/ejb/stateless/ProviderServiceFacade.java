@@ -34,6 +34,28 @@ public class ProviderServiceFacade extends AbstractFacade<ProviderService> imple
 
 
     @Override
+    public ProviderService createForProviderAndService(Long providerId, Integer serviceId, ProviderService providerService) {
+
+        Provider foundProvider = getEntityManager().find(Provider.class, providerId);
+        Service foundService = getEntityManager().find(Service.class, serviceId);
+        providerService.setProvider(foundProvider);
+        providerService.setService(foundService);
+        getEntityManager().persist(providerService);
+        return providerService;
+    }
+
+    @Override
+    public ProviderService update(ProviderServiceId providerServiceId, ProviderService providerService) {
+
+        Provider foundProvider = getEntityManager().find(Provider.class, providerServiceId.getProvider());
+        Service foundService = getEntityManager().find(Service.class, providerServiceId.getService());
+        providerService.setProvider(foundProvider);
+        providerService.setService(foundService);
+
+        return update(providerService);
+    }
+
+    @Override
     public List<ProviderService> findAllEagerly() {
         return findAllEagerly(null, null);
     }
@@ -350,6 +372,15 @@ public class ProviderServiceFacade extends AbstractFacade<ProviderService> imple
     }
 
     @Override
+    public Integer deleteById(ProviderServiceId providerServiceId) {
+
+        Query query = getEntityManager().createNamedQuery(ProviderService.DELETE_BY_ID);
+        query.setParameter("userId", providerServiceId.getProvider());
+        query.setParameter("serviceId", providerServiceId.getService());
+        return query.executeUpdate();
+    }
+
+    @Override
     public Integer deleteForOnlyWorkStation(WorkStation workStation) {
 
         Query query = getEntityManager().createNamedQuery(ProviderService.DELETE_FOR_ONLY_WORK_STATION);
@@ -372,6 +403,16 @@ public class ProviderServiceFacade extends AbstractFacade<ProviderService> imple
         Query query = getEntityManager().createNamedQuery(ProviderService.DELETE_FOR_PROVIDER_AND_SERVICE_CATEGORY);
         query.setParameter("provider", provider);
         query.setParameter("service_category", serviceCategory);
+        return query.executeUpdate();
+    }
+
+    @Override
+    public Integer deleteForProviderAndServiceCategoryAndOnlyEmployee(Provider provider, ServiceCategory serviceCategory, Employee employee) {
+
+        Query query = getEntityManager().createNamedQuery(ProviderService.DELETE_FOR_PROVIDER_AND_SERVICE_CATEGORY_AND_ONLY_EMPLOYEE);
+        query.setParameter("provider", provider);
+        query.setParameter("service_category", serviceCategory);
+        query.setParameter("employee", employee);
         return query.executeUpdate();
     }
 
