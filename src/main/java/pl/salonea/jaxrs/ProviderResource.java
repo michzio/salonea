@@ -2,6 +2,7 @@ package pl.salonea.jaxrs;
 
 import pl.salonea.ejb.stateless.*;
 import pl.salonea.entities.*;
+import pl.salonea.entities.idclass.ProviderServiceId;
 import pl.salonea.entities.idclass.ServicePointId;
 import pl.salonea.enums.ProviderType;
 import pl.salonea.jaxrs.bean_params.*;
@@ -1538,16 +1539,20 @@ public class ProviderResource {
                 providers.add(provider);
 
                 // get provider services for given provider eagerly filtered by given params
-            /*    providerServices = new ResourceList<>(
+               providerServices = new ResourceList<>(
                         ProviderServiceWrapper.wrap(
-                                providerServiceFacade.findByMultipleCriteriaEagerly(providers, );
+                                providerServiceFacade.findByMultipleCriteriaEagerly(providers, params.getServices(), params.getServiceCategories(),
+                                        params.getDescription(), params.getMinPrice(), params.getMaxPrice(), params.getIncludeDiscounts(),
+                                        params.getMinDiscount(), params.getMaxDiscount(), params.getWorkStations(), params.getEmployees(),
+                                        params.getOffset(), params.getLimit())
                         )
-                ); */
+                );
 
             } else {
                 logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
 
                 // get provider services for given provider eagerly without filtering (eventually paginated)
+                providerServices = new ResourceList<>( ProviderServiceWrapper.wrap(providerServiceFacade.findByProviderEagerly(provider, params.getOffset(), params.getLimit())) );
 
             }
 
@@ -1557,6 +1562,54 @@ public class ProviderResource {
             return Response.status(Status.OK).entity(providerServices).build();
         }
 
+        /**
+         * Method matches specific Provider Service resource by composite identifier and returns its instance.
+         */
+        @GET
+        @Path("/{serviceId : \\d+}")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getProviderService(  @PathParam("userId") Long userId,
+                                             @PathParam("serviceId") Integer serviceId,
+                                             @BeanParam GenericBeanParam params) throws NotFoundException, ForbiddenException {
+
+            if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            logger.log(Level.INFO, "returning given Provider Service by executing ProviderResource.ProviderServiceResource.getProviderService(userId, serviceId) method of REST API");
+
+            ProviderService foundProviderService = providerServiceFacade.find( new ProviderServiceId(userId, serviceId) );
+            if(foundProviderService == null)
+                throw new NotFoundException("Could not find provider service for id (" + userId + "," + serviceId + ").");
+
+            // adding hypermedia links to provider service resource
+            pl.salonea.jaxrs.ProviderServiceResource.populateWithHATEOASLinks(foundProviderService, params.getUriInfo());
+
+            return Response.status(Status.OK).entity(foundProviderService).build();
+        }
+
+        /**
+         * Method matches specific Provider Service resource by composite identifier and returns its instance fetching it eagerly
+         */
+        @GET
+        @Path("/{serviceId : \\d+}/eagerly")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getProviderServiceEagerly( @PathParam("userId") Long userId,
+                                            @PathParam("serviceId") Integer serviceId,
+                                            @BeanParam GenericBeanParam params) throws NotFoundException, ForbiddenException {
+
+            if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            logger.log(Level.INFO, "returning given Provider Service eagerly by executing ProviderResource.ProviderServiceResource.getProviderServiceEagerly(userId, serviceId) method of REST API");
+
+            ProviderService foundProviderService = providerServiceFacade.findByIdEagerly( new ProviderServiceId(userId, serviceId) );
+            if(foundProviderService == null)
+                throw new NotFoundException("Could not find provider service for id (" + userId + "," + serviceId + ").");
+
+            // wrapping ProviderService into ProviderServiceWrapper in order to marshall eagerly fetched associated collection of entities
+            ProviderServiceWrapper wrappedProviderService = new ProviderServiceWrapper(foundProviderService);
+
+            // adding hypermedia links to wrapped provider service resource
+            pl.salonea.jaxrs.ProviderServiceResource.populateWithHATEOASLinks(wrappedProviderService, params.getUriInfo());
+
+            return Response.status(Status.OK).entity(wrappedProviderService).build();
+        }
     }
 
     public class ProviderRatingResource

@@ -2,6 +2,8 @@ package pl.salonea.jaxrs;
 
 
 import pl.salonea.entities.ProviderService;
+import pl.salonea.jaxrs.bean_params.GenericBeanParam;
+import pl.salonea.jaxrs.bean_params.ProviderServiceBeanParam;
 import pl.salonea.jaxrs.exceptions.ForbiddenException;
 import pl.salonea.jaxrs.utils.ResourceList;
 import pl.salonea.jaxrs.utils.hateoas.Link;
@@ -105,6 +107,17 @@ public class ProviderServiceResource {
                     .build())
                     .rel("self").build());
 
+            // self eagerly link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/{sub-id}/eagerly
+            Method providerServiceEagerlyMethod = ProviderResource.ProviderServiceResource.class.getMethod("getProviderServiceEagerly", Long.class, Integer.class, GenericBeanParam.class);
+            providerService.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ProviderResource.class)
+                    .path(providerServicesMethod)
+                    .path(providerServiceEagerlyMethod)
+                    .resolveTemplate("userId", providerService.getProvider().getUserId().toString())
+                    .resolveTemplate("serviceId", providerService.getService().getServiceId().toString())
+                    .build())
+                    .rel("provider-service-eagerly").build());
+
             // sub-collection link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}
             providerService.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
                     .path(ProviderResource.class)
@@ -112,6 +125,16 @@ public class ProviderServiceResource {
                     .resolveTemplate("userId", providerService.getProvider().getUserId().toString())
                     .build())
                     .rel("provider-provider-services").build());
+
+            // sub-collection eagerly link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}
+            Method providerServicesEagerlyMethod = ProviderResource.ProviderServiceResource.class.getMethod("getProviderServicesEagerly", Long.class, ProviderServiceBeanParam.class);
+            providerService.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ProviderResource.class)
+                    .path(providerServicesMethod)
+                    .path(providerServicesEagerlyMethod)
+                    .resolveTemplate("userId", providerService.getProvider().getUserId().toString())
+                    .build())
+                    .rel("provider-provider-services-eagerly").build());
 
             // collection link with pattern: http://localhost:port/app/rest/{resources}
             providerService.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()

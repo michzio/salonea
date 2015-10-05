@@ -7,6 +7,7 @@ import pl.salonea.enums.WorkStationType;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
+import javax.xml.bind.annotation.XmlTransient;
 import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
@@ -157,7 +158,7 @@ public class WorkStation implements Serializable{
     }
 
     /* one-to-many relationship */
-
+    @XmlTransient
     @OneToMany(mappedBy = "workStation", fetch = FetchType.LAZY)
     public Set<TermEmployeeWorkOn> getTermsEmployeesWorkOn() {
         return termsEmployeesWorkOn;
@@ -168,7 +169,7 @@ public class WorkStation implements Serializable{
     }
 
     /* many-to-many relationship */
-
+    @XmlTransient
     @ManyToMany(mappedBy = "workStations", fetch = FetchType.LAZY)
     public Set<ProviderService> getProvidedServices() {
         return providedServices;

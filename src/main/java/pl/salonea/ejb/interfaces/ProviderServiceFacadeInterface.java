@@ -1,6 +1,7 @@
 package pl.salonea.ejb.interfaces;
 
 import pl.salonea.entities.*;
+import pl.salonea.entities.idclass.ProviderServiceId;
 
 import java.util.List;
 
@@ -10,8 +11,13 @@ import java.util.List;
 public interface ProviderServiceFacadeInterface extends AbstractFacadeInterface<ProviderService> {
 
     // concrete interface
+    List<ProviderService> findAllEagerly();
+    List<ProviderService> findAllEagerly(Integer start, Integer limit);
+    ProviderService findByIdEagerly(ProviderServiceId providerServiceId);
     List<ProviderService> findByProvider(Provider provider);
     List<ProviderService> findByProvider(Provider provider, Integer start, Integer limit);
+    List<ProviderService> findByProviderEagerly(Provider provider);
+    List<ProviderService> findByProviderEagerly(Provider provider, Integer start, Integer limit);
     List<ProviderService> findByService(Service service);
     List<ProviderService> findByService(Service service, Integer start, Integer limit);
     List<ProviderService> findByServiceCategory(ServiceCategory serviceCategory);

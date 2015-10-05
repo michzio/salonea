@@ -29,7 +29,10 @@ import java.util.Set;
 @Table(name = "provider_service")
 @Access(AccessType.PROPERTY)
 @NamedQueries({
+        @NamedQuery(name = ProviderService.FIND_ALL_EAGERLY, query = "SELECT ps FROM ProviderService ps LEFT JOIN FETCH ps.supplyingEmployees e LEFT JOIN FETCH ps.workStations ws"),
+        @NamedQuery(name = ProviderService.FIND_BY_ID_EAGERLY, query = "SELECT ps FROM ProviderService ps LEFT JOIN FETCH ps.supplyingEmployees e LEFT JOIN FETCH  ps.workStations ws WHERE ps.provider.userId = :userId AND ps.service.serviceId = :serviceId"),
         @NamedQuery(name = ProviderService.FIND_BY_PROVIDER, query = "SELECT ps FROM ProviderService ps WHERE ps.provider = :provider"),
+        @NamedQuery(name = ProviderService.FIND_BY_PROVIDER_EAGERLY, query = "SELECT ps FROM ProviderService ps LEFT JOIN FETCH ps.supplyingEmployees e LEFT JOIN FETCH ps.workStations ws WHERE ps.provider = :provider"),
         @NamedQuery(name = ProviderService.FIND_BY_SERVICE, query = "SELECT ps FROM ProviderService ps WHERE ps.service = :service"),
         @NamedQuery(name = ProviderService.FIND_BY_SERVICE_CATEGORY, query = "SELECT ps FROM ProviderService ps INNER JOIN ps.service s WHERE s.serviceCategory = :service_category"),
         @NamedQuery(name = ProviderService.FIND_BY_PROVIDER_AND_SERVICE_CATEGORY, query = "SELECT ps FROM ProviderService ps INNER JOIN ps.service s WHERE ps.provider = :provider AND s.serviceCategory = :service_category"),
@@ -56,7 +59,10 @@ import java.util.Set;
 @PriceTypeDependentDuration
 public class ProviderService {
 
+    public static final String FIND_ALL_EAGERLY = "ProviderService.findAllEagerly";
+    public static final String FIND_BY_ID_EAGERLY = "ProviderService.findByIdEagerly";
     public static final String FIND_BY_PROVIDER = "ProviderService.findByProvider";
+    public static final String FIND_BY_PROVIDER_EAGERLY = "ProviderService.findByProviderEagerly";
     public static final String FIND_BY_SERVICE = "ProviderService.findByService";
     public static final String FIND_BY_SERVICE_CATEGORY = "ProviderService.findByServiceCategory";
     public static final String FIND_BY_PROVIDER_AND_SERVICE_CATEGORY = "ProviderService.findByProviderAndServiceCategory";

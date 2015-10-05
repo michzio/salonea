@@ -2,14 +2,13 @@ package pl.salonea.ejb.stateless;
 
 import pl.salonea.ejb.interfaces.ProviderServiceFacadeInterface;
 import pl.salonea.entities.*;
+import pl.salonea.entities.idclass.ProviderServiceId;
 import pl.salonea.entities.idclass.WorkStationId;
 
 import javax.ejb.LocalBean;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
-import javax.persistence.Query;
-import javax.persistence.EntityManager;
-import javax.persistence.TypedQuery;
+import javax.persistence.*;
 import javax.persistence.criteria.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,6 +34,35 @@ public class ProviderServiceFacade extends AbstractFacade<ProviderService> imple
 
 
     @Override
+    public List<ProviderService> findAllEagerly() {
+        return findAllEagerly(null, null);
+    }
+
+    @Override
+    public List<ProviderService> findAllEagerly(Integer start, Integer limit) {
+
+        TypedQuery<ProviderService> query = getEntityManager().createNamedQuery(ProviderService.FIND_ALL_EAGERLY, ProviderService.class);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
+    public ProviderService findByIdEagerly(ProviderServiceId providerServiceId) {
+
+        TypedQuery<ProviderService> query = getEntityManager().createNamedQuery(ProviderService.FIND_BY_ID_EAGERLY, ProviderService.class);
+        query.setParameter("userId", providerServiceId.getProvider());
+        query.setParameter("serviceId", providerServiceId.getService());
+        try {
+            return query.getSingleResult();
+        } catch (NoResultException | NonUniqueResultException ex) {
+            return null;
+        }
+    }
+
+    @Override
     public List<ProviderService> findByProvider(Provider provider) {
         return findByProvider(provider, null, null);
     }
@@ -43,6 +71,23 @@ public class ProviderServiceFacade extends AbstractFacade<ProviderService> imple
     public List<ProviderService> findByProvider(Provider provider, Integer start, Integer limit) {
 
         TypedQuery<ProviderService> query = getEntityManager().createNamedQuery(ProviderService.FIND_BY_PROVIDER, ProviderService.class);
+        query.setParameter("provider", provider);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
+    public List<ProviderService> findByProviderEagerly(Provider provider) {
+        return findByProviderEagerly(provider, null, null);
+    }
+
+    @Override
+    public List<ProviderService> findByProviderEagerly(Provider provider, Integer start, Integer limit) {
+
+        TypedQuery<ProviderService> query = getEntityManager().createNamedQuery(ProviderService.FIND_BY_PROVIDER_EAGERLY, ProviderService.class);
         query.setParameter("provider", provider);
         if(start != null && limit != null) {
             query.setFirstResult(start);
