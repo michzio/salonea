@@ -15,7 +15,6 @@ import pl.salonea.jaxrs.utils.ResponseWrapper;
 import pl.salonea.jaxrs.utils.hateoas.Link;
 import pl.salonea.jaxrs.wrappers.*;
 
-
 import javax.ejb.EJBException;
 import javax.ejb.EJBTransactionRolledbackException;
 import javax.inject.Inject;
@@ -1455,7 +1454,7 @@ public class ProviderResource {
 
             // find service points by given criteria
             ResourceList<ServicePoint> servicePoints = new ResourceList<>( servicePointFacade.findByProviderAndCoordinatesCircle(provider,
-                    params.getLongitudeWGS84(), params.getLatitudeWGS84(), params.getRadius()) );
+                    params.getLongitudeWGS84(), params.getLatitudeWGS84(), params.getRadius(), params.getOffset(), params.getLimit()) );
 
             // result resources need to be populated with hypermedia links to enable resource discovery
             pl.salonea.jaxrs.ServicePointResource.populateWithHATEOASLinks(servicePoints, params.getUriInfo(), params.getOffset(), params.getLimit());
@@ -1805,8 +1804,56 @@ public class ProviderResource {
         public Response countProviderServicesByProvider( @PathParam("userId") Long userId,
                                                          @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
 
-            return null;
+            if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            logger.log(Level.INFO, "returning number of provider services for given provider by executing ProviderResource.ProviderServiceResource.countProviderServicesByProvider(userId) method of REST API");
+
+            // find provider entity for which to count provider services
+            Provider provider = providerFacade.find(userId);
+            if(provider == null)
+                throw new NotFoundException("Could not find provider for id " + userId + ".");
+
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(providerServiceFacade.countByProvider(provider)), 200,
+                                                                 "number of provider services for provider with id " + provider.getUserId());
+
+            return Response.status(Status.OK).entity(responseEntity).build();
         }
+
+        /**
+         * Method returns subset of Provider Service entities for given provider
+         * categorized in given service category.
+         * The provider id and service category id are passed in path params.
+         */
+        @GET
+        @Path("/categorized-in/{serviceCategoryId : \\d+}")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getProviderServicesByCategory( @PathParam("userId") Long userId,
+                                                       @PathParam("serviceCategoryId") Integer serviceCategoryId,
+                                                       @BeanParam PaginationBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            logger.log(Level.INFO, "returning provider services for given provider and service category using ProviderResource.ProviderServiceResource.getProviderServicesByCategory(userId, serviceCategoryId) method of REST API");
+
+            // find provider entity for which to get associated provider services
+            Provider provider = providerFacade.find(userId);
+            if(provider == null)
+                throw new NotFoundException("Could not find provider for id " + userId + ".");
+
+            // find service category entity for which to get associated provider services
+            ServiceCategory serviceCategory = serviceCategoryFacade.find(serviceCategoryId);
+            if(serviceCategory == null)
+                throw new NotFoundException("Could not find service category id " + serviceCategoryId + ".");
+
+            // find provider services by given criteria (provider and service category)
+            ResourceList<ProviderService> providerServices = new ResourceList<>(
+                    providerServiceFacade.findByProviderAndServiceCategory(provider, serviceCategory, params.getOffset(), params.getLimit()) );
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.ProviderServiceResource.populateWithHATEOASLinks(providerServices, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(providerServices).build();
+        }
+
+
 
     }
 

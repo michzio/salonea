@@ -3,6 +3,7 @@ package pl.salonea.jaxrs;
 
 import pl.salonea.entities.ProviderService;
 import pl.salonea.jaxrs.bean_params.GenericBeanParam;
+import pl.salonea.jaxrs.bean_params.PaginationBeanParam;
 import pl.salonea.jaxrs.bean_params.ProviderServiceBeanParam;
 import pl.salonea.jaxrs.exceptions.ForbiddenException;
 import pl.salonea.jaxrs.utils.ResourceList;
@@ -135,6 +136,25 @@ public class ProviderServiceResource {
                     .resolveTemplate("userId", providerService.getProvider().getUserId().toString())
                     .build())
                     .rel("provider-provider-services-eagerly").build());
+
+            // sub-collection count link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/count
+            Method countByProviderMethod = ProviderResource.ProviderServiceResource.class.getMethod("countProviderServicesByProvider", Long.class, GenericBeanParam.class);
+            providerService.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ProviderResource.class)
+                    .path(providerServicesMethod)
+                    .path(countByProviderMethod)
+                    .resolveTemplate("userId", providerService.getProvider().getUserId().toString())
+                    .build())
+                    .rel("provider-provider-services-count").build());
+
+            // categorized sub-collection link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/categorized-in/{categoryId}
+            providerService.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ProviderResource.class)
+                    .path(providerServicesMethod)
+                    .path("categorized-in")
+                    .resolveTemplate("userId", providerService.getProvider().getUserId().toString())
+                    .build())
+                    .rel("provider-provider-services-categorized").build());
 
             // collection link with pattern: http://localhost:port/app/rest/{resources}
             providerService.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()

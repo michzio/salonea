@@ -60,6 +60,7 @@ public interface ProviderServiceFacadeInterface extends AbstractFacadeInterface<
                                                  Short minDiscount, Short maxDiscount, List<WorkStation> workStations, List<Employee> employees, Integer start, Integer limit);
     Integer updateDiscountForProviderAndServiceCategory(Provider provider, ServiceCategory serviceCategory, Short newDiscount);
     Integer updateDiscountForProviderAndEmployee(Provider provider, Employee employee, Short newDiscount);
+    Integer updateDiscountForProviderAndServiceCategoryAndEmployee(Provider provider, ServiceCategory serviceCategory, Employee employee, Short newDiscount);
     Integer deleteById(ProviderServiceId providerServiceId);
     Integer deleteForOnlyWorkStation(WorkStation workStation);
     Integer deleteForProviderAndOnlyEmployee(Provider provider, Employee employee);
@@ -67,6 +68,7 @@ public interface ProviderServiceFacadeInterface extends AbstractFacadeInterface<
     Integer deleteForProviderAndServiceCategoryAndOnlyEmployee(Provider provider, ServiceCategory serviceCategory, Employee employee);
     Integer deleteForProvider(Provider provider);
     Integer deleteForService(Service service);
+    Long countByProvider(Provider provider);
 
 
     @javax.ejb.Remote

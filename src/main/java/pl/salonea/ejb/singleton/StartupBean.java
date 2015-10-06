@@ -63,6 +63,8 @@ public class StartupBean {
     private ServicePointFacade servicePointFacade;
     @Inject
     private WorkStationFacade workStationFacade;
+    @Inject
+    private ServiceCategoryFacade serviceCategoryFacade;
 
     public StartupBean() { }
 
@@ -161,6 +163,17 @@ public class StartupBean {
 
         Service hairCut = new Service("Hair cut");
         Service dentalFilling = new Service("Dental filling");
+
+        ServiceCategory medicalServices = new ServiceCategory("Medical Services");
+        ServiceCategory hairDressingServices = new ServiceCategory("Hairdressing Services");
+
+        medicalServices.getServices().add(dentalFilling);
+        hairDressingServices.getServices().add(hairCut);
+        dentalFilling.setServiceCategory(medicalServices);
+        hairCut.setServiceCategory(hairDressingServices);
+
+        serviceCategoryFacade.create(medicalServices);
+        serviceCategoryFacade.create(hairDressingServices);
 
         ProviderService prov1DentalFilling = new ProviderService(provider1, dentalFilling, 1800000L /* 30 min */);
         ProviderService prov3HairCut = new ProviderService(provider3, hairCut, 1800000L /* 30 min */);

@@ -7,6 +7,7 @@ import pl.salonea.constraints.CategoryPhrase;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import javax.xml.bind.annotation.XmlTransient;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -105,6 +106,7 @@ public class ServiceCategory {
 
     /* one-to-many relationship */
 
+    @XmlTransient
     @OneToMany(mappedBy = "superCategory", fetch = FetchType.LAZY, cascade = { CascadeType.REMOVE })
     public Set<ServiceCategory> getSubCategories() {
         return subCategories;
@@ -114,6 +116,7 @@ public class ServiceCategory {
         this.subCategories = subCategories;
     }
 
+    @XmlTransient
     @OneToMany(mappedBy = "serviceCategory", fetch = FetchType.LAZY)
     public Set<Service> getServices() {
         return services;

@@ -48,6 +48,8 @@ import java.util.Set;
         @NamedQuery(name = ProviderService.FIND_BY_PROVIDER_AND_EMPLOYEE, query = "SELECT ps FROM ProviderService ps WHERE ps.provider = :provider AND :employee MEMBER OF ps.supplyingEmployees"),
         @NamedQuery(name = ProviderService.UPDATE_DISCOUNT_FOR_PROVIDER_AND_SERVICE_CATEGORY, query = "UPDATE ProviderService ps SET ps.discount = :new_discount WHERE ps.provider = :provider AND ps.service IN (SELECT s FROM Service s WHERE s.serviceCategory = :service_category)"),
         @NamedQuery(name = ProviderService.UPDATE_DISCOUNT_FOR_PROVIDER_AND_EMPLOYEE, query = "UPDATE ProviderService ps SET ps.discount = :new_discount WHERE ps.provider = :provider AND :employee MEMBER OF ps.supplyingEmployees"),
+        @NamedQuery(name = ProviderService.UPDATE_DISCOUNT_FOR_PROVIDER_AND_SERVICE_CATEGORY_AND_EMPLOYEE, query = "UPDATE ProviderService ps SET ps.discount = :new_discount WHERE ps.provider = :provider AND" +
+                " ps.service IN (SELECT s FROM Service s WHERE s.serviceCategory = :service_category) AND :employee MEMBER OF ps.supplyingEmployees"),
         @NamedQuery(name = ProviderService.DELETE_BY_ID, query = "DELETE FROM ProviderService ps WHERE ps.provider.userId = :userId AND ps.service.serviceId = :serviceId"),
         @NamedQuery(name = ProviderService.DELETE_FOR_ONLY_WORK_STATION, query = "DELETE FROM ProviderService ps WHERE :work_station MEMBER OF ps.workStations AND SIZE(ps.workStations) = 1"),
         @NamedQuery(name = ProviderService.DELETE_FOR_PROVIDER_AND_ONLY_EMPLOYEE, query = "DELETE FROM ProviderService ps WHERE ps.provider = :provider AND :employee MEMBER OF ps.supplyingEmployees AND SIZE(ps.supplyingEmployees)= 1"),
@@ -55,7 +57,8 @@ import java.util.Set;
         @NamedQuery(name = ProviderService.DELETE_FOR_PROVIDER_AND_SERVICE_CATEGORY_AND_ONLY_EMPLOYEE, query = "DELETE FROM ProviderService ps WHERE ps.provider = :provider AND" +
                 " ps.service IN (SELECT s FROM Service s WHERE s.serviceCategory = :service_category) AND :employee MEMBER OF ps.supplyingEmployees AND SIZE(ps.supplyingEmployees)= 1"),
         @NamedQuery(name = ProviderService.DELETE_FOR_PROVIDER, query = "DELETE FROM ProviderService ps WHERE ps.provider = :provider"),
-        @NamedQuery(name = ProviderService.DELETE_FOR_SERVICE, query = "DELETE FROM ProviderService ps WHERE ps.service = :service")
+        @NamedQuery(name = ProviderService.DELETE_FOR_SERVICE, query = "DELETE FROM ProviderService ps WHERE ps.service = :service"),
+        @NamedQuery(name = ProviderService.COUNT_BY_PROVIDER, query = "SELECT COUNT(ps) FROM ProviderService ps WHERE ps.provider = :provider")
 })
 @MutualProvider
 @PriceNeedType
@@ -81,6 +84,7 @@ public class ProviderService {
     public static final String FIND_BY_PROVIDER_AND_EMPLOYEE = "ProviderService.findByProviderAndEmployee";
     public static final String UPDATE_DISCOUNT_FOR_PROVIDER_AND_SERVICE_CATEGORY = "ProviderService.updateDiscountForProviderAndServiceCategory";
     public static final String UPDATE_DISCOUNT_FOR_PROVIDER_AND_EMPLOYEE = "ProviderService.updateDiscountForProviderAndEmployee";
+    public static final String UPDATE_DISCOUNT_FOR_PROVIDER_AND_SERVICE_CATEGORY_AND_EMPLOYEE = "ProviderService.updateDiscountForProviderAndServiceCategoryAndEmployee";
     public static final String DELETE_BY_ID = "ProviderService.deleteById";
     public static final String DELETE_FOR_ONLY_WORK_STATION = "ProviderService.deleteForOnlyWorkStation";
     public static final String DELETE_FOR_PROVIDER_AND_ONLY_EMPLOYEE = "ProviderService.deleteForProviderAndOnlyEmployee";
@@ -88,6 +92,7 @@ public class ProviderService {
     public static final String DELETE_FOR_PROVIDER_AND_SERVICE_CATEGORY_AND_ONLY_EMPLOYEE = "ProviderService.deleteForProviderAndServiceCategoryAndOnlyEmployee";
     public static final String DELETE_FOR_PROVIDER = "ProviderService.deleteForProvider";
     public static final String DELETE_FOR_SERVICE = "ProviderService.deleteForService";
+    public static final String COUNT_BY_PROVIDER = "ProviderService.countByProvider";
 
     private Provider provider; // PK, FK
     private Service service; // PK, FK

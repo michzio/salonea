@@ -372,6 +372,17 @@ public class ProviderServiceFacade extends AbstractFacade<ProviderService> imple
     }
 
     @Override
+    public Integer updateDiscountForProviderAndServiceCategoryAndEmployee(Provider provider, ServiceCategory serviceCategory, Employee employee, Short newDiscount) {
+
+        Query query = getEntityManager().createNamedQuery(ProviderService.UPDATE_DISCOUNT_FOR_PROVIDER_AND_SERVICE_CATEGORY_AND_EMPLOYEE);
+        query.setParameter("provider", provider);
+        query.setParameter("service_category", serviceCategory);
+        query.setParameter("employee", employee);
+        query.setParameter("new_discount", newDiscount);
+        return query.executeUpdate();
+    }
+
+    @Override
     public Integer deleteById(ProviderServiceId providerServiceId) {
 
         Query query = getEntityManager().createNamedQuery(ProviderService.DELETE_BY_ID);
@@ -430,6 +441,14 @@ public class ProviderServiceFacade extends AbstractFacade<ProviderService> imple
         Query query = getEntityManager().createNamedQuery(ProviderService.DELETE_FOR_SERVICE);
         query.setParameter("service", service);
         return query.executeUpdate();
+    }
+
+    @Override
+    public Long countByProvider(Provider provider) {
+
+        TypedQuery<Long> query = getEntityManager().createNamedQuery(ProviderService.COUNT_BY_PROVIDER, Long.class);
+        query.setParameter("provider", provider);
+        return query.getSingleResult();
     }
 
     @Override
