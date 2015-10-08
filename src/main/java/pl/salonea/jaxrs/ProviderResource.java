@@ -10,6 +10,7 @@ import pl.salonea.jaxrs.exceptions.*;
 import pl.salonea.jaxrs.exceptions.ForbiddenException;
 import pl.salonea.jaxrs.exceptions.NotFoundException;
 import pl.salonea.jaxrs.exceptions.BadRequestException;
+import pl.salonea.jaxrs.utils.RequestWrapper;
 import pl.salonea.jaxrs.utils.ResourceList;
 import pl.salonea.jaxrs.utils.ResponseWrapper;
 import pl.salonea.jaxrs.utils.hateoas.Link;
@@ -1705,6 +1706,83 @@ public class ProviderResource {
         }
 
         /**
+         * Method that takes new discount value and update it on Provider Service entities
+         * that match specified query param criteria: service category, employee.
+         * New discount is passed through request body message and service category id
+         * and employee id are passed through query params.
+         */
+        @PUT
+        @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response updateProviderServicesDiscount( @PathParam("userId") Long userId,
+                                                        RequestWrapper wrappedDiscount,
+                                                        @QueryParam("serviceCategoryId") Integer serviceCategoryId,
+                                                        @QueryParam("employeeId") Long employeeId,
+                                                        @HeaderParam("authToken") String authToken ) throws ForbiddenException, NotFoundException, BadRequestException {
+
+            if(authToken == null) throw new ForbiddenException("Unauthorized access to web service.");
+            logger.log(Level.INFO, "updating Provider Services matching given service category and/or employee by setting new discount value " +
+                    "using ProviderResource.ProviderServiceResource.updateProviderServicesDiscount(userId, discount, serviceCategoryId, employeeId) method of REST API ");
+
+            if(wrappedDiscount == null)
+                throw new BadRequestException("New discount value should be send in request body as json or xml.");
+
+            // find provider entity for which to update provider services
+            Provider provider = providerFacade.find(userId);
+            if(provider == null)
+                throw new NotFoundException("Could not find provider for id " + userId + ".");
+
+            Short newDiscount = Short.valueOf(wrappedDiscount.getMessage());
+            if(newDiscount < 0 || newDiscount > 100 )
+                throw new BadRequestException("New discount value should be in range [0,100].");
+
+            Integer noOfUpdated = 0;
+            if(serviceCategoryId != null && employeeId != null) {
+                // update discount for provider, service category and employee
+
+                ServiceCategory serviceCategory = serviceCategoryFacade.find(serviceCategoryId);
+                if(serviceCategory == null)
+                    throw new NotFoundException("Could not find service category for id " + serviceCategoryId + ".");
+
+                Employee employee = employeeFacade.find(employeeId);
+                if(employee == null)
+                    throw new NotFoundException("Could not find employee for id " + employeeId + ".");
+
+                noOfUpdated = providerServiceFacade.updateDiscountForProviderAndServiceCategoryAndEmployee(
+                                        provider, serviceCategory, employee, newDiscount);
+
+            } else if(serviceCategoryId != null) {
+                // update discount for provider and service category
+
+                ServiceCategory serviceCategory = serviceCategoryFacade.find(serviceCategoryId);
+                if(serviceCategory == null)
+                    throw new NotFoundException("Could not find service category for id " + serviceCategoryId + ".");
+
+                noOfUpdated = providerServiceFacade.updateDiscountForProviderAndServiceCategory(provider, serviceCategory, newDiscount);
+
+            } else if(employeeId != null) {
+                // update discount for provider and employee
+
+                Employee employee = employeeFacade.find(employeeId);
+                if(employee == null)
+                    throw new NotFoundException("Could not find employee for id " + employee + ".");
+
+                noOfUpdated = providerServiceFacade.updateDiscountForProviderAndEmployee(provider, employee, newDiscount);
+
+            } else {
+                // update discount for provider only
+
+                noOfUpdated = providerServiceFacade.updateDiscountForProvider(provider, newDiscount);
+            }
+
+            // create response returning number of updated entities
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(noOfUpdated), 200, "number of updated provider services with new discount value " + newDiscount + "% for provider with id " + userId);
+
+            return Response.status(Status.OK).entity(responseEntity).build();
+
+        }
+
+        /**
          * Method that removes subset of Provider Service entities from database for given Provider.
          * The provider id is passed through path param.
          */
@@ -1724,7 +1802,7 @@ public class ProviderResource {
                 throw new NotFoundException("Could not find provider for id " + userId + ".");
 
             // remove all specified entities from database
-            Integer noOfDeleted = null;
+            Integer noOfDeleted = 0;
             if(employeeId != null && serviceCategoryId != null) {
 
                 Employee employee = employeeFacade.find(employeeId);
@@ -1841,7 +1919,7 @@ public class ProviderResource {
             // find service category entity for which to get associated provider services
             ServiceCategory serviceCategory = serviceCategoryFacade.find(serviceCategoryId);
             if(serviceCategory == null)
-                throw new NotFoundException("Could not find service category id " + serviceCategoryId + ".");
+                throw new NotFoundException("Could not find service category for id " + serviceCategoryId + ".");
 
             // find provider services by given criteria (provider and service category)
             ResourceList<ProviderService> providerServices = new ResourceList<>(
@@ -1853,7 +1931,119 @@ public class ProviderResource {
             return Response.status(Status.OK).entity(providerServices).build();
         }
 
+        /**
+         * Method returns subset of Provider Service entities for given provider
+         * described by given description.
+         * The provider id and description are passed in path params.
+         */
+        @GET
+        @Path("/described-by/{description}")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getProviderServicesByDescription( @PathParam("userId") Long userId,
+                                                          @PathParam("description") String description,
+                                                          @BeanParam PaginationBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException {
 
+            if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            logger.log(Level.INFO, "returning provider services for given provider and description using ProviderResource.ProviderServiceResource.getProviderServicesByDescription(userId, description) method of REST API");
+
+            // find provider entity for which to get associated provider services
+            Provider provider = providerFacade.find(userId);
+            if(provider == null)
+                throw new NotFoundException("Could not find provider for id " + userId + ".");
+
+            if(description == null)
+                throw new BadRequestException("Description param cannot be null.");
+
+            // find provider services by given criteria (provider and description)
+            ResourceList<ProviderService> providerServices = new ResourceList<>(
+                    providerServiceFacade.findByProviderAndDescription(provider, description, params.getOffset(), params.getLimit()) );
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.ProviderServiceResource.populateWithHATEOASLinks(providerServices, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(providerServices).build();
+        }
+
+        /**
+         * Method returns subset of Provider Service entities for given provider
+         * that have been discounted between some min discount and max discount.
+         * The provider id is passed through path param and discount limits are
+         * passed through query params.
+         */
+        @GET
+        @Path("/discounted-between")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getProviderServicesByDiscount( @PathParam("userId") Long userId,
+                                                       @BeanParam DiscountBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException {
+
+            if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            logger.log(Level.INFO, "returning provider services for given provider and discounted between given min and max discount limits" +
+                    " using ProviderResource.ProviderServiceResource.getProviderServicesByDiscount(userId, minDiscount, maxDiscount) method of REST API");
+
+            // find provider entity for which to get associated provider services
+            Provider provider = providerFacade.find(userId);
+            if(provider == null)
+                throw new NotFoundException("Could not find provider for id " + userId + ".");
+
+            if(params.getMinDiscount() == null)
+                throw new BadRequestException("Min discount query param cannot be null.");
+            else if( params.getMinDiscount() < 0 || params.getMinDiscount() > 100 )
+                throw new BadRequestException("Min discount value should be between 0 and 100.");
+
+            if(params.getMaxDiscount() == null)
+                throw new BadRequestException("Max discount query param cannot be null.");
+            else if( params.getMaxDiscount() < 0 || params.getMaxDiscount() > 100 )
+                throw new BadRequestException("Max discount value should be between 0 and 100.");
+
+            if(params.getMaxDiscount() < params.getMinDiscount())
+                throw new BadRequestException("Max discount cannot be less than min discount.");
+
+            // find provider services by given criteria (provider and discount max and min limits)
+            ResourceList<ProviderService> providerServices = new ResourceList<>(
+                    providerServiceFacade.findByProviderAndDiscount(provider, params.getMinDiscount(), params.getMaxDiscount(),
+                                                                    params.getOffset(), params.getLimit() )
+            );
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.ProviderServiceResource.populateWithHATEOASLinks(providerServices, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(providerServices).build();
+        }
+
+        /**
+         * Method returns subset of Provider Service entities for given provider
+         * supplied by given employee.
+         * The provider id and employee id are passed in path params.
+         */
+        @GET
+        @Path("/supplied-by/{employeeId : \\d+}")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getProviderServicesSuppliedByEmployee( @PathParam("userId") Long userId,
+                                                               @PathParam("employeeId") Long employeeId,
+                                                               @BeanParam PaginationBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            logger.log(Level.INFO, "returning provider services for given provider and employee using ProviderResource.ProviderServiceResource.getProviderServicesSuppliedByEmployee(userId, employeeId) method of REST API");
+
+            // find provider entity for which to get associated provider services
+            Provider provider = providerFacade.find(userId);
+            if(provider == null)
+                throw new NotFoundException("Could not find provider for id " + userId + ".");
+
+            // find employee entity for which to get associated provider services
+            Employee employee = employeeFacade.find(employeeId);
+            if(employee == null)
+                throw new NotFoundException("Could not find employee for id " + employeeId + ".");
+
+            // find provider services by given criteria (provider and employee)
+            ResourceList<ProviderService> providerServices = new ResourceList<>(
+                    providerServiceFacade.findByProviderAndEmployee(provider, employee, params.getOffset(), params.getLimit()) );
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.ProviderServiceResource.populateWithHATEOASLinks(providerServices, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(providerServices).build();
+        }
 
     }
 

@@ -29,7 +29,7 @@ import java.util.Set;
         @NamedQuery(name = ServicePoint.FIND_ALL_EAGERLY, query = "SELECT sp FROM ServicePoint sp LEFT JOIN FETCH sp.workStations ws LEFT JOIN FETCH sp.photos ph LEFT JOIN FETCH sp.virtualTours vt"),
         @NamedQuery(name = ServicePoint.FIND_BY_ID_EAGERLY, query = "SELECT sp FROM ServicePoint sp LEFT JOIN FETCH sp.workStations ws LEFT JOIN FETCH sp.photos ph LEFT JOIN FETCH sp.virtualTours vt WHERE sp.provider.userId = :userId AND sp.servicePointNumber = :servicePointNumber"),
         @NamedQuery(name = ServicePoint.FIND_BY_PROVIDER, query = "SELECT sp FROM ServicePoint sp WHERE sp.provider = :provider"),
-        @NamedQuery(name = ServicePoint.FIND_BY_PROVIDER_EAGERLY, query = "SELECT sp FROM ServicePoint sp LEFT JOIN FETCH sp.workStations ws LEFT JOIN FETCH sp.photos ph LEFT JOIN FETCH sp.virtualTours vt WHERE sp.provider = :provider" ),
+        @NamedQuery(name = ServicePoint.FIND_BY_PROVIDER_EAGERLY, query = "SELECT DISTINCT sp FROM ServicePoint sp LEFT JOIN FETCH sp.workStations ws LEFT JOIN FETCH sp.photos ph LEFT JOIN FETCH sp.virtualTours vt WHERE sp.provider = :provider" ),
         @NamedQuery(name = ServicePoint.FIND_BY_ADDRESS, query = "SELECT sp FROM ServicePoint sp WHERE sp.address.city LIKE :city AND sp.address.state LIKE :state " +
                 "AND sp.address.country LIKE :country AND sp.address.street LIKE :street AND sp.address.zipCode LIKE :zip_code"),
         @NamedQuery(name = ServicePoint.FIND_BY_COORDINATES_SQUARE, query = "SELECT sp FROM ServicePoint sp WHERE sp.longitudeWGS84 >= :min_longitude_wgs84 AND sp.longitudeWGS84 <= :max_longitude_wgs84 AND sp.latitudeWGS84 >= :min_latitude_wgs84 AND sp.latitudeWGS84 <= :max_latitude_wgs84"),

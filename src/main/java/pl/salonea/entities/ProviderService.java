@@ -32,7 +32,7 @@ import java.util.Set;
         @NamedQuery(name = ProviderService.FIND_ALL_EAGERLY, query = "SELECT ps FROM ProviderService ps LEFT JOIN FETCH ps.supplyingEmployees e LEFT JOIN FETCH ps.workStations ws"),
         @NamedQuery(name = ProviderService.FIND_BY_ID_EAGERLY, query = "SELECT ps FROM ProviderService ps LEFT JOIN FETCH ps.supplyingEmployees e LEFT JOIN FETCH  ps.workStations ws WHERE ps.provider.userId = :userId AND ps.service.serviceId = :serviceId"),
         @NamedQuery(name = ProviderService.FIND_BY_PROVIDER, query = "SELECT ps FROM ProviderService ps WHERE ps.provider = :provider"),
-        @NamedQuery(name = ProviderService.FIND_BY_PROVIDER_EAGERLY, query = "SELECT ps FROM ProviderService ps LEFT JOIN FETCH ps.supplyingEmployees e LEFT JOIN FETCH ps.workStations ws WHERE ps.provider = :provider"),
+        @NamedQuery(name = ProviderService.FIND_BY_PROVIDER_EAGERLY, query = "SELECT DISTINCT ps FROM ProviderService ps LEFT JOIN FETCH ps.supplyingEmployees e LEFT JOIN FETCH ps.workStations ws WHERE ps.provider = :provider"),
         @NamedQuery(name = ProviderService.FIND_BY_SERVICE, query = "SELECT ps FROM ProviderService ps WHERE ps.service = :service"),
         @NamedQuery(name = ProviderService.FIND_BY_SERVICE_CATEGORY, query = "SELECT ps FROM ProviderService ps INNER JOIN ps.service s WHERE s.serviceCategory = :service_category"),
         @NamedQuery(name = ProviderService.FIND_BY_PROVIDER_AND_SERVICE_CATEGORY, query = "SELECT ps FROM ProviderService ps INNER JOIN ps.service s WHERE ps.provider = :provider AND s.serviceCategory = :service_category"),
@@ -46,6 +46,7 @@ import java.util.Set;
         @NamedQuery(name = ProviderService.FIND_BY_WORK_STATION, query = "SELECT ps FROM ProviderService ps WHERE :work_station MEMBER OF ps.workStations"),
         @NamedQuery(name = ProviderService.FIND_BY_EMPLOYEE, query = "SELECT ps FROM ProviderService ps WHERE :employee MEMBER OF ps.supplyingEmployees"),
         @NamedQuery(name = ProviderService.FIND_BY_PROVIDER_AND_EMPLOYEE, query = "SELECT ps FROM ProviderService ps WHERE ps.provider = :provider AND :employee MEMBER OF ps.supplyingEmployees"),
+        @NamedQuery(name = ProviderService.UPDATE_DISCOUNT_FOR_PROVIDER, query = "UPDATE ProviderService ps SET ps.discount = :new_discount WHERE ps.provider = :provider"),
         @NamedQuery(name = ProviderService.UPDATE_DISCOUNT_FOR_PROVIDER_AND_SERVICE_CATEGORY, query = "UPDATE ProviderService ps SET ps.discount = :new_discount WHERE ps.provider = :provider AND ps.service IN (SELECT s FROM Service s WHERE s.serviceCategory = :service_category)"),
         @NamedQuery(name = ProviderService.UPDATE_DISCOUNT_FOR_PROVIDER_AND_EMPLOYEE, query = "UPDATE ProviderService ps SET ps.discount = :new_discount WHERE ps.provider = :provider AND :employee MEMBER OF ps.supplyingEmployees"),
         @NamedQuery(name = ProviderService.UPDATE_DISCOUNT_FOR_PROVIDER_AND_SERVICE_CATEGORY_AND_EMPLOYEE, query = "UPDATE ProviderService ps SET ps.discount = :new_discount WHERE ps.provider = :provider AND" +
@@ -82,6 +83,7 @@ public class ProviderService {
     public static final String FIND_BY_WORK_STATION = "ProviderService.findByWorkStation";
     public static final String FIND_BY_EMPLOYEE = "ProviderService.findByEmployee";
     public static final String FIND_BY_PROVIDER_AND_EMPLOYEE = "ProviderService.findByProviderAndEmployee";
+    public static final String UPDATE_DISCOUNT_FOR_PROVIDER = "ProviderService.updateDiscountForProvider";
     public static final String UPDATE_DISCOUNT_FOR_PROVIDER_AND_SERVICE_CATEGORY = "ProviderService.updateDiscountForProviderAndServiceCategory";
     public static final String UPDATE_DISCOUNT_FOR_PROVIDER_AND_EMPLOYEE = "ProviderService.updateDiscountForProviderAndEmployee";
     public static final String UPDATE_DISCOUNT_FOR_PROVIDER_AND_SERVICE_CATEGORY_AND_EMPLOYEE = "ProviderService.updateDiscountForProviderAndServiceCategoryAndEmployee";

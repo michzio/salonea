@@ -65,6 +65,8 @@ public class StartupBean {
     private WorkStationFacade workStationFacade;
     @Inject
     private ServiceCategoryFacade serviceCategoryFacade;
+    @Inject
+    private EmployeeFacade employeeFacade;
 
     public StartupBean() { }
 
@@ -172,11 +174,15 @@ public class StartupBean {
         dentalFilling.setServiceCategory(medicalServices);
         hairCut.setServiceCategory(hairDressingServices);
 
-        serviceCategoryFacade.create(medicalServices);
-        serviceCategoryFacade.create(hairDressingServices);
-
         ProviderService prov1DentalFilling = new ProviderService(provider1, dentalFilling, 1800000L /* 30 min */);
         ProviderService prov3HairCut = new ProviderService(provider3, hairCut, 1800000L /* 30 min */);
+
+        // create instance of Employee
+        Date dateOfBirth = new GregorianCalendar(1988, Calendar.OCTOBER, 3).getTime();
+        Employee hairDresser = new Employee("hairdresser.1@hairstyles.com", "hairdresser", "pAs12#", "Tomasz", "Fryzjer", dateOfBirth, Gender.male, "assistant");
+
+        hairDresser.getSuppliedServices().add(prov3HairCut);
+        prov3HairCut.getSupplyingEmployees().add(hairDresser);
 
         Client client1 = new Client("some client");
 
@@ -223,6 +229,9 @@ public class StartupBean {
         workStationFacade.create(workStation112);
         workStationFacade.create(workStation121);
         workStationFacade.create(workStation122);
+        serviceCategoryFacade.create(medicalServices);
+        serviceCategoryFacade.create(hairDressingServices);
+        employeeFacade.create(hairDresser);
 
     }
 

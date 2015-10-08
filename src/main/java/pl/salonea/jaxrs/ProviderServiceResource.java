@@ -1,6 +1,7 @@
 package pl.salonea.jaxrs;
 
 
+import pl.salonea.entities.Provider;
 import pl.salonea.entities.ProviderService;
 import pl.salonea.jaxrs.bean_params.GenericBeanParam;
 import pl.salonea.jaxrs.bean_params.PaginationBeanParam;
@@ -74,7 +75,7 @@ public class ProviderServiceResource {
 
         for(Object object : providerServices.getResources()) {
             if(object instanceof ProviderService) {
-                ProviderServiceResource.populateWithHATEOASLinks((ProviderService) object, uriInfo);
+                ProviderServiceResource.populateWithHATEOASLinks( (ProviderService) object, uriInfo);
             } else if(object instanceof ProviderServiceWrapper) {
                 ProviderServiceResource.populateWithHATEOASLinks( (ProviderServiceWrapper) object, uriInfo);
             }
@@ -155,6 +156,33 @@ public class ProviderServiceResource {
                     .resolveTemplate("userId", providerService.getProvider().getUserId().toString())
                     .build())
                     .rel("provider-provider-services-categorized").build());
+
+            // described sub-collection link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/described-by/{description}
+            providerService.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ProviderResource.class)
+                    .path(providerServicesMethod)
+                    .path("described-by")
+                    .resolveTemplate("userId", providerService.getProvider().getUserId().toString())
+                    .build())
+                    .rel("provider-provider-services-described").build());
+
+            // discounted sub-collection link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/discounted-between?minDiscount={minDiscount}&maxDiscount={maxDiscount}
+            providerService.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ProviderResource.class)
+                    .path(providerServicesMethod)
+                    .path("discounted-between")
+                    .resolveTemplate("userId", providerService.getProvider().getUserId().toString())
+                    .build())
+                    .rel("provider-provider-services-discounted").build());
+
+            // supplied-by-employee sub-collection link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/supplied-by/{employeeId}
+            providerService.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ProviderResource.class)
+                    .path(providerServicesMethod)
+                    .path("supplied-by")
+                    .resolveTemplate("userId", providerService.getProvider().getUserId().toString())
+                    .build())
+                    .rel("provider-provider-services-supplied-by-employee").build());
 
             // collection link with pattern: http://localhost:port/app/rest/{resources}
             providerService.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()

@@ -5,6 +5,7 @@ import pl.salonea.enums.Gender;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import javax.xml.bind.annotation.XmlTransient;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
@@ -49,13 +50,14 @@ public class Employee extends NaturalPerson {
     private String jobPosition;
     private String description;
 
-    private Set<Education> educations = new HashSet<>();
-    private Set<Skill> skills = new HashSet<>();
-
     /* one-to-many relationships */
     private Set<TermEmployeeWorkOn> termsOnWorkStation = new HashSet<>();
-    private Set<ProviderService> suppliedServices = new HashSet<>();
     private Set<EmployeeRating> receivedRatings = new HashSet<>();
+
+    /* many-to-many relationships */
+    private Set<Education> educations = new HashSet<>();
+    private Set<Skill> skills = new HashSet<>();
+    private Set<ProviderService> suppliedServices = new HashSet<>();
 
     /* constructors */
     public Employee() { }
@@ -96,7 +98,8 @@ public class Employee extends NaturalPerson {
 
     /* many-to-many bidirectional relationships */
 
-    @ManyToMany
+    @XmlTransient
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "employee_education",
             joinColumns = @JoinColumn(name = "employee_id"),
             inverseJoinColumns = @JoinColumn(name = "education_id")
@@ -109,7 +112,8 @@ public class Employee extends NaturalPerson {
         this.educations = educations;
     }
 
-    @ManyToMany
+    @XmlTransient
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "employee_skill",
         joinColumns = @JoinColumn(name = "employee_id"),
             inverseJoinColumns = @JoinColumn(name = "skill_id")
@@ -122,17 +126,7 @@ public class Employee extends NaturalPerson {
         this.skills = skills;
     }
 
-    /* one-to-many relationships */
-
-    @OneToMany(mappedBy = "employee", fetch = FetchType.LAZY)
-    public Set<TermEmployeeWorkOn> getTermsOnWorkStation() {
-        return termsOnWorkStation;
-    }
-
-    public void setTermsOnWorkStation(Set<TermEmployeeWorkOn> termsOnWorkStation) {
-        this.termsOnWorkStation = termsOnWorkStation;
-    }
-
+    @XmlTransient
     @ManyToMany(mappedBy = "supplyingEmployees", fetch = FetchType.LAZY)
     public Set<ProviderService> getSuppliedServices() {
         return suppliedServices;
@@ -142,6 +136,19 @@ public class Employee extends NaturalPerson {
         this.suppliedServices = suppliedServices;
     }
 
+    /* one-to-many relationships */
+
+    @XmlTransient
+    @OneToMany(mappedBy = "employee", fetch = FetchType.LAZY)
+    public Set<TermEmployeeWorkOn> getTermsOnWorkStation() {
+        return termsOnWorkStation;
+    }
+
+    public void setTermsOnWorkStation(Set<TermEmployeeWorkOn> termsOnWorkStation) {
+        this.termsOnWorkStation = termsOnWorkStation;
+    }
+
+    @XmlTransient
     @OneToMany(mappedBy = "employee", fetch = FetchType.LAZY)
     public Set<EmployeeRating> getReceivedRatings() {
         return receivedRatings;

@@ -352,6 +352,15 @@ public class ProviderServiceFacade extends AbstractFacade<ProviderService> imple
     }
 
     @Override
+    public Integer updateDiscountForProvider(Provider provider, Short newDiscount) {
+
+        Query query = getEntityManager().createNamedQuery(ProviderService.UPDATE_DISCOUNT_FOR_PROVIDER);
+        query.setParameter("provider", provider);
+        query.setParameter("new_discount", newDiscount);
+        return query.executeUpdate();
+    }
+
+    @Override
     public Integer updateDiscountForProviderAndServiceCategory(Provider provider, ServiceCategory serviceCategory, Short newDiscount) {
 
         Query query = getEntityManager().createNamedQuery(ProviderService.UPDATE_DISCOUNT_FOR_PROVIDER_AND_SERVICE_CATEGORY);
@@ -499,7 +508,7 @@ public class ProviderServiceFacade extends AbstractFacade<ProviderService> imple
         // FROM
         Root<ProviderService> providerService = criteriaQuery.from(ProviderService.class);
         // SELECT
-        criteriaQuery.select(providerService);
+        criteriaQuery.select(providerService).distinct(true);
 
         // INNER JOIN-s
         Join<ProviderService, Service> service = null;

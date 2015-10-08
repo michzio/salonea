@@ -58,6 +58,7 @@ public interface ProviderServiceFacadeInterface extends AbstractFacadeInterface<
     List<ProviderService> findByMultipleCriteriaEagerly(List<Provider> providers, List<Service> services, List<ServiceCategory> serviceCategories,
                                                  String description, Double minPrice, Double maxPrice, Boolean includeDiscounts,
                                                  Short minDiscount, Short maxDiscount, List<WorkStation> workStations, List<Employee> employees, Integer start, Integer limit);
+    Integer updateDiscountForProvider(Provider provider, Short newDiscount);
     Integer updateDiscountForProviderAndServiceCategory(Provider provider, ServiceCategory serviceCategory, Short newDiscount);
     Integer updateDiscountForProviderAndEmployee(Provider provider, Employee employee, Short newDiscount);
     Integer updateDiscountForProviderAndServiceCategoryAndEmployee(Provider provider, ServiceCategory serviceCategory, Employee employee, Short newDiscount);
