@@ -32,6 +32,8 @@ public interface ProviderRatingFacadeInterface extends AbstractFacadeInterface<P
     Long countClientRatings(Client client);
     Integer deleteByClient(Client client);
     Integer deleteByProvider(Provider provider);
+    List<ProviderRating> findByMultipleCriteria(List<Client> clients, List<Provider> providers, Short minRating, Short maxRating, Short exactRating, String clientComment, String providerDementi);
+    List<ProviderRating> findByMultipleCriteria(List<Client> clients, List<Provider> providers, Short minRating, Short maxRating, Short exactRating, String clientComment, String providerDementi, Integer start, Integer limit);
 
     @javax.ejb.Remote
     interface Remote extends ProviderRatingFacadeInterface { }

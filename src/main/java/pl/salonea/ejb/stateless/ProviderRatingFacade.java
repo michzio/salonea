@@ -4,6 +4,7 @@ import pl.salonea.ejb.interfaces.ProviderRatingFacadeInterface;
 import pl.salonea.entities.Client;
 import pl.salonea.entities.Provider;
 import pl.salonea.entities.ProviderRating;
+import pl.salonea.entities.ProviderRating_;
 
 import javax.ejb.LocalBean;
 import javax.ejb.Stateless;
@@ -11,6 +12,8 @@ import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import javax.persistence.TypedQuery;
+import javax.persistence.criteria.*;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -212,6 +215,75 @@ public class ProviderRatingFacade extends AbstractFacade<ProviderRating> impleme
         Query query = getEntityManager().createNamedQuery(ProviderRating.DELETE_BY_PROVIDER);
         query.setParameter("provider", provider);
         return query.executeUpdate();
+    }
+
+    @Override
+    public List<ProviderRating> findByMultipleCriteria(List<Client> clients, List<Provider> providers, Short minRating, Short maxRating, Short exactRating, String clientComment, String providerDementi) {
+        return findByMultipleCriteria(clients, providers, minRating, maxRating, exactRating, clientComment, providerDementi, null, null);
+    }
+
+    @Override
+    public List<ProviderRating> findByMultipleCriteria(List<Client> clients, List<Provider> providers, Short minRating, Short maxRating, Short exactRating, String clientComment, String providerDementi, Integer start, Integer limit) {
+
+        CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
+        CriteriaQuery<ProviderRating> criteriaQuery = criteriaBuilder.createQuery(ProviderRating.class);
+        // FROM
+        Root<ProviderRating> providerRating = criteriaQuery.from(ProviderRating.class);
+        // SELECT
+        criteriaQuery.select(providerRating);
+
+        // INNER JOIN-s
+        Join<ProviderRating, Provider> provider = null;
+        Join<ProviderRating, Client> client = null;
+
+        // WHERE PREDICATES
+        List<Predicate> predicates = new ArrayList<>();
+
+        if(clients != null && clients.size() > 0) {
+
+            if(client == null) client = providerRating.join(ProviderRating_.client);
+            predicates.add(client.in(clients));
+        }
+
+        if(providers != null && providers.size() > 0) {
+
+            if(provider == null) provider = providerRating.join(ProviderRating_.provider);
+            predicates.add(provider.in(providers));
+        }
+
+        if(minRating != null) {
+
+            predicates.add( criteriaBuilder.greaterThanOrEqualTo(providerRating.get(ProviderRating_.clientRating), minRating) );
+        }
+
+        if(maxRating != null) {
+
+            predicates.add( criteriaBuilder.lessThanOrEqualTo(providerRating.get(ProviderRating_.clientRating), maxRating) );
+        }
+
+        if(exactRating != null) {
+
+            predicates.add( criteriaBuilder.equal(providerRating.get(ProviderRating_.clientRating), exactRating) );
+        }
+
+        if(clientComment != null) {
+
+            predicates.add( criteriaBuilder.like(providerRating.get(ProviderRating_.clientComment), "%" + clientComment + "%") );
+        }
+
+        if(providerDementi != null) {
+
+            predicates.add( criteriaBuilder.like(providerRating.get(ProviderRating_.providerDementi), "%" + providerDementi + "%") );
+        }
+
+        // WHERE predicate1 AND predicate2 AND ... AND predicateN
+        criteriaQuery.where(predicates.toArray(new Predicate[] { }));
+        TypedQuery<ProviderRating> query = getEntityManager().createQuery(criteriaQuery);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
     }
 
 }

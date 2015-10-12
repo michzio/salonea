@@ -340,7 +340,7 @@ public class ProviderFacade extends AbstractFacade<Provider> implements Provider
             if (rated) {
                 predicates.add( criteriaBuilder.greaterThan(ratingsCount, 0) );
             } else {
-                predicates.add(criteriaBuilder.equal(ratingsCount, 0));
+                predicates.add( criteriaBuilder.equal(ratingsCount, 0) );
             }
         }
 
@@ -408,9 +408,10 @@ public class ProviderFacade extends AbstractFacade<Provider> implements Provider
             predicates.add(criteriaBuilder.like(provider.get(Provider_.description), "%" + description + "%"));
         }
 
-        if(eagerly)
-            // then fetch associated collection of entities
+        if(eagerly) {
+            // then left fetch associated collection of entities
             provider.fetch("servicePoints", JoinType.LEFT);
+        }
 
         // WHERE predicate1 AND predicate2 AND ... AND predicateN
         criteriaQuery.where(predicates.toArray(new Predicate[] {}));
@@ -420,6 +421,10 @@ public class ProviderFacade extends AbstractFacade<Provider> implements Provider
         }
 
         TypedQuery<Provider> query = getEntityManager().createQuery(criteriaQuery);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
 
         return query.getResultList();
     }

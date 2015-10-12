@@ -45,7 +45,8 @@ public class ResourceList<T> {
             @XmlElement(name = "service-point", type = ServicePoint.class ),
             @XmlElement(name = "service-point", type = ServicePointWrapper.class),
             @XmlElement(name = "provider-service", type = ProviderService.class),
-            @XmlElement(name = "provider-service", type = ProviderServiceWrapper.class)
+            @XmlElement(name = "provider-service", type = ProviderServiceWrapper.class),
+            @XmlElement(name = "provider-rating", type = ProviderRating.class),
     })
     public List<T> getResources() {
         return resources;

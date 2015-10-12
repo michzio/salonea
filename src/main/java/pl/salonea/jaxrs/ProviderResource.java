@@ -70,33 +70,36 @@ public class ProviderResource {
     @Inject
     private ServiceCategoryFacade serviceCategoryFacade;
 
+    @Inject
+    private ProviderRatingFacade providerRatingFacade;
+
     /**
      * Method returns all Provider resources
      * They can be additionally filtered or paginated by @QueryParams
      */
     @GET
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getProviders( @BeanParam ProviderBeanParam params ) throws ForbiddenException {
+    public Response getProviders(@BeanParam ProviderBeanParam params) throws ForbiddenException {
 
-        if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+        if (params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
         logger.log(Level.INFO, "returning all Providers by executing ProviderResource.getProviders() method of REST API");
 
         // calculate number of filter query params
         Integer noOfParams = params.getUriInfo().getQueryParameters().size();
-        if(params.getOffset() != null) noOfParams -= 1;
-        if(params.getLimit() != null) noOfParams -= 1;
+        if (params.getOffset() != null) noOfParams -= 1;
+        if (params.getLimit() != null) noOfParams -= 1;
 
         ResourceList<Provider> providers = null;
 
-        if(noOfParams > 0) {
+        if (noOfParams > 0) {
             logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
 
             // get providers filtered by criteria provided in query params
             providers = new ResourceList<>(
-                            providerFacade.findByMultipleCriteria(params.getCorporations(), params.getProviderTypes(),
-                                    params.getIndustries(), params.getPaymentMethods(), params.getServices(), params.getRated(),
-                                    params.getMinAvgRating(), params.getMaxAvgRating(), params.getRatingClients(), params.getProviderName(),
-                                    params.getDescription(), params.getOffset(), params.getLimit())
+                    providerFacade.findByMultipleCriteria(params.getCorporations(), params.getProviderTypes(),
+                            params.getIndustries(), params.getPaymentMethods(), params.getServices(), params.getRated(),
+                            params.getMinAvgRating(), params.getMaxAvgRating(), params.getRatingClients(), params.getProviderName(),
+                            params.getDescription(), params.getOffset(), params.getLimit())
             );
 
         } else {
@@ -117,26 +120,26 @@ public class ProviderResource {
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public Response getProvidersEagerly(@BeanParam ProviderBeanParam params) throws ForbiddenException, NotFoundException {
 
-        if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+        if (params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
         logger.log(Level.INFO, "returning all Providers eagerly by executing ProviderResource.getProvidersEagerly() method of REST API");
 
         // calculate number of filter query params
         Integer noOfParams = params.getUriInfo().getQueryParameters().size();
-        if(params.getOffset() != null) noOfParams -= 1;
-        if(params.getLimit() != null) noOfParams -= 1;
+        if (params.getOffset() != null) noOfParams -= 1;
+        if (params.getLimit() != null) noOfParams -= 1;
 
         ResourceList<ProviderWrapper> providers = null;
 
-        if(noOfParams > 0) {
+        if (noOfParams > 0) {
             logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
 
             // get providers filtered by criteria provided in query params
             providers = new ResourceList<>(
                     ProviderWrapper.wrap(
-                        providerFacade.findByMultipleCriteriaEagerly(params.getCorporations(), params.getProviderTypes(),
-                                params.getIndustries(), params.getPaymentMethods(), params.getServices(), params.getRated(),
-                                params.getMinAvgRating(), params.getMaxAvgRating(), params.getRatingClients(), params.getProviderName(),
-                                params.getDescription(), params.getOffset(), params.getLimit())
+                            providerFacade.findByMultipleCriteriaEagerly(params.getCorporations(), params.getProviderTypes(),
+                                    params.getIndustries(), params.getPaymentMethods(), params.getServices(), params.getRated(),
+                                    params.getMinAvgRating(), params.getMaxAvgRating(), params.getRatingClients(), params.getProviderName(),
+                                    params.getDescription(), params.getOffset(), params.getLimit())
                     )
             );
 
@@ -144,7 +147,7 @@ public class ProviderResource {
             logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
 
             // get all providers without filtering (eventually paginated)
-            providers = new ResourceList<>( ProviderWrapper.wrap(providerFacade.findAllEagerly(params.getOffset(), params.getLimit())));
+            providers = new ResourceList<>(ProviderWrapper.wrap(providerFacade.findAllEagerly(params.getOffset(), params.getLimit())));
         }
 
         ProviderResource.populateWithHATEOASLinks(providers, params.getUriInfo(), params.getOffset(), params.getLimit());
@@ -158,14 +161,14 @@ public class ProviderResource {
     @GET
     @Path("/{userId : \\d+}") // catch only numeric identifiers
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getProvider( @PathParam("userId") Long userId,
-                                 @BeanParam GenericBeanParam params) throws NotFoundException, ForbiddenException {
+    public Response getProvider(@PathParam("userId") Long userId,
+                                @BeanParam GenericBeanParam params) throws NotFoundException, ForbiddenException {
 
-        if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+        if (params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
         logger.log(Level.INFO, "returning given Provider by executing ProviderResource.getProvider(userId) method of REST API");
 
         Provider foundProvider = providerFacade.find(userId);
-        if(foundProvider == null)
+        if (foundProvider == null)
             throw new NotFoundException("Could not find provider for id " + userId + ".");
 
         // adding hypermedia links to provider resource
@@ -180,14 +183,14 @@ public class ProviderResource {
     @GET
     @Path("{userId : \\d+}/eagerly")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getProviderEagerly( @PathParam("userId") Long userId,
-                                        @BeanParam GenericBeanParam params) throws NotFoundException, ForbiddenException {
+    public Response getProviderEagerly(@PathParam("userId") Long userId,
+                                       @BeanParam GenericBeanParam params) throws NotFoundException, ForbiddenException {
 
-        if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+        if (params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
         logger.log(Level.INFO, "returning given Provider eagerly by executing ProviderResource.getProviderEagerly(userId) method of REST API");
 
         Provider foundProvider = providerFacade.findByIdEagerly(userId);
-        if(foundProvider == null)
+        if (foundProvider == null)
             throw new NotFoundException("Could not find provider for id " + userId + ".");
 
         // wrapping Provider into ProviderWrapper in order to marshall eagerly fetched associated collection of entities
@@ -208,10 +211,10 @@ public class ProviderResource {
     public Response createProvider(Provider provider,
                                    @BeanParam GenericBeanParam params) throws ForbiddenException, UnprocessableEntityException, InternalServerErrorException {
 
-        if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+        if (params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
         logger.log(Level.INFO, "creating new Provider by executing ProviderResource.createProvider(provider) method of REST API");
 
-        if(provider.getRegistrationDate() == null) {
+        if (provider.getRegistrationDate() == null) {
             // if registration date of newly created provider hasn't been set by Client set it now to the current datetime value
             provider.setRegistrationDate(new Date());
         }
@@ -230,9 +233,9 @@ public class ProviderResource {
             String createdProviderId = String.valueOf(createdProvider.getUserId());
             locationURI = params.getUriInfo().getBaseUriBuilder().path(ProviderResource.class).path(createdProviderId).build();
 
-        } catch(EJBTransactionRolledbackException ex) {
+        } catch (EJBTransactionRolledbackException ex) {
             ExceptionHandler.handleEJBTransactionRolledbackException(ex);
-        } catch(EJBException ex) {
+        } catch (EJBException ex) {
             ExceptionHandler.handleEJBException(ex);
         } catch (Exception ex) {
             throw new InternalServerErrorException(ExceptionHandler.ENTITY_CREATION_ERROR_MESSAGE);
@@ -249,11 +252,11 @@ public class ProviderResource {
     @Path("/{userId : \\d+}") // catch only numeric identifiers
     @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response updateProvider( @PathParam("userId") Long userId,
-                                    Provider provider,
-                                    @BeanParam GenericBeanParam params) throws ForbiddenException, UnprocessableEntityException, InternalServerErrorException {
+    public Response updateProvider(@PathParam("userId") Long userId,
+                                   Provider provider,
+                                   @BeanParam GenericBeanParam params) throws ForbiddenException, UnprocessableEntityException, InternalServerErrorException {
 
-        if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+        if (params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
         logger.log(Level.INFO, "updating existing Provider by executing ProviderResource.updateProvider(provider) method of REST API");
 
         // set resource ID passed in path param on updated resource object
@@ -261,7 +264,7 @@ public class ProviderResource {
 
         // keep current collection attributes of resource (marked @XmlTransient)
         Provider currentProvider = providerFacade.findByIdEagerly(userId);
-        if(currentProvider != null) {
+        if (currentProvider != null) {
             provider.setIndustries(currentProvider.getIndustries());
             provider.setAcceptedPaymentMethods(currentProvider.getAcceptedPaymentMethods());
             provider.setServicePoints(currentProvider.getServicePoints());
@@ -276,11 +279,11 @@ public class ProviderResource {
             // populate created resource with hypermedia links
             ProviderResource.populateWithHATEOASLinks(updatedProvider, params.getUriInfo());
 
-        } catch(EJBTransactionRolledbackException ex) {
+        } catch (EJBTransactionRolledbackException ex) {
             ExceptionHandler.handleEJBTransactionRolledbackException(ex);
-        } catch(EJBException ex) {
+        } catch (EJBException ex) {
             ExceptionHandler.handleEJBException(ex);
-        } catch(Exception ex) {
+        } catch (Exception ex) {
             throw new InternalServerErrorException(ExceptionHandler.ENTITY_UPDATE_ERROR_MESSAGE);
         }
 
@@ -294,22 +297,22 @@ public class ProviderResource {
     @DELETE
     @Path("/{userId : \\d+}") // catch only numeric identifiers
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response removeProvider( @PathParam("userId") Long userId,
-                                    @HeaderParam("authToken") String authToken) throws ForbiddenException, NotFoundException {
+    public Response removeProvider(@PathParam("userId") Long userId,
+                                   @HeaderParam("authToken") String authToken) throws ForbiddenException, NotFoundException {
 
-        if(authToken == null) throw new ForbiddenException("Unauthorized access to web service.");
+        if (authToken == null) throw new ForbiddenException("Unauthorized access to web service.");
         logger.log(Level.INFO, "removing given Provider by executing ProviderResource.removeProvider(userId) method of REST API");
 
         // find Provider entity that should be deleted
         Provider toDeleteProvider = providerFacade.find(userId);
         // throw exception if entity hasn't been found
-        if(toDeleteProvider == null)
+        if (toDeleteProvider == null)
             throw new NotFoundException("Could not find provider to delete for given id: " + userId + ".");
 
         // remove entity from database
         providerFacade.remove(toDeleteProvider);
 
-        return  Response.status(Status.NO_CONTENT).build();
+        return Response.status(Status.NO_CONTENT).build();
     }
 
     /**
@@ -324,9 +327,9 @@ public class ProviderResource {
     @GET
     @Path("/count")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response countProviders( @HeaderParam("authToken") String authToken ) throws ForbiddenException {
+    public Response countProviders(@HeaderParam("authToken") String authToken) throws ForbiddenException {
 
-        if(authToken == null) throw new ForbiddenException("Unauthorized access to web service.");
+        if (authToken == null) throw new ForbiddenException("Unauthorized access to web service.");
         logger.log(Level.INFO, "returning number of providers by executing ProviderResource.countProviders() method of REST API");
 
         ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(providerFacade.count()), 200, "number of providers");
@@ -340,19 +343,19 @@ public class ProviderResource {
     @GET
     @Path("/corporation/{corporationId : \\d+}")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getProvidersByCorporation( @PathParam("corporationId") Long corporationId,
-                                               @BeanParam PaginationBeanParam params) throws ForbiddenException, NotFoundException {
+    public Response getProvidersByCorporation(@PathParam("corporationId") Long corporationId,
+                                              @BeanParam PaginationBeanParam params) throws ForbiddenException, NotFoundException {
 
-        if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+        if (params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
         logger.log(Level.INFO, "returning providers for given corporation using ProviderResource.getProvidersByCorporation(corporationId) method of REST API");
 
         // get corporation for which to look for providers
         Corporation corporation = corporationFacade.find(corporationId);
-        if(corporation == null)
+        if (corporation == null)
             throw new NotFoundException("Could not find corporation for which to look for providers.");
 
         // find providers by given criteria
-        ResourceList<Provider> providers = new ResourceList<>( providerFacade.findByCorporation(corporation, params.getOffset(), params.getLimit()) );
+        ResourceList<Provider> providers = new ResourceList<>(providerFacade.findByCorporation(corporation, params.getOffset(), params.getLimit()));
 
         // result resources need to be populated with hypermedia links to enable resource discovery
         ProviderResource.populateWithHATEOASLinks(providers, params.getUriInfo(), params.getOffset(), params.getLimit());
@@ -367,14 +370,14 @@ public class ProviderResource {
     @GET
     @Path("/typed/{type : \\S+}")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getProvidersByType( @PathParam("type") ProviderType providerType,
-                                        @BeanParam PaginationBeanParam params) throws ForbiddenException {
+    public Response getProvidersByType(@PathParam("type") ProviderType providerType,
+                                       @BeanParam PaginationBeanParam params) throws ForbiddenException {
 
-        if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+        if (params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
         logger.log(Level.INFO, "returning providers for given provider type using ProviderResource.getProvidersByType(providerType) method of REST API");
 
         // find providers by given criteria
-        ResourceList<Provider> providers = new ResourceList<>( providerFacade.findByType(providerType, params.getOffset(), params.getLimit()) );
+        ResourceList<Provider> providers = new ResourceList<>(providerFacade.findByType(providerType, params.getOffset(), params.getLimit()));
 
         // result resources need to be populated with hypermedia links to enable resource discovery
         ProviderResource.populateWithHATEOASLinks(providers, params.getUriInfo(), params.getOffset(), params.getLimit());
@@ -383,25 +386,25 @@ public class ProviderResource {
     }
 
     /**
-     *  Method returns subset of Provider entities for given industry entity.
-     *  The industry id is passed through path param.
+     * Method returns subset of Provider entities for given industry entity.
+     * The industry id is passed through path param.
      */
     @GET
     @Path("/industry/{industryId : \\d+}")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getProvidersByIndustry( @PathParam("industryId") Long industryId,
-                                            @BeanParam PaginationBeanParam params) throws ForbiddenException, NotFoundException {
+    public Response getProvidersByIndustry(@PathParam("industryId") Long industryId,
+                                           @BeanParam PaginationBeanParam params) throws ForbiddenException, NotFoundException {
 
-        if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+        if (params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
         logger.log(Level.INFO, "returning providers for given industry using ProviderResource.getProvidersByIndustry(industryId) method of REST API");
 
         // get industry for which to look for providers
         Industry industry = industryFacade.find(industryId);
-        if(industry == null)
+        if (industry == null)
             throw new NotFoundException("Could not find industry for which to look for providers.");
 
         // find providers by given criteria
-        ResourceList<Provider> providers = new ResourceList<>( providerFacade.findByIndustry(industry, params.getOffset(), params.getLimit()));
+        ResourceList<Provider> providers = new ResourceList<>(providerFacade.findByIndustry(industry, params.getOffset(), params.getLimit()));
 
         // result resources need to be populated with hypermedia links to enable resource discovery
         ProviderResource.populateWithHATEOASLinks(providers, params.getUriInfo(), params.getOffset(), params.getLimit());
@@ -416,19 +419,19 @@ public class ProviderResource {
     @GET
     @Path("/accepting-payment-method/{paymentMethodId : \\d+}")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getProvidersAcceptingPaymentMethod( @PathParam("paymentMethodId") Integer paymentMethodId,
-                                                        @BeanParam PaginationBeanParam params) throws ForbiddenException, NotFoundException {
+    public Response getProvidersAcceptingPaymentMethod(@PathParam("paymentMethodId") Integer paymentMethodId,
+                                                       @BeanParam PaginationBeanParam params) throws ForbiddenException, NotFoundException {
 
-        if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+        if (params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
         logger.log(Level.INFO, "returning providers for given payment method using ProviderResource.getProvidersAcceptingPaymentMethod(paymentMethodId) method of REST API");
 
         // get payment method for which to look for providers
         PaymentMethod paymentMethod = paymentMethodFacade.find(paymentMethodId);
-        if(paymentMethod == null)
+        if (paymentMethod == null)
             throw new NotFoundException("Could not find payment method for which to look for providers.");
 
         // find providers by given criteria
-        ResourceList<Provider> providers = new ResourceList<>( providerFacade.findByPaymentMethod(paymentMethod, params.getOffset(), params.getLimit()) );
+        ResourceList<Provider> providers = new ResourceList<>(providerFacade.findByPaymentMethod(paymentMethod, params.getOffset(), params.getLimit()));
 
         // result resources need to be populated with hypermedia links to enable resource discovery
         ProviderResource.populateWithHATEOASLinks(providers, params.getUriInfo(), params.getOffset(), params.getLimit());
@@ -443,19 +446,19 @@ public class ProviderResource {
     @GET
     @Path("/supplying-service/{serviceId : \\d+}")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getProvidersSupplyingService( @PathParam("serviceId") Integer serviceId,
-                                                  @BeanParam PaginationBeanParam params) throws ForbiddenException, NotFoundException {
+    public Response getProvidersSupplyingService(@PathParam("serviceId") Integer serviceId,
+                                                 @BeanParam PaginationBeanParam params) throws ForbiddenException, NotFoundException {
 
-        if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+        if (params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
         logger.log(Level.INFO, "returning providers for given service using ProviderResource.getProvidersSupplyingService(serviceId) method of REST API");
 
         // get service for which to look for providers
         Service service = serviceFacade.find(serviceId);
-        if(service == null)
+        if (service == null)
             throw new NotFoundException("Could not find service for which to look for providers.");
 
         // find providers by given criteria
-        ResourceList<Provider> providers = new ResourceList<>( providerFacade.findBySuppliedService(service, params.getOffset(), params.getLimit()) );
+        ResourceList<Provider> providers = new ResourceList<>(providerFacade.findBySuppliedService(service, params.getOffset(), params.getLimit()));
 
         // result resources need to be populated with hypermedia links to enable resource discovery
         ProviderResource.populateWithHATEOASLinks(providers, params.getUriInfo(), params.getOffset(), params.getLimit());
@@ -469,13 +472,13 @@ public class ProviderResource {
     @GET
     @Path("/rated")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getProvidersRated( @BeanParam PaginationBeanParam params ) throws ForbiddenException {
+    public Response getProvidersRated(@BeanParam PaginationBeanParam params) throws ForbiddenException {
 
-        if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+        if (params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
         logger.log(Level.INFO, "returning providers that have been rated using ProviderResource.getProvidersRated() method of REST API");
 
         // find providers by given criteria
-        ResourceList<Provider> providers = new ResourceList<>( providerFacade.findRated(params.getOffset(), params.getLimit()) );
+        ResourceList<Provider> providers = new ResourceList<>(providerFacade.findRated(params.getOffset(), params.getLimit()));
 
         // result resources need to be populated with hypermedia links to enable resource discovery
         ProviderResource.populateWithHATEOASLinks(providers, params.getUriInfo(), params.getOffset(), params.getLimit());
@@ -489,13 +492,13 @@ public class ProviderResource {
     @GET
     @Path("/unrated")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getProvidersUnrated( @BeanParam PaginationBeanParam params ) throws ForbiddenException {
+    public Response getProvidersUnrated(@BeanParam PaginationBeanParam params) throws ForbiddenException {
 
-        if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+        if (params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
         logger.log(Level.INFO, "returning providers that haven't been rated (unrated) using ProviderResource.getProvidersUnrated() method of REST API");
 
         // find providers by given criteria
-        ResourceList<Provider> providers = new ResourceList<>( providerFacade.findUnrated(params.getOffset(), params.getLimit()) );
+        ResourceList<Provider> providers = new ResourceList<>(providerFacade.findUnrated(params.getOffset(), params.getLimit()));
 
         // result resources need to be populated with hypermedia links to enable resource discovery
         ProviderResource.populateWithHATEOASLinks(providers, params.getUriInfo(), params.getOffset(), params.getLimit());
@@ -510,14 +513,14 @@ public class ProviderResource {
     @GET
     @Path("/rated-above/{minAvgRating :  \\d+(\\.\\d+)?}") // catch only unsigned double numbers
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getProvidersOnAverageRatedAbove( @PathParam("minAvgRating") Double minAvgRating,
-                                                     @BeanParam PaginationBeanParam params) throws ForbiddenException {
+    public Response getProvidersOnAverageRatedAbove(@PathParam("minAvgRating") Double minAvgRating,
+                                                    @BeanParam PaginationBeanParam params) throws ForbiddenException {
 
-        if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+        if (params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
         logger.log(Level.INFO, "returning providers on average rated above given minimal value using ProviderResource.getProvidersOnAverageRatedAbove(minAvgRating) method of REST API");
 
         // find providers by given criteria
-        ResourceList<Provider> providers = new ResourceList<>( providerFacade.findOnAvgRatedAbove(minAvgRating, params.getOffset(), params.getLimit()) );
+        ResourceList<Provider> providers = new ResourceList<>(providerFacade.findOnAvgRatedAbove(minAvgRating, params.getOffset(), params.getLimit()));
 
         // result resources need to be populated with hypermedia links to enable resource discovery
         ProviderResource.populateWithHATEOASLinks(providers, params.getUriInfo(), params.getOffset(), params.getLimit());
@@ -532,14 +535,14 @@ public class ProviderResource {
     @GET
     @Path("/rated-below/{maxAvgRating :  \\d+(\\.\\d+)?}") // catch only unsigned double numbers
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getProvidersOnAverageRatedBelow( @PathParam("maxAvgRating") Double maxAvgRating,
-                                                     @BeanParam PaginationBeanParam params) throws ForbiddenException {
+    public Response getProvidersOnAverageRatedBelow(@PathParam("maxAvgRating") Double maxAvgRating,
+                                                    @BeanParam PaginationBeanParam params) throws ForbiddenException {
 
-        if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+        if (params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
         logger.log(Level.INFO, "returning providers on average rated below given maximal value using ProviderResource.getProvidersOnAverageRatedBelow(maxAvgRating) method of REST API");
 
         // find providers by given criteria
-        ResourceList<Provider> providers = new ResourceList<>( providerFacade.findOnAvgRatedBelow(maxAvgRating, params.getOffset(), params.getLimit()) );
+        ResourceList<Provider> providers = new ResourceList<>(providerFacade.findOnAvgRatedBelow(maxAvgRating, params.getOffset(), params.getLimit()));
 
         // result resources need to be populated with hypermedia links to enable resource discovery
         ProviderResource.populateWithHATEOASLinks(providers, params.getUriInfo(), params.getOffset(), params.getLimit());
@@ -554,19 +557,19 @@ public class ProviderResource {
     @GET
     @Path("/rated-by/{clientId : \\d+}")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getProvidersRatedByClient( @PathParam("clientId") Long clientId,
-                                               @BeanParam PaginationBeanParam params) throws ForbiddenException, NotFoundException {
+    public Response getProvidersRatedByClient(@PathParam("clientId") Long clientId,
+                                              @BeanParam PaginationBeanParam params) throws ForbiddenException, NotFoundException {
 
-        if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+        if (params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
         logger.log(Level.INFO, "returning providers rated by given client using ProviderResource.getProvidersRatedByClient(clientId) method of REST API");
 
         // get client for which to look for providers
         Client client = clientFacade.find(clientId);
-        if(client == null)
+        if (client == null)
             throw new NotFoundException("Could not find client for which to look for providers.");
 
         // find providers by given criteria
-        ResourceList<Provider> providers = new ResourceList<>( providerFacade.findRatedByClient(client, params.getOffset(), params.getLimit()) );
+        ResourceList<Provider> providers = new ResourceList<>(providerFacade.findRatedByClient(client, params.getOffset(), params.getLimit()));
 
         // result resources need to be populated with hypermedia links to enable resource discovery
         ProviderResource.populateWithHATEOASLinks(providers, params.getUriInfo(), params.getOffset(), params.getLimit());
@@ -611,77 +614,77 @@ public class ProviderResource {
     public static void populateWithHATEOASLinks(ResourceList providers, UriInfo uriInfo, Integer offset, Integer limit) {
 
         // navigation links through collection of resources
-        if(offset != null && limit != null) {
+        if (offset != null && limit != null) {
             // self collection link
-            providers.getLinks().add( Link.fromUri(uriInfo.getAbsolutePathBuilder().queryParam("offset", offset).queryParam("limit", limit).build()).rel("self").build() );
+            providers.getLinks().add(Link.fromUri(uriInfo.getAbsolutePathBuilder().queryParam("offset", offset).queryParam("limit", limit).build()).rel("self").build());
             // prev collection link
             Integer prevOffset = (offset - limit) < 0 ? 0 : offset - limit;
             Integer prevLimit = offset - prevOffset;
-            if(prevLimit > 0)
-                providers.getLinks().add( Link.fromUri(uriInfo.getAbsolutePathBuilder().queryParam("offset", prevOffset).queryParam("limit", prevLimit).build()).rel("prev").build() );
+            if (prevLimit > 0)
+                providers.getLinks().add(Link.fromUri(uriInfo.getAbsolutePathBuilder().queryParam("offset", prevOffset).queryParam("limit", prevLimit).build()).rel("prev").build());
             else
-                providers.getLinks().add( Link.fromUri("").rel("prev").build() );
+                providers.getLinks().add(Link.fromUri("").rel("prev").build());
             // next collection link
-            providers.getLinks().add( Link.fromUri(uriInfo.getAbsolutePathBuilder().queryParam("offset", (offset+limit)).queryParam("limit", limit).build()).rel("next").build() );
+            providers.getLinks().add(Link.fromUri(uriInfo.getAbsolutePathBuilder().queryParam("offset", (offset + limit)).queryParam("limit", limit).build()).rel("next").build());
         } else {
-            providers.getLinks().add( Link.fromUri(uriInfo.getAbsolutePath()).rel("self").build() );
+            providers.getLinks().add(Link.fromUri(uriInfo.getAbsolutePath()).rel("self").build());
         }
 
         try {
 
             // count resources hypermedia link
             Method countMethod = ProviderResource.class.getMethod("countProviders", String.class);
-            providers.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(ProviderResource.class).path(countMethod).build()).rel("count").build() );
+            providers.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder().path(ProviderResource.class).path(countMethod).build()).rel("count").build());
 
             // get all resources hypermedia link
-            providers.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder().path(ProviderResource.class).build()).rel("providers").build() );
+            providers.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder().path(ProviderResource.class).build()).rel("providers").build());
 
             // get all resources eagerly hypermedia link
             Method providersEagerlyMethod = ProviderResource.class.getMethod("getProvidersEagerly", ProviderBeanParam.class);
-            providers.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(ProviderResource.class).path(providersEagerlyMethod).build()).rel("providers-eagerly").build() );
+            providers.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder().path(ProviderResource.class).path(providersEagerlyMethod).build()).rel("providers-eagerly").build());
 
             // get subset of resources hypermedia links
             // corporation
-            providers.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(ProviderResource.class).path("corporation").build()).rel("corporation").build() );
+            providers.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder().path(ProviderResource.class).path("corporation").build()).rel("corporation").build());
 
             // typed
-            providers.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(ProviderResource.class).path("typed").build()).rel("typed").build() );
+            providers.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder().path(ProviderResource.class).path("typed").build()).rel("typed").build());
 
             // industry
-            providers.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(ProviderResource.class).path("industry").build()).rel("industry").build() );
+            providers.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder().path(ProviderResource.class).path("industry").build()).rel("industry").build());
 
             // accepting-payment-method
-            providers.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(ProviderResource.class).path("accepting-payment-method").build()).rel("accepting-payment-method").build() );
+            providers.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder().path(ProviderResource.class).path("accepting-payment-method").build()).rel("accepting-payment-method").build());
 
             // supplying-service
-            providers.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(ProviderResource.class).path("supplying-service").build()).rel("supplying-service").build() );
+            providers.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder().path(ProviderResource.class).path("supplying-service").build()).rel("supplying-service").build());
 
             // rated
             Method ratedMethod = ProviderResource.class.getMethod("getProvidersRated", PaginationBeanParam.class);
-            providers.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(ProviderResource.class).path(ratedMethod).build()).rel("rated").build() );
+            providers.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder().path(ProviderResource.class).path(ratedMethod).build()).rel("rated").build());
 
             // unrated
             Method unratedMethod = ProviderResource.class.getMethod("getProvidersUnrated", PaginationBeanParam.class);
-            providers.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(ProviderResource.class).path(unratedMethod).build()).rel("unrated").build() );
+            providers.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder().path(ProviderResource.class).path(unratedMethod).build()).rel("unrated").build());
 
             // rated-above
-            providers.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(ProviderResource.class).path("rated-above").build()).rel("rated-above").build() );
+            providers.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder().path(ProviderResource.class).path("rated-above").build()).rel("rated-above").build());
 
             // rated-below
-            providers.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(ProviderResource.class).path("rated-below").build()).rel("rated-below").build() );
+            providers.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder().path(ProviderResource.class).path("rated-below").build()).rel("rated-below").build());
 
             // rated-by
-            providers.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(ProviderResource.class).path("rated-by").build()).rel("rated-by").build() );
+            providers.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder().path(ProviderResource.class).path("rated-by").build()).rel("rated-by").build());
 
-        } catch(NoSuchMethodException e) {
+        } catch (NoSuchMethodException e) {
             e.printStackTrace();
         }
 
-        for(Object object : providers.getResources()) {
-            if(object instanceof Provider) {
+        for (Object object : providers.getResources()) {
+            if (object instanceof Provider) {
                 ProviderResource.populateWithHATEOASLinks((Provider) object, uriInfo);
-            } else if(object instanceof ProviderWrapper) {
-                ProviderResource.populateWithHATEOASLinks( (ProviderWrapper) object, uriInfo);
+            } else if (object instanceof ProviderWrapper) {
+                ProviderResource.populateWithHATEOASLinks((ProviderWrapper) object, uriInfo);
             }
         }
     }
@@ -693,19 +696,19 @@ public class ProviderResource {
 
         ProviderResource.populateWithHATEOASLinks(providerWrapper.getProvider(), uriInfo);
 
-        for(Industry industry : providerWrapper.getIndustries() )
+        for (Industry industry : providerWrapper.getIndustries())
             pl.salonea.jaxrs.IndustryResource.populateWithHATEOASLinks(industry, uriInfo);
 
-        for(PaymentMethod paymentMethod : providerWrapper.getAcceptedPaymentMethods())
+        for (PaymentMethod paymentMethod : providerWrapper.getAcceptedPaymentMethods())
             pl.salonea.jaxrs.PaymentMethodResource.populateWithHATEOASLinks(paymentMethod, uriInfo);
 
-        for(ServicePoint servicePoint : providerWrapper.getServicePoints())
+        for (ServicePoint servicePoint : providerWrapper.getServicePoints())
             pl.salonea.jaxrs.ServicePointResource.populateWithHATEOASLinks(servicePoint, uriInfo);
 
-        for(ProviderService providerService : providerWrapper.getSuppliedServiceOffers())
+        for (ProviderService providerService : providerWrapper.getSuppliedServiceOffers())
             pl.salonea.jaxrs.ProviderServiceResource.populateWithHATEOASLinks(providerService, uriInfo);
 
-        for(ProviderRating providerRating : providerWrapper.getReceivedRatings())
+        for (ProviderRating providerRating : providerWrapper.getReceivedRatings())
             pl.salonea.jaxrs.ProviderRatingResource.populateWithHATEOASLinks(providerRating, uriInfo);
     }
 
@@ -715,77 +718,77 @@ public class ProviderResource {
     public static void populateWithHATEOASLinks(Provider provider, UriInfo uriInfo) {
 
         // self link with pattern: http://localhost:port/app/rest/{resources}/{id}
-        provider.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
-                                                    .path(ProviderResource.class)
-                                                    .path(provider.getUserId().toString())
-                                                    .build())
-                                    .rel("self").build() );
+        provider.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                .path(ProviderResource.class)
+                .path(provider.getUserId().toString())
+                .build())
+                .rel("self").build());
 
         // collection link with pattern: http://localhost:port/app/rest/{resources}
-        provider.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
-                                                    .path(ProviderResource.class)
-                                                    .build())
-                                     .rel("providers").build());
+        provider.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                .path(ProviderResource.class)
+                .build())
+                .rel("providers").build());
 
 
         try {
             // self eagerly link with pattern http://localhost:port/app/rest/{resources}/{id}/eagerly
             Method providerEagerlyMethod = ProviderResource.class.getMethod("getProviderEagerly", Long.class, GenericBeanParam.class);
-            provider.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
-                                                        .path(ProviderResource.class)
-                                                        .path(providerEagerlyMethod)
-                                                        .resolveTemplate("userId", provider.getUserId().toString())
-                                                        .build())
-                                        .rel("provider-eagerly").build());
+            provider.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ProviderResource.class)
+                    .path(providerEagerlyMethod)
+                    .resolveTemplate("userId", provider.getUserId().toString())
+                    .build())
+                    .rel("provider-eagerly").build());
 
             // associated collections links with pattern: http://localhost:port/app/rest/{resources}/{id}/{relationship}
 
             // industries relationship
             Method industriesMethod = ProviderResource.class.getMethod("getIndustryResource");
             provider.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
-                                                        .path(ProviderResource.class)
-                                                        .path(industriesMethod)
-                                                        .resolveTemplate("userId", provider.getUserId().toString())
-                                                        .build())
-                                .rel("industries").build());
+                    .path(ProviderResource.class)
+                    .path(industriesMethod)
+                    .resolveTemplate("userId", provider.getUserId().toString())
+                    .build())
+                    .rel("industries").build());
 
             // payment-methods relationship
             Method paymentMethodsMethod = ProviderResource.class.getMethod("getPaymentMethodResource");
             provider.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
-                                                        .path(ProviderResource.class)
-                                                        .path(paymentMethodsMethod)
-                                                        .resolveTemplate("userId", provider.getUserId().toString())
-                                                        .build())
-                                .rel("payment-methods").build());
+                    .path(ProviderResource.class)
+                    .path(paymentMethodsMethod)
+                    .resolveTemplate("userId", provider.getUserId().toString())
+                    .build())
+                    .rel("payment-methods").build());
 
             // service-points relationship
             Method servicePointsMethod = ProviderResource.class.getMethod("getServicePointResource");
             provider.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
-                                                        .path(ProviderResource.class)
-                                                        .path(servicePointsMethod)
-                                                        .resolveTemplate("userId", provider.getUserId().toString())
-                                                        .build())
-                                .rel("service-points").build());
+                    .path(ProviderResource.class)
+                    .path(servicePointsMethod)
+                    .resolveTemplate("userId", provider.getUserId().toString())
+                    .build())
+                    .rel("service-points").build());
 
             // provider-services
             Method providerServicesMethod = ProviderResource.class.getMethod("getProviderServiceResource");
             provider.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
-                                                        .path(ProviderResource.class)
-                                                        .path(providerServicesMethod)
-                                                        .resolveTemplate("userId", provider.getUserId().toString())
-                                                        .build())
-                                .rel("provider-services").build());
+                    .path(ProviderResource.class)
+                    .path(providerServicesMethod)
+                    .resolveTemplate("userId", provider.getUserId().toString())
+                    .build())
+                    .rel("provider-services").build());
 
             // provider-ratings
             Method providerRatingsMethod = ProviderResource.class.getMethod("getProviderRatingResource");
             provider.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
-                                                        .path(ProviderResource.class)
-                                                        .path(providerRatingsMethod)
-                                                        .resolveTemplate("userId", provider.getUserId().toString())
-                                                        .build())
-                                .rel("provider-ratings").build());
+                    .path(ProviderResource.class)
+                    .path(providerRatingsMethod)
+                    .resolveTemplate("userId", provider.getUserId().toString())
+                    .build())
+                    .rel("provider-ratings").build());
 
-        } catch(NoSuchMethodException e) {
+        } catch (NoSuchMethodException e) {
             e.printStackTrace();
         }
     }
@@ -799,25 +802,25 @@ public class ProviderResource {
          */
         @GET
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-        public Response getProviderIndustries( @PathParam("userId") Long userId,
-                                               @BeanParam IndustryBeanParam params) throws NotFoundException, ForbiddenException {
+        public Response getProviderIndustries(@PathParam("userId") Long userId,
+                                              @BeanParam IndustryBeanParam params) throws NotFoundException, ForbiddenException {
 
-            if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            if (params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
             logger.log(Level.INFO, "returning subset of Industry entities for given Provider using ProviderResource.IndustryResource.getProviderIndustries(userId) method of REST API");
 
             // find provider entity for which to get associated industries
             Provider provider = providerFacade.find(userId);
-            if(provider == null)
+            if (provider == null)
                 throw new NotFoundException("Could not find provider for id " + userId + ".");
 
             // calculate number of filter query params
             Integer noOfParams = params.getUriInfo().getQueryParameters().size();
-            if(params.getOffset() != null) noOfParams -= 1;
-            if(params.getLimit() != null) noOfParams -= 1;
+            if (params.getOffset() != null) noOfParams -= 1;
+            if (params.getLimit() != null) noOfParams -= 1;
 
             ResourceList<Industry> industries = null;
 
-            if(noOfParams > 0) {
+            if (noOfParams > 0) {
                 logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
 
                 List<Provider> providers = new ArrayList<>();
@@ -845,25 +848,25 @@ public class ProviderResource {
         @GET
         @Path("/eagerly")
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-        public Response getProviderIndustriesEagerly( @PathParam("userId") Long userId,
-                                                      @BeanParam IndustryBeanParam params ) throws NotFoundException, ForbiddenException {
+        public Response getProviderIndustriesEagerly(@PathParam("userId") Long userId,
+                                                     @BeanParam IndustryBeanParam params) throws NotFoundException, ForbiddenException {
 
-            if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            if (params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
             logger.log(Level.INFO, "returning subset of Industry entities for given Provider eagerly using ProviderResource.IndustryResource.getProviderIndustriesEagerly(userId) method of REST API");
 
             // find provider entity for which to get associated industries
             Provider provider = providerFacade.find(userId);
-            if(provider == null)
+            if (provider == null)
                 throw new NotFoundException("Could not find provider for id " + userId + ".");
 
             // calculate number of filter query params
             Integer noOfParams = params.getUriInfo().getQueryParameters().size();
-            if(params.getOffset() != null) noOfParams -= 1;
-            if(params.getLimit() != null) noOfParams -= 1;
+            if (params.getOffset() != null) noOfParams -= 1;
+            if (params.getLimit() != null) noOfParams -= 1;
 
             ResourceList<IndustryWrapper> industries = null;
 
-            if(noOfParams > 0) {
+            if (noOfParams > 0) {
                 logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
 
                 List<Provider> providers = new ArrayList<>();
@@ -880,7 +883,7 @@ public class ProviderResource {
                 logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
 
                 // get industries for given provider eagerly without filtering (eventually paginated)
-                industries = new ResourceList<>( IndustryWrapper.wrap(industryFacade.findByProviderEagerly(provider, params.getOffset(), params.getLimit())) );
+                industries = new ResourceList<>(IndustryWrapper.wrap(industryFacade.findByProviderEagerly(provider, params.getOffset(), params.getLimit())));
             }
 
             // result resources need to be populated with hypermedia links to enable resource discovery
@@ -899,25 +902,25 @@ public class ProviderResource {
          */
         @GET
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-        public Response getProviderPaymentMethods( @PathParam("userId") Long userId,
-                                                   @BeanParam PaymentMethodBeanParam params) throws NotFoundException, ForbiddenException {
+        public Response getProviderPaymentMethods(@PathParam("userId") Long userId,
+                                                  @BeanParam PaymentMethodBeanParam params) throws NotFoundException, ForbiddenException {
 
-            if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            if (params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
             logger.log(Level.INFO, "returning subset of PaymentMethod entities for given Provider using ProviderResource.PaymentMethodResource.getProviderPaymentMethods(userId) method of REST API");
 
             // find provider entity for which to get associated payment methods
             Provider provider = providerFacade.find(userId);
-            if(provider == null)
+            if (provider == null)
                 throw new NotFoundException("Could not find provider for id " + userId + ".");
 
             // calculate number of filter query params
             Integer noOfParams = params.getUriInfo().getQueryParameters().size();
-            if(params.getOffset() != null) noOfParams -= 1;
-            if(params.getLimit() != null) noOfParams -= 1;
+            if (params.getOffset() != null) noOfParams -= 1;
+            if (params.getLimit() != null) noOfParams -= 1;
 
             ResourceList<PaymentMethod> paymentMethods = null;
 
-            if(noOfParams > 0) {
+            if (noOfParams > 0) {
                 logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
 
                 List<Provider> providers = new ArrayList<>();
@@ -946,24 +949,24 @@ public class ProviderResource {
         @GET
         @Path("/eagerly")
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-        public Response getProviderPaymentMethodsEagerly( @PathParam("userId") Long userId,
-                                                          @BeanParam PaymentMethodBeanParam params ) throws NotFoundException, ForbiddenException {
-            if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+        public Response getProviderPaymentMethodsEagerly(@PathParam("userId") Long userId,
+                                                         @BeanParam PaymentMethodBeanParam params) throws NotFoundException, ForbiddenException {
+            if (params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
             logger.log(Level.INFO, "returning subset of PaymentMethod entities for given Provider eagerly using ProviderResource.PaymentMethodResource.getProviderPaymentMethodsEagerly(userId) method of REST API");
 
             // find provider entity for which to get associated payment methods
             Provider provider = providerFacade.find(userId);
-            if(provider == null)
+            if (provider == null)
                 throw new NotFoundException("Could not find provider for id " + userId + ".");
 
             // calculate number of filter query params
             Integer noOfParams = params.getUriInfo().getQueryParameters().size();
-            if(params.getOffset() != null) noOfParams -= 1;
-            if(params.getLimit() != null) noOfParams -= 1;
+            if (params.getOffset() != null) noOfParams -= 1;
+            if (params.getLimit() != null) noOfParams -= 1;
 
             ResourceList<PaymentMethodWrapper> paymentMethods = null;
 
-            if(noOfParams > 0) {
+            if (noOfParams > 0) {
                 logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
 
                 List<Provider> providers = new ArrayList<>();
@@ -981,7 +984,7 @@ public class ProviderResource {
                 logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
 
                 // get payment methods for given provider eagerly without filtering (eventually paginated)
-                paymentMethods = new ResourceList<>( PaymentMethodWrapper.wrap(paymentMethodFacade.findByProviderEagerly(provider, params.getOffset(), params.getLimit())) );
+                paymentMethods = new ResourceList<>(PaymentMethodWrapper.wrap(paymentMethodFacade.findByProviderEagerly(provider, params.getOffset(), params.getLimit())));
             }
 
             // result resources need to be populated with hypermedia links to enable resource discovery
@@ -994,7 +997,8 @@ public class ProviderResource {
 
     public class ServicePointResource {
 
-        public ServicePointResource() { }
+        public ServicePointResource() {
+        }
 
         /**
          * Method returns subset of ServicePoint entities for given Provider
@@ -1003,41 +1007,41 @@ public class ProviderResource {
          */
         @GET
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-        public Response getProviderServicePoints( @PathParam("userId") Long userId,
-                                                  @BeanParam ServicePointBeanParam params) throws NotFoundException, ForbiddenException, BadRequestException {
+        public Response getProviderServicePoints(@PathParam("userId") Long userId,
+                                                 @BeanParam ServicePointBeanParam params) throws NotFoundException, ForbiddenException, BadRequestException {
 
-            if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            if (params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
             logger.log(Level.INFO, "returning subset of ServicePoint entities for given Provider using ProviderResource.ServicePointResource.getProviderServicePoints(userId) method of REST API");
 
             // find provider entity for which to get associated service points
             Provider provider = providerFacade.find(userId);
-            if(provider == null)
+            if (provider == null)
                 throw new NotFoundException("Could not find provider for id " + userId + ".");
 
             // calculate number of filter query params
             Integer noOfParams = params.getUriInfo().getQueryParameters().size();
-            if(params.getOffset() != null) noOfParams -= 1;
-            if(params.getLimit() != null) noOfParams -= 1;
+            if (params.getOffset() != null) noOfParams -= 1;
+            if (params.getLimit() != null) noOfParams -= 1;
 
             ResourceList<ServicePoint> servicePoints = null;
 
-            if(noOfParams > 0) {
+            if (noOfParams > 0) {
                 logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
 
                 List<Provider> providers = new ArrayList<>();
                 providers.add(provider);
 
-                if(params.getAddress() != null) {
-                    if(params.getCoordinatesSquare() != null || params.getCoordinatesCircle() != null)
+                if (params.getAddress() != null) {
+                    if (params.getCoordinatesSquare() != null || params.getCoordinatesCircle() != null)
                         throw new BadRequestException("Query params cannot include address params and coordinates square params or coordinates circle params at the same time.");
                     // only address params
                     servicePoints = new ResourceList<>(
-                        servicePointFacade.findByMultipleCriteria(providers, params.getServices(), params.getEmployees(),
-                                params.getCorporations(), params.getIndustries(), params.getServiceCategories(), params.getAddress(), params.getOffset(), params.getLimit())
+                            servicePointFacade.findByMultipleCriteria(providers, params.getServices(), params.getEmployees(),
+                                    params.getCorporations(), params.getIndustries(), params.getServiceCategories(), params.getAddress(), params.getOffset(), params.getLimit())
                     );
 
-                } else if(params.getCoordinatesSquare() != null) {
-                    if(params.getAddress() != null || params.getCoordinatesCircle() != null)
+                } else if (params.getCoordinatesSquare() != null) {
+                    if (params.getAddress() != null || params.getCoordinatesCircle() != null)
                         throw new BadRequestException("Query params cannot include coordinates square params and address params or coordinates circle params at the same time.");
                     // only coordinates square params
                     servicePoints = new ResourceList<>(
@@ -1045,8 +1049,8 @@ public class ProviderResource {
                                     params.getCorporations(), params.getIndustries(), params.getServiceCategories(), params.getCoordinatesSquare(), params.getOffset(), params.getLimit())
                     );
 
-                } else if(params.getCoordinatesCircle() != null) {
-                    if(params.getAddress() != null || params.getCoordinatesSquare() != null)
+                } else if (params.getCoordinatesCircle() != null) {
+                    if (params.getAddress() != null || params.getCoordinatesSquare() != null)
                         throw new BadRequestException("Query params cannot include coordinates circle params and address params or coordinates square params at the same time.");
                     // only coordinates circle params
                     servicePoints = new ResourceList<>(
@@ -1065,7 +1069,7 @@ public class ProviderResource {
             } else {
                 logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
 
-                servicePoints = new ResourceList<>( servicePointFacade.findByProvider(provider, params.getOffset(), params.getLimit()) );
+                servicePoints = new ResourceList<>(servicePointFacade.findByProvider(provider, params.getOffset(), params.getLimit()));
             }
 
             // result resources need to be populated with hypermedia links to enable resource discovery
@@ -1077,32 +1081,32 @@ public class ProviderResource {
         @GET
         @Path("/eagerly")
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-        public Response getProviderServicePointsEagerly( @PathParam("userId") Long userId,
-                                                         @BeanParam ServicePointBeanParam params ) throws NotFoundException, ForbiddenException, BadRequestException {
+        public Response getProviderServicePointsEagerly(@PathParam("userId") Long userId,
+                                                        @BeanParam ServicePointBeanParam params) throws NotFoundException, ForbiddenException, BadRequestException {
 
-            if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            if (params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
             logger.log(Level.INFO, "returning subset of ServicePoint entities for given Provider eagerly using ProviderResource.ServicePointResource.getProviderServicePointsEagerly(userId) method of REST API");
 
             // find provider entity for which to get associated service points
             Provider provider = providerFacade.find(userId);
-            if(provider == null)
+            if (provider == null)
                 throw new NotFoundException("Could not find provider for id " + userId + ".");
 
             // calculate number of filter query params
             Integer noOfParams = params.getUriInfo().getQueryParameters().size();
-            if(params.getOffset() != null) noOfParams -= 1;
-            if(params.getLimit() != null) noOfParams -= 1;
+            if (params.getOffset() != null) noOfParams -= 1;
+            if (params.getLimit() != null) noOfParams -= 1;
 
             ResourceList<ServicePointWrapper> servicePoints = null;
 
-            if(noOfParams > 0) {
+            if (noOfParams > 0) {
                 logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
 
                 List<Provider> providers = new ArrayList<>();
                 providers.add(provider);
 
-                if(params.getAddress() != null) {
-                    if(params.getCoordinatesSquare() != null || params.getCoordinatesCircle() != null)
+                if (params.getAddress() != null) {
+                    if (params.getCoordinatesSquare() != null || params.getCoordinatesCircle() != null)
                         throw new BadRequestException("Query params cannot include address params and coordinates square params or coordinates circle params at the same time.");
                     // only address params
                     servicePoints = new ResourceList<>(
@@ -1112,8 +1116,8 @@ public class ProviderResource {
                             )
                     );
 
-                } else if(params.getCoordinatesSquare() != null) {
-                    if(params.getAddress() != null || params.getCoordinatesCircle() != null)
+                } else if (params.getCoordinatesSquare() != null) {
+                    if (params.getAddress() != null || params.getCoordinatesCircle() != null)
                         throw new BadRequestException("Query params cannot include coordinates square params and address params or coordinates circle params at the same time.");
                     // only coordinates square params
                     servicePoints = new ResourceList<>(
@@ -1123,8 +1127,8 @@ public class ProviderResource {
                             )
                     );
 
-                } else if(params.getCoordinatesCircle() != null) {
-                    if(params.getAddress() != null || params.getCoordinatesSquare() != null)
+                } else if (params.getCoordinatesCircle() != null) {
+                    if (params.getAddress() != null || params.getCoordinatesSquare() != null)
                         throw new BadRequestException("Query params cannot include coordinates circle params and address params or coordinates square params at the same time.");
                     // only coordinates circle params
                     servicePoints = new ResourceList<>(
@@ -1147,7 +1151,7 @@ public class ProviderResource {
             } else {
                 logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
 
-                servicePoints = new ResourceList<>( ServicePointWrapper.wrap(servicePointFacade.findByProviderEagerly(provider, params.getOffset(), params.getLimit())) );
+                servicePoints = new ResourceList<>(ServicePointWrapper.wrap(servicePointFacade.findByProviderEagerly(provider, params.getOffset(), params.getLimit())));
             }
 
             // result resources need to be populated with hypermedia links to enable resource discovery
@@ -1162,15 +1166,15 @@ public class ProviderResource {
         @GET
         @Path("/{servicePointNumber : \\d+}")
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-        public Response getServicePoint( @PathParam("userId") Long userId,
-                                         @PathParam("servicePointNumber") Integer servicePointNumber,
-                                         @BeanParam GenericBeanParam params) throws NotFoundException, ForbiddenException {
+        public Response getServicePoint(@PathParam("userId") Long userId,
+                                        @PathParam("servicePointNumber") Integer servicePointNumber,
+                                        @BeanParam GenericBeanParam params) throws NotFoundException, ForbiddenException {
 
-            if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            if (params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
             logger.log(Level.INFO, "returning given Service Point by executing ProviderResource.ServicePointResource.getServicePoint(userId, servicePointNumber) method of REST API");
 
-            ServicePoint foundServicePoint = servicePointFacade.find( new ServicePointId(userId, servicePointNumber) );
-            if(foundServicePoint == null)
+            ServicePoint foundServicePoint = servicePointFacade.find(new ServicePointId(userId, servicePointNumber));
+            if (foundServicePoint == null)
                 throw new NotFoundException("Could not find service point for id (" + userId + "," + servicePointNumber + ").");
 
             // adding hypermedia links to service point resource
@@ -1185,15 +1189,15 @@ public class ProviderResource {
         @GET
         @Path("{servicePointNumber : \\d+}/eagerly")
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-        public Response getServicePointEagerly( @PathParam("userId") Long userId,
-                                                @PathParam("servicePointNumber") Integer servicePointNumber,
-                                                @BeanParam GenericBeanParam params) throws NotFoundException, ForbiddenException {
+        public Response getServicePointEagerly(@PathParam("userId") Long userId,
+                                               @PathParam("servicePointNumber") Integer servicePointNumber,
+                                               @BeanParam GenericBeanParam params) throws NotFoundException, ForbiddenException {
 
-            if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            if (params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
             logger.log(Level.INFO, "returning given Service Point eagerly by executing ProviderResource.ServicePointResource.getServicePointEagerly(userId, servicePointNumber) method of REST API");
 
             ServicePoint foundServicePoint = servicePointFacade.findByIdEagerly(new ServicePointId(userId, servicePointNumber));
-            if(foundServicePoint == null)
+            if (foundServicePoint == null)
                 throw new NotFoundException("Could not find service point for id (" + userId + "," + servicePointNumber + ").");
 
             // wrapping ServicePoint into ServicePointWrapper in order to marshall eagerly fetched associated collection of entities
@@ -1211,11 +1215,11 @@ public class ProviderResource {
         @POST
         @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-        public Response createServicePoint( @PathParam("userId") Long providerId,
-                                            ServicePoint servicePoint,
-                                            @BeanParam GenericBeanParam params ) throws ForbiddenException, UnprocessableEntityException, InternalServerErrorException {
+        public Response createServicePoint(@PathParam("userId") Long providerId,
+                                           ServicePoint servicePoint,
+                                           @BeanParam GenericBeanParam params) throws ForbiddenException, UnprocessableEntityException, InternalServerErrorException {
 
-            if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            if (params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
             logger.log(Level.INFO, "creating new ServicePoint by executing ProviderResource.ServicePointResource.createServicePoint(servicePoint) method of REST API");
 
             ServicePoint createdServicePoint = null;
@@ -1261,12 +1265,12 @@ public class ProviderResource {
         @Path("/{servicePointNumber : \\d+}")
         @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-        public Response updateServicePoint( @PathParam("userId") Long userId,
-                                            @PathParam("servicePointNumber") Integer servicePointNumber,
-                                            ServicePoint servicePoint,
-                                            @BeanParam GenericBeanParam params) throws ForbiddenException, UnprocessableEntityException, InternalServerErrorException {
+        public Response updateServicePoint(@PathParam("userId") Long userId,
+                                           @PathParam("servicePointNumber") Integer servicePointNumber,
+                                           ServicePoint servicePoint,
+                                           @BeanParam GenericBeanParam params) throws ForbiddenException, UnprocessableEntityException, InternalServerErrorException {
 
-            if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            if (params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
             logger.log(Level.INFO, "updating existing Service Point by executing ProviderResource.ServicePointResource.updateServicePoint(servicePoint) method of REST API");
 
             // create composite ID based on path params
@@ -1283,7 +1287,7 @@ public class ProviderResource {
                 ExceptionHandler.handleEJBTransactionRolledbackException(ex);
             } catch (EJBException ex) {
                 ExceptionHandler.handleEJBException(ex);
-            } catch(Exception ex) {
+            } catch (Exception ex) {
                 throw new InternalServerErrorException(ExceptionHandler.ENTITY_UPDATE_ERROR_MESSAGE);
             }
 
@@ -1296,15 +1300,15 @@ public class ProviderResource {
          */
         @DELETE
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-        public Response removeProviderServicePoints( @PathParam("userId") Long userId,
-                                                     @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+        public Response removeProviderServicePoints(@PathParam("userId") Long userId,
+                                                    @BeanParam GenericBeanParam params) throws ForbiddenException, NotFoundException {
 
-            if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            if (params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
             logger.log(Level.INFO, "removing subset of Service Point entities for given Provider by executing ProviderResource.ServicePointResource.removeProviderServicePoints(userId) method of REST API");
 
             // find provider entity for which to remove service points
             Provider provider = providerFacade.find(userId);
-            if(provider == null)
+            if (provider == null)
                 throw new NotFoundException("Could not find provider for id " + userId + ".");
 
             // remove all specified entities from database
@@ -1323,19 +1327,19 @@ public class ProviderResource {
         @DELETE
         @Path("/{servicePointNumber : \\d+}")
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-        public Response removeServicePoint( @PathParam("userId") Long userId,
-                                            @PathParam("servicePointNumber") Integer servicePointNumber,
-                                            @BeanParam GenericBeanParam params) throws ForbiddenException, NotFoundException, InternalServerErrorException {
+        public Response removeServicePoint(@PathParam("userId") Long userId,
+                                           @PathParam("servicePointNumber") Integer servicePointNumber,
+                                           @BeanParam GenericBeanParam params) throws ForbiddenException, NotFoundException, InternalServerErrorException {
 
-            if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            if (params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
             logger.log(Level.INFO, "removing given Service Point by executing ProviderResource.ServicePointResource.removeServicePoint(userId, servicePointNumber) method of REST API");
 
             // remove entity from database
             Integer noOfDeleted = servicePointFacade.deleteById(new ServicePointId(userId, servicePointNumber));
 
-            if(noOfDeleted == 0)
+            if (noOfDeleted == 0)
                 throw new NotFoundException("Could not find service point to delete for id (" + userId + "," + servicePointNumber + ").");
-            else if(noOfDeleted != 1)
+            else if (noOfDeleted != 1)
                 throw new InternalServerErrorException("Some error occurred while trying to delete service point with id (" + userId + "," + servicePointNumber + ").");
 
             return Response.status(Status.NO_CONTENT).build();
@@ -1354,15 +1358,15 @@ public class ProviderResource {
         @GET
         @Path("/count")
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-        public Response countServicePointsByProvider( @PathParam("userId") Long userId,
-                                                      @BeanParam GenericBeanParam params) throws ForbiddenException, NotFoundException {
+        public Response countServicePointsByProvider(@PathParam("userId") Long userId,
+                                                     @BeanParam GenericBeanParam params) throws ForbiddenException, NotFoundException {
 
-            if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            if (params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
             logger.log(Level.INFO, "returning number of service points for given provider by executing ProviderResource.ServicePointResource.countServicePointsByProvider() method of REST API");
 
             // find provider entity for which to count service points
             Provider provider = providerFacade.find(userId);
-            if(provider == null)
+            if (provider == null)
                 throw new NotFoundException("Could not find provider for id " + userId + ".");
 
             ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(servicePointFacade.countByProvider(provider)), 200, "number of service points for provider with id " + provider.getUserId());
@@ -1377,20 +1381,20 @@ public class ProviderResource {
         @GET
         @Path("/address")
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-        public Response getProviderServicePointsByAddress( @PathParam("userId") Long userId,
-                                                           @BeanParam AddressBeanParam params ) throws ForbiddenException, NotFoundException {
+        public Response getProviderServicePointsByAddress(@PathParam("userId") Long userId,
+                                                          @BeanParam AddressBeanParam params) throws ForbiddenException, NotFoundException {
 
-            if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            if (params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
             logger.log(Level.INFO, "returning service points for given provider and address related params using ProviderResource.ServicePointResource.getProviderServicePointsByAddress(userId, address) method of REST API");
 
             // find provider entity for which to get associated service points
             Provider provider = providerFacade.find(userId);
-            if(provider == null)
+            if (provider == null)
                 throw new NotFoundException("Could not find provider for id " + userId + ".");
 
             // find service points by given criteria
-            ResourceList<ServicePoint> servicePoints = new ResourceList<>( servicePointFacade.findByProviderAndAddress(provider,
-                    params.getCity(), params.getState(), params.getCountry(), params.getStreet(), params.getZipCode(), params.getOffset(), params.getLimit()) );
+            ResourceList<ServicePoint> servicePoints = new ResourceList<>(servicePointFacade.findByProviderAndAddress(provider,
+                    params.getCity(), params.getState(), params.getCountry(), params.getStreet(), params.getZipCode(), params.getOffset(), params.getLimit()));
 
             // result resources need to be populated with hypermedia links to enable resource discovery
             pl.salonea.jaxrs.ServicePointResource.populateWithHATEOASLinks(servicePoints, params.getUriInfo(), params.getOffset(), params.getLimit());
@@ -1406,24 +1410,24 @@ public class ProviderResource {
         @GET
         @Path("/coordinates-square")
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-        public Response getProviderServicePointsByCoordinatesSquare( @PathParam("userId") Long userId,
-                                                                     @BeanParam CoordinatesSquareBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException {
+        public Response getProviderServicePointsByCoordinatesSquare(@PathParam("userId") Long userId,
+                                                                    @BeanParam CoordinatesSquareBeanParam params) throws ForbiddenException, NotFoundException, BadRequestException {
 
-            if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            if (params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
             logger.log(Level.INFO, "returning service points for given provider and coordinates square related params using ProviderResource.ServicePointResource.getProviderServicePointsByCoordinatesSquare(userId, coordinatesSquare) method of REST API");
 
             // find provider entity for which to get associated service points
             Provider provider = providerFacade.find(userId);
-            if(provider == null)
+            if (provider == null)
                 throw new NotFoundException("Could not find provider for id " + userId + ".");
 
-            if(params.getMinLongitudeWGS84() == null || params.getMinLatitudeWGS84() == null ||
+            if (params.getMinLongitudeWGS84() == null || params.getMinLatitudeWGS84() == null ||
                     params.getMaxLongitudeWGS84() == null || params.getMaxLatitudeWGS84() == null)
                 throw new BadRequestException("All coordinates square query params must be specified.");
 
             // find service points by given criteria
-            ResourceList<ServicePoint> servicePoints = new ResourceList<>( servicePointFacade.findByProviderAndCoordinatesSquare(provider,
-                    params.getMinLongitudeWGS84(), params.getMinLatitudeWGS84(), params.getMaxLongitudeWGS84(), params.getMaxLatitudeWGS84(), params.getOffset(), params.getLimit()) );
+            ResourceList<ServicePoint> servicePoints = new ResourceList<>(servicePointFacade.findByProviderAndCoordinatesSquare(provider,
+                    params.getMinLongitudeWGS84(), params.getMinLatitudeWGS84(), params.getMaxLongitudeWGS84(), params.getMaxLatitudeWGS84(), params.getOffset(), params.getLimit()));
 
             // result resources need to be populated with hypermedia links to enable resource discovery
             pl.salonea.jaxrs.ServicePointResource.populateWithHATEOASLinks(servicePoints, params.getUriInfo(), params.getOffset(), params.getLimit());
@@ -1439,23 +1443,23 @@ public class ProviderResource {
         @GET
         @Path("/coordinates-circle")
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-        public Response getProviderServicePointsByCoordinatesCircle( @PathParam("userId") Long userId,
-                                                                     @BeanParam CoordinatesCircleBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException {
+        public Response getProviderServicePointsByCoordinatesCircle(@PathParam("userId") Long userId,
+                                                                    @BeanParam CoordinatesCircleBeanParam params) throws ForbiddenException, NotFoundException, BadRequestException {
 
-            if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            if (params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
             logger.log(Level.INFO, "returning service points for given provider and coordinates circle related params using ProviderResource.ServicePointResource.getProviderServicePointsByCoordinatesCircle(userId, coordinatesCircle) method of REST API");
 
             // find provider entity for which to get associated service points
             Provider provider = providerFacade.find(userId);
-            if(provider == null)
+            if (provider == null)
                 throw new NotFoundException("Could not find provider for id " + userId + ".");
 
-            if(params.getLongitudeWGS84() == null || params.getLatitudeWGS84() == null || params.getRadius() == null)
+            if (params.getLongitudeWGS84() == null || params.getLatitudeWGS84() == null || params.getRadius() == null)
                 throw new BadRequestException("All coordinates circle query params must be specified.");
 
             // find service points by given criteria
-            ResourceList<ServicePoint> servicePoints = new ResourceList<>( servicePointFacade.findByProviderAndCoordinatesCircle(provider,
-                    params.getLongitudeWGS84(), params.getLatitudeWGS84(), params.getRadius(), params.getOffset(), params.getLimit()) );
+            ResourceList<ServicePoint> servicePoints = new ResourceList<>(servicePointFacade.findByProviderAndCoordinatesCircle(provider,
+                    params.getLongitudeWGS84(), params.getLatitudeWGS84(), params.getRadius(), params.getOffset(), params.getLimit()));
 
             // result resources need to be populated with hypermedia links to enable resource discovery
             pl.salonea.jaxrs.ServicePointResource.populateWithHATEOASLinks(servicePoints, params.getUriInfo(), params.getOffset(), params.getLimit());
@@ -1464,8 +1468,7 @@ public class ProviderResource {
         }
     }
 
-    public class ProviderServiceResource
-    {
+    public class ProviderServiceResource {
         /**
          * Method returns subset of ProviderService entities for given Provider
          * The provider id is passed through path param.
@@ -1473,25 +1476,25 @@ public class ProviderResource {
          */
         @GET
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-        public Response getProviderServices( @PathParam("userId") Long userId,
-                                             @BeanParam ProviderServiceBeanParam params ) throws NotFoundException, ForbiddenException {
+        public Response getProviderServices(@PathParam("userId") Long userId,
+                                            @BeanParam ProviderServiceBeanParam params) throws NotFoundException, ForbiddenException {
 
-            if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            if (params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
             logger.log(Level.INFO, "returning subset of ProviderService entities for given Provider using ProviderResource.ProviderServiceResource.getProviderServices(userId) method of REST API");
 
             // find provider entity for which to get associated provider services
             Provider provider = providerFacade.find(userId);
-            if(provider == null)
+            if (provider == null)
                 throw new pl.salonea.jaxrs.exceptions.NotFoundException("Could not find provider for id " + userId + ".");
 
             // calculate number of filter query params
             Integer noOfParams = params.getUriInfo().getQueryParameters().size();
-            if(params.getOffset() != null) noOfParams -= 1;
-            if(params.getLimit() != null) noOfParams -= 1;
+            if (params.getOffset() != null) noOfParams -= 1;
+            if (params.getLimit() != null) noOfParams -= 1;
 
             ResourceList<ProviderService> providerServices = null;
 
-            if(noOfParams > 0) {
+            if (noOfParams > 0) {
                 logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
 
                 List<Provider> providers = new ArrayList<>();
@@ -1521,32 +1524,32 @@ public class ProviderResource {
         @GET
         @Path("/eagerly")
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-        public Response getProviderServicesEagerly( @PathParam("userId") Long userId,
-                                                    @BeanParam ProviderServiceBeanParam params ) throws NotFoundException, ForbiddenException {
+        public Response getProviderServicesEagerly(@PathParam("userId") Long userId,
+                                                   @BeanParam ProviderServiceBeanParam params) throws NotFoundException, ForbiddenException {
 
-            if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            if (params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
             logger.log(Level.INFO, "returning subset of ProviderService entities for given Provider eagerly using ProviderResource.ProviderServiceResource.getProviderServicesEagerly(userId) method of REST API");
 
             // find provider entity for which to get associated provider services
             Provider provider = providerFacade.find(userId);
-            if(provider == null)
+            if (provider == null)
                 throw new NotFoundException("Could not find provider for id " + userId + ".");
 
             // calculate number of filter query params
             Integer noOfParams = params.getUriInfo().getQueryParameters().size();
-            if(params.getOffset() != null) noOfParams -= 1;
-            if(params.getLimit() != null) noOfParams -= 1;
+            if (params.getOffset() != null) noOfParams -= 1;
+            if (params.getLimit() != null) noOfParams -= 1;
 
             ResourceList<ProviderServiceWrapper> providerServices = null;
 
-            if(noOfParams > 0) {
+            if (noOfParams > 0) {
                 logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
 
                 List<Provider> providers = new ArrayList<>();
                 providers.add(provider);
 
                 // get provider services for given provider eagerly filtered by given params
-               providerServices = new ResourceList<>(
+                providerServices = new ResourceList<>(
                         ProviderServiceWrapper.wrap(
                                 providerServiceFacade.findByMultipleCriteriaEagerly(providers, params.getServices(), params.getServiceCategories(),
                                         params.getDescription(), params.getMinPrice(), params.getMaxPrice(), params.getIncludeDiscounts(),
@@ -1559,7 +1562,7 @@ public class ProviderResource {
                 logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
 
                 // get provider services for given provider eagerly without filtering (eventually paginated)
-                providerServices = new ResourceList<>( ProviderServiceWrapper.wrap(providerServiceFacade.findByProviderEagerly(provider, params.getOffset(), params.getLimit())) );
+                providerServices = new ResourceList<>(ProviderServiceWrapper.wrap(providerServiceFacade.findByProviderEagerly(provider, params.getOffset(), params.getLimit())));
 
             }
 
@@ -1575,15 +1578,15 @@ public class ProviderResource {
         @GET
         @Path("/{serviceId : \\d+}")
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-        public Response getProviderService(  @PathParam("userId") Long userId,
-                                             @PathParam("serviceId") Integer serviceId,
-                                             @BeanParam GenericBeanParam params) throws NotFoundException, ForbiddenException {
+        public Response getProviderService(@PathParam("userId") Long userId,
+                                           @PathParam("serviceId") Integer serviceId,
+                                           @BeanParam GenericBeanParam params) throws NotFoundException, ForbiddenException {
 
-            if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            if (params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
             logger.log(Level.INFO, "returning given Provider Service by executing ProviderResource.ProviderServiceResource.getProviderService(userId, serviceId) method of REST API");
 
-            ProviderService foundProviderService = providerServiceFacade.find( new ProviderServiceId(userId, serviceId) );
-            if(foundProviderService == null)
+            ProviderService foundProviderService = providerServiceFacade.find(new ProviderServiceId(userId, serviceId));
+            if (foundProviderService == null)
                 throw new NotFoundException("Could not find provider service for id (" + userId + "," + serviceId + ").");
 
             // adding hypermedia links to provider service resource
@@ -1598,15 +1601,15 @@ public class ProviderResource {
         @GET
         @Path("/{serviceId : \\d+}/eagerly")
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-        public Response getProviderServiceEagerly( @PathParam("userId") Long userId,
-                                            @PathParam("serviceId") Integer serviceId,
-                                            @BeanParam GenericBeanParam params) throws NotFoundException, ForbiddenException {
+        public Response getProviderServiceEagerly(@PathParam("userId") Long userId,
+                                                  @PathParam("serviceId") Integer serviceId,
+                                                  @BeanParam GenericBeanParam params) throws NotFoundException, ForbiddenException {
 
-            if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            if (params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
             logger.log(Level.INFO, "returning given Provider Service eagerly by executing ProviderResource.ProviderServiceResource.getProviderServiceEagerly(userId, serviceId) method of REST API");
 
-            ProviderService foundProviderService = providerServiceFacade.findByIdEagerly( new ProviderServiceId(userId, serviceId) );
-            if(foundProviderService == null)
+            ProviderService foundProviderService = providerServiceFacade.findByIdEagerly(new ProviderServiceId(userId, serviceId));
+            if (foundProviderService == null)
                 throw new NotFoundException("Could not find provider service for id (" + userId + "," + serviceId + ").");
 
             // wrapping ProviderService into ProviderServiceWrapper in order to marshall eagerly fetched associated collection of entities
@@ -1625,12 +1628,12 @@ public class ProviderResource {
         @Path("/{serviceId : \\d+}")
         @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-        public Response createProviderService( @PathParam("userId") Long providerId,
-                                               @PathParam("serviceId") Integer serviceId,
-                                               ProviderService providerService,
-                                               @BeanParam GenericBeanParam params ) throws ForbiddenException, UnprocessableEntityException, InternalServerErrorException {
+        public Response createProviderService(@PathParam("userId") Long providerId,
+                                              @PathParam("serviceId") Integer serviceId,
+                                              ProviderService providerService,
+                                              @BeanParam GenericBeanParam params) throws ForbiddenException, UnprocessableEntityException, InternalServerErrorException {
 
-            if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            if (params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
             logger.log(Level.INFO, "creating new ProviderService by executing ProviderResource.ProviderServiceResource.createProviderService(providerService) method of REST API");
 
             ProviderService createdProviderService = null;
@@ -1676,12 +1679,12 @@ public class ProviderResource {
         @Path("/{serviceId : \\d+}")
         @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-        public Response updateProviderService( @PathParam("userId") Long userId,
-                                               @PathParam("serviceId") Integer serviceId,
-                                               ProviderService providerService,
-                                               @BeanParam GenericBeanParam params) throws ForbiddenException, UnprocessableEntityException, InternalServerErrorException {
+        public Response updateProviderService(@PathParam("userId") Long userId,
+                                              @PathParam("serviceId") Integer serviceId,
+                                              ProviderService providerService,
+                                              @BeanParam GenericBeanParam params) throws ForbiddenException, UnprocessableEntityException, InternalServerErrorException {
 
-            if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            if (params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
             logger.log(Level.INFO, "updating existing Provider Service by executing ProviderResource.ProviderServiceResource.updateProviderService(providerService) method of REST API");
 
             // create composite ID based on path params
@@ -1714,57 +1717,57 @@ public class ProviderResource {
         @PUT
         @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-        public Response updateProviderServicesDiscount( @PathParam("userId") Long userId,
-                                                        RequestWrapper wrappedDiscount,
-                                                        @QueryParam("serviceCategoryId") Integer serviceCategoryId,
-                                                        @QueryParam("employeeId") Long employeeId,
-                                                        @HeaderParam("authToken") String authToken ) throws ForbiddenException, NotFoundException, BadRequestException {
+        public Response updateProviderServicesDiscount(@PathParam("userId") Long userId,
+                                                       RequestWrapper wrappedDiscount,
+                                                       @QueryParam("serviceCategoryId") Integer serviceCategoryId,
+                                                       @QueryParam("employeeId") Long employeeId,
+                                                       @HeaderParam("authToken") String authToken) throws ForbiddenException, NotFoundException, BadRequestException {
 
-            if(authToken == null) throw new ForbiddenException("Unauthorized access to web service.");
+            if (authToken == null) throw new ForbiddenException("Unauthorized access to web service.");
             logger.log(Level.INFO, "updating Provider Services matching given service category and/or employee by setting new discount value " +
                     "using ProviderResource.ProviderServiceResource.updateProviderServicesDiscount(userId, discount, serviceCategoryId, employeeId) method of REST API ");
 
-            if(wrappedDiscount == null)
+            if (wrappedDiscount == null)
                 throw new BadRequestException("New discount value should be send in request body as json or xml.");
 
             // find provider entity for which to update provider services
             Provider provider = providerFacade.find(userId);
-            if(provider == null)
+            if (provider == null)
                 throw new NotFoundException("Could not find provider for id " + userId + ".");
 
             Short newDiscount = Short.valueOf(wrappedDiscount.getMessage());
-            if(newDiscount < 0 || newDiscount > 100 )
+            if (newDiscount < 0 || newDiscount > 100)
                 throw new BadRequestException("New discount value should be in range [0,100].");
 
             Integer noOfUpdated = 0;
-            if(serviceCategoryId != null && employeeId != null) {
+            if (serviceCategoryId != null && employeeId != null) {
                 // update discount for provider, service category and employee
 
                 ServiceCategory serviceCategory = serviceCategoryFacade.find(serviceCategoryId);
-                if(serviceCategory == null)
+                if (serviceCategory == null)
                     throw new NotFoundException("Could not find service category for id " + serviceCategoryId + ".");
 
                 Employee employee = employeeFacade.find(employeeId);
-                if(employee == null)
+                if (employee == null)
                     throw new NotFoundException("Could not find employee for id " + employeeId + ".");
 
                 noOfUpdated = providerServiceFacade.updateDiscountForProviderAndServiceCategoryAndEmployee(
-                                        provider, serviceCategory, employee, newDiscount);
+                        provider, serviceCategory, employee, newDiscount);
 
-            } else if(serviceCategoryId != null) {
+            } else if (serviceCategoryId != null) {
                 // update discount for provider and service category
 
                 ServiceCategory serviceCategory = serviceCategoryFacade.find(serviceCategoryId);
-                if(serviceCategory == null)
+                if (serviceCategory == null)
                     throw new NotFoundException("Could not find service category for id " + serviceCategoryId + ".");
 
                 noOfUpdated = providerServiceFacade.updateDiscountForProviderAndServiceCategory(provider, serviceCategory, newDiscount);
 
-            } else if(employeeId != null) {
+            } else if (employeeId != null) {
                 // update discount for provider and employee
 
                 Employee employee = employeeFacade.find(employeeId);
-                if(employee == null)
+                if (employee == null)
                     throw new NotFoundException("Could not find employee for id " + employee + ".");
 
                 noOfUpdated = providerServiceFacade.updateDiscountForProviderAndEmployee(provider, employee, newDiscount);
@@ -1788,50 +1791,50 @@ public class ProviderResource {
          */
         @DELETE
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-        public Response removeProviderServices( @PathParam("userId") Long userId,
-                                                @QueryParam("employeeId") Long employeeId,
-                                                @QueryParam("serviceCategoryId") Integer serviceCategoryId,
-                                                @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+        public Response removeProviderServices(@PathParam("userId") Long userId,
+                                               @QueryParam("employeeId") Long employeeId,
+                                               @QueryParam("serviceCategoryId") Integer serviceCategoryId,
+                                               @BeanParam GenericBeanParam params) throws ForbiddenException, NotFoundException {
 
-            if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            if (params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
             logger.log(Level.INFO, "removing subset of Provider Service entities for given Provider by executing ProviderResource.ProviderServiceResource.removeProviderServices(userId) method of REST API");
 
             // find provider entity for which to remove provider services
             Provider provider = providerFacade.find(userId);
-            if(provider == null)
+            if (provider == null)
                 throw new NotFoundException("Could not find provider for id " + userId + ".");
 
             // remove all specified entities from database
             Integer noOfDeleted = 0;
-            if(employeeId != null && serviceCategoryId != null) {
+            if (employeeId != null && serviceCategoryId != null) {
 
                 Employee employee = employeeFacade.find(employeeId);
-                if(employee == null)
+                if (employee == null)
                     throw new NotFoundException("Could not find employee for id " + employeeId + ".");
 
                 ServiceCategory serviceCategory = serviceCategoryFacade.find(serviceCategoryId);
-                if(serviceCategory == null)
+                if (serviceCategory == null)
                     throw new NotFoundException("Could not find service category for id " + serviceCategoryId + ".");
 
                 noOfDeleted = providerServiceFacade.deleteForProviderAndServiceCategoryAndOnlyEmployee(provider, serviceCategory, employee);
 
-            } else if(employeeId != null) {
+            } else if (employeeId != null) {
 
                 Employee employee = employeeFacade.find(employeeId);
-                if(employee == null)
+                if (employee == null)
                     throw new NotFoundException("Could not find employee for id " + employeeId + ".");
 
                 noOfDeleted = providerServiceFacade.deleteForProviderAndOnlyEmployee(provider, employee);
 
-            } else if(serviceCategoryId != null) {
+            } else if (serviceCategoryId != null) {
 
                 ServiceCategory serviceCategory = serviceCategoryFacade.find(serviceCategoryId);
-                if(serviceCategory == null)
+                if (serviceCategory == null)
                     throw new NotFoundException("Could not find service category for id " + serviceCategoryId + ".");
 
                 noOfDeleted = providerServiceFacade.deleteForProviderAndServiceCategory(provider, serviceCategory);
 
-            }  else {
+            } else {
                 noOfDeleted = providerServiceFacade.deleteForProvider(provider);
             }
 
@@ -1848,19 +1851,19 @@ public class ProviderResource {
         @DELETE
         @Path("/{serviceId : \\d+}")
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-        public Response removeProviderService( @PathParam("userId") Long userId,
-                                               @PathParam("serviceId") Integer serviceId,
-                                               @BeanParam GenericBeanParam params) throws ForbiddenException, NotFoundException, InternalServerErrorException {
+        public Response removeProviderService(@PathParam("userId") Long userId,
+                                              @PathParam("serviceId") Integer serviceId,
+                                              @BeanParam GenericBeanParam params) throws ForbiddenException, NotFoundException, InternalServerErrorException {
 
-            if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            if (params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
             logger.log(Level.INFO, "removing given Provider Service by executing ProviderResource.ProviderServiceResource.removeProviderService(userId, serviceId) method of REST API");
 
             // remove entity from database
             Integer noOfDeleted = providerServiceFacade.deleteById(new ProviderServiceId(userId, serviceId));
 
-            if( noOfDeleted == 0)
+            if (noOfDeleted == 0)
                 throw new NotFoundException("Could not find provider service to delete for id (" + userId + "," + serviceId + ").");
-            else if(noOfDeleted != 1)
+            else if (noOfDeleted != 1)
                 throw new InternalServerErrorException("Some error occurred while trying to delete provider service with id (" + userId + "," + serviceId + ").");
 
             return Response.status(Status.NO_CONTENT).build();
@@ -1879,19 +1882,19 @@ public class ProviderResource {
         @GET
         @Path("/count")
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-        public Response countProviderServicesByProvider( @PathParam("userId") Long userId,
-                                                         @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+        public Response countProviderServicesByProvider(@PathParam("userId") Long userId,
+                                                        @BeanParam GenericBeanParam params) throws ForbiddenException, NotFoundException {
 
-            if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            if (params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
             logger.log(Level.INFO, "returning number of provider services for given provider by executing ProviderResource.ProviderServiceResource.countProviderServicesByProvider(userId) method of REST API");
 
             // find provider entity for which to count provider services
             Provider provider = providerFacade.find(userId);
-            if(provider == null)
+            if (provider == null)
                 throw new NotFoundException("Could not find provider for id " + userId + ".");
 
             ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(providerServiceFacade.countByProvider(provider)), 200,
-                                                                 "number of provider services for provider with id " + provider.getUserId());
+                    "number of provider services for provider with id " + provider.getUserId());
 
             return Response.status(Status.OK).entity(responseEntity).build();
         }
@@ -1904,26 +1907,26 @@ public class ProviderResource {
         @GET
         @Path("/categorized-in/{serviceCategoryId : \\d+}")
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-        public Response getProviderServicesByCategory( @PathParam("userId") Long userId,
-                                                       @PathParam("serviceCategoryId") Integer serviceCategoryId,
-                                                       @BeanParam PaginationBeanParam params ) throws ForbiddenException, NotFoundException {
+        public Response getProviderServicesByCategory(@PathParam("userId") Long userId,
+                                                      @PathParam("serviceCategoryId") Integer serviceCategoryId,
+                                                      @BeanParam PaginationBeanParam params) throws ForbiddenException, NotFoundException {
 
-            if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            if (params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
             logger.log(Level.INFO, "returning provider services for given provider and service category using ProviderResource.ProviderServiceResource.getProviderServicesByCategory(userId, serviceCategoryId) method of REST API");
 
             // find provider entity for which to get associated provider services
             Provider provider = providerFacade.find(userId);
-            if(provider == null)
+            if (provider == null)
                 throw new NotFoundException("Could not find provider for id " + userId + ".");
 
             // find service category entity for which to get associated provider services
             ServiceCategory serviceCategory = serviceCategoryFacade.find(serviceCategoryId);
-            if(serviceCategory == null)
+            if (serviceCategory == null)
                 throw new NotFoundException("Could not find service category for id " + serviceCategoryId + ".");
 
             // find provider services by given criteria (provider and service category)
             ResourceList<ProviderService> providerServices = new ResourceList<>(
-                    providerServiceFacade.findByProviderAndServiceCategory(provider, serviceCategory, params.getOffset(), params.getLimit()) );
+                    providerServiceFacade.findByProviderAndServiceCategory(provider, serviceCategory, params.getOffset(), params.getLimit()));
 
             // result resources need to be populated with hypermedia links to enable resource discovery
             pl.salonea.jaxrs.ProviderServiceResource.populateWithHATEOASLinks(providerServices, params.getUriInfo(), params.getOffset(), params.getLimit());
@@ -1939,24 +1942,24 @@ public class ProviderResource {
         @GET
         @Path("/described-by/{description}")
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-        public Response getProviderServicesByDescription( @PathParam("userId") Long userId,
-                                                          @PathParam("description") String description,
-                                                          @BeanParam PaginationBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException {
+        public Response getProviderServicesByDescription(@PathParam("userId") Long userId,
+                                                         @PathParam("description") String description,
+                                                         @BeanParam PaginationBeanParam params) throws ForbiddenException, NotFoundException, BadRequestException {
 
-            if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            if (params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
             logger.log(Level.INFO, "returning provider services for given provider and description using ProviderResource.ProviderServiceResource.getProviderServicesByDescription(userId, description) method of REST API");
 
             // find provider entity for which to get associated provider services
             Provider provider = providerFacade.find(userId);
-            if(provider == null)
+            if (provider == null)
                 throw new NotFoundException("Could not find provider for id " + userId + ".");
 
-            if(description == null)
+            if (description == null)
                 throw new BadRequestException("Description param cannot be null.");
 
             // find provider services by given criteria (provider and description)
             ResourceList<ProviderService> providerServices = new ResourceList<>(
-                    providerServiceFacade.findByProviderAndDescription(provider, description, params.getOffset(), params.getLimit()) );
+                    providerServiceFacade.findByProviderAndDescription(provider, description, params.getOffset(), params.getLimit()));
 
             // result resources need to be populated with hypermedia links to enable resource discovery
             pl.salonea.jaxrs.ProviderServiceResource.populateWithHATEOASLinks(providerServices, params.getUriInfo(), params.getOffset(), params.getLimit());
@@ -1973,35 +1976,35 @@ public class ProviderResource {
         @GET
         @Path("/discounted-between")
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-        public Response getProviderServicesByDiscount( @PathParam("userId") Long userId,
-                                                       @BeanParam DiscountBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException {
+        public Response getProviderServicesByDiscount(@PathParam("userId") Long userId,
+                                                      @BeanParam DiscountBeanParam params) throws ForbiddenException, NotFoundException, BadRequestException {
 
-            if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            if (params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
             logger.log(Level.INFO, "returning provider services for given provider and discounted between given min and max discount limits" +
                     " using ProviderResource.ProviderServiceResource.getProviderServicesByDiscount(userId, minDiscount, maxDiscount) method of REST API");
 
             // find provider entity for which to get associated provider services
             Provider provider = providerFacade.find(userId);
-            if(provider == null)
+            if (provider == null)
                 throw new NotFoundException("Could not find provider for id " + userId + ".");
 
-            if(params.getMinDiscount() == null)
+            if (params.getMinDiscount() == null)
                 throw new BadRequestException("Min discount query param cannot be null.");
-            else if( params.getMinDiscount() < 0 || params.getMinDiscount() > 100 )
+            else if (params.getMinDiscount() < 0 || params.getMinDiscount() > 100)
                 throw new BadRequestException("Min discount value should be between 0 and 100.");
 
-            if(params.getMaxDiscount() == null)
+            if (params.getMaxDiscount() == null)
                 throw new BadRequestException("Max discount query param cannot be null.");
-            else if( params.getMaxDiscount() < 0 || params.getMaxDiscount() > 100 )
+            else if (params.getMaxDiscount() < 0 || params.getMaxDiscount() > 100)
                 throw new BadRequestException("Max discount value should be between 0 and 100.");
 
-            if(params.getMaxDiscount() < params.getMinDiscount())
+            if (params.getMaxDiscount() < params.getMinDiscount())
                 throw new BadRequestException("Max discount cannot be less than min discount.");
 
             // find provider services by given criteria (provider and discount max and min limits)
             ResourceList<ProviderService> providerServices = new ResourceList<>(
                     providerServiceFacade.findByProviderAndDiscount(provider, params.getMinDiscount(), params.getMaxDiscount(),
-                                                                    params.getOffset(), params.getLimit() )
+                            params.getOffset(), params.getLimit())
             );
 
             // result resources need to be populated with hypermedia links to enable resource discovery
@@ -2018,38 +2021,259 @@ public class ProviderResource {
         @GET
         @Path("/supplied-by/{employeeId : \\d+}")
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-        public Response getProviderServicesSuppliedByEmployee( @PathParam("userId") Long userId,
-                                                               @PathParam("employeeId") Long employeeId,
-                                                               @BeanParam PaginationBeanParam params ) throws ForbiddenException, NotFoundException {
+        public Response getProviderServicesSuppliedByEmployee(@PathParam("userId") Long userId,
+                                                              @PathParam("employeeId") Long employeeId,
+                                                              @BeanParam PaginationBeanParam params) throws ForbiddenException, NotFoundException {
 
-            if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            if (params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
             logger.log(Level.INFO, "returning provider services for given provider and employee using ProviderResource.ProviderServiceResource.getProviderServicesSuppliedByEmployee(userId, employeeId) method of REST API");
 
             // find provider entity for which to get associated provider services
             Provider provider = providerFacade.find(userId);
-            if(provider == null)
+            if (provider == null)
                 throw new NotFoundException("Could not find provider for id " + userId + ".");
 
             // find employee entity for which to get associated provider services
             Employee employee = employeeFacade.find(employeeId);
-            if(employee == null)
+            if (employee == null)
                 throw new NotFoundException("Could not find employee for id " + employeeId + ".");
 
             // find provider services by given criteria (provider and employee)
             ResourceList<ProviderService> providerServices = new ResourceList<>(
-                    providerServiceFacade.findByProviderAndEmployee(provider, employee, params.getOffset(), params.getLimit()) );
+                    providerServiceFacade.findByProviderAndEmployee(provider, employee, params.getOffset(), params.getLimit()));
 
             // result resources need to be populated with hypermedia links to enable resource discovery
             pl.salonea.jaxrs.ProviderServiceResource.populateWithHATEOASLinks(providerServices, params.getUriInfo(), params.getOffset(), params.getLimit());
 
             return Response.status(Status.OK).entity(providerServices).build();
         }
-
     }
 
-    public class ProviderRatingResource
-    {
+    public class ProviderRatingResource {
+        /**
+         * Method returns subset of Provider Rating entities for given Provider.
+         * The provider id is passed through path param.
+         * They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getProviderRatings(@PathParam("userId") Long userId,
+                                           @BeanParam ProviderRatingBeanParam params) throws NotFoundException, ForbiddenException {
+
+            if (params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            logger.log(Level.INFO, "returning subset of Provider Rating entities for given Provider using ProviderResource.ProviderRatingResource.getProviderRatings(userId) method of REST API");
+
+            // find provider entity for which to get associated provider ratings
+            Provider provider = providerFacade.find(userId);
+            if (provider == null)
+                throw new NotFoundException("Could not find provider for id " + userId + ".");
+
+            // calculate number of filter query params
+            Integer noOfParams = params.getUriInfo().getQueryParameters().size();
+            if (params.getOffset() != null) noOfParams -= 1;
+            if (params.getLimit() != null) noOfParams -= 1;
+
+            ResourceList<ProviderRating> providerRatings = null;
+
+            if (noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Provider> providers = new ArrayList<>();
+                providers.add(provider);
+
+                // get provider ratings for given provider and filter params
+                providerRatings = new ResourceList<>(
+                        providerRatingFacade.findByMultipleCriteria(params.getClients(), providers, params.getMinRating(), params.getMaxRating(),
+                                params.getExactRating(), params.getClientComment(), params.getProviderDementi(), params.getOffset(), params.getLimit())
+                );
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get provider ratings for given provider
+                providerRatings = new ResourceList<>(providerRatingFacade.findByProvider(provider, params.getOffset(), params.getLimit()));
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.ProviderRatingResource.populateWithHATEOASLinks(providerRatings, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(providerRatings).build();
+        }
+
+        /**
+         * Method that removes subset of Provider Rating entities from database for given Provider.
+         * The provider id is passed through path param.
+         */
+        @DELETE
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response removeProviderRatings( @PathParam("userId") Long userId,
+                                               @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            logger.log(Level.INFO, "removing subset of Provider Rating entities for given Provider by executing ProviderResource.ProviderRatingResource.removeProviderRatings(userId) method of REST API");
+
+            // find provider entity for which to remove provider ratings
+            Provider provider = providerFacade.find(userId);
+            if(provider == null)
+                throw new NotFoundException("Could not find provider for id " + userId + ".");
+
+            // remove all specified entities from database
+            Integer noOfDeleted = providerRatingFacade.deleteByProvider(provider);
+
+            // create response returning number of deleted entities
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(noOfDeleted), 200, "number of deleted provider ratings for provider with id " + userId);
+
+            return Response.status(Status.OK).entity(responseEntity).build();
+        }
+
+        /**
+         * Additional methods returning subset of resources based on given criteria
+         * You can also achieve similar results by applying @QueryParams to generic method
+         * returning all resources in order to filter and limit them.
+         */
+
+        /**
+         * Method that counts Provider Rating entities for given Provider resource
+         * The provider id is passed through path param.
+         */
+        @GET
+        @Path("/count")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response countProviderRatingsByProvider(@PathParam("userId") Long userId,
+                                                       @BeanParam GenericBeanParam params) throws ForbiddenException, NotFoundException {
+
+            if (params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            logger.log(Level.INFO, "returning number of provider ratings for given provider by executing ProviderResource.ProviderRatingResource.countProviderRatingsByProvider(userId) method of REST API");
+
+            // find provider entity for which to count provider ratings
+            Provider provider = providerFacade.find(userId);
+            if (provider == null)
+                throw new NotFoundException("Could not find provider for id " + userId + ".");
+
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(providerRatingFacade.countProviderRatings(provider)), 200,
+                    "number of provider ratings for provider with id " + provider.getUserId());
+
+            return Response.status(Status.OK).entity(responseEntity).build();
+        }
+
+        /**
+         * Method that returns average rating for Provider entity with given provider id.
+         */
+        @GET
+        @Path("/average-rating")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getAverageProviderRating( @PathParam("userId") Long userId,
+                                                  @BeanParam GenericBeanParam params) throws ForbiddenException, NotFoundException {
+
+            if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            logger.log(Level.INFO, "returning average rating for given provider using ProviderResource.ProviderRatingResource.getAverageProviderRating(userId) method of REST API");
+
+            // find provider entity for which to calculate average rating
+            Provider provider = providerFacade.find(userId);
+            if (provider == null)
+                throw new NotFoundException("Could not find provider for id " + userId + ".");
+
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(providerRatingFacade.findProviderAvgRating(provider)), 200,
+                    "average rating for provider with id " + provider.getUserId());
+
+            return Response.status(Status.OK).entity(responseEntity).build();
+        }
+
+        /**
+         * Method returns subset of Provider Rating entities for given Provider
+         * that have been granted given rating.
+         * The provider id and rating are passed through path params.
+         */
+        @GET
+        @Path("/rated/{rating : \\d+}")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getProviderRatingsByRating(@PathParam("userId") Long userId,
+                                                   @PathParam("rating") Short rating,
+                                                   @BeanParam PaginationBeanParam params) throws ForbiddenException, NotFoundException {
+
+            if (params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            logger.log(Level.INFO, "returning provider ratings for given provider and rating using ProviderResource.ProviderRatingResource.getProviderRatingsByRating(userId, rating) method of REST API");
+
+            // find provider entity for which to get associated provider ratings
+            Provider provider = providerFacade.find(userId);
+            if (provider == null)
+                throw new NotFoundException("Could not find provider for id " + userId + ".");
+
+            // find provider ratings by given criteria (provider and rating)
+            ResourceList<ProviderRating> providerRatings = new ResourceList<>(
+                    providerRatingFacade.findForProviderByRating(provider, rating, params.getOffset(), params.getLimit())
+            );
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.ProviderRatingResource.populateWithHATEOASLinks(providerRatings, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(providerRatings).build();
+        }
+
+        /**
+         * Method returns subset of Provider Rating entities for given Provider
+         * rated above given minimal rating.
+         * The provider id and minimal rating are passed through path params.
+         */
+        @GET
+        @Path("/rated-above/{minRating : \\d+}")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getProviderRatingsAboveMinimalRating(@PathParam("userId") Long userId,
+                                                             @PathParam("minRating") Short minRating,
+                                                             @BeanParam PaginationBeanParam params) throws ForbiddenException, NotFoundException {
+
+            if (params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            logger.log(Level.INFO, "returning provider ratings for given provider rated above given minimal rating using " +
+                    "ProviderResource.ProviderRatingResource.getProviderRatingsAboveMinimalRating(userId, minRating) method of REST API");
+
+            // find provider entity for which to get associated provider ratings
+            Provider provider = providerFacade.find(userId);
+            if (provider == null)
+                throw new NotFoundException("Could not find provider for id " + userId + ".");
+
+            // find provider ratings by given criteria (provider and min rating)
+            ResourceList<ProviderRating> providerRatings = new ResourceList<>(
+                    providerRatingFacade.findForProviderAboveRating(provider, minRating, params.getOffset(), params.getLimit())
+            );
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.ProviderRatingResource.populateWithHATEOASLinks(providerRatings, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(providerRatings).build();
+        }
+
+        /**
+         * Method returns subset of Provider Rating entities for given Provider
+         * rated below given maximal rating.
+         * The provider id and maximal rating are passed through path params.
+         */
+        @GET
+        @Path("/rated-below/{maxRating : \\d+}")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getProviderRatingsBelowMaximalRating(@PathParam("userId") Long userId,
+                                                             @PathParam("maxRating") Short maxRating,
+                                                             @BeanParam PaginationBeanParam params) throws ForbiddenException, NotFoundException {
+
+            if (params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            logger.log(Level.INFO, "returning provider ratings for given provider rated below given maximal rating using " +
+                    "ProviderResource.ProviderRatingResource.getProviderRatingsBelowMaximalRating(userId, maxRating) method of REST API");
+
+            // find provider entity for which to get associated provider ratings
+            Provider provider = providerFacade.find(userId);
+            if (provider == null)
+                throw new NotFoundException("Could not find provider for id " + userId + ".");
+
+            // find provider ratings by given criteria (provider and max rating)
+            ResourceList<ProviderRating> providerRatings = new ResourceList<>(
+                    providerRatingFacade.findForProviderBelowRating(provider, maxRating, params.getOffset(), params.getLimit())
+            );
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.ProviderRatingResource.populateWithHATEOASLinks(providerRatings, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(providerRatings).build();
+
+        }
 
     }
-
 }
