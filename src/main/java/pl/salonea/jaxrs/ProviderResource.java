@@ -79,7 +79,7 @@ public class ProviderResource {
      */
     @GET
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getProviders(@BeanParam ProviderBeanParam params) throws ForbiddenException {
+    public Response getProviders(@BeanParam ProviderBeanParam params) throws ForbiddenException, NotFoundException {
 
         if (params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
         logger.log(Level.INFO, "returning all Providers by executing ProviderResource.getProviders() method of REST API");
@@ -150,6 +150,7 @@ public class ProviderResource {
             providers = new ResourceList<>(ProviderWrapper.wrap(providerFacade.findAllEagerly(params.getOffset(), params.getLimit())));
         }
 
+        // result resources need to be populated with hypermedia links to enable resource discovery
         ProviderResource.populateWithHATEOASLinks(providers, params.getUriInfo(), params.getOffset(), params.getLimit());
 
         return Response.status(Status.OK).entity(providers).build();
@@ -329,7 +330,7 @@ public class ProviderResource {
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public Response countProviders(@HeaderParam("authToken") String authToken) throws ForbiddenException {
 
-        if (authToken == null) throw new ForbiddenException("Unauthorized access to web service.");
+        if(authToken == null) throw new ForbiddenException("Unauthorized access to web service.");
         logger.log(Level.INFO, "returning number of providers by executing ProviderResource.countProviders() method of REST API");
 
         ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(providerFacade.count()), 200, "number of providers");
@@ -614,7 +615,10 @@ public class ProviderResource {
     public static void populateWithHATEOASLinks(ResourceList providers, UriInfo uriInfo, Integer offset, Integer limit) {
 
         // navigation links through collection of resources
-        if (offset != null && limit != null) {
+        ResourceList.generateNavigationLinks(providers, uriInfo, offset, limit);
+
+      /* deprecated
+       if (offset != null && limit != null) {
             // self collection link
             providers.getLinks().add(Link.fromUri(uriInfo.getAbsolutePathBuilder().queryParam("offset", offset).queryParam("limit", limit).build()).rel("self").build());
             // prev collection link
@@ -628,7 +632,7 @@ public class ProviderResource {
             providers.getLinks().add(Link.fromUri(uriInfo.getAbsolutePathBuilder().queryParam("offset", (offset + limit)).queryParam("limit", limit).build()).rel("next").build());
         } else {
             providers.getLinks().add(Link.fromUri(uriInfo.getAbsolutePath()).rel("self").build());
-        }
+        } */
 
         try {
 
@@ -729,7 +733,6 @@ public class ProviderResource {
                 .path(ProviderResource.class)
                 .build())
                 .rel("providers").build());
-
 
         try {
             // self eagerly link with pattern http://localhost:port/app/rest/{resources}/{id}/eagerly

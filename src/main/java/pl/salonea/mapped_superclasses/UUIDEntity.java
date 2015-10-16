@@ -5,6 +5,7 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import javax.persistence.Column;
 import javax.persistence.MappedSuperclass;
+import javax.xml.bind.annotation.XmlTransient;
 import java.util.UUID;
 
 /**
@@ -17,6 +18,7 @@ public abstract class UUIDEntity {
     // parsed to VARCHAR(36) value which takes 36*8 = 288 bits
     private String uuid = UUID.randomUUID().toString();
 
+    @XmlTransient
     @Column(name = "uuid", columnDefinition = "CHAR(36) default NULL")
     public String getUuid() {
         return uuid;

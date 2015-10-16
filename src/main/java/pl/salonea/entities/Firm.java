@@ -1,6 +1,7 @@
 package pl.salonea.entities;
 
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import pl.salonea.constraints.*;
 import pl.salonea.embeddables.Address;
 

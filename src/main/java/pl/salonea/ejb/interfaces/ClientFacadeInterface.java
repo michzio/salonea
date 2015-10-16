@@ -32,6 +32,8 @@ public interface ClientFacadeInterface extends AbstractFacadeInterface<Client> {
     List<Client> findByFirmName(String firmName, Integer start, Integer limit);
     List<Client> findByName(String name);
     List<Client> findByName(String name, Integer start, Integer limit);
+    List<Client> findByDescription(String description);
+    List<Client> findByDescription(String description, Integer start, Integer limit);
     List<Client> findBornAfter(Date date);
     List<Client> findBornAfter(Date date, Integer start, Integer limit);
     List<Client> findBornBefore(Date date);
@@ -56,10 +58,10 @@ public interface ClientFacadeInterface extends AbstractFacadeInterface<Client> {
     List<Client> findRatingEmployee(Employee employee, Integer start, Integer limit);
     List<Client> findByType(ClientType clientType);
     List<Client> findByType(ClientType clientType, Integer start, Integer limit);
-    List<Client> findByMultipleCriteria(String firstName, String lastName, String firmName, String name, Set<ClientType> clientTypes, Date earliestBirthDate, Date latestBirthDate, Integer youngestAge, Integer oldestAge,  Address location, Address delivery, Gender gender, List<Provider> ratedProviders, List<Employee> ratedEmployees);
-    List<Client> findByMultipleCriteria(String firstName, String lastName, String firmName, String name, Set<ClientType> clientTypes, Date earliestBirthDate, Date latestBirthDate, Integer youngestAge, Integer oldestAge, Address location, Address delivery, Gender gender, List<Provider> ratedProviders, List<Employee> ratedEmployees, Integer start, Integer limit);
-    List<Client> findByMultipleCriteriaEagerly(String firstName, String lastName, String firmName, String name, Set<ClientType> clientTypes, Date earliestBirthDate, Date latestBirthDate, Integer youngestAge, Integer oldestAge, Address location, Address delivery, Gender gender, List<Provider> ratedProviders, List<Employee> ratedEmployees);
-    List<Client> findByMultipleCriteriaEagerly(String firstName, String lastName, String firmName, String name, Set<ClientType> clientTypes, Date earliestBirthDate, Date latestBirthDate, Integer youngestAge, Integer oldestAge, Address location, Address delivery, Gender gender, List<Provider> ratedProviders, List<Employee> ratedEmployees, Integer start, Integer limit);
+    List<Client> findByMultipleCriteria(String firstName, String lastName, String firmName, String name, String description, Set<ClientType> clientTypes, Date oldestBirthDate, Date youngestBirthDate, Integer youngestAge, Integer oldestAge,  Address location, Address delivery, Gender gender, List<Provider> ratedProviders, List<Employee> ratedEmployees);
+    List<Client> findByMultipleCriteria(String firstName, String lastName, String firmName, String name, String description, Set<ClientType> clientTypes, Date oldestBirthDate, Date youngestBirthDate, Integer youngestAge, Integer oldestAge, Address location, Address delivery, Gender gender, List<Provider> ratedProviders, List<Employee> ratedEmployees, Integer start, Integer limit);
+    List<Client> findByMultipleCriteriaEagerly(String firstName, String lastName, String firmName, String name, String description, Set<ClientType> clientTypes, Date oldestBirthDate, Date youngestBirthDate, Integer youngestAge, Integer oldestAge, Address location, Address delivery, Gender gender, List<Provider> ratedProviders, List<Employee> ratedEmployees);
+    List<Client> findByMultipleCriteriaEagerly(String firstName, String lastName, String firmName, String name, String description, Set<ClientType> clientTypes, Date oldestBirthDate, Date youngestBirthDate, Integer youngestAge, Integer oldestAge, Address location, Address delivery, Gender gender, List<Provider> ratedProviders, List<Employee> ratedEmployees, Integer start, Integer limit);
 
     @javax.ejb.Remote
     interface Remote extends ClientFacadeInterface {

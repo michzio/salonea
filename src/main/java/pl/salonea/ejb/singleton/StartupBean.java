@@ -83,6 +83,7 @@ public class StartupBean {
         populateNaturalPersons();
         populateFirms();
         populateProviders();
+        populateClients();
 
     }
 
@@ -121,6 +122,51 @@ public class StartupBean {
 
         firmFacade.create(firm1);
         firmFacade.create(firm2);
+    }
+
+    private void populateClients() {
+
+        Client client3 = new Client("personal client 3");
+        Client client4 = new Client("personal client 4");
+        Client client5 = new Client("firm client 5");
+        Client client6 = new Client("firm client 6");
+        Client client7 = new Client("provider client 7");
+        Client client11 = new Client("employee client 11");
+
+        NaturalPerson person3 = naturalPersonFacade.find(3l);
+        NaturalPerson person4 = naturalPersonFacade.find(4l);
+        Firm firm5 = firmFacade.find(5l);
+        Firm firm6 = firmFacade.find(6l);
+        Provider provider7 = providerFacade.find(7l);
+        Employee employee11 = employeeFacade.find(11l);
+
+        person3.setClient(client3);
+        person4.setClient(client4);
+        firm5.setClient(client5);
+        firm6.setClient(client6);
+        provider7.setClient(client7);
+        employee11.setClient(client11);
+
+        client3.setNaturalPerson(person3);
+        client4.setNaturalPerson(person4);
+        client5.setFirm(firm5);
+        client6.setFirm(firm6);
+        client7.setFirm(provider7);
+        client11.setNaturalPerson(employee11);
+
+        clientFacade.create(client3);
+        clientFacade.create(client4);
+        clientFacade.create(client5);
+        clientFacade.create(client6);
+        clientFacade.create(client7);
+        clientFacade.create(client11);
+
+        naturalPersonFacade.update(person3);
+        naturalPersonFacade.update(person4);
+        firmFacade.update(firm5);
+        firmFacade.update(firm6);
+        providerFacade.update(provider7);
+        employeeFacade.update(employee11);
     }
 
     private void populateProviders() {

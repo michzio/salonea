@@ -627,7 +627,7 @@ public class UserAccountResource {
             }
 
         } else if(userAccount.getAccountType().equals("employee")) {
-            //resourceClass = EmployeeResource.class;
+            resourceClass = EmployeeResource.class;
         } else {
             resourceClass = UserAccountResource.class;
         }

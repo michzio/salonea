@@ -19,7 +19,7 @@ import java.util.Set;
 
 @XmlRootElement(name = "service-point")
 @XmlAccessorType(XmlAccessType.PROPERTY)
-@XmlType(propOrder = { "servicePointNumber", "provider", "address", "phoneNumber", "skypeName", "latitudeWGS84", "longitudeWGS84"  })
+@XmlType(propOrder = { "servicePointNumber", "provider", "address", "phoneNumber", "skypeName", "latitudeWGS84", "longitudeWGS84", "links" })
 
 @Entity
 @IdClass(ServicePointId.class)

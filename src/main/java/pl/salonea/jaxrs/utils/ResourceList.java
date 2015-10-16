@@ -5,6 +5,7 @@ import pl.salonea.entities.*;
 import pl.salonea.jaxrs.utils.hateoas.Link;
 import pl.salonea.jaxrs.wrappers.*;
 
+import javax.ws.rs.core.UriInfo;
 import javax.xml.bind.annotation.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -47,6 +48,8 @@ public class ResourceList<T> {
             @XmlElement(name = "provider-service", type = ProviderService.class),
             @XmlElement(name = "provider-service", type = ProviderServiceWrapper.class),
             @XmlElement(name = "provider-rating", type = ProviderRating.class),
+            @XmlElement(name = "client", type = Client.class),
+            @XmlElement(name = "client", type = ClientWrapper.class),
     })
     public List<T> getResources() {
         return resources;
@@ -64,5 +67,25 @@ public class ResourceList<T> {
 
     public void setLinks(List<Link> links) {
         this.links = links;
+    }
+
+    public static void generateNavigationLinks(ResourceList resources, UriInfo uriInfo,Integer offset, Integer limit) {
+
+        // navigation links through collection of resources
+        if(offset != null && limit != null) {
+            // self collection link
+            resources.getLinks().add( Link.fromUri(uriInfo.getAbsolutePathBuilder().queryParam("offset", offset).queryParam("limit", limit).build()).rel("self").build() );
+            // prev collection link
+            Integer prevOffset = (offset - limit) < 0 ? 0 : offset - limit;
+            Integer prevLimit = offset - prevOffset;
+            if(prevLimit > 0)
+                resources.getLinks().add( Link.fromUri(uriInfo.getAbsolutePathBuilder().queryParam("offset", prevOffset).queryParam("limit", prevLimit).build()).rel("prev").build() );
+            else
+                resources.getLinks().add( Link.fromUri("").rel("prev").build() );
+            // next collection link
+            resources.getLinks().add( Link.fromUri(uriInfo.getAbsolutePathBuilder().queryParam("offset", (offset+limit)).queryParam("limit", limit).build()).rel("next").build() );
+        } else {
+            resources.getLinks().add( Link.fromUri(uriInfo.getAbsolutePath()).rel("self").build() );
+        }
     }
 }

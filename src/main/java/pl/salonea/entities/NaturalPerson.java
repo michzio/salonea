@@ -1,5 +1,6 @@
 package pl.salonea.entities;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import pl.salonea.constraints.BirthDate;
 import pl.salonea.constraints.DeliveryAddressFlagMatch;
 import pl.salonea.constraints.PhoneNumber;

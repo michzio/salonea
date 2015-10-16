@@ -38,21 +38,7 @@ public class ProviderRatingResource {
     public static void populateWithHATEOASLinks(ResourceList<ProviderRating> providerRatings, UriInfo uriInfo, Integer offset, Integer limit) {
 
         // navigation links through collection of resources
-        if(offset != null && limit != null) {
-            // self collection link
-            providerRatings.getLinks().add( Link.fromUri(uriInfo.getAbsolutePathBuilder().queryParam("offset", offset).queryParam("limit", limit).build()).rel("self").build() );
-            // prev collection link
-            Integer prevOffset = (offset - limit) < 0 ? 0 : offset - limit;
-            Integer prevLimit = offset - prevOffset;
-            if(prevLimit > 0)
-                providerRatings.getLinks().add( Link.fromUri(uriInfo.getAbsolutePathBuilder().queryParam("offset", prevOffset).queryParam("limit", prevLimit).build()).rel("prev").build() );
-            else
-                providerRatings.getLinks().add( Link.fromUri("").rel("prev").build() );
-            // next collection link
-            providerRatings.getLinks().add( Link.fromUri(uriInfo.getAbsolutePathBuilder().queryParam("offset", (offset+limit)).queryParam("limit", limit).build()).rel("next").build() );
-        } else {
-            providerRatings.getLinks().add( Link.fromUri(uriInfo.getAbsolutePath()).rel("self").build() );
-        }
+       ResourceList.generateNavigationLinks(providerRatings, uriInfo, offset, limit);
 
         try {
             // count resources hypermedia link

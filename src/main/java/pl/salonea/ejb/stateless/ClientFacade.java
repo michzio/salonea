@@ -12,6 +12,8 @@ import javax.ejb.LocalBean;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
+import javax.persistence.NonUniqueResultException;
 import javax.persistence.TypedQuery;
 import javax.persistence.criteria.*;
 import java.util.*;
@@ -33,6 +35,34 @@ public class ClientFacade extends AbstractFacade<Client> implements ClientFacade
 
     public ClientFacade() {
         super(Client.class);
+    }
+
+    @Override
+    public List<Client> findAllEagerly() {
+        return findAllEagerly(null, null);
+    }
+
+    @Override
+    public List<Client> findAllEagerly(Integer start, Integer limit) {
+
+        TypedQuery<Client> query = getEntityManager().createNamedQuery(Client.FIND_ALL_EAGERLY, Client.class);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
+    public Client findByIdEagerly(Long clientId) {
+
+        TypedQuery<Client> query = getEntityManager().createNamedQuery(Client.FIND_BY_ID_EAGERLY, Client.class);
+        query.setParameter("clientId", clientId);
+        try {
+            return query.getSingleResult();
+        } catch (NoResultException | NonUniqueResultException ex) {
+            return null;
+        }
     }
 
     @Override
@@ -112,6 +142,23 @@ public class ClientFacade extends AbstractFacade<Client> implements ClientFacade
 
         TypedQuery<Client> query = getEntityManager().createNamedQuery(Client.FIND_BY_NAME, Client.class);
         query.setParameter("name", "%" + name + "%");
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
+    public List<Client> findByDescription(String description) {
+        return findByDescription(description, null, null);
+    }
+
+    @Override
+    public List<Client> findByDescription(String description, Integer start, Integer limit) {
+
+        TypedQuery<Client> query = getEntityManager().createNamedQuery(Client.FIND_BY_DESCRIPTION, Client.class);
+        query.setParameter("description", "%" + description + "%");
         if(start != null && limit != null) {
             query.setFirstResult(start);
             query.setMaxResults(limit);
@@ -359,26 +406,26 @@ public class ClientFacade extends AbstractFacade<Client> implements ClientFacade
     }
 
     @Override
-    public List<Client> findByMultipleCriteria(String firstName, String lastName, String firmName, String name, Set<ClientType> clientTypes, Date earliestBirthDate, Date latestBirthDate, Integer youngestAge, Integer oldestAge, Address location, Address delivery, Gender gender, List<Provider> ratedProviders, List<Employee> ratedEmployees) {
-        return findByMultipleCriteria(firstName, lastName, firmName, name, clientTypes, earliestBirthDate, latestBirthDate, youngestAge, oldestAge, location, delivery, gender, ratedProviders, ratedEmployees, null, null);
+    public List<Client> findByMultipleCriteria(String firstName, String lastName, String firmName, String name, String description, Set<ClientType> clientTypes, Date oldestBirthDate, Date youngestBirthDate, Integer youngestAge, Integer oldestAge, Address location, Address delivery, Gender gender, List<Provider> ratedProviders, List<Employee> ratedEmployees) {
+        return findByMultipleCriteria(firstName, lastName, firmName, name, description, clientTypes, oldestBirthDate, youngestBirthDate, youngestAge, oldestAge, location, delivery, gender, ratedProviders, ratedEmployees, null, null);
     }
 
     @Override
-    public List<Client> findByMultipleCriteria(String firstName, String lastName, String firmName, String name, Set<ClientType> clientTypes, Date earliestBirthDate, Date latestBirthDate, Integer youngestAge, Integer oldestAge, Address location, Address delivery, Gender gender, List<Provider> ratedProviders, List<Employee> ratedEmployees,  Integer start, Integer limit) {
-        return findByMultipleCriteria(firstName, lastName, firmName, name, clientTypes, earliestBirthDate, latestBirthDate, youngestAge, oldestAge, location, delivery, gender, ratedProviders, ratedEmployees, false, start, limit);
+    public List<Client> findByMultipleCriteria(String firstName, String lastName, String firmName, String name, String description, Set<ClientType> clientTypes, Date oldestBirthDate, Date youngestBirthDate, Integer youngestAge, Integer oldestAge, Address location, Address delivery, Gender gender, List<Provider> ratedProviders, List<Employee> ratedEmployees,  Integer start, Integer limit) {
+        return findByMultipleCriteria(firstName, lastName, firmName, name, description, clientTypes, oldestBirthDate, youngestBirthDate, youngestAge, oldestAge, location, delivery, gender, ratedProviders, ratedEmployees, false, start, limit);
     }
 
     @Override
-    public List<Client> findByMultipleCriteriaEagerly(String firstName, String lastName, String firmName, String name, Set<ClientType> clientTypes,  Date earliestBirthDate, Date latestBirthDate, Integer youngestAge, Integer oldestAge,  Address location, Address delivery, Gender gender, List<Provider> ratedProviders, List<Employee> ratedEmployees) {
-        return findByMultipleCriteriaEagerly(firstName, lastName, firmName, name, clientTypes, earliestBirthDate,latestBirthDate, youngestAge, oldestAge, location, delivery,gender, ratedProviders, ratedEmployees, null, null);
+    public List<Client> findByMultipleCriteriaEagerly(String firstName, String lastName, String firmName, String name, String description, Set<ClientType> clientTypes,  Date oldestBirthDate, Date youngestBirthDate, Integer youngestAge, Integer oldestAge,  Address location, Address delivery, Gender gender, List<Provider> ratedProviders, List<Employee> ratedEmployees) {
+        return findByMultipleCriteriaEagerly(firstName, lastName, firmName, name, description, clientTypes, oldestBirthDate,youngestBirthDate, youngestAge, oldestAge, location, delivery,gender, ratedProviders, ratedEmployees, null, null);
     }
 
     @Override
-    public List<Client> findByMultipleCriteriaEagerly(String firstName, String lastName, String firmName, String name, Set<ClientType> clientTypes, Date earliestBirthDate, Date latestBirthDate, Integer youngestAge, Integer oldestAge,  Address location, Address delivery, Gender gender, List<Provider> ratedProviders, List<Employee> ratedEmployees, Integer start, Integer limit) {
-        return findByMultipleCriteria(firstName, lastName, firmName, name, clientTypes, earliestBirthDate, latestBirthDate, youngestAge, oldestAge, location, delivery, gender, ratedProviders, ratedEmployees, true, start, limit);
+    public List<Client> findByMultipleCriteriaEagerly(String firstName, String lastName, String firmName, String name, String description, Set<ClientType> clientTypes, Date oldestBirthDate, Date youngestBirthDate, Integer youngestAge, Integer oldestAge,  Address location, Address delivery, Gender gender, List<Provider> ratedProviders, List<Employee> ratedEmployees, Integer start, Integer limit) {
+        return findByMultipleCriteria(firstName, lastName, firmName, name, description, clientTypes, oldestBirthDate, youngestBirthDate, youngestAge, oldestAge, location, delivery, gender, ratedProviders, ratedEmployees, true, start, limit);
     }
 
-    private List<Client> findByMultipleCriteria(String firstName, String lastName, String firmName, String name, Set<ClientType> clientTypes, Date earliestBirthDate, Date latestBirthDate, Integer youngestAge, Integer oldestAge, Address location, Address delivery, Gender gender, List<Provider> ratedProviders, List<Employee> ratedEmployees, Boolean eagerly, Integer start, Integer limit) {
+    private List<Client> findByMultipleCriteria(String firstName, String lastName, String firmName, String name, String description, Set<ClientType> clientTypes, Date oldestBirthDate, Date youngestBirthDate, Integer youngestAge, Integer oldestAge, Address location, Address delivery, Gender gender, List<Provider> ratedProviders, List<Employee> ratedEmployees, Boolean eagerly, Integer start, Integer limit) {
 
         CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
         CriteriaQuery<Client> criteriaQuery = criteriaBuilder.createQuery(Client.class);
@@ -485,6 +532,41 @@ public class ClientFacade extends AbstractFacade<Client> implements ClientFacade
             predicates.add( criteriaBuilder.or(orPredicates.toArray(new Predicate[]{})) );
         }
 
+        if(clientTypes != null && clientTypes.size() > 0) {
+
+            if(naturalPerson == null || naturalPerson.getJoinType() == JoinType.INNER) naturalPerson = client.join(Client_.naturalPerson, JoinType.LEFT);
+            if(firm == null || firm.getJoinType() == JoinType.INNER) firm = client.join(Client_.firm, JoinType.LEFT);
+
+            List<Predicate> orPredicates = new ArrayList<>();
+            for(ClientType clientType : clientTypes) {
+
+                if(clientType == ClientType.NATURAL_PERSON) {
+
+                    orPredicates.add( criteriaBuilder.and( criteriaBuilder.isNull(firm),
+                                    criteriaBuilder.isNotNull(naturalPerson)
+                            )
+                    );
+
+                } else if(clientType == ClientType.FIRM) {
+
+                    orPredicates.add( criteriaBuilder.and(  criteriaBuilder.isNotNull(firm),
+                                    criteriaBuilder.isNull(naturalPerson)
+                            )
+                    );
+
+                } else if(clientType == ClientType.NOT_ASSIGNED) {
+
+                    orPredicates.add( criteriaBuilder.and(  criteriaBuilder.isNull(firm),
+                                    criteriaBuilder.isNull(naturalPerson)
+                            )
+                    );
+
+                }
+            }
+
+            predicates.add( criteriaBuilder.or(orPredicates.toArray(new Predicate[]{})) );
+        }
+
         if(firstName != null) {
 
             if(naturalPerson == null) naturalPerson = client.join(Client_.naturalPerson);
@@ -506,50 +588,23 @@ public class ClientFacade extends AbstractFacade<Client> implements ClientFacade
             predicates.add( criteriaBuilder.like(firm.get(Firm_.name), "%" + firmName + "%") );
         }
 
-        if(clientTypes != null && clientTypes.size() > 0) {
+        if(description != null) {
 
-            List<Predicate> orPredicates = new ArrayList<>();
-            for(ClientType clientType : clientTypes) {
-
-                if(clientType == ClientType.NATURAL_PERSON) {
-
-                    orPredicates.add( criteriaBuilder.and( criteriaBuilder.isNull(client.get(Client_.firm)),
-                                                           criteriaBuilder.isNotNull(client.get(Client_.naturalPerson))
-                                                         )
-                                    );
-
-                } else if(clientType == ClientType.FIRM) {
-
-                    orPredicates.add( criteriaBuilder.and(  criteriaBuilder.isNotNull(client.get(Client_.firm)),
-                                                            criteriaBuilder.isNull(client.get(Client_.naturalPerson))
-                            )
-                    );
-
-                } else if(clientType == ClientType.NOT_ASSIGNED) {
-
-                    orPredicates.add( criteriaBuilder.and(  criteriaBuilder.isNull(client.get(Client_.firm)),
-                                                            criteriaBuilder.isNull(client.get(Client_.naturalPerson))
-                            )
-                    );
-
-                }
-            }
-
-            predicates.add( criteriaBuilder.or(orPredicates.toArray(new Predicate[]{})) );
+            predicates.add( criteriaBuilder.like(client.get(Client_.description), "%" + description + "%") );
         }
 
-        if(earliestBirthDate != null) {
+        if(oldestBirthDate != null) {
 
             if(naturalPerson == null) naturalPerson = client.join(Client_.naturalPerson);
 
-            predicates.add( criteriaBuilder.greaterThanOrEqualTo(naturalPerson.get(NaturalPerson_.birthDate), earliestBirthDate) );
+            predicates.add( criteriaBuilder.greaterThanOrEqualTo(naturalPerson.get(NaturalPerson_.birthDate), oldestBirthDate) );
         }
 
-        if(latestBirthDate != null) {
+        if(youngestBirthDate != null) {
 
             if(naturalPerson == null) naturalPerson = client.join(Client_.naturalPerson);
 
-            predicates.add( criteriaBuilder.lessThanOrEqualTo(naturalPerson.get(NaturalPerson_.birthDate), latestBirthDate) );
+            predicates.add( criteriaBuilder.lessThanOrEqualTo(naturalPerson.get(NaturalPerson_.birthDate), youngestBirthDate) );
         }
 
         if(youngestAge != null) {
@@ -558,9 +613,9 @@ public class ClientFacade extends AbstractFacade<Client> implements ClientFacade
 
             Calendar calendar = Calendar.getInstance();
             calendar.add(Calendar.YEAR, -youngestAge);
-            Date youngestBirthDate = calendar.getTime();
+            Date birthDate = calendar.getTime();
 
-            predicates.add( criteriaBuilder.lessThanOrEqualTo(naturalPerson.get(NaturalPerson_.birthDate), youngestBirthDate) );
+            predicates.add( criteriaBuilder.lessThanOrEqualTo(naturalPerson.get(NaturalPerson_.birthDate), birthDate) );
         }
 
         if(oldestAge != null) {
@@ -569,9 +624,9 @@ public class ClientFacade extends AbstractFacade<Client> implements ClientFacade
 
             Calendar calendar = Calendar.getInstance();
             calendar.add(Calendar.YEAR, -oldestAge);
-            Date oldestBirthDate = calendar.getTime();
+            Date birthDate = calendar.getTime();
 
-            predicates.add( criteriaBuilder.greaterThanOrEqualTo(naturalPerson.get(NaturalPerson_.birthDate), oldestBirthDate) );
+            predicates.add( criteriaBuilder.greaterThanOrEqualTo(naturalPerson.get(NaturalPerson_.birthDate), birthDate) );
         }
 
         if(gender != null) {
