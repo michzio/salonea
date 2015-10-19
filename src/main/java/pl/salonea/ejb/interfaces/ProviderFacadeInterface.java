@@ -12,6 +12,7 @@ import java.util.List;
 public interface ProviderFacadeInterface extends AbstractFacadeInterface<Provider> {
 
     // concrete interface
+    Provider update(Provider provider, Boolean retainTransientFields);
     List<Provider> findAllEagerly();
     List<Provider> findAllEagerly(Integer start, Integer limit);
     Provider findByIdEagerly(Long providerId);

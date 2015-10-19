@@ -33,6 +33,23 @@ public class ProviderFacade extends AbstractFacade<Provider> implements Provider
     public ProviderFacade() { super(Provider.class); }
 
     @Override
+    public Provider update(Provider provider, Boolean retainTransientFields) {
+
+        if(retainTransientFields) {
+            // keep current collection attributes of resource (and other marked @XmlTransient)
+            Provider currentProvider = findByIdEagerly(provider.getUserId());
+            if (currentProvider != null) {
+                provider.setIndustries(currentProvider.getIndustries());
+                provider.setAcceptedPaymentMethods(currentProvider.getAcceptedPaymentMethods());
+                provider.setServicePoints(currentProvider.getServicePoints());
+                provider.setSuppliedServiceOffers(currentProvider.getSuppliedServiceOffers());
+                provider.setReceivedRatings(currentProvider.getReceivedRatings());
+            }
+        }
+        return update(provider);
+    }
+
+    @Override
     public List<Provider> findAllEagerly() {
         return findAllEagerly(null, null);
     }

@@ -212,10 +212,10 @@ public class ProviderResource {
     public Response createProvider(Provider provider,
                                    @BeanParam GenericBeanParam params) throws ForbiddenException, UnprocessableEntityException, InternalServerErrorException {
 
-        if (params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+        if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
         logger.log(Level.INFO, "creating new Provider by executing ProviderResource.createProvider(provider) method of REST API");
 
-        if (provider.getRegistrationDate() == null) {
+        if(provider.getRegistrationDate() == null) {
             // if registration date of newly created provider hasn't been set by Client set it now to the current datetime value
             provider.setRegistrationDate(new Date());
         }
@@ -258,25 +258,15 @@ public class ProviderResource {
                                    @BeanParam GenericBeanParam params) throws ForbiddenException, UnprocessableEntityException, InternalServerErrorException {
 
         if (params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
-        logger.log(Level.INFO, "updating existing Provider by executing ProviderResource.updateProvider(provider) method of REST API");
+        logger.log(Level.INFO, "updating existing Provider by executing ProviderResource.updateProvider(userId, provider) method of REST API");
 
         // set resource ID passed in path param on updated resource object
         provider.setUserId(userId);
 
-        // keep current collection attributes of resource (marked @XmlTransient)
-        Provider currentProvider = providerFacade.findByIdEagerly(userId);
-        if (currentProvider != null) {
-            provider.setIndustries(currentProvider.getIndustries());
-            provider.setAcceptedPaymentMethods(currentProvider.getAcceptedPaymentMethods());
-            provider.setServicePoints(currentProvider.getServicePoints());
-            provider.setSuppliedServiceOffers(currentProvider.getSuppliedServiceOffers());
-            provider.setReceivedRatings(currentProvider.getReceivedRatings());
-        }
-
         Provider updatedProvider = null;
         try {
             // reflect updated resource object in database
-            updatedProvider = providerFacade.update(provider);
+            updatedProvider = providerFacade.update(provider, true);
             // populate created resource with hypermedia links
             ProviderResource.populateWithHATEOASLinks(updatedProvider, params.getUriInfo());
 
@@ -338,33 +328,6 @@ public class ProviderResource {
     }
 
     /**
-     * Method returns subset of Provider entities for given corporation entity.
-     * The corporation id is passed through path param.
-     */
-    @GET
-    @Path("/corporation/{corporationId : \\d+}")
-    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getProvidersByCorporation(@PathParam("corporationId") Long corporationId,
-                                              @BeanParam PaginationBeanParam params) throws ForbiddenException, NotFoundException {
-
-        if (params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
-        logger.log(Level.INFO, "returning providers for given corporation using ProviderResource.getProvidersByCorporation(corporationId) method of REST API");
-
-        // get corporation for which to look for providers
-        Corporation corporation = corporationFacade.find(corporationId);
-        if (corporation == null)
-            throw new NotFoundException("Could not find corporation for which to look for providers.");
-
-        // find providers by given criteria
-        ResourceList<Provider> providers = new ResourceList<>(providerFacade.findByCorporation(corporation, params.getOffset(), params.getLimit()));
-
-        // result resources need to be populated with hypermedia links to enable resource discovery
-        ProviderResource.populateWithHATEOASLinks(providers, params.getUriInfo(), params.getOffset(), params.getLimit());
-
-        return Response.status(Status.OK).entity(providers).build();
-    }
-
-    /**
      * Method returns subset of Provider entities for given provider type.
      * The provider type is passed through path param as a string mapped to ProviderType.
      */
@@ -379,60 +342,6 @@ public class ProviderResource {
 
         // find providers by given criteria
         ResourceList<Provider> providers = new ResourceList<>(providerFacade.findByType(providerType, params.getOffset(), params.getLimit()));
-
-        // result resources need to be populated with hypermedia links to enable resource discovery
-        ProviderResource.populateWithHATEOASLinks(providers, params.getUriInfo(), params.getOffset(), params.getLimit());
-
-        return Response.status(Status.OK).entity(providers).build();
-    }
-
-    /**
-     * Method returns subset of Provider entities for given industry entity.
-     * The industry id is passed through path param.
-     */
-    @GET
-    @Path("/industry/{industryId : \\d+}")
-    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getProvidersByIndustry(@PathParam("industryId") Long industryId,
-                                           @BeanParam PaginationBeanParam params) throws ForbiddenException, NotFoundException {
-
-        if (params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
-        logger.log(Level.INFO, "returning providers for given industry using ProviderResource.getProvidersByIndustry(industryId) method of REST API");
-
-        // get industry for which to look for providers
-        Industry industry = industryFacade.find(industryId);
-        if (industry == null)
-            throw new NotFoundException("Could not find industry for which to look for providers.");
-
-        // find providers by given criteria
-        ResourceList<Provider> providers = new ResourceList<>(providerFacade.findByIndustry(industry, params.getOffset(), params.getLimit()));
-
-        // result resources need to be populated with hypermedia links to enable resource discovery
-        ProviderResource.populateWithHATEOASLinks(providers, params.getUriInfo(), params.getOffset(), params.getLimit());
-
-        return Response.status(Status.OK).entity(providers).build();
-    }
-
-    /**
-     * Method returns subset of Provider entities for given payment method entity.
-     * The payment method id is passed through path param.
-     */
-    @GET
-    @Path("/accepting-payment-method/{paymentMethodId : \\d+}")
-    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getProvidersAcceptingPaymentMethod(@PathParam("paymentMethodId") Integer paymentMethodId,
-                                                       @BeanParam PaginationBeanParam params) throws ForbiddenException, NotFoundException {
-
-        if (params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
-        logger.log(Level.INFO, "returning providers for given payment method using ProviderResource.getProvidersAcceptingPaymentMethod(paymentMethodId) method of REST API");
-
-        // get payment method for which to look for providers
-        PaymentMethod paymentMethod = paymentMethodFacade.find(paymentMethodId);
-        if (paymentMethod == null)
-            throw new NotFoundException("Could not find payment method for which to look for providers.");
-
-        // find providers by given criteria
-        ResourceList<Provider> providers = new ResourceList<>(providerFacade.findByPaymentMethod(paymentMethod, params.getOffset(), params.getLimit()));
 
         // result resources need to be populated with hypermedia links to enable resource discovery
         ProviderResource.populateWithHATEOASLinks(providers, params.getUriInfo(), params.getOffset(), params.getLimit());
@@ -617,23 +526,6 @@ public class ProviderResource {
         // navigation links through collection of resources
         ResourceList.generateNavigationLinks(providers, uriInfo, offset, limit);
 
-      /* deprecated
-       if (offset != null && limit != null) {
-            // self collection link
-            providers.getLinks().add(Link.fromUri(uriInfo.getAbsolutePathBuilder().queryParam("offset", offset).queryParam("limit", limit).build()).rel("self").build());
-            // prev collection link
-            Integer prevOffset = (offset - limit) < 0 ? 0 : offset - limit;
-            Integer prevLimit = offset - prevOffset;
-            if (prevLimit > 0)
-                providers.getLinks().add(Link.fromUri(uriInfo.getAbsolutePathBuilder().queryParam("offset", prevOffset).queryParam("limit", prevLimit).build()).rel("prev").build());
-            else
-                providers.getLinks().add(Link.fromUri("").rel("prev").build());
-            // next collection link
-            providers.getLinks().add(Link.fromUri(uriInfo.getAbsolutePathBuilder().queryParam("offset", (offset + limit)).queryParam("limit", limit).build()).rel("next").build());
-        } else {
-            providers.getLinks().add(Link.fromUri(uriInfo.getAbsolutePath()).rel("self").build());
-        } */
-
         try {
 
             // count resources hypermedia link
@@ -648,14 +540,8 @@ public class ProviderResource {
             providers.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder().path(ProviderResource.class).path(providersEagerlyMethod).build()).rel("providers-eagerly").build());
 
             // get subset of resources hypermedia links
-            // corporation
-            providers.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder().path(ProviderResource.class).path("corporation").build()).rel("corporation").build());
-
             // typed
             providers.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder().path(ProviderResource.class).path("typed").build()).rel("typed").build());
-
-            // industry
-            providers.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder().path(ProviderResource.class).path("industry").build()).rel("industry").build());
 
             // accepting-payment-method
             providers.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder().path(ProviderResource.class).path("accepting-payment-method").build()).rel("accepting-payment-method").build());

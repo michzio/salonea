@@ -4,6 +4,7 @@ import pl.salonea.constraints.ImageName;
 import pl.salonea.constraints.PhoneNumber;
 import pl.salonea.constraints.SkypeName;
 import pl.salonea.embeddables.Address;
+import pl.salonea.jaxrs.utils.hateoas.Link;
 import pl.salonea.mapped_superclasses.UUIDEntity;
 
 import javax.persistence.*;
@@ -52,6 +53,9 @@ public class Corporation extends UUIDEntity implements Serializable {
 
     /* one-to-many relationship with providers */
     private Set<Provider> providers = new HashSet<>();
+
+    // HATEOAS support for RESTFul web service in JAX-RS
+    private Set<Link> links = new HashSet<>();
 
     /* constructors */
 
@@ -205,5 +209,14 @@ public class Corporation extends UUIDEntity implements Serializable {
         this.providers = providers;
     }
 
+    @XmlElementWrapper(name = "links")
+    @XmlElement(name = "link")
+    @Transient
+    public Set<Link> getLinks() {
+        return links;
+    }
 
+    public void setLinks(Set<Link> links) {
+        this.links = links;
+    }
 }

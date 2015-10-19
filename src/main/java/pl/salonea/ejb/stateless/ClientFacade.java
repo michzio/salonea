@@ -38,6 +38,23 @@ public class ClientFacade extends AbstractFacade<Client> implements ClientFacade
     }
 
     @Override
+    public Client update(Client client, Boolean retainTransientFields) {
+
+        if(retainTransientFields) {
+            // keep current collection attributes of resource (and other marked @XmlTransient)
+            Client currentClient = findByIdEagerly(client.getClientId());
+            if(currentClient != null) {
+                client.setNaturalPerson(currentClient.getNaturalPerson());
+                client.setFirm(currentClient.getFirm());
+                client.setCreditCards(currentClient.getCreditCards());
+                client.setEmployeeRatings(currentClient.getEmployeeRatings());
+                client.setProviderRatings(currentClient.getProviderRatings());
+            }
+        }
+        return update(client);
+    }
+
+    @Override
     public List<Client> findAllEagerly() {
         return findAllEagerly(null, null);
     }

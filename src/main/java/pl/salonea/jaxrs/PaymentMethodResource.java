@@ -1,27 +1,40 @@
 package pl.salonea.jaxrs;
 
-import pl.salonea.entities.Industry;
+import pl.salonea.ejb.stateless.PaymentMethodFacade;
+import pl.salonea.ejb.stateless.ProviderFacade;
 import pl.salonea.entities.PaymentMethod;
 import pl.salonea.entities.Provider;
+import pl.salonea.jaxrs.bean_params.ProviderBeanParam;
+import pl.salonea.jaxrs.exceptions.NotFoundException;
 import pl.salonea.jaxrs.exceptions.ForbiddenException;
 import pl.salonea.jaxrs.utils.ResourceList;
 import pl.salonea.jaxrs.utils.hateoas.Link;
 import pl.salonea.jaxrs.wrappers.PaymentMethodWrapper;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.HeaderParam;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
+import javax.inject.Inject;
+import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriInfo;
-import javax.xml.ws.Response;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Created by michzio on 13/09/2015.
  */
 @Path("/payment-methods")
 public class PaymentMethodResource {
+
+    private static final Logger logger = Logger.getLogger(PaymentMethodResource.class.getName());
+
+    @Inject
+    private PaymentMethodFacade paymentMethodFacade;
+    @Inject
+    private ProviderFacade providerFacade;
 
     @GET
     @Path("/count")
@@ -30,8 +43,20 @@ public class PaymentMethodResource {
 
         if(authToken == null) throw new ForbiddenException("Unauthorized access to web service.");
 
+        // TODO
         return null;
     }
+
+    /**
+     * related subresources (through relationships)
+     */
+
+    @Path("/{paymentMethodId : \\d+}/providers")
+    public ProviderResource getProviderResource() {
+        return new ProviderResource();
+    }
+
+    // helper methods e.g. to populate resources/resource lists with HATEOAS links
 
     /**
      * This method enables to populate list of resources and each individual resource on list with hypermedia links
@@ -39,21 +64,7 @@ public class PaymentMethodResource {
     public static void populateWithHATEOASLinks(ResourceList paymentMethods, UriInfo uriInfo, Integer offset, Integer limit) {
 
         // navigation links through collection of resources
-        if(offset != null && limit != null) {
-            // self collection link
-            paymentMethods.getLinks().add( Link.fromUri(uriInfo.getAbsolutePathBuilder().queryParam("offset", offset).queryParam("limit", limit).build()).rel("self").build() );
-            // prev collection link
-            Integer prevOffset = (offset - limit) < 0 ? 0 : offset - limit;
-            Integer prevLimit = offset - prevOffset;
-            if(prevLimit > 0)
-                paymentMethods.getLinks().add( Link.fromUri(uriInfo.getAbsolutePathBuilder().queryParam("offset", prevOffset).queryParam("limit", prevLimit).build()).rel("prev").build() );
-            else
-                paymentMethods.getLinks().add( Link.fromUri("").rel("prev").build() );
-            // next collection link
-            paymentMethods.getLinks().add( Link.fromUri(uriInfo.getAbsolutePathBuilder().queryParam("offset", (offset+limit)).queryParam("limit", limit).build()).rel("next").build() );
-        } else {
-            paymentMethods.getLinks().add( Link.fromUri(uriInfo.getAbsolutePath()).rel("self").build() );
-        }
+        ResourceList.generateNavigationLinks(paymentMethods, uriInfo, offset, limit);
 
         try {
             // count resources hypermedia link
@@ -72,7 +83,7 @@ public class PaymentMethodResource {
         for(Object object : paymentMethods.getResources()) {
             if(object instanceof PaymentMethod) {
                 PaymentMethodResource.populateWithHATEOASLinks((PaymentMethod) object, uriInfo);
-            }  else if(object instanceof PaymentMethodWrapper) {
+            } else if(object instanceof PaymentMethodWrapper) {
                 PaymentMethodResource.populateWithHATEOASLinks( (PaymentMethodWrapper) object, uriInfo);
             }
         }
@@ -109,4 +120,59 @@ public class PaymentMethodResource {
                                           .rel("payment-methods").build() );
     }
 
+    public class ProviderResource {
+
+        public ProviderResource() { }
+
+        /**
+         * Method returns subset of Provider entities for given Payment Method entity.
+         * The payment method id is passed through path param.
+         */
+        @GET
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getPaymentMethodProviders( @PathParam("paymentMethodId") Integer paymentMethodId,
+                                                   @BeanParam ProviderBeanParam params) throws ForbiddenException, NotFoundException {
+
+            if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            logger.log(Level.INFO, "returning providers for given payment method using PaymentMethodResource.ProviderResource.getPaymentMethodProviders(paymentMethodId) method of REST API");
+
+            // find payment method entity for which to get associated providers
+            PaymentMethod paymentMethod = paymentMethodFacade.find(paymentMethodId);
+            if(paymentMethod == null)
+                throw new NotFoundException("Could not find payment method for id " + paymentMethodId + ".");
+
+            // calculate number of filter query params
+            Integer noOfParams = params.getUriInfo().getQueryParameters().size();
+            if(params.getOffset() != null) noOfParams -= 1;
+            if(params.getLimit() != null) noOfParams -= 1;
+
+            ResourceList<Provider> providers = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<PaymentMethod> paymentMethods = new ArrayList<>();
+                paymentMethods.add(paymentMethod);
+
+                // get providers for given payment method filtered by given params.
+                providers = new ResourceList<>(
+                        providerFacade.findByMultipleCriteria(params.getCorporations(), params.getProviderTypes(), params.getIndustries(), paymentMethods,
+                                params.getServices(), params.getRated(), params.getMinAvgRating(), params.getMaxAvgRating(),params.getRatingClients(),
+                                params.getProviderName(), params.getDescription(), params.getOffset(), params.getLimit())
+                );
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get providers for given payment method without filtering
+                providers = new ResourceList<>( providerFacade.findByPaymentMethod(paymentMethod, params.getOffset(), params.getLimit()) );
+
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.ProviderResource.populateWithHATEOASLinks(providers, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(providers).build();
+        }
+    }
 }

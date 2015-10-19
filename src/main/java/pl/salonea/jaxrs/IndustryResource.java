@@ -1,26 +1,40 @@
 package pl.salonea.jaxrs;
 
+import pl.salonea.ejb.stateless.IndustryFacade;
+import pl.salonea.ejb.stateless.ProviderFacade;
 import pl.salonea.entities.Industry;
 import pl.salonea.entities.Provider;
+import pl.salonea.jaxrs.bean_params.ProviderBeanParam;
 import pl.salonea.jaxrs.exceptions.ForbiddenException;
+import pl.salonea.jaxrs.exceptions.NotFoundException;
 import pl.salonea.jaxrs.utils.ResourceList;
 import pl.salonea.jaxrs.utils.hateoas.Link;
 import pl.salonea.jaxrs.wrappers.IndustryWrapper;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.HeaderParam;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
+import javax.inject.Inject;
+import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriInfo;
-import javax.xml.ws.Response;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Created by michzio on 12/09/2015.
  */
 @Path("/industries")
 public class IndustryResource {
+
+    private static final Logger logger = Logger.getLogger(IndustryResource.class.getName());
+
+    @Inject
+    private IndustryFacade industryFacade;
+    @Inject
+    private ProviderFacade providerFacade;
 
     @GET
     @Path("/count")
@@ -32,7 +46,16 @@ public class IndustryResource {
         return null;
     }
 
-    // private helper methods e.g. to populate resources/resource lists with HATEOAS links
+    /**
+     * related subresources (through relationships)
+     */
+
+    @Path("/{industryId : \\d+}/providers")
+    public ProviderResource getProviderResource() {
+        return new ProviderResource();
+    }
+
+    // helper methods e.g. to populate resources/resource lists with HATEOAS links
 
     /**
      * This method enables to populate list of resources and each individual resource on list with hypermedia links
@@ -40,21 +63,7 @@ public class IndustryResource {
     public static void populateWithHATEOASLinks(ResourceList industries, UriInfo uriInfo, Integer offset, Integer limit) {
 
         // navigation links through collection of resources
-        if(offset != null && limit != null) {
-            // self collection link
-            industries.getLinks().add( Link.fromUri(uriInfo.getAbsolutePathBuilder().queryParam("offset", offset).queryParam("limit", limit).build()).rel("self").build() );
-            // prev collection link
-            Integer prevOffset = (offset - limit) < 0 ? 0 : offset - limit;
-            Integer prevLimit = offset - prevOffset;
-            if(prevLimit > 0)
-                industries.getLinks().add( Link.fromUri(uriInfo.getAbsolutePathBuilder().queryParam("offset", prevOffset).queryParam("limit", prevLimit).build()).rel("prev").build() );
-            else
-                industries.getLinks().add( Link.fromUri("").rel("prev").build() );
-            // next collection link
-            industries.getLinks().add( Link.fromUri(uriInfo.getAbsolutePathBuilder().queryParam("offset", (offset+limit)).queryParam("limit", limit).build()).rel("next").build() );
-        } else {
-            industries.getLinks().add( Link.fromUri(uriInfo.getAbsolutePath()).rel("self").build() );
-        }
+        ResourceList.generateNavigationLinks(industries, uriInfo, offset, limit);
 
         try {
 
@@ -83,12 +92,12 @@ public class IndustryResource {
     /**
      * This method enables to populate each individual resource wrapper with hypermedia links
      */
-    public static void populateWithHATEOASLinks(IndustryWrapper industryWrapper, UriInfo uriinfo) {
+    public static void populateWithHATEOASLinks(IndustryWrapper industryWrapper, UriInfo uriInfo) {
 
-        IndustryResource.populateWithHATEOASLinks(industryWrapper.getIndustry(), uriinfo);
+        IndustryResource.populateWithHATEOASLinks(industryWrapper.getIndustry(), uriInfo);
 
         for(Provider provider : industryWrapper.getProviders())
-            pl.salonea.jaxrs.ProviderResource.populateWithHATEOASLinks(provider, uriinfo);
+            pl.salonea.jaxrs.ProviderResource.populateWithHATEOASLinks(provider, uriInfo);
     }
 
     /**
@@ -108,6 +117,62 @@ public class IndustryResource {
                                                     .path(IndustryResource.class)
                                                     .build())
                                     .rel("industries").build());
+
+    }
+
+    public class ProviderResource {
+
+        public ProviderResource() { }
+
+        /**
+         * Method returns subset of Provider entities for given Industry entity.
+         * The industry id is passed through path param.
+         */
+        @GET
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getIndustryProviders(@PathParam("industryId") Long industryId,
+                                             @BeanParam ProviderBeanParam params) throws ForbiddenException, NotFoundException {
+
+            if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            logger.log(Level.INFO, "returning providers for given industry using IndustryResource.ProviderResource.getIndustryProviders(industryId) method of REST API");
+
+            // find industry entity for which to get associated providers
+            Industry industry = industryFacade.find(industryId);
+            if (industry == null)
+                throw new NotFoundException("Could not find industry for id " + industryId + ".");
+
+            // calculate number of filter query params
+            Integer noOfParams = params.getUriInfo().getQueryParameters().size();
+            if(params.getOffset() != null) noOfParams -= 1;
+            if(params.getLimit() != null) noOfParams -= 1;
+
+            ResourceList<Provider> providers = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Industry> industries = new ArrayList<>();
+                industries.add(industry);
+
+                // get providers for given industry filtered by given params.
+                providers = new ResourceList<>(
+                        providerFacade.findByMultipleCriteria(params.getCorporations(), params.getProviderTypes(), industries, params.getPaymentMethods(),
+                                params.getServices(), params.getRated(), params.getMinAvgRating(), params.getMaxAvgRating(),params.getRatingClients(),
+                                params.getProviderName(), params.getDescription(), params.getOffset(), params.getLimit())
+                );
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get providers for given industry without filtering
+                providers = new ResourceList<>( providerFacade.findByIndustry(industry, params.getOffset(), params.getLimit()) );
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.ProviderResource.populateWithHATEOASLinks(providers, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(providers).build();
+        }
 
     }
 }

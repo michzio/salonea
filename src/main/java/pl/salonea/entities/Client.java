@@ -120,7 +120,7 @@ public class Client extends UUIDEntity implements Serializable{
     }
 
     @XmlTransient
-    @OneToOne(mappedBy = "client", fetch = FetchType.EAGER)
+    @OneToOne(mappedBy = "client", fetch = FetchType.EAGER, cascade = { CascadeType.REMOVE })
     public NaturalPerson getNaturalPerson() {
         return naturalPerson;
     }
@@ -130,7 +130,7 @@ public class Client extends UUIDEntity implements Serializable{
     }
 
     @XmlTransient
-    @OneToOne(mappedBy = "client", fetch = FetchType.EAGER)
+    @OneToOne(mappedBy = "client", fetch = FetchType.EAGER, cascade = { CascadeType.REMOVE })
     public Firm getFirm() {
         return firm;
     }
@@ -160,7 +160,7 @@ public class Client extends UUIDEntity implements Serializable{
     }
 
     @XmlTransient
-    @OneToMany(mappedBy = "client", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "client", fetch = FetchType.LAZY, cascade = { CascadeType.PERSIST, CascadeType.REMOVE })
     public Set<EmployeeRating> getEmployeeRatings() {
         return employeeRatings;
     }

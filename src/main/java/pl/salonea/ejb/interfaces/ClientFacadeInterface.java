@@ -19,6 +19,7 @@ import java.util.Set;
 public interface ClientFacadeInterface extends AbstractFacadeInterface<Client> {
 
     // concrete interface
+    Client update(Client client, Boolean retainTransientFields);
     List<Client> findAllEagerly();
     List<Client> findAllEagerly(Integer start, Integer limit);
     Client findByIdEagerly(Long clientId);

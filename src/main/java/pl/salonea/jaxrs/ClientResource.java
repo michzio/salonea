@@ -6,13 +6,17 @@ import pl.salonea.embeddables.Address;
 import pl.salonea.entities.Client;
 import pl.salonea.jaxrs.bean_params.ClientBeanParam;
 import pl.salonea.jaxrs.bean_params.GenericBeanParam;
+import pl.salonea.jaxrs.exceptions.ExceptionHandler;
 import pl.salonea.jaxrs.exceptions.ForbiddenException;
 import pl.salonea.jaxrs.exceptions.NotFoundException;
+import pl.salonea.jaxrs.exceptions.UnprocessableEntityException;
 import pl.salonea.jaxrs.utils.ResourceList;
 import pl.salonea.jaxrs.utils.ResponseWrapper;
 import pl.salonea.jaxrs.utils.hateoas.Link;
 import pl.salonea.jaxrs.wrappers.ClientWrapper;
 
+import javax.ejb.EJBException;
+import javax.ejb.EJBTransactionRolledbackException;
 import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -20,6 +24,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 import java.lang.reflect.Method;
+import java.net.URI;
 import java.util.HashSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -172,6 +177,103 @@ public class ClientResource {
         return Response.status(Status.OK).entity(wrappedClient).build();
     }
 
+    /**
+     * Method that takes Client as XML or JSON and creates its new instance in database
+     */
+    @POST
+    @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response createClient(Client client,
+                                 @BeanParam GenericBeanParam params) throws ForbiddenException, UnprocessableEntityException, InternalServerErrorException {
+
+        if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+        logger.log(Level.INFO, "creating new Client by executing ClientResource.createClient(client) method of REST API");
+
+        Client createdClient = null;
+        URI locationURI = null;
+
+        try {
+            // persist new resource in database
+            createdClient = clientFacade.create(client);
+
+            // populate created resource with hypermedia links
+            ClientResource.populateWithHATEOASLinks(createdClient, params.getUriInfo());
+
+            // construct link to newly created resource to return in HTTP Header
+            String createdClientId = String.valueOf(createdClient.getClientId());
+            locationURI = params.getUriInfo().getBaseUriBuilder().path(ClientResource.class).path(createdClientId).build();
+
+        } catch (EJBTransactionRolledbackException ex) {
+            ExceptionHandler.handleEJBTransactionRolledbackException(ex);
+        } catch (EJBException ex) {
+            ExceptionHandler.handleEJBException(ex);
+        } catch (Exception ex) {
+            throw new InternalServerErrorException(ExceptionHandler.ENTITY_CREATION_ERROR_MESSAGE);
+        }
+
+        return Response.created(locationURI).entity(createdClient).build();
+    }
+
+    /**
+     * Method that takes updated Client as XML or JSON and its ID as path param.
+     * It updates Client in database for provided ID.
+     */
+    @PUT
+    @Path("/{clientId : \\d+}") // catch only numeric identifiers
+    @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response updateClient(@PathParam("clientId") Long clientId,
+                                 Client client,
+                                 @BeanParam GenericBeanParam params) throws ForbiddenException, UnprocessableEntityException, InternalServerErrorException {
+
+        if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+        logger.log(Level.INFO, "updating existing Client by executing ClientResource.updateClient(clientId, client) method of REST API");
+
+        // set resource ID passed in path param on updated resource object
+        client.setClientId(clientId);
+
+        Client updatedClient = null;
+        try {
+            // reflect updated resource object in database
+            updatedClient = clientFacade.update(client, true);
+            // populate created resource with hypermedia links
+            ClientResource.populateWithHATEOASLinks(updatedClient, params.getUriInfo());
+
+        } catch (EJBTransactionRolledbackException ex) {
+            ExceptionHandler.handleEJBTransactionRolledbackException(ex);
+        } catch (EJBException ex) {
+            ExceptionHandler.handleEJBException(ex);
+        } catch (Exception ex) {
+            throw new InternalServerErrorException(ExceptionHandler.ENTITY_UPDATE_ERROR_MESSAGE);
+        }
+
+        return Response.status(Status.OK).entity(updatedClient).build();
+    }
+
+    /**
+     * Method that removes Client entity from database for given ID.
+     * The ID is passed through path param.
+     */
+    @DELETE
+    @Path("/{clientId : \\d+}") // catch only numeric identifiers
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response removeClient(@PathParam("clientId") Long clientId,
+                                 @HeaderParam("authToken") String authToken) throws ForbiddenException, NotFoundException {
+
+        if(authToken == null) throw new ForbiddenException("Unauthorized access to web service.");
+        logger.log(Level.INFO, "removing given Client by executing ClientResource.removeClient(clientId) method of REST API");
+
+        // find Client entity that should be deleted
+        Client toDeleteClient = clientFacade.find(clientId);
+        // throw exception if entity hasn't been found
+        if(toDeleteClient == null)
+            throw new NotFoundException("Could not find client to delete for given id: " + clientId + ".");
+
+        // remove entity from database
+        clientFacade.remove(toDeleteClient);
+
+        return Response.status(Status.NO_CONTENT).build();
+    }
 
     /**
      * Additional methods returning a subset of resources based on given criteria
