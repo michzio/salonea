@@ -275,7 +275,7 @@ public class NaturalPersonResource {
      * Method returns subset of Natural Person entities for provided first name and last name combination
      */
     @GET
-    @Path("/names")
+    @Path("/named")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public Response getNaturalPersonsByNames( @BeanParam NamesBeanParam params) throws ForbiddenException, BadRequestException {
 
@@ -554,9 +554,9 @@ public class NaturalPersonResource {
             // last-name
             naturalPersons.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder().path(NaturalPersonResource.class).path("last-name").build()).rel("last-name").build());
 
-            // names
-            Method namesMethod = NaturalPersonResource.class.getMethod("getNaturalPersonsByNames", NamesBeanParam.class);
-            naturalPersons.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder().path(NaturalPersonResource.class).path(namesMethod).build()).rel("names").build());
+            // named
+            Method namedMethod = NaturalPersonResource.class.getMethod("getNaturalPersonsByNames", NamesBeanParam.class);
+            naturalPersons.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder().path(NaturalPersonResource.class).path(namedMethod).build()).rel("named").build());
 
             // born-after
             naturalPersons.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder().path(NaturalPersonResource.class).path("born-after").build()).rel("born-after").build());

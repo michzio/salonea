@@ -157,16 +157,14 @@ public class PaymentMethodResource {
                 // get providers for given payment method filtered by given params.
                 providers = new ResourceList<>(
                         providerFacade.findByMultipleCriteria(params.getCorporations(), params.getProviderTypes(), params.getIndustries(), paymentMethods,
-                                params.getServices(), params.getRated(), params.getMinAvgRating(), params.getMaxAvgRating(),params.getRatingClients(),
+                                params.getServices(), params.getRated(), params.getMinAvgRating(), params.getMaxAvgRating(), params.getRatingClients(),
                                 params.getProviderName(), params.getDescription(), params.getOffset(), params.getLimit())
                 );
-
             } else {
                 logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
 
                 // get providers for given payment method without filtering
                 providers = new ResourceList<>( providerFacade.findByPaymentMethod(paymentMethod, params.getOffset(), params.getLimit()) );
-
             }
 
             // result resources need to be populated with hypermedia links to enable resource discovery

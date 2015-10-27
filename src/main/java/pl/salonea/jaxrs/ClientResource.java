@@ -2,14 +2,14 @@ package pl.salonea.jaxrs;
 
 
 import pl.salonea.ejb.stateless.ClientFacade;
+import pl.salonea.ejb.stateless.ProviderFacade;
 import pl.salonea.embeddables.Address;
 import pl.salonea.entities.Client;
-import pl.salonea.jaxrs.bean_params.ClientBeanParam;
-import pl.salonea.jaxrs.bean_params.GenericBeanParam;
-import pl.salonea.jaxrs.exceptions.ExceptionHandler;
+import pl.salonea.entities.Provider;
+import pl.salonea.jaxrs.bean_params.*;
+import pl.salonea.jaxrs.exceptions.*;
 import pl.salonea.jaxrs.exceptions.ForbiddenException;
 import pl.salonea.jaxrs.exceptions.NotFoundException;
-import pl.salonea.jaxrs.exceptions.UnprocessableEntityException;
 import pl.salonea.jaxrs.utils.ResourceList;
 import pl.salonea.jaxrs.utils.ResponseWrapper;
 import pl.salonea.jaxrs.utils.hateoas.Link;
@@ -19,13 +19,16 @@ import javax.ejb.EJBException;
 import javax.ejb.EJBTransactionRolledbackException;
 import javax.inject.Inject;
 import javax.ws.rs.*;
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 import java.lang.reflect.Method;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -39,6 +42,8 @@ public class ClientResource {
 
     @Inject
     private ClientFacade clientFacade;
+    @Inject
+    private ProviderFacade providerFacade;
 
     /**
      * Method returns all Client resources
@@ -297,6 +302,115 @@ public class ClientResource {
     }
 
     /**
+     * Method returns subset of Client entities for given first name
+     */
+    @GET
+    @Path("/first-name/{firstName : \\S+}")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getClientsByFirstName( @PathParam("firstName") String firstName,
+                                           @BeanParam PaginationBeanParam params ) throws ForbiddenException {
+
+        if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+        logger.log(Level.INFO, "returning clients for given first name using ClientResource.getClientsByFirstName(firstName) method of REST API");
+
+        // find clients by given criteria
+        ResourceList<Client> clients = new ResourceList<>( clientFacade.findByFirstName(firstName, params.getOffset(), params.getLimit()) );
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        populateWithHATEOASLinks(clients, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(clients).build();
+    }
+
+    /**
+     * Method returns subset of Client entities for given last name
+     */
+    @GET
+    @Path("/last-name/{lastName : \\S+}")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getClientsByLastName( @PathParam("lastName") String lastName,
+                                          @BeanParam PaginationBeanParam params ) throws ForbiddenException {
+
+        if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+        logger.log(Level.INFO, "returning clients for given last name using ClientResource.getClientsByLastName(lastName) method of REST API");
+
+        // find clients by given criteria
+        ResourceList<Client> clients = new ResourceList<>( clientFacade.findByLastName(lastName, params.getOffset(), params.getLimit()) );
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        populateWithHATEOASLinks(clients, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(clients).build();
+    }
+
+    /**
+     * Method returns subset of Client entities for given first and last names
+     */
+    @GET
+    @Path("/person-names")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getClientsByPersonNames( @BeanParam NamesBeanParam params ) throws ForbiddenException, BadRequestException {
+
+        if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+        logger.log(Level.INFO, "returning clients for given first and last names using ClientResource.getClientsByPersonNames(firstName, lastName) method of REST API");
+
+        // check correctness of query params
+        if(params.getFirstName() == null || params.getLastName() == null) {
+            throw new BadRequestException("First name or last name query param not specified for request.");
+        }
+
+        // find clients by given criteria
+        ResourceList<Client> clients = new ResourceList<>( clientFacade.findByPersonNames(params.getFirstName(), params.getLastName(), params.getOffset(), params.getLimit()) );
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        populateWithHATEOASLinks(clients, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(clients).build();
+    }
+
+    /**
+     * Method returns subset of Client entities for given firm name
+     */
+    @GET
+    @Path("/firm-name/{firmName : \\S+}")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getClientsByFirmName( @PathParam("firmName") String firmName,
+                                          @BeanParam PaginationBeanParam params ) throws ForbiddenException {
+
+        if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+        logger.log(Level.INFO, "returning clients for given firm name using ClientResource.getClientsByFirmName(firmName) method of REST API");
+
+        // find clients by given criteria
+        ResourceList<Client> clients = new ResourceList<>( clientFacade.findByFirmName(firmName, params.getOffset(), params.getLimit()) );
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        populateWithHATEOASLinks(clients, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(clients).build();
+    }
+
+    /**
+     * Method returns subset of Client entities for given name (searched in first name or last name or firm name)
+     */
+    @GET
+    @Path("/named/{name : \\S+}")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getClientsByName( @PathParam("name") String name,
+                                      @BeanParam PaginationBeanParam params ) throws ForbiddenException {
+
+        if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+        logger.log(Level.INFO, "returning clients for given name using ClientResource.getClientsByName(name) method of REST API");
+
+        // find clients by given criteria
+        ResourceList<Client> clients = new ResourceList<>( clientFacade.findByName(name, params.getOffset(), params.getLimit()) );
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        populateWithHATEOASLinks(clients, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(clients).build();
+    }
+
+    /**
      * related subresources (through relationships)
      */
 
@@ -305,23 +419,8 @@ public class ClientResource {
         return new ProviderRatingResource();
     }
 
-    public class ProviderRatingResource {
-
-        public ProviderRatingResource() { }
-
-        @GET
-        @Path("/count")
-        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-        public Response countProviderRatingsByClient( @PathParam("clientId") Long clientId,
-                                                      @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException  {
-
-            if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
-
-
-            return null;
-
-        }
-    }
+    @Path("/{clientId: \\d+}/rated-providers")
+    public ProviderResource getProviderResource() { return new ProviderResource(); }
 
     /**
      * This method enables to populate list of resources and each individual resource with hypermedia links
@@ -356,6 +455,21 @@ public class ClientResource {
                     .rel("clients-eagerly").build());
 
             // get subset of resources hypermedia links
+            // first-name
+            clients.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(ClientResource.class).path("first-name").build()).rel("first-name").build() );
+
+            // last-name
+            clients.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(ClientResource.class).path("last-name").build()).rel("last-name").build() );
+
+            // person-names
+            Method personNamesMethod = ClientResource.class.getMethod("getClientsByPersonNames", NamesBeanParam.class);
+            clients.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(ClientResource.class).path(personNamesMethod).build()).rel("person-names").build() );
+
+            // firm-name
+            clients.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(ClientResource.class).path("firm-name").build()).rel("firm-name").build() );
+
+            // named
+            clients.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(ClientResource.class).path("named").build()).rel("named").build() );
 
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
@@ -376,6 +490,7 @@ public class ClientResource {
     public static void populateWithHATEOASLinks(ClientWrapper clientWrapper, UriInfo uriInfo) {
 
         ClientResource.populateWithHATEOASLinks(clientWrapper.getClient(), uriInfo);
+
     }
 
     /**
@@ -428,12 +543,98 @@ public class ClientResource {
                     .build())
                     .rel("client-eagerly").build());
 
+            // associated collections links with pattern: http://localhost:port/app/rest/{resources}/{id}/{relationship}
+
+            // provider-ratings
+            Method providerRatingsMethod = ClientResource.class.getMethod("getProviderRatingResource");
+            client.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ClientResource.class)
+                    .path(providerRatingsMethod)
+                    .resolveTemplate("clientId", client.getClientId().toString())
+                    .build())
+                    .rel("provider-ratings").build());
+
+            // rated-providers
+            Method providersMethod = ClientResource.class.getMethod("getProviderResource");
+            client.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ClientResource.class)
+                    .path(providersMethod)
+                    .resolveTemplate("clientId", client.getClientId().toString())
+                    .build())
+                    .rel("rated-providers").build());
 
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
         }
 
+    }
 
+    public class ProviderRatingResource {
+
+        public ProviderRatingResource() { }
+
+        @GET
+        @Path("/count")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response countProviderRatingsByClient( @PathParam("clientId") Long clientId,
+                                                      @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException  {
+
+            if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+
+
+            return null;
+
+        }
+    }
+
+    public class ProviderResource {
+
+        public ProviderResource() { }
+
+        @GET
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getClientRatedProviders( @PathParam("clientId") Long clientId,
+                                                 @BeanParam ProviderBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            logger.log(Level.INFO, "returning providers rated by given client using ClientResource.ProviderResource.getClientRatedProviders(clientId) method of REST API");
+
+            // find client entity for which to get rated by it providers
+            Client client = clientFacade.find(clientId);
+            if(client == null)
+                throw new NotFoundException("Could not find client for id " + clientId + ".");
+
+            // calculate number of filter query params
+            Integer noOfParams = params.getUriInfo().getQueryParameters().size();
+            if(params.getOffset() != null) noOfParams -= 1;
+            if(params.getLimit() != null) noOfParams -= 1;
+
+            ResourceList<Provider> providers = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Client> clients = new ArrayList<>();
+                clients.add(client);
+
+                // get providers for given client filtered by given params.
+                providers = new ResourceList<>(
+                        providerFacade.findByMultipleCriteria(params.getCorporations(), params.getProviderTypes(), params.getIndustries(), params.getPaymentMethods(),
+                                params.getServices(), params.getRated(), params.getMinAvgRating(), params.getMaxAvgRating(), clients,
+                                params.getProviderName(), params.getDescription(), params.getOffset(), params.getLimit())
+                );
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get providers for given client without filtering
+                providers = new ResourceList<>( providerFacade.findRatedByClient(client, params.getOffset(), params.getLimit()) );
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.ProviderResource.populateWithHATEOASLinks(providers, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(providers).build();
+        }
     }
 
 }

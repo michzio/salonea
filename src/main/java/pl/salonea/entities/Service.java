@@ -3,14 +3,13 @@ package pl.salonea.entities;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import pl.salonea.jaxrs.utils.hateoas.Link;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlTransient;
+import javax.xml.bind.annotation.*;
+import java.util.HashSet;
 import java.util.Set;
 
 @XmlRootElement(name = "service")
@@ -56,6 +55,9 @@ public class Service {
 
     /* one-to-many relationship */
     private Set<ProviderService> providedServiceOffers;
+
+    // HATEOAS support for RESTFul web service in JAX-RS
+    private Set<Link> links = new HashSet<>();
 
     /* constructors */
 
@@ -150,5 +152,16 @@ public class Service {
                 // if deriving: .appendSuper(super.equals(obj)).
                 .append(getServiceName(), rhs.getServiceName())
                 .isEquals();
+    }
+
+    @XmlElementWrapper(name = "links")
+    @XmlElement(name = "link")
+    @Transient
+    public Set<Link> getLinks() {
+        return links;
+    }
+
+    public void setLinks(Set<Link> links) {
+        this.links = links;
     }
 }
