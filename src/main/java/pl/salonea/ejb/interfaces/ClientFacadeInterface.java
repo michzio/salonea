@@ -55,8 +55,12 @@ public interface ClientFacadeInterface extends AbstractFacadeInterface<Client> {
     List<Client> findByGender(Gender gender, Integer start, Integer limit);
     List<Client> findRatingProvider(Provider provider);
     List<Client> findRatingProvider(Provider provider, Integer start, Integer limit);
+    List<Client> findRatingProviderEagerly(Provider provider);
+    List<Client> findRatingProviderEagerly(Provider provider, Integer start, Integer limit);
     List<Client> findRatingEmployee(Employee employee);
     List<Client> findRatingEmployee(Employee employee, Integer start, Integer limit);
+    List<Client> findRatingEmployeeEagerly(Employee employee);
+    List<Client> findRatingEmployeeEagerly(Employee employee, Integer start, Integer limit);
     List<Client> findByType(ClientType clientType);
     List<Client> findByType(ClientType clientType, Integer start, Integer limit);
     List<Client> findByMultipleCriteria(String firstName, String lastName, String firmName, String name, String description, Set<ClientType> clientTypes, Date oldestBirthDate, Date youngestBirthDate, Integer youngestAge, Integer oldestAge,  Address location, Address delivery, Gender gender, List<Provider> ratedProviders, List<Employee> ratedEmployees);

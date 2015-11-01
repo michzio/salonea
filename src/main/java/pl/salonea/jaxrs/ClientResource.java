@@ -6,10 +6,13 @@ import pl.salonea.ejb.stateless.ProviderFacade;
 import pl.salonea.embeddables.Address;
 import pl.salonea.entities.Client;
 import pl.salonea.entities.Provider;
+import pl.salonea.enums.Gender;
 import pl.salonea.jaxrs.bean_params.*;
 import pl.salonea.jaxrs.exceptions.*;
 import pl.salonea.jaxrs.exceptions.ForbiddenException;
 import pl.salonea.jaxrs.exceptions.NotFoundException;
+import pl.salonea.jaxrs.exceptions.BadRequestException;
+import pl.salonea.jaxrs.utils.RESTDateTime;
 import pl.salonea.jaxrs.utils.ResourceList;
 import pl.salonea.jaxrs.utils.ResponseWrapper;
 import pl.salonea.jaxrs.utils.hateoas.Link;
@@ -19,7 +22,6 @@ import javax.ejb.EJBException;
 import javax.ejb.EJBTransactionRolledbackException;
 import javax.inject.Inject;
 import javax.ws.rs.*;
-import javax.ws.rs.BadRequestException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
@@ -411,6 +413,246 @@ public class ClientResource {
     }
 
     /**
+     * Method returns subset of Client entities for given description
+     */
+    @GET
+    @Path("/described/{description : \\S+}")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getClientsByDescription( @PathParam("description") String description,
+                                             @BeanParam PaginationBeanParam params ) throws ForbiddenException {
+
+        if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+        logger.log(Level.INFO, "returning clients for given description using ClientResource.getClientsByDescription(description) method of REST API ");
+
+        // find clients by given criteria
+        ResourceList<Client> clients = new ResourceList<>( clientFacade.findByDescription(description, params.getOffset(), params.getLimit()) );
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        populateWithHATEOASLinks(clients, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(clients).build();
+    }
+
+    /**
+     * Method returns subset of Client entities born after given date
+     */
+    @GET
+    @Path("/born-after/{date}")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getClientsBornAfter( @PathParam("date") RESTDateTime date,
+                                         @BeanParam PaginationBeanParam params ) throws ForbiddenException  {
+
+        if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+        logger.log(Level.INFO, "returning clients born after provided date using ClientResource.getClientsBornAfter(date) method of REST API");
+
+        // find clients by given criteria
+        ResourceList<Client> clients = new ResourceList<>( clientFacade.findBornAfter(date, params.getOffset(), params.getLimit()) );
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        populateWithHATEOASLinks(clients, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(clients).build();
+    }
+
+    /**
+     * Method returns subset of Client entities born before given date
+     */
+    @GET
+    @Path("/born-before/{date}")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getClientsBornBefore( @PathParam("date") RESTDateTime date,
+                                          @BeanParam PaginationBeanParam params ) throws ForbiddenException {
+
+        if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+        logger.log(Level.INFO, "returning clients born before provided date using ClientResource.getClientsBornBefore(date) method of REST API");
+
+        // find clients by given criteria
+        ResourceList<Client> clients = new ResourceList<>( clientFacade.findBornBefore(date, params.getOffset(), params.getLimit()) );
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        populateWithHATEOASLinks(clients, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(clients).build();
+    }
+
+    /**
+     * Method returns subset of Client entities born between given dates
+     */
+    @GET
+    @Path("/born-between")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getClientsBornBetween( @BeanParam DateBetweenBeanParam params ) throws ForbiddenException, BadRequestException {
+
+        if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+        logger.log(Level.INFO, "returning clients born between given start and end date using ClientResource.getClientsBornBetween() method of REST API");
+
+        // check correctness of query params
+        if(params.getStartDate() == null || params.getEndDate() == null) {
+            throw new BadRequestException("Start date or end date query param not specified for request.");
+        }
+
+        if(params.getStartDate().after(params.getEndDate())) {
+            throw new BadRequestException("Start date is after end date.");
+        }
+
+        // find clients by given criteria
+        ResourceList<Client> clients = new ResourceList<>( clientFacade.findBornBetween(params.getStartDate(),
+                params.getEndDate(), params.getOffset(), params.getLimit()) );
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        populateWithHATEOASLinks(clients, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(clients).build();
+    }
+
+    /**
+     * Method returns subset of Client entities older than specified age
+     */
+    @GET
+    @Path("/older-than/{age : \\d{1,3}}") // catch only numeric 0-999 path param
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getClientsOlderThan( @PathParam("age") Integer age,
+                                         @BeanParam PaginationBeanParam params ) throws ForbiddenException {
+
+        if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+        logger.log(Level.INFO, "returning clients older than specified age using ClientResource.getClientsOlderThan(age) method of REST API");
+
+        // find clients by given criteria
+        ResourceList<Client> clients = new ResourceList<>( clientFacade.findOlderThan(age, params.getOffset(), params.getLimit()) );
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        populateWithHATEOASLinks(clients, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(clients).build();
+    }
+
+    /**
+     * Method returns subset of Client entities younger than specified age
+     */
+    @GET
+    @Path("/younger-than/{age : \\d{1,3}}") // catch only numeric 0-999 path param
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getClientsYoungerThan( @PathParam("age") Integer age,
+                                           @BeanParam PaginationBeanParam params ) throws ForbiddenException {
+
+        if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+        logger.log(Level.INFO, "returning clients younger than specified age using ClientResource.getClientsYoungerThan(age) method of REST API");
+
+        // find clients by given criteria
+        ResourceList<Client> clients = new ResourceList<>( clientFacade.findYoungerThan(age, params.getOffset(), params.getLimit()) );
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        populateWithHATEOASLinks(clients, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(clients).build();
+    }
+
+    /**
+     * Method returns subset of Client entities between specified age
+     */
+    @GET
+    @Path("/aged-between")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getClientsAgedBetween( @BeanParam AgeBetweenBeanParam params ) throws ForbiddenException, BadRequestException {
+
+        if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+        logger.log(Level.INFO, "returning clients aged between specified youngest and oldest age using ClientResource.getClientsAgedBetween() method of REST API");
+
+        // check correctness of query params
+        if(params.getYoungestAge() == null || params.getOldestAge() == null) {
+            throw new BadRequestException("Youngest or oldest age query param not specified for request.");
+        }
+
+        if(params.getYoungestAge() > params.getOldestAge()) {
+            throw new BadRequestException("Youngest age is greater than oldest age.");
+        }
+
+        // find clients by given criteria
+        ResourceList<Client> clients = new ResourceList<>( clientFacade.findBetweenAge(params.getYoungestAge(), params.getOldestAge(), params.getOffset(), params.getLimit()) );
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        populateWithHATEOASLinks(clients, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(clients).build();
+    }
+
+    /**
+     * Method returns subset of Client entities for given location query params (home address or firm address)
+     */
+    @GET
+    @Path("/located")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getClientsByLocation( @BeanParam AddressBeanParam params ) throws ForbiddenException, BadRequestException {
+
+        if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+        logger.log(Level.INFO, "returning clients for given location query params using ClientResource.getClientsByLocation() method of REST API");
+
+        // check correctness of query params
+        Integer noOfParams = params.getUriInfo().getQueryParameters().size();
+        if(params.getOffset() != null) noOfParams -= 1;
+        if(params.getLimit() != null) noOfParams -= 1;
+        if(noOfParams < 1 )
+            throw new BadRequestException("There is no location related query param in request.");
+
+        // find clients by given criteria
+        ResourceList<Client> clients = new ResourceList<>( clientFacade.findByLocation(params.getCity(), params.getState(), params.getCountry(),
+                params.getStreet(), params.getZipCode(), params.getOffset(), params.getLimit()) );
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        populateWithHATEOASLinks(clients, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(clients).build();
+    }
+
+    /**
+     * Method returns subset of Client entities for given delivery query params (delivery address or firm address)
+     */
+    @GET
+    @Path("/delivered")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getClientsByDelivery(  @BeanParam AddressBeanParam params ) throws ForbiddenException, BadRequestException {
+
+        if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+        logger.log(Level.INFO, "returning clients for given delivery query params using ClientResource.getClientsByDelivery() method of REST API");
+
+        // check correctness
+        Integer noOfParams = params.getUriInfo().getQueryParameters().size();
+        if(params.getOffset() != null) noOfParams -= 1;
+        if(params.getLimit() != null) noOfParams -= 1;
+        if(noOfParams < 1)
+            throw new BadRequestException("There is no delivery related query param in request.");
+
+        // find clients by given criteria
+        ResourceList<Client> clients = new ResourceList<>( clientFacade.findByDelivery(params.getCity(), params.getState(), params.getCountry(),
+                params.getStreet(), params.getZipCode(), params.getOffset(), params.getLimit()) );
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        populateWithHATEOASLinks(clients, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(clients).build();
+    }
+
+    /**
+     * Method returns subset of Client entities for given gender
+     */
+    @GET
+    @Path("/gender/{gender : \\S+}")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getClientsByGender( @PathParam("gender") Gender gender,
+                                        @BeanParam PaginationBeanParam params ) throws ForbiddenException {
+
+        if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+        logger.log(Level.INFO, "returning clients for given gender using ClientResource.getClientsByGender(gender) method of REST API");
+
+        ResourceList<Client> clients = new ResourceList<>( clientFacade.findByGender(gender, params.getOffset(), params.getLimit()) );
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        populateWithHATEOASLinks(clients, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(clients).build();
+    }
+
+    /**
      * related subresources (through relationships)
      */
 
@@ -470,6 +712,40 @@ public class ClientResource {
 
             // named
             clients.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(ClientResource.class).path("named").build()).rel("named").build() );
+
+            // described
+            clients.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(ClientResource.class).path("described").build()).rel("described").build() );
+
+            // born-after
+            clients.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(ClientResource.class).path("born-after").build()).rel("born-after").build() );
+
+            // born-before
+            clients.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(ClientResource.class).path("born-before").build()).rel("born-before").build() );
+
+            // born-between
+            Method bornBetweenMethod = ClientResource.class.getMethod("getClientsBornBetween", DateBetweenBeanParam.class);
+            clients.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(ClientResource.class).path(bornBetweenMethod).build()).rel("born-between").build() );
+
+            // older-than
+            clients.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(ClientResource.class).path("older-than").build()).rel("older-than").build() );
+
+            // younger-than
+            clients.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(ClientResource.class).path("younger-than").build()).rel("younger-than").build() );
+
+            // aged-between
+            Method agedBetweenMethod = ClientResource.class.getMethod("getClientsAgedBetween", AgeBetweenBeanParam.class);
+            clients.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(ClientResource.class).path(agedBetweenMethod).build()).rel("aged-between").build() );
+
+            // located
+            Method locatedMethod = ClientResource.class.getMethod("getClientsByLocation", AddressBeanParam.class);
+            clients.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(ClientResource.class).path(locatedMethod).build()).rel("located").build() );
+
+            // delivered
+            Method deliveredMethod = ClientResource.class.getMethod("getClientsByDelivery", AddressBeanParam.class);
+            clients.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(ClientResource.class).path(deliveredMethod).build()).rel("delivered").build() );
+
+            // gender
+            clients.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(ClientResource.class).path("gender").build()).rel("gender").build() );
 
         } catch (NoSuchMethodException e) {
             e.printStackTrace();

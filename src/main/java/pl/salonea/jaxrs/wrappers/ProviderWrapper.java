@@ -37,7 +37,7 @@ public class ProviderWrapper {
 
         List<ProviderWrapper> wrappedProviders = new ArrayList<>();
 
-        for (Provider provider : providers)
+        for(Provider provider : providers)
             wrappedProviders.add(new ProviderWrapper(provider));
 
         return wrappedProviders;
@@ -61,7 +61,7 @@ public class ProviderWrapper {
         this.industries = industries;
     }
 
-    @XmlElement(name = "acceptedPaymentMethods")
+    @XmlElement(name = "acceptedPaymentMethods", nillable = true)
     public Set<PaymentMethod> getAcceptedPaymentMethods() {
         return acceptedPaymentMethods;
     }

@@ -303,7 +303,7 @@ public class NaturalPersonResource {
     @Path("/born-after/{date}")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public Response getNaturalPersonsBornAfter( @PathParam("date") RESTDateTime date,
-                                                @BeanParam PaginationBeanParam params) throws ForbiddenException {
+                                                @BeanParam PaginationBeanParam params ) throws ForbiddenException {
 
         if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
         logger.log(Level.INFO, "returning natural persons born after provided date using NaturalPersonResource.getNaturalPersonsBornAfter(date) method of REST API");
@@ -344,7 +344,7 @@ public class NaturalPersonResource {
     @GET
     @Path("/born-between")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getNaturalPersonsBornBetween( @BeanParam DateBetweenBeanParam params) throws ForbiddenException, BadRequestException {
+    public Response getNaturalPersonsBornBetween( @BeanParam DateBetweenBeanParam params ) throws ForbiddenException, BadRequestException {
 
         if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
         logger.log(Level.INFO, "returning natural persons born between given start and end date using NaturalPersonResource.getNaturalPersonsBornBetween() method of REST API");
@@ -375,7 +375,7 @@ public class NaturalPersonResource {
     @Path("/older-than/{age : \\d{1,3}}") // catch only numeric 0-999 path param
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public Response getNaturalPersonsOlderThan( @PathParam("age") Integer age,
-                                                @BeanParam PaginationBeanParam params) throws ForbiddenException {
+                                                @BeanParam PaginationBeanParam params ) throws ForbiddenException {
 
         if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
         logger.log(Level.INFO, "returning natural persons older than specified age using NaturalPersonResource.getNaturalPersonsOlderThan(age) method of REST API");
@@ -416,7 +416,7 @@ public class NaturalPersonResource {
     @GET
     @Path("/aged-between")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getNaturalPersonsAgedBetween( @BeanParam AgeBetweenBeanParam params) throws ForbiddenException, BadRequestException {
+    public Response getNaturalPersonsAgedBetween( @BeanParam AgeBetweenBeanParam params ) throws ForbiddenException, BadRequestException {
 
         if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
         logger.log(Level.INFO, "returning natural persons aged between specified youngest and oldest age using NaturalPersonResource.getNaturalPersonsAgedBetween() method of REST API");
@@ -445,7 +445,7 @@ public class NaturalPersonResource {
     @GET
     @Path("/located")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getNaturalPersonsByLocation( @BeanParam AddressBeanParam params) throws ForbiddenException, BadRequestException {
+    public Response getNaturalPersonsByLocation( @BeanParam AddressBeanParam params ) throws ForbiddenException, BadRequestException {
 
         if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
         logger.log(Level.INFO, "returning natural persons for given location query params using NaturalPersonResource.getNaturalPersonsByLocation() method of REST API");
@@ -473,7 +473,7 @@ public class NaturalPersonResource {
     @GET
     @Path("/delivered")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getNaturalPersonsByDelivery( @BeanParam AddressBeanParam params) throws ForbiddenException, BadRequestException {
+    public Response getNaturalPersonsByDelivery( @BeanParam AddressBeanParam params ) throws ForbiddenException, BadRequestException {
 
         if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
         logger.log(Level.INFO, "returning natural persons for given delivery query params using NaturalPersonResource.getNaturalPersonsByDelivery() method of REST API");

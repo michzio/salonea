@@ -26,20 +26,22 @@ import java.util.Set;
         @NamedQuery(name = Client.FIND_BY_LAST_NAME, query = "SELECT c FROM Client c WHERE c.naturalPerson.lastName LIKE :lname"),
         @NamedQuery(name = Client.FIND_BY_PERSON_NAMES, query = "SELECT c FROM Client c WHERE c.naturalPerson.firstName LIKE :fname AND c.naturalPerson.lastName LIKE :lname"),
         @NamedQuery(name = Client.FIND_BY_FIRM_NAME, query = "SELECT c FROM Client c WHERE c.firm.name LIKE :firm_name"),
-        @NamedQuery(name = Client.FIND_BY_NAME, query = "SELECT c FROM Client c WHERE c.naturalPerson.firstName LIKE :name OR c.naturalPerson.lastName LIKE :name OR c.firm.name LIKE :name"),
+        @NamedQuery(name = Client.FIND_BY_NAME, query = "SELECT c FROM Client c LEFT JOIN c.naturalPerson np LEFT JOIN c.firm f WHERE np.firstName LIKE :name OR np.lastName LIKE :name OR f.name LIKE :name"),
         @NamedQuery(name = Client.FIND_BY_DESCRIPTION, query = "SELECT c FROM Client c WHERE c.description LIKE :description"),
         @NamedQuery(name = Client.FIND_BORN_AFTER, query = "SELECT c FROM Client c WHERE c.naturalPerson.birthDate >= :date"),
         @NamedQuery(name = Client.FIND_BORN_BEFORE, query = "SELECT c FROM Client c WHERE c.naturalPerson.birthDate <= :date"),
         @NamedQuery(name = Client.FIND_BORN_BETWEEN, query = "SELECT c FROM Client c WHERE c.naturalPerson.birthDate >= :start_date AND c.naturalPerson.birthDate <= :end_date"),
-        @NamedQuery(name = Client.FIND_BY_LOCATION, query = "SELECT c FROM Client c WHERE (c.naturalPerson.homeAddress.city LIKE :city AND c.naturalPerson.homeAddress.state LIKE :state " +
-                "AND c.naturalPerson.homeAddress.country LIKE :country AND c.naturalPerson.homeAddress.street LIKE :street AND c.naturalPerson.homeAddress.zipCode LIKE :zip_code) OR " +
-                "(c.firm.address.city LIKE :city AND c.firm.address.state LIKE :state AND c.firm.address.country LIKE :country AND c.firm.address.street LIKE :street AND c.firm.address.zipCode LIKE :zip_code)"),
-        @NamedQuery(name = Client.FIND_BY_DELIVERY, query = "SELECT c FROM Client c WHERE (c.naturalPerson.deliveryAddress.city LIKE :city AND c.naturalPerson.deliveryAddress.state LIKE :state " +
-                "AND c.naturalPerson.deliveryAddress.country LIKE :country AND c.naturalPerson.deliveryAddress.street LIKE :street AND c.naturalPerson.deliveryAddress.zipCode LIKE :zip_code) OR " +
-                "(c.firm.address.city LIKE :city AND c.firm.address.state LIKE :state AND c.firm.address.country LIKE :country AND c.firm.address.street LIKE :street AND c.firm.address.zipCode LIKE :zip_code)"),
+        @NamedQuery(name = Client.FIND_BY_LOCATION, query = "SELECT c FROM Client c LEFT JOIN c.naturalPerson np LEFT JOIN c.firm f WHERE (np.homeAddress.city LIKE :city AND np.homeAddress.state LIKE :state " +
+                "AND np.homeAddress.country LIKE :country AND np.homeAddress.street LIKE :street AND np.homeAddress.zipCode LIKE :zip_code) OR " +
+                "(f.address.city LIKE :city AND f.address.state LIKE :state AND f.address.country LIKE :country AND f.address.street LIKE :street AND f.address.zipCode LIKE :zip_code)"),
+        @NamedQuery(name = Client.FIND_BY_DELIVERY, query = "SELECT c FROM Client c LEFT JOIN c.naturalPerson np LEFT JOIN c.firm f WHERE (np.deliveryAddress.city LIKE :city AND np.deliveryAddress.state LIKE :state " +
+                "AND np.deliveryAddress.country LIKE :country AND np.deliveryAddress.street LIKE :street AND np.deliveryAddress.zipCode LIKE :zip_code) OR " +
+                "(f.address.city LIKE :city AND f.address.state LIKE :state AND f.address.country LIKE :country AND f.address.street LIKE :street AND f.address.zipCode LIKE :zip_code)"),
         @NamedQuery(name = Client.FIND_BY_GENDER, query = "SELECT c FROM Client c WHERE c.naturalPerson.gender = :gender"),
         @NamedQuery(name = Client.FIND_RATING_PROVIDER, query = "SELECT c FROM Client c INNER JOIN c.providerRatings pr WHERE pr.provider = :provider"),
+        @NamedQuery(name = Client.FIND_RATING_PROVIDER_EAGERLY, query = "SELECT c FROM Client c LEFT JOIN FETCH c.creditCards LEFT JOIN FETCH c.providerRatings pr LEFT JOIN FETCH c.employeeRatings WHERE pr.provider = :provider"),
         @NamedQuery(name = Client.FIND_RATING_EMPLOYEE, query = "SELECT c FROM Client c INNER JOIN c.employeeRatings er WHERE er.employee = :employee"),
+        @NamedQuery(name = Client.FIND_RATING_EMPLOYEE_EAGERLY, query = "SELECT c FROM Client c LEFT JOIN FETCH c.creditCards LEFT JOIN FETCH c.providerRatings LEFT JOIN FETCH c.employeeRatings er WHERE er.employee = :employee"),
         @NamedQuery(name = Client.FIND_ONLY_FIRMS, query = "SELECT c FROM Client c WHERE c.firm IS NOT NULL AND c.naturalPerson IS NULL"),
         @NamedQuery(name = Client.FIND_ONLY_NATURAL_PERSONS, query = "SELECT c FROM Client c WHERE c.firm IS NULL AND c.naturalPerson IS NOT NULL"),
         @NamedQuery(name = Client.FIND_NOT_ASSIGNED, query = "SELECT c FROM Client c WHERE c.firm IS NULL AND c.naturalPerson IS NULL"),
@@ -62,7 +64,9 @@ public class Client extends UUIDEntity implements Serializable{
     public static final String FIND_BY_DELIVERY = "Client.findByDelivery";
     public static final String FIND_BY_GENDER = "Client.findByGender";
     public static final String FIND_RATING_PROVIDER = "Client.findRatingProvider";
+    public static final String FIND_RATING_PROVIDER_EAGERLY = "Client.findRatingProviderEagerly";
     public static final String FIND_RATING_EMPLOYEE = "Client.findRatingEmployee";
+    public static final String FIND_RATING_EMPLOYEE_EAGERLY = "Client.findRatingEmployeeEagerly";
     public static final String FIND_ONLY_FIRMS = "Client.findOnlyFirms";
     public static final String FIND_ONLY_NATURAL_PERSONS = "Client.findOnlyNaturalPersons";
     public static final String FIND_NOT_ASSIGNED = "Client.findNotAssigned";

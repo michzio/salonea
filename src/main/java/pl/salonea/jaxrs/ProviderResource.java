@@ -1,9 +1,11 @@
 package pl.salonea.jaxrs;
 
 import pl.salonea.ejb.stateless.*;
+import pl.salonea.embeddables.Address;
 import pl.salonea.entities.*;
 import pl.salonea.entities.idclass.ProviderServiceId;
 import pl.salonea.entities.idclass.ServicePointId;
+import pl.salonea.enums.ClientType;
 import pl.salonea.enums.ProviderType;
 import pl.salonea.jaxrs.bean_params.*;
 import pl.salonea.jaxrs.exceptions.*;
@@ -28,6 +30,7 @@ import java.lang.reflect.Method;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -462,6 +465,9 @@ public class ProviderResource {
         return new ProviderRatingResource();
     }
 
+    @Path("/{userId: \\d+}/rating-clients")
+    public ClientResource getClientResource() { return new ClientResource(); }
+
     // private helper methods e.g. to populate resources/resource lists with HATEOAS links
 
     /**
@@ -613,6 +619,25 @@ public class ProviderResource {
                     .resolveTemplate("userId", provider.getUserId().toString())
                     .build())
                     .rel("provider-ratings").build());
+
+            // rating-clients
+            Method ratingClientsMethod = ProviderResource.class.getMethod("getClientResource");
+            provider.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ProviderResource.class)
+                    .path(ratingClientsMethod)
+                    .resolveTemplate("userId", provider.getUserId().toString())
+                    .build())
+                    .rel("rating-clients").build());
+
+            // rating-clients eagerly
+            Method ratingClientsEagerlyMethod = ClientResource.class.getMethod("getProviderRatingClientsEagerly", Long.class, ClientBeanParam.class);
+            provider.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ProviderResource.class)
+                    .path(ratingClientsMethod)
+                    .path(ratingClientsEagerlyMethod)
+                    .resolveTemplate("userId", provider.getUserId().toString())
+                    .build())
+                    .rel("rating-clients-eagerly").build());
 
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
@@ -2101,5 +2126,118 @@ public class ProviderResource {
 
         }
 
+    }
+
+    public class ClientResource {
+
+        public ClientResource() { }
+
+        @GET
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getProviderRatingClients( @PathParam("userId") Long providerId,
+                                                  @BeanParam ClientBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            logger.log(Level.INFO, "returning clients rating given provider using ProviderResource.ClientResource.getProviderRatingClients(providerId) method of REST API");
+
+            // find provider entity for which to get rating it clients
+            Provider provider = providerFacade.find(providerId);
+            if(provider == null)
+                throw new NotFoundException("Could not find provider for id " + providerId + ".");
+
+            // calculate number of filter query params
+            Integer noOfParams = params.getUriInfo().getQueryParameters().size();
+            if(params.getOffset() != null) noOfParams -= 1;
+            if(params.getLimit() != null) noOfParams -= 1;
+
+            ResourceList<Client> clients = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Provider> ratedProviders = new ArrayList<>();
+                ratedProviders.add(provider);
+
+                Address location = new Address(params.getStreet(), params.getHouseNumber(), params.getFlatNumber(), params.getZipCode(), params.getCity(), params.getState(), params.getCountry());
+                Address delivery = new Address(params.getDeliveryStreet(), params.getDeliveryHouseNumber(), params.getDeliveryFlatNumber(), params.getDeliveryZipCode(), params.getDeliveryCity(), params.getDeliveryState(), params.getDeliveryCountry());
+
+
+                // get clients for given rated provider filtered by given params
+                clients = new ResourceList<>(
+                        clientFacade.findByMultipleCriteria(params.getFirstName(), params.getLastName(), params.getFirmName(), params.getName(),
+                                params.getDescription(), new HashSet<>(params.getClientTypes()), params.getOldestBirthDate(), params.getYoungestBirthDate(),
+                                params.getYoungestAge(), params.getOldestAge(), location, delivery, params.getGender(), ratedProviders,
+                                params.getRatedEmployees(), params.getOffset(), params.getLimit())
+                );
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get clients for given rated provider without filtering
+                clients = new ResourceList<>( clientFacade.findRatingProvider(provider, params.getOffset(), params.getLimit()) );
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.ClientResource.populateWithHATEOASLinks(clients, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(clients).build();
+
+        }
+
+        @GET
+        @Path("/eagerly")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getProviderRatingClientsEagerly( @PathParam("userId") Long providerId,
+                                                         @BeanParam ClientBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            logger.log(Level.INFO, "returning clients rating given provider eagerly using ProviderResource.ClientResource.getProviderRatingClientsEagerly(providerId) method of REST API");
+
+            // find provider entity for which to get rating it clients
+            Provider provider = providerFacade.find(providerId);
+            if(provider == null)
+                throw new NotFoundException("Could not find provider for id " + providerId + ".");
+
+            // calculate number of filter query params
+            Integer noOfParams = params.getUriInfo().getQueryParameters().size();
+            if(params.getOffset() != null) noOfParams -= 1;
+            if(params.getLimit() != null) noOfParams -= 1;
+
+            ResourceList<ClientWrapper> clients = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Provider> ratedProviders = new ArrayList<>();
+                ratedProviders.add(provider);
+
+                Address location = new Address(params.getStreet(), params.getHouseNumber(), params.getFlatNumber(), params.getZipCode(), params.getCity(), params.getState(), params.getCountry());
+                Address delivery = new Address(params.getDeliveryStreet(), params.getDeliveryHouseNumber(), params.getDeliveryFlatNumber(), params.getDeliveryZipCode(), params.getDeliveryCity(), params.getDeliveryState(), params.getDeliveryCountry());
+
+                // get clients eagerly for given rated provider filtered by given params
+                clients = new ResourceList<>(
+                        ClientWrapper.wrap(
+                                clientFacade.findByMultipleCriteriaEagerly(params.getFirstName(), params.getLastName(), params.getFirmName(), params.getName(),
+                                        params.getDescription(), new HashSet<>(params.getClientTypes()), params.getOldestBirthDate(), params.getYoungestBirthDate(),
+                                        params.getYoungestAge(), params.getOldestAge(), location, delivery, params.getGender(), ratedProviders,
+                                        params.getRatedEmployees(), params.getOffset(), params.getLimit())
+                        )
+                );
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get clients eagerly for given rated provider without filtering
+                clients = new ResourceList<>(
+                        ClientWrapper.wrap( clientFacade.findRatingProviderEagerly(provider, params.getOffset(), params.getLimit()) )
+                );
+
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.ClientResource.populateWithHATEOASLinks(clients, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(clients).build();
+        }
     }
 }

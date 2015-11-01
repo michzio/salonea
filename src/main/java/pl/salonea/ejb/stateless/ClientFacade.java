@@ -378,6 +378,23 @@ public class ClientFacade extends AbstractFacade<Client> implements ClientFacade
     }
 
     @Override
+    public List<Client> findRatingProviderEagerly(Provider provider) {
+        return findRatingProviderEagerly(provider, null, null);
+    }
+
+    @Override
+    public List<Client> findRatingProviderEagerly(Provider provider, Integer start, Integer limit) {
+
+        TypedQuery<Client> query = getEntityManager().createNamedQuery(Client.FIND_RATING_PROVIDER_EAGERLY, Client.class);
+        query.setParameter("provider", provider);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
     public List<Client> findRatingEmployee(Employee employee) {
         return findRatingEmployee(employee, null, null);
     }
@@ -386,6 +403,23 @@ public class ClientFacade extends AbstractFacade<Client> implements ClientFacade
     public List<Client> findRatingEmployee(Employee employee, Integer start, Integer limit) {
 
         TypedQuery<Client> query = getEntityManager().createNamedQuery(Client.FIND_RATING_EMPLOYEE, Client.class);
+        query.setParameter("employee", employee);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
+    public List<Client> findRatingEmployeeEagerly(Employee employee) {
+        return findRatingEmployeeEagerly(employee, null, null);
+    }
+
+    @Override
+    public List<Client> findRatingEmployeeEagerly(Employee employee, Integer start, Integer limit) {
+
+        TypedQuery<Client> query = getEntityManager().createNamedQuery(Client.FIND_RATING_EMPLOYEE_EAGERLY, Client.class);
         query.setParameter("employee", employee);
         if(start != null && limit != null) {
             query.setFirstResult(start);
