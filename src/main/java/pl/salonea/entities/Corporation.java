@@ -20,7 +20,7 @@ import java.util.Set;
 
 @XmlRootElement(name = "corporation")
 @XmlAccessorType(XmlAccessType.PROPERTY)
-@XmlType(propOrder = {"corporationId", "corporationName", "logo", "description", "openingDate", "history", "address", "phoneNumber", "skypeName" })
+@XmlType(propOrder = {"corporationId", "corporationName", "logo", "description", "openingDate", "history", "address", "phoneNumber", "skypeName", "links" })
 
 @Entity
 @Table(name = "corporation")

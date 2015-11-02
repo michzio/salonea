@@ -67,6 +67,8 @@ public class StartupBean {
     private ServiceCategoryFacade serviceCategoryFacade;
     @Inject
     private EmployeeFacade employeeFacade;
+    @Inject
+    private EmployeeRatingFacade employeeRatingFacade;
 
     public StartupBean() { }
 
@@ -231,9 +233,13 @@ public class StartupBean {
         prov3HairCut.getSupplyingEmployees().add(hairDresser);
 
         Client client1 = new Client("some client");
+        Client client2 = new Client("some client");
 
         ProviderRating prov1Rating = new ProviderRating(provider1, client1, (short) 5);
         ProviderRating prov2Rating = new ProviderRating(provider2, client1, (short) 6);
+
+        EmployeeRating emplRating1 = new EmployeeRating(hairDresser, client1, (short) 7);
+        EmployeeRating emplRating2 = new EmployeeRating(hairDresser, client2, (short) 4);
 
         Address address11 = new Address("Poznańska", "15", "29-100", "Poznań", "Wielkopolska", "Poland");
         Address address12 = new Address("Pomorska", "109", "30-102", "Luboń", "Wielkopolska", "Poland");
@@ -267,6 +273,7 @@ public class StartupBean {
         providerServiceFacade.create(prov1DentalFilling);
         providerServiceFacade.create(prov3HairCut);
         clientFacade.create(client1);
+        clientFacade.create(client2);
         providerRatingFacade.create(prov1Rating);
         providerRatingFacade.create(prov2Rating);
         servicePointFacade.create(point11);
@@ -278,6 +285,8 @@ public class StartupBean {
         serviceCategoryFacade.create(medicalServices);
         serviceCategoryFacade.create(hairDressingServices);
         employeeFacade.create(hairDresser);
+        employeeRatingFacade.create(emplRating1);
+        employeeRatingFacade.create(emplRating2);
 
     }
 
