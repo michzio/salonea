@@ -54,4 +54,31 @@ public class ProviderServiceId implements Serializable {
         result = 31 * result + (service != null ? service.hashCode() : 0);
         return result;
     }
+
+    /**
+     * Allowed serialized provider service id formats:
+     * [1,2]  [1+2]  [1-2]
+     * (1,2)  (1+2)  (1-2)
+     * 1,2    1+2    1-2
+     */
+    public static ProviderServiceId valueOf(String providerServiceIdString) {
+
+        if( !providerServiceIdString.matches("[(\\[]?\\d+[,+ -]{1}\\d+[\\])]?") )
+            throw new IllegalArgumentException("Serialized provider service id doesn't match specified regex pattern.");
+
+        // trim leading and trailing brackets
+        providerServiceIdString = providerServiceIdString.replaceAll("[(\\[)\\]]", "");
+        // split identifiers by several possible delimiters
+        String[] tokens = providerServiceIdString.split("[,+ -]", 2);
+        if( tokens.length != 2 )
+            throw new IllegalArgumentException("Serialized provider service id should consist of two delimited tokens ex. 1+2");
+
+        Long providerId = Long.valueOf(tokens[0]);
+        Integer serviceId = Integer.valueOf(tokens[1]);
+
+        // construct provider service id
+        return new ProviderServiceId(providerId, serviceId);
+    }
+
 }
+

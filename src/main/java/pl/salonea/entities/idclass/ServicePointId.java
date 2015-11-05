@@ -54,4 +54,29 @@ public class ServicePointId implements Serializable {
         result = 31 * result + (servicePointNumber != null ? servicePointNumber.hashCode() : 0);
         return result;
     }
+
+    /**
+     * Allowed serialized service point id formats:
+     * [1,2] [1+2] [1-2]
+     * (1,2) (1+2) (1-2)
+     * 1,2   1+2    1-2
+     */
+    public static ServicePointId valueOf(String servicePointIdString) {
+
+        if( !servicePointIdString.matches("[(\\[]?\\d+[,+ -]{1}\\d+[\\])]?") )
+            throw new IllegalArgumentException("Serialized service point id doesn't match specified regex pattern.");
+
+        // trim leading and trailing brackets
+        servicePointIdString = servicePointIdString.replaceAll("[(\\[)\\]]", "");
+        // split identifiers by several possible delimiters
+        String[] tokens = servicePointIdString.split("[,+ -]", 2);
+        if(tokens.length != 2)
+            throw new IllegalArgumentException("Serialized service point id should consist of two delimited tokens ex. 1+2");
+
+        Long providerId = Long.valueOf(tokens[0]);
+        Integer servicePointNumber = Integer.valueOf(tokens[1]);
+
+        // construct service point id
+        return new ServicePointId(providerId, servicePointNumber);
+    }
 }
