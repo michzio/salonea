@@ -246,7 +246,7 @@ public class EmployeeResource {
                 );
             }
 
-            // retult resources need to be populated with hypermedia links to enable resource discovery
+            // result resources need to be populated with hypermedia links to enable resource discovery
             pl.salonea.jaxrs.ClientResource.populateWithHATEOASLinks(clients, params.getUriInfo(), params.getOffset(), params.getLimit());
 
             return Response.status(Response.Status.OK).entity(clients).build();

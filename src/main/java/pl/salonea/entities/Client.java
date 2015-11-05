@@ -42,9 +42,9 @@ import java.util.Set;
         @NamedQuery(name = Client.FIND_RATING_PROVIDER_EAGERLY, query = "SELECT c FROM Client c LEFT JOIN FETCH c.creditCards LEFT JOIN FETCH c.providerRatings pr LEFT JOIN FETCH c.employeeRatings WHERE pr.provider = :provider"),
         @NamedQuery(name = Client.FIND_RATING_EMPLOYEE, query = "SELECT c FROM Client c INNER JOIN c.employeeRatings er WHERE er.employee = :employee"),
         @NamedQuery(name = Client.FIND_RATING_EMPLOYEE_EAGERLY, query = "SELECT c FROM Client c LEFT JOIN FETCH c.creditCards LEFT JOIN FETCH c.providerRatings LEFT JOIN FETCH c.employeeRatings er WHERE er.employee = :employee"),
-        @NamedQuery(name = Client.FIND_ONLY_FIRMS, query = "SELECT c FROM Client c WHERE c.firm IS NOT NULL AND c.naturalPerson IS NULL"),
-        @NamedQuery(name = Client.FIND_ONLY_NATURAL_PERSONS, query = "SELECT c FROM Client c WHERE c.firm IS NULL AND c.naturalPerson IS NOT NULL"),
-        @NamedQuery(name = Client.FIND_NOT_ASSIGNED, query = "SELECT c FROM Client c WHERE c.firm IS NULL AND c.naturalPerson IS NULL"),
+        @NamedQuery(name = Client.FIND_ONLY_FIRMS, query = "SELECT c FROM Client c LEFT JOIN c.firm f LEFT JOIN c.naturalPerson np WHERE f IS NOT NULL AND np IS NULL"),
+        @NamedQuery(name = Client.FIND_ONLY_NATURAL_PERSONS, query = "SELECT c FROM Client c LEFT JOIN c.firm f LEFT JOIN c.naturalPerson np WHERE f IS NULL AND np IS NOT NULL"),
+        @NamedQuery(name = Client.FIND_NOT_ASSIGNED, query = "SELECT c FROM Client c LEFT JOIN c.firm f LEFT JOIN c.naturalPerson np WHERE f IS NULL AND np IS NULL"),
 })
 @NaturalPersonOrFirm
 public class Client extends UUIDEntity implements Serializable{

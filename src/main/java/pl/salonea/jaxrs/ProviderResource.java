@@ -1990,8 +1990,8 @@ public class ProviderResource {
         @GET
         @Path("/count")
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-        public Response countProviderRatingsByProvider(@PathParam("userId") Long userId,
-                                                       @BeanParam GenericBeanParam params) throws ForbiddenException, NotFoundException {
+        public Response countProviderRatings(@PathParam("userId") Long userId,
+                                             @BeanParam GenericBeanParam params) throws ForbiddenException, NotFoundException {
 
             if (params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
             logger.log(Level.INFO, "returning number of provider ratings for given provider by executing ProviderResource.ProviderRatingResource.countProviderRatingsByProvider(userId) method of REST API");
@@ -2014,7 +2014,7 @@ public class ProviderResource {
         @Path("/average-rating")
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
         public Response getAverageProviderRating( @PathParam("userId") Long userId,
-                                                  @BeanParam GenericBeanParam params) throws ForbiddenException, NotFoundException {
+                                                            @BeanParam GenericBeanParam params) throws ForbiddenException, NotFoundException {
 
             if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
             logger.log(Level.INFO, "returning average rating for given provider using ProviderResource.ProviderRatingResource.getAverageProviderRating(userId) method of REST API");

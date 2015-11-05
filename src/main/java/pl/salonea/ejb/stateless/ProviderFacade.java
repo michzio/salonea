@@ -246,6 +246,23 @@ public class ProviderFacade extends AbstractFacade<Provider> implements Provider
     }
 
     @Override
+    public List<Provider> findRatedByClientEagerly(Client client) {
+        return findRatedByClientEagerly(client, null, null);
+    }
+
+    @Override
+    public List<Provider> findRatedByClientEagerly(Client client, Integer start, Integer limit) {
+
+        TypedQuery<Provider> query = getEntityManager().createNamedQuery(Provider.FIND_RATED_BY_CLIENT_EAGERLY, Provider.class);
+        query.setParameter("client", client);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
     public List<Provider> findByMultipleCriteria(List<Corporation> corporations, List<ProviderType> types, List<Industry> industries, List<PaymentMethod> paymentMethods, List<Service> services, Boolean rated, Double minAvgRating, Double maxAvgRating, List<Client> clients, String providerName, String description) {
         return findByMultipleCriteria(corporations, types, industries, paymentMethods, services, rated, minAvgRating, maxAvgRating, clients, providerName, description, null, null);
     }

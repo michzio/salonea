@@ -36,6 +36,8 @@ public interface ProviderFacadeInterface extends AbstractFacadeInterface<Provide
     List<Provider> findOnAvgRatedBelow(Double maxAvgRating, Integer start, Integer limit);
     List<Provider> findRatedByClient(Client client);
     List<Provider> findRatedByClient(Client client, Integer start, Integer limit);
+    List<Provider> findRatedByClientEagerly(Client client);
+    List<Provider> findRatedByClientEagerly(Client client, Integer start, Integer limit);
     List<Provider> findByMultipleCriteria(List<Corporation> corporations, List<ProviderType> types, List<Industry> industries, List<PaymentMethod> paymentMethods,
                                           List<Service> services, Boolean rated, Double minAvgRating, Double maxAvgRating, List<Client> clients, String providerName, String description);
     List<Provider> findByMultipleCriteria(List<Corporation> corporations, List<ProviderType> types, List<Industry> industries, List<PaymentMethod> paymentMethods,

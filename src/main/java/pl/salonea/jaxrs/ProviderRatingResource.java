@@ -90,7 +90,7 @@ public class ProviderRatingResource {
                     .rel("provider-provider-ratings").build());
 
             // sub-collection count link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/count
-            Method countByClientMethod = ClientResource.ProviderRatingResource.class.getMethod("countProviderRatingsByClient", Long.class, GenericBeanParam.class);
+            Method countByClientMethod = ClientResource.ProviderRatingResource.class.getMethod("countClientProviderRatings", Long.class, GenericBeanParam.class);
             providerRating.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
                     .path(ClientResource.class)
                     .path(clientProviderRatingsMethod)
@@ -99,7 +99,7 @@ public class ProviderRatingResource {
                     .build())
                     .rel("client-provider-ratings-count").build());
 
-            Method countByProviderMethod = ProviderResource.ProviderRatingResource.class.getMethod("countProviderRatingsByProvider", Long.class, GenericBeanParam.class);
+            Method countByProviderMethod = ProviderResource.ProviderRatingResource.class.getMethod("countProviderRatings", Long.class, GenericBeanParam.class);
             providerRating.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
                     .path(ProviderResource.class)
                     .path(providerProviderRatingsMethod)
@@ -120,6 +120,14 @@ public class ProviderRatingResource {
 
             // rated sub-collection link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/rated/{rating}
             providerRating.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ClientResource.class)
+                    .path(clientProviderRatingsMethod)
+                    .path("rated")
+                    .resolveTemplate("clientId", providerRating.getClient().getClientId().toString())
+                    .build())
+                    .rel("client-provider-ratings-rated").build());
+
+            providerRating.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
                     .path(ProviderResource.class)
                     .path(providerProviderRatingsMethod)
                     .path("rated")
@@ -129,6 +137,14 @@ public class ProviderRatingResource {
 
             // rated-above sub-collection link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/rated-above/{minRating}
             providerRating.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ClientResource.class)
+                    .path(clientProviderRatingsMethod)
+                    .path("rated-above")
+                    .resolveTemplate("clientId", providerRating.getClient().getClientId().toString())
+                    .build())
+                    .rel("client-provider-ratings-rated-above").build());
+
+            providerRating.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
                     .path(ProviderResource.class)
                     .path(providerProviderRatingsMethod)
                     .path("rated-above")
@@ -137,6 +153,14 @@ public class ProviderRatingResource {
                     .rel("provider-provider-ratings-rated-above").build());
 
             // rated-below sub-collection link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/rated-below/{maxRating}
+            providerRating.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ClientResource.class)
+                    .path(clientProviderRatingsMethod)
+                    .path("rated-below")
+                    .resolveTemplate("clientId", providerRating.getClient().getClientId().toString())
+                    .build())
+                    .rel("client-provider-ratings-rated-below").build());
+
             providerRating.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
                     .path(ProviderResource.class)
                     .path(providerProviderRatingsMethod)

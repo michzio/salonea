@@ -36,6 +36,8 @@ import java.util.Set;
         @NamedQuery(name = Provider.FIND_ON_AVG_RATED_ABOVE, query = "SELECT p FROM Provider p INNER JOIN p.receivedRatings pr GROUP BY p HAVING AVG(pr.clientRating) >= :avg_rating"),
         @NamedQuery(name = Provider.FIND_ON_AVG_RATED_BELOW, query = "SELECT p FROM Provider p INNER JOIN p.receivedRatings pr GROUP BY p HAVING AVG(pr.clientRating) <= :avg_rating"),
         @NamedQuery(name = Provider.FIND_RATED_BY_CLIENT, query = "SELECT p FROM Provider p INNER JOIN p.receivedRatings pr WHERE pr.client = :client"),
+        @NamedQuery(name = Provider.FIND_RATED_BY_CLIENT_EAGERLY, query = "SELECT p FROM Provider p LEFT JOIN FETCH p.industries LEFT JOIN FETCH p.acceptedPaymentMethods LEFT JOIN FETCH p.servicePoints " +
+                "LEFT JOIN FETCH p.suppliedServiceOffers LEFT JOIN FETCH p.receivedRatings pr WHERE pr.client = :client"),
 })
 @CorporateOwner
 public class Provider extends Firm {
@@ -52,6 +54,7 @@ public class Provider extends Firm {
     public static final String FIND_ON_AVG_RATED_ABOVE = "Provider.findOnAvgRatedAbove";
     public static final String FIND_ON_AVG_RATED_BELOW = "Provider.findOnAvgRatedBelow";
     public static final String FIND_RATED_BY_CLIENT = "Provider.findRatedByClient";
+    public static final String FIND_RATED_BY_CLIENT_EAGERLY = "Provider.findRatedByClientEagerly";
 
     private String providerName;
     private String description;

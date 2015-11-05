@@ -38,8 +38,14 @@ public interface EmployeeFacadeInterface extends AbstractFacadeInterface<Employe
     List<Employee> findByWorkStationAndTerm(WorkStation workStation, Date startTime, Date endTime, Integer start, Integer limit);
     List<Employee> findByWorkStationAndTermStrict(WorkStation workStation, Date startTime, Date endTime);
     List<Employee> findByWorkStationAndTermStrict(WorkStation workStation, Date startTime, Date endTime, Integer start, Integer limit);
-    List<Employee> findByMultipleCriteria(String description, List<String> jobPositions, List<Skill> skills, List<Education> educations, List<Service> services, List<ProviderService> providerServices, List<ServicePoint> servicePoints, List<WorkStation> workStations, Period period, Boolean strictTerm);
-    List<Employee> findByMultipleCriteria(String description, List<String> jobPositions, List<Skill> skills, List<Education> educations, List<Service> services, List<ProviderService> providerServices, List<ServicePoint> servicePoints, List<WorkStation> workStations, Period period, Boolean strictTerm, Integer start, Integer limit);
+    List<Employee> findRatedByClient(Client client);
+    List<Employee> findRatedByClient(Client client, Integer start, Integer limit);
+    List<Employee> findRatedByClientEagerly(Client client);
+    List<Employee> findRatedByClientEagerly(Client client, Integer start, Integer limit);
+    List<Employee> findByMultipleCriteria(String description, List<String> jobPositions, List<Skill> skills, List<Education> educations, List<Service> services, List<ProviderService> providerServices, List<ServicePoint> servicePoints, List<WorkStation> workStations, Period period, Boolean strictTerm, Boolean rated, Double minAvgRating, Double maxAvgRating, List<Client> ratingClients);
+    List<Employee> findByMultipleCriteria(String description, List<String> jobPositions, List<Skill> skills, List<Education> educations, List<Service> services, List<ProviderService> providerServices, List<ServicePoint> servicePoints, List<WorkStation> workStations, Period period, Boolean strictTerm, Boolean rated, Double minAvgRating, Double maxAvgRating, List<Client> ratingClients, Integer start, Integer limit);
+    List<Employee> findByMultipleCriteriaEagerly(String description, List<String> jobPositions, List<Skill> skills, List<Education> educations, List<Service> services, List<ProviderService> providerServices, List<ServicePoint> servicePoints, List<WorkStation> workStations, Period period, Boolean strictTerm, Boolean rated, Double minAvgRating, Double maxAvgRating, List<Client> ratingClients);
+    List<Employee> findByMultipleCriteriaEagerly(String description, List<String> jobPositions, List<Skill> skills, List<Education> educations, List<Service> services, List<ProviderService> providerServices, List<ServicePoint> servicePoints, List<WorkStation> workStations, Period period, Boolean strictTerm, Boolean rated, Double minAvgRating, Double maxAvgRating, List<Client> ratingClients,  Integer start, Integer limit);
 
     @javax.ejb.Local
     interface Local extends EmployeeFacadeInterface { }

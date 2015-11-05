@@ -265,12 +265,61 @@ public class EmployeeFacade extends AbstractFacade<Employee> implements Employee
     }
 
     @Override
-    public List<Employee> findByMultipleCriteria(String description, List<String> jobPositions, List<Skill> skills, List<Education> educations, List<Service> services, List<ProviderService> providerServices, List<ServicePoint> servicePoints, List<WorkStation> workStations, Period period, Boolean strictTerm) {
-        return findByMultipleCriteria(description, jobPositions, skills, educations, services, providerServices, servicePoints, workStations, period, strictTerm, null, null);
+    public List<Employee> findRatedByClient(Client client) {
+        return findRatedByClient(client, null, null);
     }
 
     @Override
-    public List<Employee> findByMultipleCriteria(String description, List<String> jobPositions, List<Skill> skills, List<Education> educations, List<Service> services, List<ProviderService> providerServices, List<ServicePoint> servicePoints, List<WorkStation> workStations, Period period, Boolean strictTerm, Integer start, Integer limit) {
+    public List<Employee> findRatedByClient(Client client, Integer start, Integer limit) {
+
+        TypedQuery<Employee> query = getEntityManager().createNamedQuery(Employee.FIND_RATED_BY_CLIENT, Employee.class);
+        query.setParameter("client", client);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
+    public List<Employee> findRatedByClientEagerly(Client client) {
+        return findRatedByClientEagerly(client, null, null);
+    }
+
+    @Override
+    public List<Employee> findRatedByClientEagerly(Client client, Integer start, Integer limit) {
+
+        TypedQuery<Employee> query = getEntityManager().createNamedQuery(Employee.FIND_RATED_BY_CLIENT_EAGERLY, Employee.class);
+        query.setParameter("client", client);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
+    public List<Employee> findByMultipleCriteria(String description, List<String> jobPositions, List<Skill> skills, List<Education> educations, List<Service> services, List<ProviderService> providerServices, List<ServicePoint> servicePoints, List<WorkStation> workStations, Period period, Boolean strictTerm, Boolean rated, Double minAvgRating, Double maxAvgRating, List<Client> ratingClients) {
+        return findByMultipleCriteria(description, jobPositions, skills, educations, services, providerServices, servicePoints, workStations, period, strictTerm, rated, minAvgRating, maxAvgRating, ratingClients, null, null);
+    }
+
+    @Override
+    public List<Employee> findByMultipleCriteria(String description, List<String> jobPositions, List<Skill> skills, List<Education> educations, List<Service> services, List<ProviderService> providerServices, List<ServicePoint> servicePoints, List<WorkStation> workStations, Period period, Boolean strictTerm, Boolean rated, Double minAvgRating, Double maxAvgRating, List<Client> ratingClients, Integer start, Integer limit) {
+        return findByMultipleCriteria(description, jobPositions, skills, educations, services, providerServices, servicePoints, workStations, period, strictTerm, rated, minAvgRating, maxAvgRating, ratingClients, false, start, limit);
+    }
+
+    @Override
+    public List<Employee> findByMultipleCriteriaEagerly(String description, List<String> jobPositions, List<Skill> skills, List<Education> educations, List<Service> services, List<ProviderService> providerServices, List<ServicePoint> servicePoints, List<WorkStation> workStations, Period period, Boolean strictTerm, Boolean rated, Double minAvgRating, Double maxAvgRating, List<Client> ratingClients) {
+        return findByMultipleCriteriaEagerly(description, jobPositions, skills, educations, services, providerServices, servicePoints, workStations, period, strictTerm, rated, minAvgRating, maxAvgRating, ratingClients, null, null);
+    }
+
+    @Override
+    public List<Employee> findByMultipleCriteriaEagerly(String description, List<String> jobPositions, List<Skill> skills, List<Education> educations, List<Service> services, List<ProviderService> providerServices, List<ServicePoint> servicePoints, List<WorkStation> workStations, Period period, Boolean strictTerm, Boolean rated, Double minAvgRating, Double maxAvgRating, List<Client> ratingClients, Integer start, Integer limit) {
+        return findByMultipleCriteria(description, jobPositions, skills, educations, services, providerServices, servicePoints, workStations, period, strictTerm, rated, minAvgRating, maxAvgRating, ratingClients, true, start, limit);
+    }
+
+    private List<Employee> findByMultipleCriteria(String description, List<String> jobPositions, List<Skill> skills, List<Education> educations, List<Service> services, List<ProviderService> providerServices, List<ServicePoint> servicePoints, List<WorkStation> workStations, Period period, Boolean strictTerm,
+                                                  Boolean rated, Double minAvgRating, Double maxAvgRating, List<Client> ratingClients, Boolean eagerly, Integer start, Integer limit) {
 
         CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
         CriteriaQuery<Employee> criteriaQuery = criteriaBuilder.createQuery(Employee.class);
@@ -286,9 +335,15 @@ public class EmployeeFacade extends AbstractFacade<Employee> implements Employee
         Join<WorkStation, ServicePoint> servicePoint = null;
         Join<Employee, ProviderService> providerService = null;
         Join<ProviderService, Service> service = null;
+        Join<Employee, EmployeeRating> employeeRating = null;
+        Join<EmployeeRating, Client> client = null;
 
         // WHERE PREDICATES
         List<Predicate> predicates = new ArrayList<>();
+        // HAS BEEN GROUPED BY
+        Boolean groupedBy = false;
+        // HAVING PREDICATES
+        List<Predicate> havingPredicates = new ArrayList<>();
 
         if(description != null) {
             SingularAttribute<Employee, String> descriptionAttr = Employee_.description;
@@ -308,6 +363,14 @@ public class EmployeeFacade extends AbstractFacade<Employee> implements Employee
             }
 
             predicates.add( criteriaBuilder.or(orPredicates.toArray(new Predicate[] { })) );
+
+            if(eagerly) {
+                // then fetch associated collection of entities
+                employee.fetch("skills", JoinType.INNER);
+            }
+        } else if(eagerly) {
+            // then left fetch associated collection of entities
+            employee.fetch("skills", JoinType.LEFT);
         }
 
         if(educations != null && educations.size() > 0) {
@@ -318,8 +381,18 @@ public class EmployeeFacade extends AbstractFacade<Employee> implements Employee
                 orPredicates.add( criteriaBuilder.isMember(education, employee.get(Employee_.educations)) );
             }
 
-            predicates.add( criteriaBuilder.or(orPredicates.toArray(new Predicate[] {})) );
+            predicates.add( criteriaBuilder.or(orPredicates.toArray(new Predicate[]{})) );
+
+            if(eagerly) {
+                // then fetch associated collection of entities
+                employee.fetch("educations", JoinType.INNER);
+            }
+        } else if(eagerly) {
+            // then left fetch associated collection of entities
+            employee.fetch("educations", JoinType.LEFT);
         }
+
+        Fetch<Employee, ProviderService> fetchProviderServices = null;
 
         if(services != null && services.size() > 0) {
 
@@ -327,6 +400,11 @@ public class EmployeeFacade extends AbstractFacade<Employee> implements Employee
             if(service == null) service = providerService.join(ProviderService_.service);
 
             predicates.add( service.in(services) );
+
+            if(eagerly && fetchProviderServices == null) {
+                // then fetch associated collection of entities
+                fetchProviderServices = employee.fetch("suppliedServices", JoinType.INNER);
+            }
         }
 
         if(providerServices != null && providerServices.size() > 0) {
@@ -338,23 +416,45 @@ public class EmployeeFacade extends AbstractFacade<Employee> implements Employee
             }
 
             predicates.add( criteriaBuilder.or(orPredicates.toArray(new Predicate[]{})) );
+
+            if(eagerly && fetchProviderServices == null) {
+                // then fetch associated collection of entities
+                fetchProviderServices = employee.fetch("suppliedServices", JoinType.INNER);
+            }
         }
+
+        if(eagerly && fetchProviderServices == null) {
+            // then left fetch associated collection of entities
+            fetchProviderServices = employee.fetch("suppliedServices", JoinType.LEFT);
+        }
+
+        Fetch<Employee, TermEmployeeWorkOn> fetchEmployeeTerms = null;
 
         if(servicePoints != null && servicePoints.size() > 0) {
 
-           if(employeeTerm == null) employeeTerm = employee.join(Employee_.termsOnWorkStation);
-           if(workStation == null) workStation = employeeTerm.join(TermEmployeeWorkOn_.workStation);
-           if(servicePoint == null) servicePoint =  workStation.join(WorkStation_.servicePoint);
+            if(employeeTerm == null) employeeTerm = employee.join(Employee_.termsOnWorkStation);
+            if(workStation == null) workStation = employeeTerm.join(TermEmployeeWorkOn_.workStation);
+            if(servicePoint == null) servicePoint =  workStation.join(WorkStation_.servicePoint);
 
-           predicates.add( servicePoint.in(servicePoints) );
+            predicates.add( servicePoint.in(servicePoints) );
+
+            if(eagerly && fetchEmployeeTerms == null) {
+                // then fetch associated collection of entities
+                fetchEmployeeTerms = employee.fetch("termsOnWorkStation", JoinType.INNER);
+            }
 
         }
 
         if(workStations != null && workStations.size() > 0) {
 
-           if(employeeTerm == null) employeeTerm = employee.join(Employee_.termsOnWorkStation);
+            if(employeeTerm == null) employeeTerm = employee.join(Employee_.termsOnWorkStation);
 
             predicates.add( employeeTerm.get(TermEmployeeWorkOn_.workStation).in(workStations) );
+
+            if(eagerly && fetchEmployeeTerms == null) {
+                // then fetch associated collection of entities
+                fetchEmployeeTerms = employee.fetch("termsOnWorkStation", JoinType.INNER);
+            }
         }
 
         if(period != null) {
@@ -369,6 +469,11 @@ public class EmployeeFacade extends AbstractFacade<Employee> implements Employee
                 predicates.add( criteriaBuilder.lessThan( term.get(Term_.openingTime), period.getEndTime()) );
                 predicates.add( criteriaBuilder.greaterThan( term.get(Term_.closingTime), period.getStartTime()) );
             }
+
+            if(eagerly && fetchEmployeeTerms == null) {
+                // then fetch associated collection of entities
+                fetchEmployeeTerms = employee.fetch("termsOnWorkStation", JoinType.INNER);
+            }
         }
 
         // take into account that work station must provide given services when searching by (term or work station or service point) and (services or provider services)
@@ -379,10 +484,91 @@ public class EmployeeFacade extends AbstractFacade<Employee> implements Employee
             if(workStation == null) workStation = employeeTerm.join(TermEmployeeWorkOn_.workStation);
 
             predicates.add( criteriaBuilder.isMember(providerService, (workStation.get(WorkStation_.providedServices)) ) );
+
+            if(eagerly && fetchEmployeeTerms == null) {
+                // then fetch associated collection of entities
+                fetchEmployeeTerms = employee.fetch("termsOnWorkStation", JoinType.INNER);
+            }
+        }
+
+        if(eagerly && fetchEmployeeTerms == null) {
+            // then left fetch associated collection of entities
+            fetchEmployeeTerms = employee.fetch("termsOnWorkStation", JoinType.LEFT);
+        }
+
+        if(rated != null) {
+            Expression<Integer> ratingsCount = criteriaBuilder.size(employee.get(Employee_.receivedRatings));
+            if(rated) {
+                predicates.add( criteriaBuilder.greaterThan(ratingsCount, 0) );
+            } else {
+                predicates.add( criteriaBuilder.equal(ratingsCount, 0) );
+            }
+        }
+
+        Fetch<Employee, EmployeeRating> fetchRatings = null;
+
+        if(minAvgRating != null) {
+
+            if(employeeRating == null) employeeRating = employee.join(Employee_.receivedRatings);
+
+            if(!groupedBy) {
+                criteriaQuery.groupBy(employee);
+                groupedBy = true;
+            }
+
+            final Expression<Double> avgRating = criteriaBuilder.avg(employeeRating.get(EmployeeRating_.clientRating));
+            havingPredicates.add( criteriaBuilder.greaterThanOrEqualTo(avgRating, minAvgRating) );
+
+            if(eagerly && fetchRatings == null) {
+                // then fetch associated collection of entities
+                fetchRatings = employee.fetch("receivedRatings", JoinType.INNER);
+            }
+
+        }
+
+        if(maxAvgRating != null) {
+
+            if(employeeRating == null) employeeRating = employee.join(Employee_.receivedRatings);
+
+            if(!groupedBy) {
+                criteriaQuery.groupBy(employee);
+                groupedBy = true;
+            }
+
+            final Expression<Double> avgRating = criteriaBuilder.avg(employeeRating.get(EmployeeRating_.clientRating));
+            havingPredicates.add( criteriaBuilder.lessThanOrEqualTo(avgRating, maxAvgRating) );
+
+            if(eagerly && fetchRatings == null) {
+                // then fetch associated collection of entities
+                fetchRatings = employee.fetch("receivedRatings", JoinType.INNER);
+            }
+        }
+
+        if(ratingClients != null && ratingClients.size() > 0) {
+
+            if(employeeRating == null) employeeRating = employee.join(Employee_.receivedRatings);
+            if(client == null) client = employeeRating.join(EmployeeRating_.client);
+
+            predicates.add( client.in(ratingClients) );
+
+            if(eagerly && fetchRatings == null) {
+                // then fetch associated collection of entities
+                fetchRatings = employee.fetch("receivedRatings", JoinType.INNER);
+            }
+        }
+
+        if(eagerly && fetchRatings == null) {
+            // then left fetch associated collection of entities
+            fetchRatings = employee.fetch("receivedRatings", JoinType.LEFT);
         }
 
         // WHERE predicate1 AND predicate2 AND ... AND predicateN
         criteriaQuery.where(predicates.toArray(new Predicate[] { }));
+        if(groupedBy) {
+            // HAVING predicate1 AND predicate2 AND ... AND predicateN
+            criteriaQuery.having(havingPredicates.toArray(new Predicate[] {}));
+        }
+
 
         TypedQuery<Employee> query = getEntityManager().createQuery(criteriaQuery);
         if(start != null && limit != null) {

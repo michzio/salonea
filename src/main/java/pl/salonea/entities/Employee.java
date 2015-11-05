@@ -30,6 +30,9 @@ import java.util.Set;
         @NamedQuery(name = Employee.FIND_BY_WORK_STATION, query = "SELECT DISTINCT e FROM Employee e INNER JOIN e.termsOnWorkStation empl_term WHERE empl_term.workStation = :work_station"),
         @NamedQuery(name = Employee.FIND_BY_WORK_STATION_AND_TERM, query = "SELECT DISTINCT e FROM Employee e INNER JOIN e.termsOnWorkStation empl_term INNER JOIN empl_term.term term WHERE empl_term.workStation = :work_station AND term.openingTime < :end_time AND term.closingTime > :start_time"), // constraint: openingTime < closingTime
         @NamedQuery(name = Employee.FIND_BY_WORK_STATION_AND_TERM_STRICT, query = "SELECT DISTINCT e FROM Employee e INNER JOIN e.termsOnWorkStation empl_term INNER JOIN empl_term.term term WHERE empl_term.workStation = :work_station AND term.openingTime <= :start_time AND term.closingTime >= :end_time"),
+        @NamedQuery(name = Employee.FIND_RATED_BY_CLIENT, query = "SELECT e FROM Employee e INNER JOIN e.receivedRatings er WHERE er.client = :client"),
+        @NamedQuery(name = Employee.FIND_RATED_BY_CLIENT_EAGERLY, query = "SELECT e FROM Employee e LEFT JOIN e.termsOnWorkStation LEFT JOIN e.educations " +
+                                                    "LEFT JOIN e.skills LEFT JOIN e.suppliedServices INNER JOIN e.receivedRatings er WHERE er.client = :client"),
 })
 public class Employee extends NaturalPerson {
 
@@ -46,6 +49,8 @@ public class Employee extends NaturalPerson {
     public static final String FIND_BY_WORK_STATION = "Employee.findByWorkStation";
     public static final String FIND_BY_WORK_STATION_AND_TERM = "Employee.findByWorkStationAndTerm";
     public static final String FIND_BY_WORK_STATION_AND_TERM_STRICT = "Employee.findByWorkStationAndTermStrict";
+    public static final String FIND_RATED_BY_CLIENT = "Employee.findRatedByClient";
+    public static final String FIND_RATED_BY_CLIENT_EAGERLY = "Employee.findRatedByClientEagerly";
 
     private String jobPosition;
     private String description;
