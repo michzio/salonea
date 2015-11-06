@@ -1217,8 +1217,6 @@ public class ClientResource {
                                                  @BeanParam EmployeeBeanParam params ) throws ForbiddenException, NotFoundException {
 
 
-
-
         }
 
     }

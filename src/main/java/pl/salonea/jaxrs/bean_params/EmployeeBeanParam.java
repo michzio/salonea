@@ -6,6 +6,7 @@ import pl.salonea.entities.idclass.ProviderServiceId;
 import pl.salonea.entities.idclass.ServicePointId;
 import pl.salonea.entities.idclass.WorkStationId;
 import pl.salonea.jaxrs.exceptions.NotFoundException;
+import pl.salonea.utils.Period;
 
 import javax.inject.Inject;
 import javax.ws.rs.QueryParam;
@@ -161,6 +162,19 @@ public class EmployeeBeanParam extends DateBetweenBeanParam { // incl. Paginatio
         this.workStationIds = workStationIds;
     }
 
+    public List<WorkStation> getWorkStations() throws NotFoundException {
+        if(getWorkStationIds() != null && getWorkStationIds().size() > 0) {
+            final List<WorkStation> workStations = workStationFacade.find( new ArrayList<>(getWorkStationIds()) );
+            if(workStations.size() != getWorkStationIds().size()) throw new NotFoundException("Could not find work stations for all provided ids.");
+            return workStations;
+        }
+        return null;
+    }
+
+    public Period getPeriod() {
+        return new Period(getStartDate(), getEndDate());
+    }
+
     public Boolean getStrictTerm() {
         return strictTerm;
     }
@@ -199,5 +213,14 @@ public class EmployeeBeanParam extends DateBetweenBeanParam { // incl. Paginatio
 
     public void setRatingClientIds(List<Long> ratingClientIds) {
         this.ratingClientIds = ratingClientIds;
+    }
+
+    public List<Client> getRatingClients() throws NotFoundException {
+        if(getRatingClientIds() != null && getRatingClientIds().size() > 0) {
+            final List<Client> ratingClients = clientFacade.find(new ArrayList<>(getRatingClientIds()));
+            if(ratingClients.size() != getRatingClientIds().size()) throw new NotFoundException("Could not find rating clients for all provided ids.");
+            return ratingClients;
+        }
+        return null;
     }
 }
