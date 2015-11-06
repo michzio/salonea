@@ -56,6 +56,47 @@ public class ProviderServiceFacade extends AbstractFacade<ProviderService> imple
     }
 
     @Override
+    public List<ProviderService> find(List<Object> providerServiceIds) {
+
+        if(providerServiceIds == null || providerServiceIds.size() == 0)
+            throw new IllegalArgumentException("The providerServiceIds argument must be not empty list.");
+
+        CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
+        CriteriaQuery<ProviderService> criteriaQuery = criteriaBuilder.createQuery(ProviderService.class);
+        // FROM
+        Root<ProviderService> providerService = criteriaQuery.from(ProviderService.class);
+        // SELECT
+        criteriaQuery.select(providerService);
+
+        // INNER JOIN
+        Join<ProviderService, Provider> provider = providerService.join(ProviderService_.provider);
+        Join<ProviderService, Service> service = providerService.join(ProviderService_.service);
+
+        // WHERE PREDICATES on composite primary key
+        List<Predicate> orPredicates = new ArrayList<>();
+
+        for(Object object : providerServiceIds) {
+
+            if( !(object instanceof ProviderServiceId) )
+                throw new IllegalArgumentException("The providerServiceIds argument should be list of ProviderServiceId typed objects.");
+
+            ProviderServiceId providerServiceId = (ProviderServiceId) object;
+
+            Predicate[] andPredicates = new Predicate[2];
+            andPredicates[0] = criteriaBuilder.equal( provider.get(Provider_.userId), providerServiceId.getProvider() );
+            andPredicates[1] = criteriaBuilder.equal( service.get(Service_.serviceId), providerServiceId.getService() );
+
+            orPredicates.add( criteriaBuilder.and(andPredicates) );
+         }
+
+        // WHERE compositePK1 OR compositePK2 OR ... OR compositePKN
+        criteriaQuery.where( criteriaBuilder.or(orPredicates.toArray(new Predicate[] {})) );
+
+        TypedQuery<ProviderService> query = getEntityManager().createQuery(criteriaQuery);
+        return query.getResultList();
+    }
+
+    @Override
     public List<ProviderService> findAllEagerly() {
         return findAllEagerly(null, null);
     }
