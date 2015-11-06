@@ -692,6 +692,11 @@ public class ClientResource {
         return new ProviderRatingResource();
     }
 
+    @Path("/{clientId: \\d+}/employee-ratings")
+    public EmployeeRatingResource getEmployeeRatingResource() {
+        return new EmployeeRatingResource();
+    }
+
     @Path("/{clientId: \\d+}/rated-providers")
     public ProviderResource getProviderResource() { return new ProviderResource(); }
 
@@ -1113,6 +1118,27 @@ public class ClientResource {
             pl.salonea.jaxrs.ProviderRatingResource.populateWithHATEOASLinks(providerRatings, params.getUriInfo(), params.getOffset(), params.getLimit());
 
             return Response.status(Status.OK).entity(providerRatings).build();
+        }
+
+    }
+
+    public class EmployeeRatingResource {
+
+        public EmployeeRatingResource() { }
+
+        /**
+         * Method returns subset of Employee Rating entities for given Client.
+         * The client id is passed through path param.
+         * They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getClientEmployeeRatings( @PathParam("clientId") Long clientId,
+                                                  @BeanParam EmployeeRatingBeanParam params ) throws NotFoundException, ForbiddenException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+
+
         }
 
     }

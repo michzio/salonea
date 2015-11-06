@@ -33,6 +33,8 @@ public interface EmployeeRatingFacadeInterface extends AbstractFacadeInterface<E
     Long countClientRatings(Client client);
     Integer deleteByClient(Client client);
     Integer deleteByEmployee(Employee employee);
+    List<EmployeeRating> findByMultipleCriteria(List<Client> clients, List<Employee> employees, Short minRating, Short maxRating, Short exactRating, String clientComment, String employeeDementi);
+    List<EmployeeRating> findByMultipleCriteria(List<Client> clients, List<Employee> employees, Short minRating, Short maxRating, Short exactRating, String clientComment, String employeeDementi, Integer start, Integer limit);
 
     @javax.ejb.Local
     interface Local extends EmployeeRatingFacadeInterface { }

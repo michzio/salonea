@@ -35,8 +35,8 @@ import java.util.Set;
         @NamedQuery(name = Employee.FIND_BY_WORK_STATION_AND_TERM, query = "SELECT DISTINCT e FROM Employee e INNER JOIN e.termsOnWorkStation empl_term INNER JOIN empl_term.term term WHERE empl_term.workStation = :work_station AND term.openingTime < :end_time AND term.closingTime > :start_time"), // constraint: openingTime < closingTime
         @NamedQuery(name = Employee.FIND_BY_WORK_STATION_AND_TERM_STRICT, query = "SELECT DISTINCT e FROM Employee e INNER JOIN e.termsOnWorkStation empl_term INNER JOIN empl_term.term term WHERE empl_term.workStation = :work_station AND term.openingTime <= :start_time AND term.closingTime >= :end_time"),
         @NamedQuery(name = Employee.FIND_RATED_BY_CLIENT, query = "SELECT e FROM Employee e INNER JOIN e.receivedRatings er WHERE er.client = :client"),
-        @NamedQuery(name = Employee.FIND_RATED_BY_CLIENT_EAGERLY, query = "SELECT e FROM Employee e LEFT JOIN e.termsOnWorkStation LEFT JOIN e.educations " +
-                                                    "LEFT JOIN e.skills LEFT JOIN e.suppliedServices INNER JOIN e.receivedRatings er WHERE er.client = :client"),
+        @NamedQuery(name = Employee.FIND_RATED_BY_CLIENT_EAGERLY, query = "SELECT e FROM Employee e LEFT JOIN FETCH e.termsOnWorkStation LEFT JOIN FETCH e.educations " +
+                                                    "LEFT JOIN FETCH e.skills LEFT JOIN FETCH e.suppliedServices INNER JOIN FETCH e.receivedRatings er WHERE er.client = :client"),
 })
 public class Employee extends NaturalPerson {
 

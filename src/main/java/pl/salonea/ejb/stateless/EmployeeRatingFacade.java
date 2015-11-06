@@ -4,6 +4,7 @@ import pl.salonea.ejb.interfaces.EmployeeRatingFacadeInterface;
 import pl.salonea.entities.Client;
 import pl.salonea.entities.Employee;
 import pl.salonea.entities.EmployeeRating;
+import pl.salonea.entities.EmployeeRating_;
 
 import javax.ejb.LocalBean;
 import javax.ejb.Stateless;
@@ -11,6 +12,8 @@ import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import javax.persistence.TypedQuery;
+import javax.persistence.criteria.*;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -213,5 +216,74 @@ public class EmployeeRatingFacade extends AbstractFacade<EmployeeRating>
         Query query = getEntityManager().createNamedQuery(EmployeeRating.DELETE_BY_EMPLOYEE);
         query.setParameter("employee", employee);
         return query.executeUpdate();
+    }
+
+    @Override
+    public List<EmployeeRating> findByMultipleCriteria(List<Client> clients, List<Employee> employees, Short minRating, Short maxRating, Short exactRating, String clientComment, String employeeDementi) {
+        return findByMultipleCriteria(clients, employees, minRating, maxRating, exactRating, clientComment, employeeDementi, null, null);
+    }
+
+    @Override
+    public List<EmployeeRating> findByMultipleCriteria(List<Client> clients, List<Employee> employees, Short minRating, Short maxRating, Short exactRating, String clientComment, String employeeDementi, Integer start, Integer limit) {
+
+        CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
+        CriteriaQuery<EmployeeRating> criteriaQuery = criteriaBuilder.createQuery(EmployeeRating.class);
+        // FROM
+        Root<EmployeeRating> employeeRating = criteriaQuery.from(EmployeeRating.class);
+        // SELECT
+        criteriaQuery.select(employeeRating);
+
+        // INNER JOIN-s
+        Join<EmployeeRating, Employee> employee = null;
+        Join<EmployeeRating, Client> client = null;
+
+        // WHERE PREDICATES
+        List<Predicate> predicates = new ArrayList<>();
+
+        if(clients != null && clients.size() > 0) {
+
+            if(client == null) client = employeeRating.join(EmployeeRating_.client);
+            predicates.add( client.in(clients) );
+        }
+
+        if(employees != null && employees.size() > 0) {
+
+            if(employee == null) employee = employeeRating.join(EmployeeRating_.employee);
+            predicates.add( employee.in(employees) );
+        }
+
+        if(minRating != null) {
+
+            predicates.add( criteriaBuilder.greaterThanOrEqualTo(employeeRating.get(EmployeeRating_.clientRating), minRating) );
+        }
+
+        if(maxRating != null) {
+
+            predicates.add( criteriaBuilder.lessThanOrEqualTo(employeeRating.get(EmployeeRating_.clientRating), maxRating) );
+        }
+
+        if(exactRating != null) {
+
+            predicates.add( criteriaBuilder.equal(employeeRating.get(EmployeeRating_.clientRating), exactRating) );
+        }
+
+        if(clientComment != null) {
+
+            predicates.add( criteriaBuilder.like(employeeRating.get(EmployeeRating_.clientComment), "%" + clientComment + "%") );
+        }
+
+        if(employeeDementi != null) {
+
+            predicates.add( criteriaBuilder.like(employeeRating.get(EmployeeRating_.employeeDementi), "%" + employeeDementi + "%") );
+        }
+
+        // WHERE predicate1 AND predicate2 AND ... AND predicateN
+        criteriaQuery.where(predicates.toArray(new Predicate[] {}));
+        TypedQuery<EmployeeRating> query = getEntityManager().createQuery(criteriaQuery);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
     }
 }
