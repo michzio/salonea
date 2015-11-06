@@ -1,6 +1,8 @@
 package pl.salonea.jaxrs.utils;
 
+import pl.salonea.jaxrs.bean_params.GenericBeanParam;
 import pl.salonea.jaxrs.bean_params.PaginationBeanParam;
+import pl.salonea.jaxrs.exceptions.ForbiddenException;
 
 /**
  * Created by michzio on 04/11/2015.
@@ -19,5 +21,13 @@ public class RESTToolkit {
         if(params.getLimit() != null) noOfParams -= 1;
 
         return noOfParams;
+    }
+
+    /**
+     * Method checks whether access to web service is authorized.
+     */
+    public static void authorizeAccessToWebService(GenericBeanParam params) throws ForbiddenException {
+
+        if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
     }
 }

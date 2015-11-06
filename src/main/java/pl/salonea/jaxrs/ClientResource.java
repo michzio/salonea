@@ -1,10 +1,12 @@
 package pl.salonea.jaxrs;
 
 import pl.salonea.ejb.stateless.ClientFacade;
+import pl.salonea.ejb.stateless.EmployeeFacade;
 import pl.salonea.ejb.stateless.ProviderFacade;
 import pl.salonea.ejb.stateless.ProviderRatingFacade;
 import pl.salonea.embeddables.Address;
 import pl.salonea.entities.Client;
+import pl.salonea.entities.Employee;
 import pl.salonea.entities.Provider;
 import pl.salonea.entities.ProviderRating;
 import pl.salonea.enums.ClientType;
@@ -20,6 +22,7 @@ import pl.salonea.jaxrs.utils.ResourceList;
 import pl.salonea.jaxrs.utils.ResponseWrapper;
 import pl.salonea.jaxrs.utils.hateoas.Link;
 import pl.salonea.jaxrs.wrappers.ClientWrapper;
+import pl.salonea.jaxrs.wrappers.EmployeeWrapper;
 import pl.salonea.jaxrs.wrappers.ProviderWrapper;
 
 import javax.ejb.EJBException;
@@ -52,6 +55,8 @@ public class ClientResource {
     private ProviderFacade providerFacade;
     @Inject
     private ProviderRatingFacade providerRatingFacade;
+    @Inject
+    private EmployeeFacade employeeFacade;
 
     /**
      * Method returns all Client resources
@@ -893,7 +898,14 @@ public class ClientResource {
                     .rel("rated-employees").build());
 
             // rated-employees eagerly
-            Method employeesEagerlyMethod = null; //TODO
+            Method employeesEagerlyMethod = EmployeeResource.class.getMethod("getClientRatedEmployeesEagerly", Long.class, EmployeeBeanParam.class);
+            client.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ClientResource.class)
+                    .path(employeesMethod)
+                    .path(employeesEagerlyMethod)
+                    .resolveTemplate("clientId", client.getClientId().toString())
+                    .build())
+                    .rel("rated-employees-eagerly").build());
 
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
@@ -1123,10 +1135,7 @@ public class ClientResource {
             if (client == null)
                 throw new NotFoundException("Could not find client for id " + clientId + ".");
 
-            // calculate number of filter query params
-            Integer noOfParams = params.getUriInfo().getQueryParameters().size();
-            if (params.getOffset() != null) noOfParams -= 1;
-            if (params.getLimit() != null) noOfParams -= 1;
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
 
             ResourceList<Provider> providers = null;
 
@@ -1169,10 +1178,7 @@ public class ClientResource {
             if (client == null)
                 throw new NotFoundException("Could not find client for id " + clientId + ".");
 
-            // calculate number of filter query params
-            Integer noOfParams = params.getUriInfo().getQueryParameters().size();
-            if (params.getOffset() != null) noOfParams -= 1;
-            if (params.getLimit() != null) noOfParams -= 1;
+           Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
 
             ResourceList<ProviderWrapper> providers = null;
 
@@ -1216,7 +1222,92 @@ public class ClientResource {
         public Response getClientRatedEmployees( @PathParam("clientId") Long clientId,
                                                  @BeanParam EmployeeBeanParam params ) throws ForbiddenException, NotFoundException {
 
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning employees rated by given client using ClientResource.EmployeeResource.getClientRatedEmployees(clientId) method of REST API");
 
+            // find client entity for which to get rated by it employees
+            Client client = clientFacade.find(clientId);
+            if(client == null)
+                throw new NotFoundException("Could not find client for id " + clientId + ".");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<Employee> employees = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Client> clients = new ArrayList<>();
+                clients.add(client);
+
+                // get employees for given client filtered by given params
+                employees = new ResourceList<>(
+                        employeeFacade.findByMultipleCriteria(params.getDescription(), params.getJobPositions(), params.getSkills(), params.getEducations(),
+                                params.getServices(), params.getProviderServices(), params.getServicePoints(), params.getWorkStations(), params.getPeriod(),
+                                params.getStrictTerm(), params.getRated(), params.getMinAvgRating(), params.getMaxAvgRating(), clients,
+                                params.getOffset(), params.getLimit())
+                );
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                /// get employees for given client without filtering
+                employees = new ResourceList<>(employeeFacade.findRatedByClient(client, params.getOffset(), params.getLimit()));
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.EmployeeResource.populateWithHATEOASLinks(employees, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(employees).build();
+        }
+
+        @GET
+        @Path("/eagerly")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getClientRatedEmployeesEagerly( @PathParam("clientId") Long clientId,
+                                                        @BeanParam EmployeeBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning employees eagerly rated by given client using ClientResource.EmployeeResource.getClientRatedEmployeesEagerly(clientId) method of REST API");
+
+            // find client entity for which to get rated by it employees
+            Client client = clientFacade.find(clientId);
+            if(client == null)
+                throw new NotFoundException("Could not find client for id " + clientId + ".");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<EmployeeWrapper> employees = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Client> clients = new ArrayList<>();
+                clients.add(client);
+
+                // get employees eagerly for given client filtered by given params
+                employees = new ResourceList<>(
+                        EmployeeWrapper.wrap(
+                                employeeFacade.findByMultipleCriteriaEagerly(params.getDescription(), params.getJobPositions(), params.getSkills(),
+                                        params.getEducations(), params.getServices(), params.getProviderServices(), params.getServicePoints(),
+                                        params.getWorkStations(), params.getPeriod(), params.getStrictTerm(), params.getRated(), params.getMinAvgRating(),
+                                        params.getMaxAvgRating(), clients, params.getOffset(), params.getLimit())
+                        )
+                );
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get employees eagerly for given client without filtering
+                employees = new ResourceList<>(
+                        EmployeeWrapper.wrap( employeeFacade.findRatedByClientEagerly(client, params.getOffset(), params.getLimit()) )
+                );
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.EmployeeResource.populateWithHATEOASLinks(employees, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(employees).build();
         }
 
     }

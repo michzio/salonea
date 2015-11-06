@@ -172,6 +172,9 @@ public class EmployeeBeanParam extends DateBetweenBeanParam { // incl. Paginatio
     }
 
     public Period getPeriod() {
+        if(getStartDate() == null && getEndDate() == null)
+            return null;
+
         return new Period(getStartDate(), getEndDate());
     }
 

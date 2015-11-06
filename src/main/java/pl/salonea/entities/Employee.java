@@ -5,10 +5,14 @@ import pl.salonea.enums.Gender;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
-import javax.xml.bind.annotation.XmlTransient;
+import javax.xml.bind.annotation.*;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
+
+@XmlRootElement(name = "employee")
+@XmlAccessorType(XmlAccessType.PROPERTY)
+@XmlType(propOrder = { "jobPosition", "description" })
 
 @Entity
 @Table(name = "employee")

@@ -50,6 +50,8 @@ public class ResourceList<T> {
             @XmlElement(name = "provider-rating", type = ProviderRating.class),
             @XmlElement(name = "client", type = Client.class),
             @XmlElement(name = "client", type = ClientWrapper.class),
+            @XmlElement(name = "employee", type = Employee.class),
+            @XmlElement(name = "employee", type = EmployeeWrapper.class),
     })
     public List<T> getResources() {
         return resources;
