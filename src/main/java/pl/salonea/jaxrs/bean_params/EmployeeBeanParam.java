@@ -1,10 +1,7 @@
 package pl.salonea.jaxrs.bean_params;
 
 import pl.salonea.ejb.stateless.*;
-import pl.salonea.entities.Education;
-import pl.salonea.entities.ProviderService;
-import pl.salonea.entities.Service;
-import pl.salonea.entities.Skill;
+import pl.salonea.entities.*;
 import pl.salonea.entities.idclass.ProviderServiceId;
 import pl.salonea.entities.idclass.ServicePointId;
 import pl.salonea.entities.idclass.WorkStationId;
@@ -130,7 +127,7 @@ public class EmployeeBeanParam extends DateBetweenBeanParam { // incl. Paginatio
         this.providerServiceIds = providerServiceIds;
     }
 
-    public List<ProviderService> getProviderServices() {
+    public List<ProviderService> getProviderServices() throws NotFoundException {
         if(getProviderServiceIds() != null && getProviderServiceIds().size() > 0) {
             final List<ProviderService> providerServices = providerServiceFacade.find( new ArrayList<>(getProviderServiceIds()) );
             if(providerServices.size() != getProviderServiceIds().size()) throw new NotFoundException("Could not find provider services for all provided ids.");
@@ -145,6 +142,15 @@ public class EmployeeBeanParam extends DateBetweenBeanParam { // incl. Paginatio
 
     public void setServicePointIds(List<ServicePointId> servicePointIds) {
         this.servicePointIds = servicePointIds;
+    }
+
+    public List<ServicePoint> getServicePoints() throws NotFoundException {
+        if(getServicePointIds() != null && getServicePointIds().size() > 0) {
+            final List<ServicePoint> servicePoints = servicePointFacade.find( new ArrayList<>(getServicePointIds()) );
+            if(servicePoints.size() != getServicePointIds().size()) throw new NotFoundException("Could not find service points for all provided ids.");
+            return servicePoints;
+        }
+        return null;
     }
 
     public List<WorkStationId> getWorkStationIds() {

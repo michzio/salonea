@@ -149,7 +149,7 @@ public class ProviderServiceBeanParam extends PaginationBeanParam {
         this.workStationIds = workStationIds;
     }
 
-    public List<WorkStation> getWorkStations() {
+    public List<WorkStation> getWorkStations() throws NotFoundException {
         if(getWorkStationIds() != null && getWorkStationIds().size() > 0) {
             final List<WorkStation> workStations = workStationFacade.find( new ArrayList<>(getWorkStationIds()) );
             if(workStations.size() != getWorkStationIds().size()) throw new NotFoundException("Could not find work stations for all provided ids.");

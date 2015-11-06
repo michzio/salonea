@@ -27,6 +27,15 @@ public class ServicePointFacade extends AbstractFacade<ServicePoint> implements 
     private EntityManager em;
 
     @Override
+    public EntityManager getEntityManager() {
+        return em;
+    }
+
+    public ServicePointFacade() {
+        super(ServicePoint.class);
+    }
+
+    @Override
     public ServicePoint createForProvider(Long providerId, ServicePoint servicePoint) {
 
         Provider foundProvider = getEntityManager().find(Provider.class, providerId);
@@ -46,12 +55,43 @@ public class ServicePointFacade extends AbstractFacade<ServicePoint> implements 
     }
 
     @Override
-    public EntityManager getEntityManager() {
-        return em;
-    }
+    public List<ServicePoint> find(List<Object> servicePointIds) {
 
-    public ServicePointFacade() {
-        super(ServicePoint.class);
+        if(servicePointIds == null || servicePointIds.size() == 0)
+            throw new IllegalArgumentException("The servicePointIds argument must be not empty list.");
+
+        CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
+        CriteriaQuery<ServicePoint> criteriaQuery = criteriaBuilder.createQuery(ServicePoint.class);
+        // FROM
+        Root<ServicePoint> servicePoint = criteriaQuery.from(ServicePoint.class);
+        // SELECT
+        criteriaQuery.select(servicePoint);
+
+        // INNER JOIN
+        Join<ServicePoint, Provider> provider = servicePoint.join(ServicePoint_.provider);
+
+        // WHERE PREDICATES on composite primary keys
+        List<Predicate> orPredicates = new ArrayList<>();
+
+        for( Object object : servicePointIds ) {
+
+            if( !(object instanceof ServicePointId) )
+                throw new IllegalArgumentException("The servicePointIds argument should be list of ServicePointId typed objects.");
+
+            ServicePointId servicePointId = (ServicePointId) object;
+
+            Predicate[] andPredicates = new Predicate[2];
+            andPredicates[0] = criteriaBuilder.equal( provider.get(Provider_.userId), servicePointId.getProvider() );
+            andPredicates[1] = criteriaBuilder.equal( servicePoint.get(ServicePoint_.servicePointNumber), servicePointId.getServicePointNumber() );
+
+            orPredicates.add( criteriaBuilder.and(andPredicates) );
+        }
+
+        // WHERE compositePK1 OR compositePK2 OR ... OR compositePKN
+        criteriaQuery.where( criteriaBuilder.or(orPredicates.toArray(new Predicate[] {})) );
+
+        TypedQuery<ServicePoint> query = getEntityManager().createQuery(criteriaQuery);
+        return query.getResultList();
     }
 
     @Override
