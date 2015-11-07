@@ -3,11 +3,19 @@ package pl.salonea.entities;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import pl.salonea.entities.idclass.EmployeeRatingId;
+import pl.salonea.jaxrs.utils.hateoas.Link;
 
 import javax.persistence.*;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
+import javax.xml.bind.annotation.*;
+import java.util.ArrayList;
+import java.util.List;
+
+@XmlRootElement(name = "employee-rating")
+@XmlAccessorType(XmlAccessType.PROPERTY)
+@XmlType(propOrder = { "client", "employee", "clientRating", "clientComment", "employeeDementi" })
 
 @Entity
 @IdClass(EmployeeRatingId.class)
@@ -51,6 +59,9 @@ public class EmployeeRating {
     private Short clientRating;
     private String clientComment;
     private String employeeDementi;
+
+    // HATEOAS support for RESTFul web service in JAX-RS
+    private List<Link> links = new ArrayList<>();
 
      /* constructors */
 
@@ -149,5 +160,16 @@ public class EmployeeRating {
                 .append(getClient(), rhs.getClient())
                 .append(getEmployee(), rhs.getEmployee())
                 .isEquals();
+    }
+
+    @Transient
+    @XmlElementWrapper(name = "links")
+    @XmlElement(name = "link")
+    public List<Link> getLinks() {
+        return links;
+    }
+
+    public void setLinks(List<Link> links) {
+        this.links = links;
     }
 }

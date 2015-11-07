@@ -49,6 +49,11 @@ public class EmployeeResource {
     @Path("/{userId: \\d+}/rating-clients")
     public ClientResource getClientResource() { return new ClientResource(); }
 
+    @Path("/{userId: \\d+}/employee-ratings")
+    public EmployeeRatingResource getEmployeeRatingResource() {
+        return new EmployeeRatingResource();
+    }
+
     // private helper methods e.g. to populate resources/resource lists with HATEOAS links
 
     /**
@@ -251,5 +256,10 @@ public class EmployeeResource {
 
             return Response.status(Response.Status.OK).entity(clients).build();
         }
+    }
+
+    public class EmployeeRatingResource {
+
+        public EmployeeRatingResource() { }
     }
 }

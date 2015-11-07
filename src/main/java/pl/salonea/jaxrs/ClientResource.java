@@ -1,14 +1,8 @@
 package pl.salonea.jaxrs;
 
-import pl.salonea.ejb.stateless.ClientFacade;
-import pl.salonea.ejb.stateless.EmployeeFacade;
-import pl.salonea.ejb.stateless.ProviderFacade;
-import pl.salonea.ejb.stateless.ProviderRatingFacade;
+import pl.salonea.ejb.stateless.*;
 import pl.salonea.embeddables.Address;
-import pl.salonea.entities.Client;
-import pl.salonea.entities.Employee;
-import pl.salonea.entities.Provider;
-import pl.salonea.entities.ProviderRating;
+import pl.salonea.entities.*;
 import pl.salonea.enums.ClientType;
 import pl.salonea.enums.Gender;
 import pl.salonea.jaxrs.bean_params.*;
@@ -57,6 +51,8 @@ public class ClientResource {
     private ProviderRatingFacade providerRatingFacade;
     @Inject
     private EmployeeFacade employeeFacade;
+    @Inject
+    private EmployeeRatingFacade employeeRatingFacade;
 
     /**
      * Method returns all Client resources
@@ -1137,8 +1133,127 @@ public class ClientResource {
                                                   @BeanParam EmployeeRatingBeanParam params ) throws NotFoundException, ForbiddenException {
 
             RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning subset of Employee Rating entities for given Client using ClientResource.EmployeeRatingResource.getClientEmployeeRatings(clientId) method of REST API");
 
+            // find client entity for which to get associated employee ratings
+            Client client = clientFacade.find(clientId);
+            if(client == null)
+                throw new NotFoundException("Could not find client for id " + clientId + ".");
 
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<EmployeeRating> employeeRatings = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Client> clients = new ArrayList<>();
+                clients.add(client);
+
+                // get employee ratings for given client filtered by given params
+                employeeRatings = new ResourceList<>(
+                        employeeRatingFacade.findByMultipleCriteria(clients, params.getEmployees(), params.getMinRating(), params.getMaxRating(),
+                                params.getExactRating(), params.getClientComment(), params.getEmployeeDementi(), params.getOffset(), params.getLimit())
+                );
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get employee ratings for given client without filtering
+                employeeRatings = new ResourceList<>(employeeRatingFacade.findByClient(client, params.getOffset(), params.getLimit()));
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.EmployeeRatingResource.populateWithHATEOASLinks(employeeRatings, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(employeeRatings).build();
+        }
+
+        /**
+         * Method that removes subset of Employee Rating entities from database for given Client.
+         * The client id is passed through path param.
+         */
+        @DELETE
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response removeClientEmployeeRatings( @PathParam("clientId") Long clientId,
+                                                     @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "removing subset of Employee Rating entities for given Client by executing ClientResource.EmployeeRatingResource.removeClientEmployeeRatings(clientId) method of REST API");
+
+            // find client entity for which to remove employee ratings
+            Client client = clientFacade.find(clientId);
+            if(client == null)
+                throw new NotFoundException("Could not find client for id " + clientId + ".");
+
+            // remove all specified entities from database
+            Integer noOfDeleted = employeeRatingFacade.deleteByClient(client);
+
+            // create response returning number of deleted entities
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(noOfDeleted), 200, "number of deleted employee ratings for client with id " + clientId );
+
+            return Response.status(Status.OK).entity(responseEntity).build();
+        }
+
+        /**
+         * Additional methods returning subset of resources based on given criteria.
+         * You can also achieve similar results by applying @QueryParams to generic method
+         * returning all resources in order to filter and limit them
+         */
+
+        /**
+         * Method that counts Employee Rating entities for given Client resource
+         * The client id is passed through path param.
+         */
+        @GET
+        @Path("/count")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response countClientEmployeeRatings( @PathParam("clientId") Long clientId,
+                                                    @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning number of employee ratings for given client by executing ClientResource.EmployeeRatingResource.countClientEmployeeRatings(clientId) method of REST API");
+
+            // find client entity for which to count employee ratings
+            Client client = clientFacade.find(clientId);
+            if(client == null)
+                throw new NotFoundException("Could not find client for id " + clientId + ".");
+
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(employeeRatingFacade.countClientRatings(client)), 200,
+                    "number of employee ratings for client with id " + client.getClientId());
+
+            return Response.status(Status.OK).entity(responseEntity).build();
+        }
+
+        /**
+         * Method returns subset of Employee Rating entities for given Client
+         * that have been granted given rating.
+         * The client id and rating are passed through path params.
+         */
+        @GET
+        @Path("/rated/{rating : \\d+}")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getClientEmployeeRatingsByRating( @PathParam("clientId") Long clientId,
+                                                          @PathParam("rating") Short rating,
+                                                          @BeanParam PaginationBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning employee ratings for given client and rating using ClientResource.EmployeeRatingResource.getClientEmployeeRatingsByRating(clientId, rating) method of REST API");
+
+            // find client entity for which to get associated employee ratings
+            Client client = clientFacade.find(clientId);
+            if(client == null)
+                throw new NotFoundException("Could not find client for id " + clientId + ".");
+
+            // find employee ratings by given criteria (client and rating)
+            ResourceList<EmployeeRating> employeeRatings = new ResourceList<>(
+                    employeeRatingFacade.findFromClientByRating(client, rating, params.getOffset(), params.getLimit())
+            );
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.EmployeeRatingResource.populateWithHATEOASLinks(employeeRatings, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(employeeRatings).build();
         }
 
     }

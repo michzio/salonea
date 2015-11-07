@@ -52,6 +52,7 @@ public class ResourceList<T> {
             @XmlElement(name = "client", type = ClientWrapper.class),
             @XmlElement(name = "employee", type = Employee.class),
             @XmlElement(name = "employee", type = EmployeeWrapper.class),
+            @XmlElement(name = "employee-rating", type = EmployeeRating.class),
     })
     public List<T> getResources() {
         return resources;

@@ -14,13 +14,10 @@ import java.util.List;
 /**
  * Created by michzio on 08/10/2015.
  */
-public class ProviderRatingBeanParam extends PaginationBeanParam {
+public class ProviderRatingBeanParam extends RatingBeanParam {
 
     private @QueryParam("clientId") List<Long> clientIds;
     private @QueryParam("providerId") List<Long> providerIds;
-    private @QueryParam("minRating") Short minRating;
-    private @QueryParam("maxRating") Short maxRating;
-    private @QueryParam("rating") Short exactRating;
     private @QueryParam("clientComment") String clientComment;
     private @QueryParam("providerDementi") String providerDementi;
 
@@ -62,30 +59,6 @@ public class ProviderRatingBeanParam extends PaginationBeanParam {
             return providers;
         }
         return null;
-    }
-
-    public Short getMinRating() {
-        return minRating;
-    }
-
-    public void setMinRating(Short minRating) {
-        this.minRating = minRating;
-    }
-
-    public Short getMaxRating() {
-        return maxRating;
-    }
-
-    public void setMaxRating(Short maxRating) {
-        this.maxRating = maxRating;
-    }
-
-    public Short getExactRating() {
-        return exactRating;
-    }
-
-    public void setExactRating(Short exactRating) {
-        this.exactRating = exactRating;
     }
 
     public String getClientComment() {

@@ -9,10 +9,13 @@ import javax.persistence.*;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlElementWrapper;
+import javax.xml.bind.annotation.*;
 import java.util.ArrayList;
 import java.util.List;
+
+@XmlRootElement(name = "provider-rating")
+@XmlAccessorType(XmlAccessType.PROPERTY)
+@XmlType(propOrder = { "client", "provider", "clientRating", "clientComment", "providerDementi", "links"  })
 
 @Entity
 @IdClass(ProviderRatingId.class)
