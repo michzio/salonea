@@ -98,21 +98,21 @@ public class EmployeeRatingResource {
                     .build())
                     .rel("client-employee-ratings-count").build());
 
-            Method countByEmployeeMethod; //EmployeeResource.EmployeeRatingResource.class...TODO
+            Method countByEmployeeMethod = EmployeeResource.EmployeeRatingResource.class.getMethod("countEmployeeRatings", Long.class, GenericBeanParam.class);
             employeeRating.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
                     .path(EmployeeResource.class)
                     .path(employeeEmployeeRatingsMethod)
-                    //.path(countByEmployeeMethod) TODO
+                    .path(countByEmployeeMethod)
                     .resolveTemplate("userId", employeeRating.getEmployee().getUserId().toString())
                     .build())
                     .rel("employee-employee-ratings-count").build());
 
             // employee average rating link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/average-rating
-            Method employeeAverageRatingMethod; //EmployeeResource.EmployeeRatingResource.class... TODO
+            Method employeeAverageRatingMethod = EmployeeResource.EmployeeRatingResource.class.getMethod("getAverageEmployeeRating", Long.class, GenericBeanParam.class);
             employeeRating.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
                     .path(EmployeeResource.class)
                     .path(employeeEmployeeRatingsMethod)
-                   // .path(employeeAverageRatingMethod) TODO
+                    .path(employeeAverageRatingMethod)
                     .resolveTemplate("userId", employeeRating.getEmployee().getUserId().toString())
                     .build())
                     .rel("employee-average-rating").build());

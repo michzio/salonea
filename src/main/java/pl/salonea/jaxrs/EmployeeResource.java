@@ -16,6 +16,7 @@ import javax.ws.rs.core.UriInfo;
 import static javax.ws.rs.core.Response.Status;
 
 import pl.salonea.jaxrs.bean_params.GenericBeanParam;
+import pl.salonea.jaxrs.bean_params.PaginationBeanParam;
 import pl.salonea.jaxrs.exceptions.ForbiddenException;
 import pl.salonea.jaxrs.exceptions.NotFoundException;
 import pl.salonea.jaxrs.utils.RESTToolkit;
@@ -341,5 +342,154 @@ public class EmployeeResource {
 
             return Response.status(Status.OK).entity(responseEntity).build();
         }
+
+        /**
+         * Additional methods returning subset of resources based on given criteria
+         * You can achieve similar results by applying @QueryParams to generic method
+         * returning all resources in order to filter and limit them.
+         */
+
+        /**
+         * Method that counts Employee Rating entities for given Employee resource
+         * The employee id is passed through path param.
+         */
+        @GET
+        @Path("/count")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response countEmployeeRatings( @PathParam("userId") Long userId,
+                                              @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning number of employee ratings for given employee by executing EmployeeResource.EmployeeRatingResource.countEmployeeRatings(userId) method of REST API");
+
+            // find employee entity for which to count employee ratings
+            Employee employee = employeeFacade.find(userId);
+            if(employee == null)
+                throw new NotFoundException("Could not find employee for id " + userId + ".");
+
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(employeeRatingFacade.countEmployeeRatings(employee)), 200,
+                    "number of employee ratings for employee with id " + employee.getUserId());
+
+            return Response.status(Status.OK).entity(responseEntity).build();
+        }
+
+        /**
+         * Method that returns average rating for Employee entity with given employee id.
+         */
+        @GET
+        @Path("/average-rating")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getAverageEmployeeRating( @PathParam("userId") Long userId,
+                                                  @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning average rating for given employee using EmployeeResource.EmployeeRatingResource.getAverageEmployeeRating(userId) method of REST API");
+
+            // find employee entity for which to calculate average rating
+            Employee employee = employeeFacade.find(userId);
+            if(employee == null)
+                throw new NotFoundException("Could not find employee for id " + userId + ".");
+
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(employeeRatingFacade.findEmployeeAvgRating(employee)), 200,
+                    "average rating for employee with id " + employee.getUserId());
+
+            return Response.status(Status.OK).entity(responseEntity).build();
+        }
+
+        /**
+         * Method returns subset of Employee Rating entities for given Employee
+         * that have been granted given rating.
+         * The employee id and rating are passed through path params.
+         */
+        @GET
+        @Path("/rated/{rating : \\d+}")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getEmployeeRatingsByRating( @PathParam("userId") Long userId,
+                                                    @PathParam("rating") Short rating,
+                                                    @BeanParam PaginationBeanParam params ) throws ForbiddenException, NotFoundException  {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning employee ratings for given employee and rating using EmployeeResource.EmployeeRatingResource.getEmployeeRatingsByRating(userId, rating) method of REST API");
+
+            // find employee entity for which to get associated employee ratings
+            Employee employee = employeeFacade.find(userId);
+            if(employee == null)
+                throw new NotFoundException("Could not find employee for id " + userId + ".");
+
+            // find employee ratings by given criteria (employee and rating)
+            ResourceList<EmployeeRating> employeeRatings = new ResourceList<>(
+                    employeeRatingFacade.findForEmployeeByRating(employee, rating, params.getOffset(), params.getLimit())
+            );
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.EmployeeRatingResource.populateWithHATEOASLinks(employeeRatings, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(employeeRatings).build();
+        }
+
+        /**
+         * Method returns subset of Employee Rating entities for given Employee
+         * rated above given minimal rating.
+         * The employee id and minimal rating are passed through path params.
+         */
+        @GET
+        @Path("/rated-above/{minRating : \\d+}")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getEmployeeRatingsAboveMinimalRating( @PathParam("userId") Long userId,
+                                                              @PathParam("minRating") Short minRating,
+                                                              @BeanParam PaginationBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning employee ratings for given employee rated above given minimal rating using " +
+                    "EmployeeResource.EmployeeRatingResource.getEmployeeRatingsAboveMinimalRating(userId, minRating) method of REST API");
+
+            // find employee entity for which to get associated employee ratings
+            Employee employee = employeeFacade.find(userId);
+            if(employee == null)
+                throw new NotFoundException("Could not find employee for id " + userId + ".");
+
+            // find employee ratings by given criteria (employee and min rating)
+            ResourceList<EmployeeRating> employeeRatings = new ResourceList<>(
+                    employeeRatingFacade.findForEmployeeAboveRating(employee, minRating, params.getOffset(), params.getLimit())
+            );
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.EmployeeRatingResource.populateWithHATEOASLinks(employeeRatings, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(employeeRatings).build();
+        }
+
+        /**
+         * Method returns subset of Employee Rating entities for given Employee
+         * rated below given maximal rating.
+         * The employee id and maximal rating are passed through path params.
+         */
+        @GET
+        @Path("/rated-below/{maxRating : \\d+}")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getEmployeeRatingsBelowMaximalRating( @PathParam("userId") Long userId,
+                                                              @PathParam("maxRating") Short maxRating,
+                                                              @BeanParam PaginationBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning employee ratings for given employee rated below given maximal rating using " +
+                    "EmployeeResource.EmployeeRatingResource.getEmployeeRatingsBelowMaximalRating(userId, maxRating) method of REST API");
+
+            // find employee entity for which to get associated employee ratings
+            Employee employee = employeeFacade.find(userId);
+            if(employee == null)
+                throw new NotFoundException("Could not find employee for id " + userId + ".");
+
+            // find employee ratings by given criteria (employee and max rating)
+            ResourceList<EmployeeRating> employeeRatings = new ResourceList<>(
+                    employeeRatingFacade.findForEmployeeBelowRating(employee, maxRating, params.getOffset(), params.getLimit())
+            );
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.EmployeeRatingResource.populateWithHATEOASLinks(employeeRatings, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(employeeRatings).build();
+        }
+
     }
 }

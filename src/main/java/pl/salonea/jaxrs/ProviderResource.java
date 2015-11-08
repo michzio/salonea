@@ -1994,7 +1994,7 @@ public class ProviderResource {
                                              @BeanParam GenericBeanParam params) throws ForbiddenException, NotFoundException {
 
             if (params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
-            logger.log(Level.INFO, "returning number of provider ratings for given provider by executing ProviderResource.ProviderRatingResource.countProviderRatingsByProvider(userId) method of REST API");
+            logger.log(Level.INFO, "returning number of provider ratings for given provider by executing ProviderResource.ProviderRatingResource.countProviderRatings(userId) method of REST API");
 
             // find provider entity for which to count provider ratings
             Provider provider = providerFacade.find(userId);
