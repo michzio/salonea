@@ -98,7 +98,75 @@ public class EmployeeRatingResource {
                     .build())
                     .rel("client-employee-ratings-count").build());
 
-            // TODO
+            Method countByEmployeeMethod; //EmployeeResource.EmployeeRatingResource.class...TODO
+            employeeRating.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(EmployeeResource.class)
+                    .path(employeeEmployeeRatingsMethod)
+                    //.path(countByEmployeeMethod) TODO
+                    .resolveTemplate("userId", employeeRating.getEmployee().getUserId().toString())
+                    .build())
+                    .rel("employee-employee-ratings-count").build());
+
+            // employee average rating link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/average-rating
+            Method employeeAverageRatingMethod; //EmployeeResource.EmployeeRatingResource.class... TODO
+            employeeRating.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(EmployeeResource.class)
+                    .path(employeeEmployeeRatingsMethod)
+                   // .path(employeeAverageRatingMethod) TODO
+                    .resolveTemplate("userId", employeeRating.getEmployee().getUserId().toString())
+                    .build())
+                    .rel("employee-average-rating").build());
+
+            // rated sub-collection link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/rated/{rating}
+            employeeRating.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ClientResource.class)
+                    .path(clientEmployeeRatingsMethod)
+                    .path("rated")
+                    .resolveTemplate("clientId", employeeRating.getClient().getClientId().toString())
+                    .build())
+                    .rel("client-employee-ratings-rated").build());
+
+            employeeRating.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(EmployeeResource.class)
+                    .path(employeeEmployeeRatingsMethod)
+                    .path("rated")
+                    .resolveTemplate("userId", employeeRating.getEmployee().getUserId().toString())
+                    .build())
+                    .rel("employee-employee-ratings-rated").build());
+
+            // rated-above sub-collection link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/rated-above/{minRating}
+            employeeRating.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ClientResource.class)
+                    .path(clientEmployeeRatingsMethod)
+                    .path("rated-above")
+                    .resolveTemplate("clientId", employeeRating.getClient().getClientId().toString())
+                    .build())
+                    .rel("client-employee-ratings-rated-above").build());
+
+            employeeRating.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(EmployeeResource.class)
+                    .path(employeeEmployeeRatingsMethod)
+                    .path("rated-above")
+                    .resolveTemplate("userId", employeeRating.getEmployee().getUserId().toString())
+                    .build())
+                    .rel("employee-employee-ratings-rated-above").build());
+
+            // rated-below sub-collection link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/rated-below/{maxRating}
+            employeeRating.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ClientResource.class)
+                    .path(clientEmployeeRatingsMethod)
+                    .path("rated-below")
+                    .resolveTemplate("clientId", employeeRating.getClient().getClientId().toString())
+                    .build())
+                    .rel("client-employee-ratings-rated-below").build());
+
+            employeeRating.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(EmployeeResource.class)
+                    .path(employeeEmployeeRatingsMethod)
+                    .path("rated-below")
+                    .resolveTemplate("userId", employeeRating.getEmployee().getUserId().toString())
+                    .build())
+                    .rel("employee-employee-ratings-rated-below").build());
 
         } catch (NoSuchMethodException e) {
             e.printStackTrace();

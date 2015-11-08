@@ -2,21 +2,25 @@ package pl.salonea.jaxrs;
 
 import pl.salonea.ejb.stateless.ClientFacade;
 import pl.salonea.ejb.stateless.EmployeeFacade;
+import pl.salonea.ejb.stateless.EmployeeRatingFacade;
 import pl.salonea.embeddables.Address;
 import pl.salonea.entities.*;
-import pl.salonea.enums.ClientType;
 import pl.salonea.jaxrs.bean_params.ClientBeanParam;
-import pl.salonea.jaxrs.exceptions.*;
+import pl.salonea.jaxrs.bean_params.EmployeeRatingBeanParam;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
+import static javax.ws.rs.core.Response.Status;
 
+import pl.salonea.jaxrs.bean_params.GenericBeanParam;
 import pl.salonea.jaxrs.exceptions.ForbiddenException;
 import pl.salonea.jaxrs.exceptions.NotFoundException;
+import pl.salonea.jaxrs.utils.RESTToolkit;
 import pl.salonea.jaxrs.utils.ResourceList;
+import pl.salonea.jaxrs.utils.ResponseWrapper;
 import pl.salonea.jaxrs.utils.hateoas.Link;
 import pl.salonea.jaxrs.wrappers.ClientWrapper;
 import pl.salonea.jaxrs.wrappers.EmployeeWrapper;
@@ -41,6 +45,9 @@ public class EmployeeResource {
 
     @Inject
     private ClientFacade clientFacade;
+
+    @Inject
+    private EmployeeRatingFacade employeeRatingFacade;
 
     /**
      * related subresources (through relationships)
@@ -261,5 +268,78 @@ public class EmployeeResource {
     public class EmployeeRatingResource {
 
         public EmployeeRatingResource() { }
+
+        /**
+         * Method returns subset of Employee Rating entities for given Employee.
+         * The employee id is passed through path param.
+         * They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getEmployeeRatings(@PathParam("userId") Long userId,
+                                           @BeanParam EmployeeRatingBeanParam params) throws NotFoundException, ForbiddenException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning subset of Employee Rating entities for given Employee using EmployeeResource.EmployeeRatingResource.getEmployeeRatings(userId) method of REST API");
+
+            // find employee entity for which to get associated employee ratings
+            Employee employee = employeeFacade.find(userId);
+            if(employee == null)
+                throw new NotFoundException("Could not find employee for id " + userId + ".");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<EmployeeRating> employeeRatings = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Employee> employees = new ArrayList<>();
+                employees.add(employee);
+
+                // get employee ratings for given employee and filter params
+                employeeRatings = new ResourceList<>(
+                        employeeRatingFacade.findByMultipleCriteria(params.getClients(), employees, params.getMinRating(), params.getMaxRating(),
+                                params.getExactRating(), params.getClientComment(), params.getEmployeeDementi(), params.getOffset(), params.getLimit())
+                );
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get employee ratings for given employee without filtering
+                employeeRatings = new ResourceList<>( employeeRatingFacade.findByEmployee(employee, params.getOffset(), params.getLimit()) );
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.EmployeeRatingResource.populateWithHATEOASLinks(employeeRatings, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(employeeRatings).build();
+        }
+
+        /**
+         * Method that removes subset of Employee Rating entities from database for given Employee.
+         * The employee id is passed through path params.
+         */
+        @DELETE
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response removeEmployeeRatings( @PathParam("userId") Long userId,
+                                               @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "removing subset of Employee Rating entities for given Employee by executing EmployeeResource.EmployeeRatingResource.removeEmployeeRatings(userId) method of REST API");
+
+            // find employee entity for which to remove employee ratings
+            Employee employee = employeeFacade.find(userId);
+            if(employee == null)
+                throw new NotFoundException("Could not find employee for id " + userId + ".");
+
+            // remove all specified entities from database
+            Integer noOfDeleted = employeeRatingFacade.deleteByEmployee(employee);
+
+            // create response returning number of deleted entities
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(noOfDeleted), 200, "number of deleted employee ratings for employee with id " + userId);
+
+            return Response.status(Status.OK).entity(responseEntity).build();
+        }
     }
 }

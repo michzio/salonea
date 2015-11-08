@@ -1256,6 +1256,70 @@ public class ClientResource {
             return Response.status(Status.OK).entity(employeeRatings).build();
         }
 
+        /**
+         * Method returns subset of Employee Rating entities for given Client
+         * rated above given minimal rating.
+         * The client id and minimal rating are passed through path params.
+         */
+        @GET
+        @Path("/rated-above/{minRating : \\d+}")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getClientEmployeeRatingsAboveMinimalRating( @PathParam("clientId") Long clientId,
+                                                                    @PathParam("minRating") Short minRating,
+                                                                    @BeanParam PaginationBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning employee ratings for given client rated above given minimal rating using " +
+                    "ClientResource.EmployeeRatingResource.getClientEmployeeRatingsAboveMinimalRating(clientId, minRating) method of REST API");
+
+            // find client entity for which to get associated employee ratings
+            Client client = clientFacade.find(clientId);
+            if(client == null)
+                throw new NotFoundException("Could not find client for id " + clientId + ".");
+
+            // find employee ratings by given criteria (client and min rating)
+            ResourceList<EmployeeRating> employeeRatings = new ResourceList<>(
+                    employeeRatingFacade.findFromClientAboveRating(client, minRating, params.getOffset(), params.getLimit())
+            );
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.EmployeeRatingResource.populateWithHATEOASLinks(employeeRatings, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(employeeRatings).build();
+        }
+
+        /**
+         * Method returns subset of Employee Rating entities for given Client
+         * rated below given maximal rating.
+         * The client id and maximal rating are passed through path params.
+         */
+        @GET
+        @Path("/rated-below/{maxRating : \\d+}")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getClientEmployeeRatingsBelowMaximalRating( @PathParam("clientId") Long clientId,
+                                                                    @PathParam("maxRating") Short maxRating,
+                                                                    @BeanParam PaginationBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning employee ratings for given client rated below given maximal rating using " +
+                    "ClientResource.EmployeeRatingResource.getClientEmployeeRatingsBelowMaximalRating(clientId, maxRating) method of REST API");
+
+            // find client entity for which to get associated employee ratings
+            Client client = clientFacade.find(clientId);
+            if(client == null)
+                throw new NotFoundException("Could not find client for id " + clientId + ".");
+
+            // find employee ratings by given criteria (client and max rating)
+            ResourceList<EmployeeRating> employeeRatings = new ResourceList<>(
+                    employeeRatingFacade.findFromClientBelowRating(client, maxRating, params.getOffset(), params.getLimit())
+            );
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.EmployeeRatingResource.populateWithHATEOASLinks(employeeRatings, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(employeeRatings).build();
+        }
+
     }
 
     public class ProviderResource {
