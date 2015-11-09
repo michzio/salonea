@@ -35,6 +35,7 @@ import java.util.List;
         @NamedQuery(name = EmployeeRating.COUNT_CLIENT_RATINGS, query = "SELECT COUNT(er) FROM EmployeeRating er WHERE er.client = :client"),
         @NamedQuery(name = EmployeeRating.DELETE_BY_CLIENT, query = "DELETE FROM EmployeeRating er WHERE er.client = :client"),
         @NamedQuery(name = EmployeeRating.DELETE_BY_EMPLOYEE, query = "DELETE FROM EmployeeRating er WHERE er.employee = :employee"),
+        @NamedQuery(name = EmployeeRating.DELETE_BY_ID, query = "DELETE FROM EmployeeRating er WHERE er.employee.userId = :employeeId AND er.client.clientId = :clientId"),
 })
 public class EmployeeRating {
 
@@ -51,6 +52,7 @@ public class EmployeeRating {
     public static final String COUNT_CLIENT_RATINGS = "EmployeeRating.countClientRatings";
     public static final String DELETE_BY_CLIENT = "EmployeeRating.deleteByClient";
     public static final String DELETE_BY_EMPLOYEE = "EmployeeRating.deleteByEmployee";
+    public static final String DELETE_BY_ID = "EmployeeRating.deleteById";
 
 
     private Client client; // PK, FK

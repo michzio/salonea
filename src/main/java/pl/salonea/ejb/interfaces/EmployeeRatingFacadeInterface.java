@@ -3,6 +3,7 @@ package pl.salonea.ejb.interfaces;
 import pl.salonea.entities.Client;
 import pl.salonea.entities.Employee;
 import pl.salonea.entities.EmployeeRating;
+import pl.salonea.entities.idclass.EmployeeRatingId;
 
 import java.util.List;
 
@@ -12,6 +13,8 @@ import java.util.List;
 public interface EmployeeRatingFacadeInterface extends AbstractFacadeInterface<EmployeeRating> {
 
     // concrete interface
+    EmployeeRating createForEmployeeAndClient(Long employeeId, Long clientId, EmployeeRating employeeRating);
+    EmployeeRating update(EmployeeRatingId employeeRatingId, EmployeeRating employeeRating);
     List<EmployeeRating> findByClient(Client client);
     List<EmployeeRating> findByClient(Client client, Integer start, Integer limit);
     List<EmployeeRating> findByEmployee(Employee employee);
@@ -33,6 +36,7 @@ public interface EmployeeRatingFacadeInterface extends AbstractFacadeInterface<E
     Long countClientRatings(Client client);
     Integer deleteByClient(Client client);
     Integer deleteByEmployee(Employee employee);
+    Integer deleteById(EmployeeRatingId employeeRatingId);
     List<EmployeeRating> findByMultipleCriteria(List<Client> clients, List<Employee> employees, Short minRating, Short maxRating, Short exactRating, String clientComment, String employeeDementi);
     List<EmployeeRating> findByMultipleCriteria(List<Client> clients, List<Employee> employees, Short minRating, Short maxRating, Short exactRating, String clientComment, String employeeDementi, Integer start, Integer limit);
 

@@ -258,7 +258,7 @@ public class ProviderRatingResource {
     public static void populateWithHATEOASLinks(ProviderRating providerRating, UriInfo uriInfo) {
 
         try {
-            // self link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/{sub-id}
+            // self link with pattern: http://localhost:port/app/rest/{resources}/{id1}+{id2}
             Method providerRatingMethod = ProviderRatingResource.class.getMethod("getProviderRating", Long.class, Long.class, GenericBeanParam.class);
             providerRating.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
                     .path(ProviderRatingResource.class)
@@ -267,6 +267,12 @@ public class ProviderRatingResource {
                     .resolveTemplate("clientId", providerRating.getClient().getClientId().toString())
                     .build())
                     .rel("self").build());
+
+            // collection link with pattern: http://localhost:port/app/rest/{resources}
+            providerRating.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ProviderRatingResource.class)
+                    .build())
+                    .rel("provider-ratings").build());
 
             // sub-collection link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}
             Method clientProviderRatingsMethod = ClientResource.class.getMethod("getProviderRatingResource");

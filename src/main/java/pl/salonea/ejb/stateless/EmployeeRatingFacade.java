@@ -5,6 +5,7 @@ import pl.salonea.entities.Client;
 import pl.salonea.entities.Employee;
 import pl.salonea.entities.EmployeeRating;
 import pl.salonea.entities.EmployeeRating_;
+import pl.salonea.entities.idclass.EmployeeRatingId;
 
 import javax.ejb.LocalBean;
 import javax.ejb.Stateless;
@@ -34,6 +35,30 @@ public class EmployeeRatingFacade extends AbstractFacade<EmployeeRating>
 
     public EmployeeRatingFacade() {
         super(EmployeeRating.class);
+    }
+
+    @Override
+    public EmployeeRating createForEmployeeAndClient(Long employeeId, Long clientId, EmployeeRating employeeRating) {
+
+        Employee foundEmployee = getEntityManager().find(Employee.class, employeeId);
+        Client foundClient = getEntityManager().find(Client.class, clientId);
+
+        employeeRating.setEmployee(foundEmployee);
+        employeeRating.setClient(foundClient);
+        getEntityManager().persist(employeeRating);
+        return employeeRating;
+    }
+
+    @Override
+    public EmployeeRating update(EmployeeRatingId employeeRatingId, EmployeeRating employeeRating) {
+
+        Employee foundEmployee = getEntityManager().find(Employee.class, employeeRatingId.getEmployee());
+        Client foundClient = getEntityManager().find(Client.class, employeeRatingId.getClient());
+
+        employeeRating.setEmployee(foundEmployee);
+        employeeRating.setClient(foundClient);
+
+        return update(employeeRating);
     }
 
     @Override
@@ -215,6 +240,15 @@ public class EmployeeRatingFacade extends AbstractFacade<EmployeeRating>
 
         Query query = getEntityManager().createNamedQuery(EmployeeRating.DELETE_BY_EMPLOYEE);
         query.setParameter("employee", employee);
+        return query.executeUpdate();
+    }
+
+    @Override
+    public Integer deleteById(EmployeeRatingId employeeRatingId) {
+
+        Query query = getEntityManager().createNamedQuery(EmployeeRating.DELETE_BY_ID);
+        query.setParameter("employeeId", employeeRatingId.getEmployee());
+        query.setParameter("clientId", employeeRatingId.getClient());
         return query.executeUpdate();
     }
 
