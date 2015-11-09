@@ -5,6 +5,7 @@ import pl.salonea.entities.Client;
 import pl.salonea.entities.Provider;
 import pl.salonea.entities.ProviderRating;
 import pl.salonea.entities.ProviderRating_;
+import pl.salonea.entities.idclass.ProviderRatingId;
 
 import javax.ejb.LocalBean;
 import javax.ejb.Stateless;
@@ -33,6 +34,30 @@ public class ProviderRatingFacade extends AbstractFacade<ProviderRating> impleme
 
     public ProviderRatingFacade() {
         super(ProviderRating.class);
+    }
+
+    @Override
+    public ProviderRating createForProviderAndClient(Long providerId, Long clientId, ProviderRating providerRating) {
+
+        Provider foundProvider = getEntityManager().find(Provider.class, providerId);
+        Client foundClient = getEntityManager().find(Client.class, clientId);
+
+        providerRating.setProvider(foundProvider);
+        providerRating.setClient(foundClient);
+        getEntityManager().persist(providerRating);
+        return providerRating;
+    }
+
+    @Override
+    public ProviderRating update(ProviderRatingId providerRatingId, ProviderRating providerRating) {
+
+        Provider foundProvider = getEntityManager().find(Provider.class, providerRatingId.getProvider());
+        Client foundClient = getEntityManager().find(Client.class, providerRatingId.getClient());
+
+        providerRating.setProvider(foundProvider);
+        providerRating.setClient(foundClient);
+
+        return update(providerRating);
     }
 
     @Override
@@ -214,6 +239,15 @@ public class ProviderRatingFacade extends AbstractFacade<ProviderRating> impleme
 
         Query query = getEntityManager().createNamedQuery(ProviderRating.DELETE_BY_PROVIDER);
         query.setParameter("provider", provider);
+        return query.executeUpdate();
+    }
+
+    @Override
+    public Integer deleteById(ProviderRatingId providerRatingId) {
+
+        Query query = getEntityManager().createNamedQuery(ProviderRating.DELETE_BY_ID);
+        query.setParameter("providerId", providerRatingId.getProvider());
+        query.setParameter("clientId", providerRatingId.getClient());
         return query.executeUpdate();
     }
 
