@@ -1,26 +1,60 @@
 package pl.salonea.jaxrs;
 
+import pl.salonea.ejb.stateless.ProviderRatingFacade;
 import pl.salonea.entities.ProviderRating;
-import pl.salonea.entities.ProviderService;
+import pl.salonea.entities.idclass.ProviderRatingId;
 import pl.salonea.jaxrs.bean_params.GenericBeanParam;
 import pl.salonea.jaxrs.exceptions.ForbiddenException;
+import pl.salonea.jaxrs.utils.RESTToolkit;
 import pl.salonea.jaxrs.utils.ResourceList;
 import pl.salonea.jaxrs.utils.hateoas.Link;
+import pl.salonea.jaxrs.exceptions.NotFoundException;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.HeaderParam;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
+import javax.inject.Inject;
+import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import javax.xml.ws.Response;
 import java.lang.reflect.Method;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import static javax.ws.rs.core.Response.Status;
 
 /**
  * Created by michzio on 12/09/2015.
  */
 @Path("/provider-ratings")
 public class ProviderRatingResource {
+
+    private static final Logger logger = Logger.getLogger(ProviderRatingResource.class.getName());
+
+    @Inject
+    private ProviderRatingFacade providerRatingFacade;
+
+    /**
+     * Method matches specific Provider Rating resource by identifier and returns its instance.
+     * Provider Rating composite identifier has pattern: providerId+clientId.
+     */
+    @GET
+    @Path("/{providerId : \\d+}+{clientId : \\d+}") // catch only numeric identifiers
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getProviderRating( @PathParam("providerId") Long providerId,
+                                       @PathParam("clientId") Long clientId,
+                                       @BeanParam GenericBeanParam params ) throws NotFoundException, ForbiddenException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning given Provider Rating for providerId: " + providerId + " and clientId: " + clientId +
+                " by executing ProviderRatingResource.getProviderRating(providerId, clientId) method of REST API");
+
+        ProviderRating foundProviderRating = providerRatingFacade.find(new ProviderRatingId(providerId, clientId));
+        if(foundProviderRating == null)
+            throw new NotFoundException("Could not find provider rating for id (" + providerId + "," + clientId + ").");
+
+        // adding hypermedia links to provider rating resource
+        ProviderRatingResource.populateWithHATEOASLinks(foundProviderRating, params.getUriInfo());
+
+        return Response.status(Status.OK).entity(foundProviderRating).build();
+    }
 
     @GET
     @Path("/count")
@@ -64,16 +98,17 @@ public class ProviderRatingResource {
 
         try {
             // self link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/{sub-id}
-            Method clientProviderRatingsMethod = ClientResource.class.getMethod("getProviderRatingResource");
+            Method providerRatingMethod = ProviderRatingResource.class.getMethod("getProviderRating", Long.class, Long.class, GenericBeanParam.class);
             providerRating.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
-                    .path(ClientResource.class)
-                    .path(clientProviderRatingsMethod)
-                    .path(providerRating.getProvider().getUserId().toString())
+                    .path(ProviderRatingResource.class)
+                    .path(providerRatingMethod)
+                    .resolveTemplate("providerId", providerRating.getProvider().getUserId().toString())
                     .resolveTemplate("clientId", providerRating.getClient().getClientId().toString())
                     .build())
                     .rel("self").build());
 
             // sub-collection link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}
+            Method clientProviderRatingsMethod = ClientResource.class.getMethod("getProviderRatingResource");
             providerRating.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
                     .path(ClientResource.class)
                     .path(clientProviderRatingsMethod)
