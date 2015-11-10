@@ -5,13 +5,21 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 import pl.salonea.constraints.CreditCardValidity;
 import pl.salonea.entities.idclass.CreditCardId;
 import pl.salonea.enums.CreditCardType;
+import pl.salonea.jaxrs.utils.hateoas.Link;
 
 import javax.persistence.*;
 import javax.validation.constraints.Future;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import javax.xml.bind.annotation.*;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
+
+@XmlRootElement(name = "credit-card")
+@XmlAccessorType(XmlAccessType.PROPERTY)
+@XmlType(propOrder = {"creditCardNumber", "expirationDate", "client", "cardHolder", "cardType", "links"})
 
 @Entity
 @IdClass(CreditCardId.class)
@@ -53,6 +61,9 @@ public class CreditCard implements Serializable {
     /* simple attributes */
     private String cardHolder;
     private CreditCardType cardType;
+
+    // HATEOAS support for RESTful web service in JAX-RS
+    private List<Link> links = new ArrayList<>();
 
     /* constructors */
 
@@ -157,4 +168,14 @@ public class CreditCard implements Serializable {
                 .isEquals();
     }
 
+    @Transient
+    @XmlElementWrapper(name = "links")
+    @XmlElement(name = "link")
+    public List<Link> getLinks() {
+        return links;
+    }
+
+    public void setLinks(List<Link> links) {
+        this.links = links;
+    }
 }
