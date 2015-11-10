@@ -16,6 +16,7 @@ import java.util.List;
 public interface CreditCardFacadeInterface extends AbstractFacadeInterface<CreditCard> {
 
     // concrete interface
+    CreditCard createForClient(Long clientId, CreditCard creditCard); 
     List<CreditCard> findByClient(Client client);
     List<CreditCard> findByClient(Client client, Integer start, Integer limit);
     List<CreditCard> findByType(CreditCardType cardType);

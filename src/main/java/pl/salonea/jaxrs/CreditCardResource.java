@@ -3,10 +3,13 @@ package pl.salonea.jaxrs;
 import pl.salonea.ejb.stateless.CreditCardFacade;
 import pl.salonea.entities.CreditCard;
 import pl.salonea.jaxrs.bean_params.CreditCardBeanParam;
+import pl.salonea.jaxrs.bean_params.GenericBeanParam;
 import pl.salonea.jaxrs.exceptions.ForbiddenException;
 import pl.salonea.jaxrs.exceptions.NotFoundException;
+import pl.salonea.jaxrs.utils.RESTDateTime;
 import pl.salonea.jaxrs.utils.RESTToolkit;
 import pl.salonea.jaxrs.utils.ResourceList;
+import pl.salonea.jaxrs.utils.hateoas.Link;
 
 import javax.inject.Inject;
 import javax.ws.rs.BeanParam;
@@ -14,7 +17,12 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
-import javax.xml.ws.Response;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
+
+import static javax.ws.rs.core.Response.Status;
+
+import java.lang.reflect.Method;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -48,14 +56,91 @@ public class CreditCardResource {
             logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
 
             // get credit cards filtered by criteria provided in query params
-
+            creditCards = new ResourceList<>(
+                    creditCardFacade.findByMultipleCriteria(params.getClients(), params.getCardTypes(), params.getCardNumber(), params.getCardHolder(),
+                            params.getExpired(), params.getTheEarliestExpirationDate(), params.getTheLatestExpirationDate(), params.getOffset(), params.getLimit())
+            );
         } else {
             logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
 
             // get all credit cards without filtering (eventually paginated)
+            creditCards = new ResourceList<>( creditCardFacade.findAll(params.getOffset(), params.getLimit()) );
         }
 
-        return null;
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        CreditCardResource.populateWithHATEOASLinks(creditCards, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(creditCards).build();
+    }
+
+
+
+    /**
+     * This method enables to populate list of resources and each individual resource with hypermedia links
+     */
+    public static void populateWithHATEOASLinks(ResourceList<CreditCard> creditCards, UriInfo uriInfo, Integer offset, Integer limit) {
+
+        // navigation links through collection of resources
+        ResourceList.generateNavigationLinks(creditCards, uriInfo, offset, limit);
+
+        try {
+            // count resources hypermedia links
+            Method countMethod = CreditCardResource.class.getMethod("countCreditCards", GenericBeanParam.class);
+            creditCards.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(CreditCardResource.class)
+                    .path(countMethod)
+                    .build())
+                    .rel("count").build());
+
+            // get all resources hypermedia links
+            creditCards.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(CreditCardResource.class)
+                    .build())
+                    .rel("credit-cards").build());
+
+            // get subset of resources hypermedia links
+
+
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        }
+
+        for(CreditCard creditCard : creditCards.getResources()) {
+            CreditCardResource.populateWithHATEOASLinks(creditCard, uriInfo);
+        }
+    }
+
+    /**
+     * This method enables to populate each individual resource with hypermedia links
+     */
+    public static void populateWithHATEOASLinks(CreditCard creditCard, UriInfo uriInfo) {
+
+
+        try {
+            // self link with pattern: http://localhost:port/app/rest/clients/{clientId}/{credit-cards}/{cardNumber}/expiring/{expirationDate}
+            Method clientCreditCardsMethod = ClientResource.class.getMethod("getCreditCardResource");
+            Method creditCardMethod = ClientResource.CreditCardResource.class.getMethod("getCreditCard", Long.class, String.class, RESTDateTime.class, GenericBeanParam.class);
+            creditCard.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ClientResource.class)
+                    .path(clientCreditCardsMethod)
+                    .path(creditCardMethod)
+                    .resolveTemplate("clientId", creditCard.getClient().getClientId().toString())
+                    .resolveTemplate("cardNumber", creditCard.getCreditCardNumber())
+                    .resolveTemplate("expirationDate", creditCard.getExpirationDate().toString())
+                    .build())
+                    .rel("self").build());
+
+            // collection link with pattern: http://localhost:port/app/rest/{resources}
+            creditCard.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(CreditCardResource.class)
+                    .build())
+                    .rel("credit-cards").build());
+
+
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        }
+
     }
 
 }

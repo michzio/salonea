@@ -22,6 +22,7 @@ import pl.salonea.jaxrs.wrappers.ProviderWrapper;
 import javax.ejb.EJBException;
 import javax.ejb.EJBTransactionRolledbackException;
 import javax.inject.Inject;
+import javax.print.attribute.standard.Media;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -53,6 +54,8 @@ public class ClientResource {
     private EmployeeFacade employeeFacade;
     @Inject
     private EmployeeRatingFacade employeeRatingFacade;
+    @Inject
+    private CreditCardFacade creditCardFacade;
 
     /**
      * Method returns all Client resources
@@ -698,6 +701,9 @@ public class ClientResource {
 
     @Path("/{clientId: \\d+}/rated-employees")
     public EmployeeResource getEmployeeResource() { return new EmployeeResource(); }
+
+    @Path("/{clientId: \\d+}/credit-cards")
+    public CreditCardResource getCreditCardResource() { return new CreditCardResource(); }
 
     /**
      * This method enables to populate list of resources and each individual resource with hypermedia links
@@ -1513,6 +1519,92 @@ public class ClientResource {
             pl.salonea.jaxrs.EmployeeResource.populateWithHATEOASLinks(employees, params.getUriInfo(), params.getOffset(), params.getLimit());
 
             return Response.status(Status.OK).entity(employees).build();
+        }
+
+    }
+
+    public class CreditCardResource {
+
+        public CreditCardResource() { }
+
+        /**
+         * Method that returns subset of Credit Card entities for given Client.
+         * The client id is passed through path param.
+         * Credit cards can be additionally filtered and paginated by given @QueryParams
+         * passed in by @BeanParam object.
+         */
+        @GET
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getClientCreditCards( @PathParam("clientId") Long clientId,
+                                              @BeanParam CreditCardBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning credit cards by given client using ClientResource.CreditCardResource.getClientCreditCards(clientId) method of REST API");
+
+
+
+            return null;
+        }
+
+        /**
+         * Method that returns specified Credit Card entity by given composite Credit Card Id.
+         * The Credit Card Id consist of client id, card number and expiration date passed through path params.
+         */
+        @GET
+        @Path("/{cardNumber : \\S+}/expiring/{expirationDate: \\S+}")
+        public Response getCreditCard( @PathParam("clientId") Long clientId,
+                                       @PathParam("cardNumber") String cardNumber,
+                                       @PathParam("expirationDate") RESTDateTime expirationDate,
+                                       @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            return null;
+        }
+
+        /**
+         * Method that takes Credit Card as XML or JSON and creates its new instance for given Client in database.
+         * The client id for which Credit Card is created is passed through path param.
+         */
+        @POST
+        @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response createCreditCard( @PathParam("clientId") Long clientId,
+                                          CreditCard creditCard,
+                                          @BeanParam GenericBeanParam params ) throws ForbiddenException, UnprocessableEntityException, InternalServerErrorException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "creating new Credit Card for given Client by executing ClientResource.CreditCardResource.createCreditCard(clientId, creditCard) method of REST API");
+
+            CreditCard createdCreditCard = null;
+            URI locationURI = null;
+
+            try {
+                // persist new resource in database
+                createdCreditCard = creditCardFacade.createForClient(clientId, creditCard);
+
+                // populate created resource with hypermedia links
+                pl.salonea.jaxrs.CreditCardResource.populateWithHATEOASLinks(createdCreditCard, params.getUriInfo());
+
+                // construct link to newly created resource to return in HTTP Header
+                Method clientCreditCardsMethod = ClientResource.class.getMethod("getCreditCardResource");
+                Method creditCardMethod = ClientResource.CreditCardResource.class.getMethod("getCreditCard", Long.class, String.class, RESTDateTime.class, GenericBeanParam.class);
+                locationURI = params.getUriInfo().getBaseUriBuilder()
+                        .path(ClientResource.class)
+                        .path(clientCreditCardsMethod)
+                        .path(creditCardMethod)
+                        .resolveTemplate("clientId", String.valueOf(createdCreditCard.getClient().getClientId()))
+                        .resolveTemplate("cardNumber", createdCreditCard.getCreditCardNumber())
+                        .resolveTemplate("expirationDate", createdCreditCard.getExpirationDate().toString())
+                        .build();
+
+            } catch (EJBTransactionRolledbackException ex) {
+                ExceptionHandler.handleEJBTransactionRolledbackException(ex);
+            } catch (EJBException ex) {
+                ExceptionHandler.handleEJBException(ex);
+            } catch (Exception ex) {
+                throw new InternalServerErrorException(ExceptionHandler.ENTITY_CREATION_ERROR_MESSAGE);
+            }
+
+            return Response.created(locationURI).entity(createdCreditCard).build();
         }
 
     }

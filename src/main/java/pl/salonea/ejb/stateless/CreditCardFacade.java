@@ -40,6 +40,14 @@ public class CreditCardFacade extends AbstractFacade<CreditCard> implements Cred
 
 
     @Override
+    public CreditCard createForClient(Long clientId, CreditCard creditCard) {
+
+        Client client = getEntityManager().find(Client.class, clientId);
+        creditCard.setClient(client);
+        return create(creditCard);
+    }
+
+    @Override
     public List<CreditCard> findByClient(Client client) {
         return findByClient(client, null, null);
     }

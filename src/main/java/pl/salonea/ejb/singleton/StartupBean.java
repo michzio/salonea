@@ -3,6 +3,7 @@ package pl.salonea.ejb.singleton;
 import pl.salonea.ejb.stateless.*;
 import pl.salonea.embeddables.Address;
 import pl.salonea.entities.*;
+import pl.salonea.enums.CreditCardType;
 import pl.salonea.enums.Gender;
 import pl.salonea.enums.ProviderType;
 import pl.salonea.enums.WorkStationType;
@@ -69,6 +70,8 @@ public class StartupBean {
     private EmployeeFacade employeeFacade;
     @Inject
     private EmployeeRatingFacade employeeRatingFacade;
+    @Inject
+    private CreditCardFacade cardFacade;
 
     public StartupBean() { }
 
@@ -86,6 +89,7 @@ public class StartupBean {
         populateFirms();
         populateProviders();
         populateClients();
+        populateCreditCards();
 
     }
 
@@ -288,6 +292,40 @@ public class StartupBean {
         employeeRatingFacade.create(emplRating1);
         employeeRatingFacade.create(emplRating2);
 
+    }
+
+    private void populateCreditCards() {
+
+        // find currently stored clients
+        Client foundClient1 = clientFacade.find(1L);
+        Client foundClient2 = clientFacade.find(2L);
+
+        // calculate expiration date
+        Calendar cal = Calendar.getInstance();
+        cal.add(Calendar.YEAR, 1);
+
+        if(foundClient1 != null) {
+            CreditCard card1 = new CreditCard(foundClient1, "4539345259115377", cal.getTime(), "Michał Ziobro", CreditCardType.VISA);
+            cal.add(Calendar.YEAR, 2);
+            CreditCard card2 = new CreditCard(foundClient1, "4485249741691678", cal.getTime(), "Michał Ziobro", CreditCardType.MASTERCARD);
+
+            foundClient1.getCreditCards().add(card1);
+            foundClient1.getCreditCards().add(card2);
+            cardFacade.create(card1);
+            cardFacade.create(card2);
+        }
+
+        if(foundClient2 != null) {
+            CreditCard card3 = new CreditCard(foundClient2, "4532661830539670", cal.getTime(), "Jan Nowak", CreditCardType.AMERICAN_EXPRESS);
+            cal.add(Calendar.MONTH, -10);
+            CreditCard card4 = new CreditCard(foundClient2, "5266864683957747", cal.getTime(), "Jan Nowak", CreditCardType.VISA);
+
+            foundClient2.getCreditCards().add(card3);
+            foundClient2.getCreditCards().add(card4);
+
+            cardFacade.create(card3);
+            cardFacade.create(card4);
+        }
     }
 
 
