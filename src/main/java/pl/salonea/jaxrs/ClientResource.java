@@ -3,6 +3,7 @@ package pl.salonea.jaxrs;
 import pl.salonea.ejb.stateless.*;
 import pl.salonea.embeddables.Address;
 import pl.salonea.entities.*;
+import pl.salonea.entities.idclass.CreditCardId;
 import pl.salonea.enums.ClientType;
 import pl.salonea.enums.Gender;
 import pl.salonea.jaxrs.bean_params.*;
@@ -1541,9 +1542,38 @@ public class ClientResource {
             RESTToolkit.authorizeAccessToWebService(params);
             logger.log(Level.INFO, "returning credit cards by given client using ClientResource.CreditCardResource.getClientCreditCards(clientId) method of REST API");
 
+            // find client entity for which to get associated credit cards
+            Client client = clientFacade.find(clientId);
+            if(client == null)
+                throw new NotFoundException("Could not find client for id " + clientId);
 
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
 
-            return null;
+            ResourceList<CreditCard> creditCards = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Client> clients = new ArrayList<>();
+                clients.add(client);
+
+                // get credit cards for given client filtered by given criteria
+                creditCards = new ResourceList<>(
+                    creditCardFacade.findByMultipleCriteria(clients, params.getCardTypes(), params.getCardNumber(), params.getCardHolder(),
+                            params.getExpired(), params.getTheEarliestExpirationDate(), params.getTheLatestExpirationDate(), params.getOffset(), params.getLimit())
+                );
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get all credit cards for given client without additional filtering (eventually paginated)
+                creditCards = new ResourceList<>( creditCardFacade.findByClient(client, params.getOffset(), params.getLimit()) );
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.CreditCardResource.populateWithHATEOASLinks(creditCards, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(creditCards).build();
         }
 
         /**
@@ -1557,7 +1587,18 @@ public class ClientResource {
                                        @PathParam("expirationDate") RESTDateTime expirationDate,
                                        @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
 
-            return null;
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning given Credit Card for given client, card number and expiration date by executing " +
+                    "ClientResource.CreditCardResource.getCreditCard(clientId, cardNumber, expirationDate) method of REST API");
+
+            CreditCard foundCreditCard = creditCardFacade.find( new CreditCardId(clientId, cardNumber, expirationDate));
+            if(foundCreditCard == null)
+                throw new NotFoundException("Could not find credit card for id (" + clientId + "," + cardNumber + "," + expirationDate + ").");
+
+            // adding hypermedia links to credit card resource
+            pl.salonea.jaxrs.CreditCardResource.populateWithHATEOASLinks(foundCreditCard, params.getUriInfo());
+
+            return Response.status(Status.OK).entity(foundCreditCard).build();
         }
 
         /**
