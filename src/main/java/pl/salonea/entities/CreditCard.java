@@ -26,6 +26,7 @@ import java.util.List;
 @Table(name = "credit_card")
 @Access(AccessType.PROPERTY)
 @NamedQueries({
+        @NamedQuery(name = CreditCard.FIND_BY_CLIENT, query = "SELECT cc FROM CreditCard cc WHERE cc.client = :client"),
         @NamedQuery(name = CreditCard.FIND_BY_TYPE, query = "SELECT cc FROM CreditCard cc WHERE cc.cardType = :card_type"),
         @NamedQuery(name = CreditCard.FIND_EXPIRED, query = "SELECT cc FROM CreditCard cc WHERE cc.expirationDate < current_timestamp"),
         @NamedQuery(name = CreditCard.FIND_NOT_EXPIRED, query = "SELECT cc FROM CreditCard cc WHERE cc.expirationDate > current_timestamp"),
@@ -42,6 +43,7 @@ import java.util.List;
 // TODO some online check of credit card validity i.e. number, holder, exp_date, type
 public class CreditCard implements Serializable {
 
+    public static final String FIND_BY_CLIENT = "CreditCard.findByClient";
     public static final String FIND_BY_TYPE = "CreditCard.findByType";
     public static final String FIND_EXPIRED = "CreditCard.findExpired";
     public static final String FIND_NOT_EXPIRED = "CreditCard.findNotExpired";

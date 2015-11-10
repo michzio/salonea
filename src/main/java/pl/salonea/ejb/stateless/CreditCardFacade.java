@@ -1,7 +1,10 @@
 package pl.salonea.ejb.stateless;
 
 import pl.salonea.ejb.interfaces.CreditCardFacadeInterface;
+import pl.salonea.entities.Client;
+import pl.salonea.entities.Client_;
 import pl.salonea.entities.CreditCard;
+import pl.salonea.entities.CreditCard_;
 import pl.salonea.enums.CreditCardType;
 
 import javax.ejb.LocalBean;
@@ -11,6 +14,8 @@ import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import javax.persistence.TypedQuery;
+import javax.persistence.criteria.*;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -33,6 +38,23 @@ public class CreditCardFacade extends AbstractFacade<CreditCard> implements Cred
         super(CreditCard.class);
     }
 
+
+    @Override
+    public List<CreditCard> findByClient(Client client) {
+        return findByClient(client, null, null);
+    }
+
+    @Override
+    public List<CreditCard> findByClient(Client client, Integer start, Integer limit) {
+
+        TypedQuery<CreditCard> query = getEntityManager().createNamedQuery(CreditCard.FIND_BY_CLIENT, CreditCard.class);
+        query.setParameter("client", client);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
 
     @Override
     public List<CreditCard> findByType(CreditCardType cardType) {
@@ -173,5 +195,73 @@ public class CreditCardFacade extends AbstractFacade<CreditCard> implements Cred
         Query query = getEntityManager().createNamedQuery(CreditCard.DELETE_WITH_TYPE);
         query.setParameter("card_type", cardType);
         return query.executeUpdate();
+    }
+
+    @Override
+    public List<CreditCard> findByMultipleCriteria(List<Client> clients, List<CreditCardType> cardTypes, String cardNumber, String cardHolder, Boolean expired, Date theEarliestExpirationDate, Date theLatestExpirationDate) {
+        return findByMultipleCriteria(clients, cardTypes, cardNumber, cardHolder, expired, theEarliestExpirationDate, theLatestExpirationDate, null, null);
+    }
+
+    @Override
+    public List<CreditCard> findByMultipleCriteria(List<Client> clients, List<CreditCardType> cardTypes, String cardNumber, String cardHolder, Boolean expired, Date theEarliestExpirationDate, Date theLatestExpirationDate, Integer start, Integer limit) {
+
+        CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
+        CriteriaQuery<CreditCard> criteriaQuery = criteriaBuilder.createQuery(CreditCard.class);
+        // FROM
+        Root<CreditCard> creditCard = criteriaQuery.from(CreditCard.class);
+        // SELECT
+        criteriaQuery.select(creditCard);
+
+        // INNER JOIN-s
+        Join<CreditCard, Client> client = null;
+
+        // WHERE PREDICATES
+        List<Predicate> predicates = new ArrayList<>();
+
+        if(clients != null && clients.size() > 0) {
+
+            if(client == null) client = creditCard.join(CreditCard_.client);
+
+            predicates.add( client.in(clients) );
+        }
+
+        if(cardTypes != null && cardTypes.size() > 0) {
+            predicates.add( creditCard.get(CreditCard_.cardType).in(cardTypes) );
+        }
+
+        if(cardNumber != null) {
+            predicates.add( criteriaBuilder.like(creditCard.get(CreditCard_.creditCardNumber), cardNumber) );
+        }
+
+        if(cardHolder != null) {
+            predicates.add( criteriaBuilder.like(creditCard.get(CreditCard_.cardHolder), cardHolder) );
+        }
+
+        if(expired != null) {
+
+            if(expired) {
+                predicates.add( criteriaBuilder.lessThan(creditCard.get(CreditCard_.expirationDate), new Date()) );
+            } else {
+                predicates.add( criteriaBuilder.greaterThan(creditCard.get(CreditCard_.expirationDate), new Date()) );
+            }
+        }
+
+        if(theEarliestExpirationDate != null) {
+            predicates.add( criteriaBuilder.greaterThanOrEqualTo(creditCard.get(CreditCard_.expirationDate), theEarliestExpirationDate) );
+        }
+
+        if(theLatestExpirationDate != null) {
+            predicates.add( criteriaBuilder.lessThanOrEqualTo(creditCard.get(CreditCard_.expirationDate), theLatestExpirationDate) );
+        }
+
+        // WHERE predicate1 AND predicate2 AND ... AND predicateN
+        criteriaQuery.where(predicates.toArray(new Predicate[] {}));
+
+        TypedQuery<CreditCard> query = getEntityManager().createQuery(criteriaQuery);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
     }
 }

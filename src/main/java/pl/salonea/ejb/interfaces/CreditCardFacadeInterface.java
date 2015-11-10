@@ -1,5 +1,6 @@
 package pl.salonea.ejb.interfaces;
 
+import pl.salonea.entities.Client;
 import pl.salonea.entities.CreditCard;
 import pl.salonea.enums.CreditCardType;
 
@@ -15,6 +16,8 @@ import java.util.List;
 public interface CreditCardFacadeInterface extends AbstractFacadeInterface<CreditCard> {
 
     // concrete interface
+    List<CreditCard> findByClient(Client client);
+    List<CreditCard> findByClient(Client client, Integer start, Integer limit);
     List<CreditCard> findByType(CreditCardType cardType);
     List<CreditCard> findByType(CreditCardType cardType, Integer start, Integer limit);
     List<CreditCard> findExpired();
@@ -32,6 +35,8 @@ public interface CreditCardFacadeInterface extends AbstractFacadeInterface<Credi
     Integer deleteWithExpirationDateBetween(Date startDate, Date endDate);
     Integer deleteExpired();
     Integer deleteWithType(CreditCardType cardType);
+    List<CreditCard> findByMultipleCriteria(List<Client> clients, List<CreditCardType> cardTypes, String cardNumber, String cardHolder, Boolean expired, Date theEarliestExpirationDate, Date theLatestExpirationDate);
+    List<CreditCard> findByMultipleCriteria(List<Client> clients, List<CreditCardType> cardTypes, String cardNumber, String cardHolder, Boolean expired, Date theEarliestExpirationDate, Date theLatestExpirationDate, Integer start, Integer limit);
 
     @javax.ejb.Remote
     interface Remote extends CreditCardFacadeInterface { }
