@@ -1811,6 +1811,131 @@ public class ClientResource {
             return Response.status(Status.OK).entity(creditCards).build();
         }
 
+        /**
+         * Method that returns subset of Credit Card entities for given client
+         * that have already expired. The client id is passed through path param.
+         */
+        @GET
+        @Path("/expired")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getClientCreditCardsThatExpired( @PathParam("clientId") Long clientId,
+                                                         @BeanParam PaginationBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning credit cards for given client that have already expired using " +
+                    "ClientResource.CreditCardResource.getClientCreditCardsThatExpired(clientId) method of REST API");
+
+            // find client entity for which to get associated credit cards
+            Client client = clientFacade.find(clientId);
+            if(client == null)
+                throw new NotFoundException("Could not find client for id " + clientId + ".");
+
+            // find credit cards by given criteria (client and expired)
+            ResourceList<CreditCard> creditCards = new ResourceList<>(
+                    creditCardFacade.findExpiredByClient(client, params.getOffset(), params.getLimit()) );
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.CreditCardResource.populateWithHATEOASLinks(creditCards, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(creditCards).build();
+        }
+
+        /**
+         * Method that returns subset of Credit Card entities for given client
+         * that haven't expired yet. The client id is passed through path param.
+         */
+        @GET
+        @Path("/not-expired")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getClientCreditCardsThatNotExpired( @PathParam("clientId") Long clientId,
+                                                            @BeanParam PaginationBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning credit cards for given client that haven't expired yet using " +
+                    "ClientResource.CreditCardResource.getClientCreditCardsThatNotExpired(clientId) method of REST API");
+
+            // find client entity for which to get associated credit cards
+            Client client = clientFacade.find(clientId);
+            if(client == null)
+                throw new NotFoundException("Could not find client for id " + clientId + ".");
+
+            // find credit cards by given criteria (client and not expired)
+            ResourceList<CreditCard> creditCards = new ResourceList<>(
+                    creditCardFacade.findNotExpiredByClient(client, params.getOffset(), params.getLimit()) );
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.CreditCardResource.populateWithHATEOASLinks(creditCards, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(creditCards).build();
+        }
+
+        /**
+         * Method that returns subset of Credit Card entities for given client
+         * and expiration date after given date.
+         * The client id and date are passed through path params.
+         */
+        @GET
+        @Path("/expiring-after/{expirationDate : \\S+}")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getClientCreditCardsExpiringAfter( @PathParam("clientId") Long clientId,
+                                                           @PathParam("expirationDate") RESTDateTime expirationDate,
+                                                           @BeanParam PaginationBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning credit cards for given client expiring after given date " +
+                    "ClientResource.CreditCardResource.getClientCreditCardsExpiringAfter(clientId, expirationDate) method of REST API");
+
+            // find client entity for which to get associated credit cards
+            Client client = clientFacade.find(clientId);
+            if(client == null)
+                throw new NotFoundException("Could not find client for id " + clientId + ".");
+
+            if(expirationDate == null)
+                throw new BadRequestException("Expiration date param cannot be null.");
+
+            // find credit cards by given criteria (client and expiration date)
+            ResourceList<CreditCard> creditCards = new ResourceList<>(
+                    creditCardFacade.findExpirationDateAfterByClient(expirationDate, client, params.getOffset(), params.getLimit()) );
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.CreditCardResource.populateWithHATEOASLinks(creditCards, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(creditCards).build();
+        }
+
+        /**
+         * Method that returns subset of Credit Card entities for given client
+         * and expiration date before given date.
+         * The client id and date are passed through path params.
+         */
+        @GET
+        @Path("/expiring-before/{expirationDate : \\S+}")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getClientCreditCardsExpiringBefore( @PathParam("clientId") Long clientId,
+                                                            @PathParam("expirationDate") RESTDateTime expirationDate,
+                                                            @BeanParam PaginationBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning credit cards for given client expiring before given date " +
+                    "ClientResource.CreditCardResource.getClientCreditCardsExpiringBefore(clientId, expirationDate) method of REST API");
+
+            // find client entity for which to get associated credit cards
+            Client client = clientFacade.find(clientId);
+            if(client == null)
+                throw new NotFoundException("Could not find client for id " + clientId + ".");
+
+            if(expirationDate == null)
+                throw new BadRequestException("Expiration date param cannot be null.");
+
+            // find credit cards by given criteria (client and expiration date)
+            ResourceList<CreditCard> creditCards = new ResourceList<>(
+                    creditCardFacade.findExpirationDateBeforeByClient(expirationDate, client, params.getOffset(), params.getLimit()) );
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.CreditCardResource.populateWithHATEOASLinks(creditCards, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(creditCards).build();
+        }
 
         /**
          * Additional methods removing subset of resources by given criteria

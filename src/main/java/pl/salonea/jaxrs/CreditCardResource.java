@@ -2,8 +2,10 @@ package pl.salonea.jaxrs;
 
 import pl.salonea.ejb.stateless.CreditCardFacade;
 import pl.salonea.entities.CreditCard;
+import pl.salonea.enums.CreditCardType;
 import pl.salonea.jaxrs.bean_params.CreditCardBeanParam;
 import pl.salonea.jaxrs.bean_params.GenericBeanParam;
+import pl.salonea.jaxrs.bean_params.PaginationBeanParam;
 import pl.salonea.jaxrs.exceptions.ForbiddenException;
 import pl.salonea.jaxrs.exceptions.NotFoundException;
 import pl.salonea.jaxrs.utils.RESTDateTime;
@@ -126,7 +128,7 @@ public class CreditCardResource {
                     .path(creditCardMethod)
                     .resolveTemplate("clientId", creditCard.getClient().getClientId().toString())
                     .resolveTemplate("cardNumber", creditCard.getCreditCardNumber())
-                    .resolveTemplate("expirationDate",  new RESTDateTime( creditCard.getExpirationDate() ).toString())
+                    .resolveTemplate("expirationDate", new RESTDateTime(creditCard.getExpirationDate()).toString())
                     .build())
                     .rel("self").build());
 
@@ -144,6 +146,62 @@ public class CreditCardResource {
                     .build())
                     .rel("client-credit-cards").build());
 
+            // sub-collection count link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/count
+            Method countByClientMethod = ClientResource.CreditCardResource.class.getMethod("countCreditCardsByClient", Long.class, GenericBeanParam.class);
+            creditCard.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ClientResource.class)
+                    .path(clientCreditCardsMethod)
+                    .path(countByClientMethod)
+                    .resolveTemplate("clientId", creditCard.getClient().getClientId().toString())
+                    .build())
+                    .rel("client-credit-cards-count").build());
+
+            // typed sub-collection link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/typed
+            creditCard.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ClientResource.class)
+                    .path(clientCreditCardsMethod)
+                    .path("typed")
+                    .resolveTemplate("clientId", creditCard.getClient().getClientId().toString())
+                    .build())
+                    .rel("client-credit-cards-typed").build());
+
+            // expired sub-collection link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/expired
+            Method expiredMethod = ClientResource.CreditCardResource.class.getMethod("getClientCreditCardsThatExpired", Long.class, PaginationBeanParam.class);
+            creditCard.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ClientResource.class)
+                    .path(clientCreditCardsMethod)
+                    .path(expiredMethod)
+                    .resolveTemplate("clientId", creditCard.getClient().getClientId().toString())
+                    .build())
+                    .rel("client-credit-cards-expired").build());
+
+            // not-expired sub-collection link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/not-expired
+            Method notExpiredMethod = ClientResource.CreditCardResource.class.getMethod("getClientCreditCardsThatNotExpired", Long.class, PaginationBeanParam.class);
+            creditCard.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ClientResource.class)
+                    .path(clientCreditCardsMethod)
+                    .path(notExpiredMethod)
+                    .resolveTemplate("clientId", creditCard.getClient().getClientId().toString())
+                    .build())
+                    .rel("client-credit-cards-not-expired").build());
+
+            // expiring-after sub-collection link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/expiring-after
+            creditCard.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ClientResource.class)
+                    .path(clientCreditCardsMethod)
+                    .path("expiring-after")
+                    .resolveTemplate("clientId", creditCard.getClient().getClientId().toString())
+                    .build())
+                    .rel("client-credit-cards-expiring-after").build());
+
+            // expiring-before sub-collection link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/expiring-before
+            creditCard.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ClientResource.class)
+                    .path(clientCreditCardsMethod)
+                    .path("expiring-before")
+                    .resolveTemplate("clientId", creditCard.getClient().getClientId().toString())
+                    .build())
+                    .rel("client-credit-cards-expiring-before").build());
 
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
