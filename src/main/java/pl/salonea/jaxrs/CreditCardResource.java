@@ -126,7 +126,7 @@ public class CreditCardResource {
                     .path(creditCardMethod)
                     .resolveTemplate("clientId", creditCard.getClient().getClientId().toString())
                     .resolveTemplate("cardNumber", creditCard.getCreditCardNumber())
-                    .resolveTemplate("expirationDate", creditCard.getExpirationDate().toString())
+                    .resolveTemplate("expirationDate",  new RESTDateTime( creditCard.getExpirationDate() ).toString())
                     .build())
                     .rel("self").build());
 
@@ -135,6 +135,14 @@ public class CreditCardResource {
                     .path(CreditCardResource.class)
                     .build())
                     .rel("credit-cards").build());
+
+            // sub-collection link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}
+           creditCard.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ClientResource.class)
+                    .path(clientCreditCardsMethod)
+                    .resolveTemplate("clientId", creditCard.getClient().getClientId().toString())
+                    .build())
+                    .rel("client-credit-cards").build());
 
 
         } catch (NoSuchMethodException e) {

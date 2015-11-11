@@ -915,6 +915,15 @@ public class ClientResource {
                     .build())
                     .rel("rated-employees-eagerly").build());
 
+            // credit-cards
+            Method creditCardsMethod = ClientResource.class.getMethod("getCreditCardResource");
+            client.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ClientResource.class)
+                    .path(creditCardsMethod)
+                    .resolveTemplate("clientId", client.getClientId().toString())
+                    .build())
+                    .rel("credit-cards").build());
+
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
         }
@@ -1646,6 +1655,45 @@ public class ClientResource {
             }
 
             return Response.created(locationURI).entity(createdCreditCard).build();
+        }
+
+        /**
+         * Method that takes updated Credit Card as XML or JSON and its composite Credit Card Id as path param.
+         * It updated Credit Card in database for provided id consisting of: clientId, card number and expiration date.
+         */
+        @PUT
+        @Path("/{cardNumber : \\S+}/expiring/{expirationDate: \\S+}")
+        @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response updateCreditCard( @PathParam("clientId") Long clientId,
+                                          @PathParam("cardNumber") String cardNumber,
+                                          @PathParam("expirationDate") RESTDateTime expirationDate,
+                                          CreditCard creditCard,
+                                          @BeanParam GenericBeanParam params ) throws ForbiddenException, UnprocessableEntityException, InternalServerErrorException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "updating existing Credit Card for given composite id: clientId, card number and expiration date by executing " +
+                    "ClientResource.CreditCardResource.updateCreditCard(clientId, cardNumber, expirationDate, creditCard) method of REST API");
+
+            // create composite ID based on path params
+            CreditCardId creditCardId = new CreditCardId(clientId, cardNumber, expirationDate);
+
+            CreditCard updatedCreditCard = null;
+            try {
+                // reflect updated resource object in database
+                updatedCreditCard = creditCardFacade.update(creditCardId, creditCard);
+                // populate created resource with hypermedia links
+                pl.salonea.jaxrs.CreditCardResource.populateWithHATEOASLinks(updatedCreditCard, params.getUriInfo());
+
+            } catch (EJBTransactionRolledbackException ex) {
+                ExceptionHandler.handleEJBTransactionRolledbackException(ex);
+            } catch (EJBException ex) {
+                ExceptionHandler.handleEJBException(ex);
+            } catch (Exception ex) {
+                throw new InternalServerErrorException(ExceptionHandler.ENTITY_UPDATE_ERROR_MESSAGE);
+            }
+
+            return Response.status(Status.OK).entity(updatedCreditCard).build();
         }
 
     }

@@ -5,6 +5,7 @@ import pl.salonea.entities.Client;
 import pl.salonea.entities.Client_;
 import pl.salonea.entities.CreditCard;
 import pl.salonea.entities.CreditCard_;
+import pl.salonea.entities.idclass.CreditCardId;
 import pl.salonea.enums.CreditCardType;
 
 import javax.ejb.LocalBean;
@@ -48,6 +49,17 @@ public class CreditCardFacade extends AbstractFacade<CreditCard> implements Cred
     }
 
     @Override
+    public CreditCard update(CreditCardId creditCardId, CreditCard creditCard) {
+
+        Client foundClient = getEntityManager().find(Client.class, creditCardId.getClient());
+        creditCard.setClient(foundClient);
+        creditCard.setCreditCardNumber(creditCardId.getCreditCardNumber());
+        creditCard.setExpirationDate(creditCardId.getExpirationDate());
+
+        return update(creditCard);
+    }
+
+    @Override
     public List<CreditCard> findByClient(Client client) {
         return findByClient(client, null, null);
     }
@@ -82,6 +94,24 @@ public class CreditCardFacade extends AbstractFacade<CreditCard> implements Cred
     }
 
     @Override
+    public List<CreditCard> findByClientAndType(Client client, CreditCardType cardType) {
+        return findByClientAndType(client, cardType, null, null);
+    }
+
+    @Override
+    public List<CreditCard> findByClientAndType(Client client, CreditCardType cardType, Integer start, Integer limit) {
+
+        TypedQuery<CreditCard> query = getEntityManager().createNamedQuery(CreditCard.FIND_BY_CLIENT_AND_TYPE, CreditCard.class);
+        query.setParameter("client", client);
+        query.setParameter("card_type", cardType);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
     public List<CreditCard> findExpired() {
        return findExpired(null, null);
     }
@@ -98,6 +128,23 @@ public class CreditCardFacade extends AbstractFacade<CreditCard> implements Cred
     }
 
     @Override
+    public List<CreditCard> findExpiredByClient(Client client) {
+        return findExpiredByClient(client, null, null);
+    }
+
+    @Override
+    public List<CreditCard> findExpiredByClient(Client client, Integer start, Integer limit) {
+
+        TypedQuery<CreditCard> query = getEntityManager().createNamedQuery(CreditCard.FIND_EXPIRED_BY_CLIENT, CreditCard.class);
+        query.setParameter("client", client);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
     public List<CreditCard> findNotExpired() {
         return findNotExpired(null, null);
     }
@@ -106,6 +153,23 @@ public class CreditCardFacade extends AbstractFacade<CreditCard> implements Cred
     public List<CreditCard> findNotExpired(Integer start, Integer limit) {
 
         TypedQuery<CreditCard> query = getEntityManager().createNamedQuery(CreditCard.FIND_NOT_EXPIRED, CreditCard.class);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
+    public List<CreditCard> findNotExpiredByClient(Client client) {
+        return findNotExpiredByClient(client, null, null);
+    }
+
+    @Override
+    public List<CreditCard> findNotExpiredByClient(Client client, Integer start, Integer limit) {
+
+        TypedQuery<CreditCard> query = getEntityManager().createNamedQuery(CreditCard.FIND_NOT_EXPIRED_BY_CLIENT, CreditCard.class);
+        query.setParameter("client", client);
         if(start != null && limit != null) {
             query.setFirstResult(start);
             query.setMaxResults(limit);
@@ -131,6 +195,24 @@ public class CreditCardFacade extends AbstractFacade<CreditCard> implements Cred
     }
 
     @Override
+    public List<CreditCard> findExpirationDateAfterByClient(Date date, Client client) {
+        return findExpirationDateAfterByClient(date, client, null, null);
+    }
+
+    @Override
+    public List<CreditCard> findExpirationDateAfterByClient(Date date, Client client, Integer start, Integer limit) {
+
+        TypedQuery<CreditCard> query = getEntityManager().createNamedQuery(CreditCard.FIND_EXPIRATION_DATE_AFTER_BY_CLIENT, CreditCard.class);
+        query.setParameter("date", date);
+        query.setParameter("client", client);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
     public List<CreditCard> findExpirationDateBefore(Date date) {
         return findExpirationDateBefore(date, null, null);
     }
@@ -140,6 +222,24 @@ public class CreditCardFacade extends AbstractFacade<CreditCard> implements Cred
 
         TypedQuery<CreditCard> query = getEntityManager().createNamedQuery(CreditCard.FIND_EXPIRATION_DATE_BEFORE, CreditCard.class);
         query.setParameter("date", date);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
+    public List<CreditCard> findExpirationDateBeforeByClient(Date date, Client client) {
+        return findExpirationDateBeforeByClient(date, client, null, null);
+    }
+
+    @Override
+    public List<CreditCard> findExpirationDateBeforeByClient(Date date, Client client, Integer start, Integer limit) {
+
+        TypedQuery<CreditCard> query = getEntityManager().createNamedQuery(CreditCard.FIND_EXPIRATION_DATE_BEFORE_BY_CLIENT, CreditCard.class);
+        query.setParameter("date", date);
+        query.setParameter("client", client);
         if(start != null && limit != null) {
             query.setFirstResult(start);
             query.setMaxResults(limit);
@@ -166,9 +266,37 @@ public class CreditCardFacade extends AbstractFacade<CreditCard> implements Cred
     }
 
     @Override
+    public List<CreditCard> findExpirationDateBetweenByClient(Date startDate, Date endDate, Client client) {
+        return findExpirationDateBetweenByClient(startDate, endDate, client, null, null);
+    }
+
+    @Override
+    public List<CreditCard> findExpirationDateBetweenByClient(Date startDate, Date endDate, Client client, Integer start, Integer limit) {
+
+        TypedQuery<CreditCard> query = getEntityManager().createNamedQuery(CreditCard.FIND_EXPIRATION_DATE_BETWEEN_BY_CLIENT, CreditCard.class);
+        query.setParameter("start_date", startDate);
+        query.setParameter("end_date", endDate);
+        query.setParameter("client", client);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
     public Integer deleteWithExpirationDateBefore(Date date) {
 
         Query query = getEntityManager().createNamedQuery(CreditCard.DELETE_WITH_EXPIRATION_DATE_BEFORE);
+        query.setParameter("date", date);
+        return query.executeUpdate();
+    }
+
+    @Override
+    public Integer deleteWithExpirationDateBeforeForClient(Date date, Client client) {
+
+        Query query = getEntityManager().createNamedQuery(CreditCard.DELETE_WITH_EXPIRATION_DATE_BEFORE_FOR_CLIENT);
+        query.setParameter("client", client);
         query.setParameter("date", date);
         return query.executeUpdate();
     }
@@ -182,8 +310,15 @@ public class CreditCardFacade extends AbstractFacade<CreditCard> implements Cred
     }
 
     @Override
-    public Integer deleteWithExpirationDateBetween(Date startDate, Date endDate) {
+    public Integer deleteWithExpirationDateAfterForClient(Date date, Client client) {
+        Query query = getEntityManager().createNamedQuery(CreditCard.DELETE_WITH_EXPIRATION_DATE_AFTER_FOR_CLIENT);
+        query.setParameter("client", client);
+        query.setParameter("date", date);
+        return query.executeUpdate();
+    }
 
+    @Override
+    public Integer deleteWithExpirationDateBetween(Date startDate, Date endDate) {
         Query query = getEntityManager().createNamedQuery(CreditCard.DELETE_WITH_EXPIRATION_DATE_BETWEEN);
         query.setParameter("start_date", startDate);
         query.setParameter("end_date", endDate);
@@ -191,16 +326,38 @@ public class CreditCardFacade extends AbstractFacade<CreditCard> implements Cred
     }
 
     @Override
-    public Integer deleteExpired() {
+    public Integer deleteWithExpirationDateBetweenForClient(Date startDate, Date endDate, Client client) {
+        Query query = getEntityManager().createNamedQuery(CreditCard.DELETE_WITH_EXPIRATION_DATE_BETWEEN_FOR_CLIENT);
+        query.setParameter("client", client);
+        query.setParameter("start_date", startDate);
+        query.setParameter("end_date", endDate);
+        return query.executeUpdate();
+    }
 
+    @Override
+    public Integer deleteExpired() {
         Query query = getEntityManager().createNamedQuery(CreditCard.DELETE_EXPIRED);
         return query.executeUpdate();
     }
 
     @Override
-    public Integer deleteWithType(CreditCardType cardType) {
+    public Integer deleteExpiredForClient(Client client) {
+        Query query = getEntityManager().createNamedQuery(CreditCard.DELETE_EXPIRED_FOR_CLIENT);
+        query.setParameter("client", client);
+        return query.executeUpdate();
+    }
 
+    @Override
+    public Integer deleteWithType(CreditCardType cardType) {
         Query query = getEntityManager().createNamedQuery(CreditCard.DELETE_WITH_TYPE);
+        query.setParameter("card_type", cardType);
+        return query.executeUpdate();
+    }
+
+    @Override
+    public Integer deleteWithTypeForClient(CreditCardType cardType, Client client) {
+        Query query = getEntityManager().createNamedQuery(CreditCard.DELETE_WITH_TYPE_FOR_CLIENT);
+        query.setParameter("client", client);
         query.setParameter("card_type", cardType);
         return query.executeUpdate();
     }

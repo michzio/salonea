@@ -29,6 +29,10 @@ public class RESTDateTime extends Date {
         }
     }
 
+    public RESTDateTime( Date date ) {
+        this.setTime(date.getTime());
+    }
+
 
     public class RESTDateTimeException extends WebApplicationException {
 
@@ -36,5 +40,9 @@ public class RESTDateTime extends Date {
 
             super(Response.status(Status.BAD_REQUEST).entity(new ErrorResponseWrapper(message, 400, "")).build());
         }
+    }
+
+    public String toString() {
+        return dfz.format(this);
     }
 }
