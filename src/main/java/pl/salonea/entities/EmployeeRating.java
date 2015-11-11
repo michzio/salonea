@@ -15,7 +15,7 @@ import java.util.List;
 
 @XmlRootElement(name = "employee-rating")
 @XmlAccessorType(XmlAccessType.PROPERTY)
-@XmlType(propOrder = { "client", "employee", "clientRating", "clientComment", "employeeDementi" })
+@XmlType(propOrder = { "client", "employee", "clientRating", "clientComment", "employeeDementi", "links" })
 
 @Entity
 @IdClass(EmployeeRatingId.class)

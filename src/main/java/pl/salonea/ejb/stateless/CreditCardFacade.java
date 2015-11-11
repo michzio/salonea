@@ -370,6 +370,22 @@ public class CreditCardFacade extends AbstractFacade<CreditCard> implements Cred
     }
 
     @Override
+    public Integer deleteById(CreditCardId creditCardId) {
+        Query query = getEntityManager().createNamedQuery(CreditCard.DELETE_BY_ID);
+        query.setParameter("client_id", creditCardId.getClient());
+        query.setParameter("card_number", creditCardId.getCreditCardNumber());
+        query.setParameter("expiration_date", creditCardId.getExpirationDate());
+        return query.executeUpdate();
+    }
+
+    @Override
+    public Integer countByClient(Client client) {
+        TypedQuery<Integer> query = getEntityManager().createNamedQuery(CreditCard.COUNT_BY_CLIENT, Integer.class);
+        query.setParameter("client", client);
+        return query.getSingleResult();
+    }
+
+    @Override
     public List<CreditCard> findByMultipleCriteria(List<Client> clients, List<CreditCardType> cardTypes, String cardNumber, String cardHolder, Boolean expired, Date theEarliestExpirationDate, Date theLatestExpirationDate) {
         return findByMultipleCriteria(clients, cardTypes, cardNumber, cardHolder, expired, theEarliestExpirationDate, theLatestExpirationDate, null, null);
     }

@@ -5,6 +5,7 @@ import pl.salonea.embeddables.Address;
 import pl.salonea.entities.*;
 import pl.salonea.entities.idclass.CreditCardId;
 import pl.salonea.enums.ClientType;
+import pl.salonea.enums.CreditCardType;
 import pl.salonea.enums.Gender;
 import pl.salonea.jaxrs.bean_params.*;
 import pl.salonea.jaxrs.exceptions.*;
@@ -1721,5 +1722,99 @@ public class ClientResource {
 
             return Response.status(Status.OK).entity(responseEntity).build();
         }
+
+        /**
+         * Method that removes Credit Card entity from database for given ID.
+         * The credit card composite id consisting of client id, card number,
+         * expiration date is passed through path params.
+         */
+        @DELETE
+        @Path("/{cardNumber : \\S+}/expiring/{expirationDate: \\S+}")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response removeCreditCard( @PathParam("clientId") Long clientId,
+                                          @PathParam("cardNumber") String cardNumber,
+                                          @PathParam("expirationDate") RESTDateTime expirationDate,
+                                          @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException, InternalServerErrorException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "removing given Credit Card by executing ClientResource.CreditCardResource.removeCreditCard(clientId, cardNumber, expirationDate) method of REST API");
+
+            // remove entity from database
+            Integer noOfDeleted = creditCardFacade.deleteById( new CreditCardId(clientId, cardNumber, expirationDate) );
+
+            if(noOfDeleted == 0)
+                throw new NotFoundException("Could not find credit card to delete for id (" + clientId + "," + cardNumber + "," + expirationDate + ").");
+            else if(noOfDeleted != 1)
+                throw new InternalServerErrorException("Some error occurred while trying to delete credit card with id (" + clientId + "," + cardNumber + "," + expirationDate + ").");
+
+            return Response.status(Status.NO_CONTENT).build();
+        }
+
+
+        /**
+         * Additional methods returning subset of resources based on given criteria
+         * you can achieve similar results by applying @QueryParams to generic method
+         * returning all resources in order to filter and limit them
+         */
+
+        /**
+         * Method that counts Credit Card entities for given Client
+         * The client id is passed through path param.
+         */
+        @GET
+        @Path("/count")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response countCreditCardsByClient( @PathParam("clientId") Long clientId,
+                                                  @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning number of credit cards for given client by executing ClientResource.CreditCardResource.countCreditCardsByClient(clientId) method of REST API");
+
+            // find client entity for which to count credit cards
+            Client client = clientFacade.find(clientId);
+            if(client == null)
+                throw new NotFoundException("Could not find client for id " + clientId + ".");
+
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(creditCardFacade.countByClient(client)), 200, "number of credit cards for client with id " + client.getClientId());
+            return Response.status(Status.OK).entity(responseEntity).build();
+        }
+
+        /**
+         * Method returns subset of Credit Card entities for given client
+         * and card type. The client id and card type are passed through path params.
+         */
+        @GET
+        @Path("/typed/{cardType : \\S+}")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getClientCreditCardsByCardType( @PathParam("clientId") Long clientId,
+                                                        @PathParam("cardType") CreditCardType cardType,
+                                                        @BeanParam PaginationBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning credit cards for given client and card type using ClientResource.CreditCardResource.getClientCreditCardsByCardType(clientId, cardType) method of REST API");
+
+            // find client entity for which to get associated credit cards
+            Client client = clientFacade.find(clientId);
+            if(client == null)
+                throw new NotFoundException("Could not find client for id " + clientId + ".");
+
+            if(cardType == null)
+                throw new BadRequestException("Card type param cannot be null.");
+
+            // find credit cards by given criteria (client and card type)
+            ResourceList<CreditCard> creditCards = new ResourceList<>(
+                    creditCardFacade.findByClientAndType(client, cardType, params.getOffset(), params.getLimit()) );
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.CreditCardResource.populateWithHATEOASLinks(creditCards, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(creditCards).build();
+        }
+
+
+        /**
+         * Additional methods removing subset of resources by given criteria
+         */
+
     }
 }

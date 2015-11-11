@@ -39,6 +39,7 @@ import java.util.List;
         @NamedQuery(name = CreditCard.FIND_EXPIRATION_DATE_BEFORE_BY_CLIENT, query = "SELECT cc FROM CreditCard cc WHERE cc.client = :client AND cc.expirationDate <= :date"),
         @NamedQuery(name = CreditCard.FIND_EXPIRATION_DATE_BETWEEN, query = "SELECT cc FROM CreditCard cc WHERE cc.expirationDate >= :start_date AND cc.expirationDate <= :end_date"),
         @NamedQuery(name = CreditCard.FIND_EXPIRATION_DATE_BETWEEN_BY_CLIENT, query = "SELECT cc FROM CreditCard cc WHERE cc.client = :client AND cc.expirationDate >= :start_date AND cc.expirationDate <= :end_date"),
+        @NamedQuery(name = CreditCard.DELETE_BY_ID, query = "DELETE FROM CreditCard cc WHERE cc.client.clientId = :client_id AND cc.creditCardNumber = :card_number AND cc.expirationDate = :expiration_date"),
         @NamedQuery(name = CreditCard.DELETE_FOR_CLIENT, query = "DELETE FROM CreditCard cc WHERE cc.client = :client"),
         @NamedQuery(name = CreditCard.DELETE_WITH_EXPIRATION_DATE_BEFORE, query = "DELETE FROM CreditCard cc WHERE cc.expirationDate <= :date"),
         @NamedQuery(name = CreditCard.DELETE_WITH_EXPIRATION_DATE_BEFORE_FOR_CLIENT, query = "DELETE FROM CreditCard cc WHERE cc.client = :client AND cc.expirationDate <= :date"),
@@ -49,7 +50,8 @@ import java.util.List;
         @NamedQuery(name = CreditCard.DELETE_EXPIRED, query = "DELETE FROM CreditCard cc WHERE cc.expirationDate < current_timestamp"),
         @NamedQuery(name = CreditCard.DELETE_EXPIRED_FOR_CLIENT, query = "DELETE FROM CreditCard cc WHERE cc.client = :client AND cc.expirationDate < current_timestamp"),
         @NamedQuery(name = CreditCard.DELETE_WITH_TYPE, query = "DELETE FROM CreditCard cc WHERE cc.cardType = :card_type"),
-        @NamedQuery(name = CreditCard.DELETE_WITH_TYPE_FOR_CLIENT, query = "DELETE FROM CreditCard cc WHERE cc.client = :client AND cc.cardType = :card_type")
+        @NamedQuery(name = CreditCard.DELETE_WITH_TYPE_FOR_CLIENT, query = "DELETE FROM CreditCard cc WHERE cc.client = :client AND cc.cardType = :card_type"),
+        @NamedQuery(name = CreditCard.COUNT_BY_CLIENT, query = "SELECT COUNT(cc) FROM CreditCard cc WHERE cc.client = :client"),
 })
 @CreditCardValidity
 // TODO some online check of credit card validity i.e. number, holder, exp_date, type
@@ -68,6 +70,7 @@ public class CreditCard implements Serializable {
     public static final String FIND_EXPIRATION_DATE_BEFORE_BY_CLIENT = "CreditCard.findExpirationDateBeforeByClient";
     public static final String FIND_EXPIRATION_DATE_BETWEEN = "CreditCard.findExpirationDateBetween";
     public static final String FIND_EXPIRATION_DATE_BETWEEN_BY_CLIENT = "CreditCard.findExpirationDateBetweenByClient";
+    public static final String DELETE_BY_ID = "CreditCard.deleteById";
     public static final String DELETE_FOR_CLIENT = "CreditCard.deleteForClient";
     public static final String DELETE_WITH_EXPIRATION_DATE_BEFORE = "CreditCard.deleteWithExpirationDateBefore";
     public static final String DELETE_WITH_EXPIRATION_DATE_BEFORE_FOR_CLIENT = "CreditCard.deleteWithExpirationDateBeforeForClient";
@@ -79,6 +82,7 @@ public class CreditCard implements Serializable {
     public static final String DELETE_EXPIRED_FOR_CLIENT = "CreditCard.deleteExpiredForClient";
     public static final String DELETE_WITH_TYPE = "CreditCard.deleteWithType";
     public static final String DELETE_WITH_TYPE_FOR_CLIENT = "CreditCard.deleteWithTypeForClient";
+    public static final String COUNT_BY_CLIENT = "CreditCard.countByClient";
 
     private String creditCardNumber; // PK
     private Date expirationDate; // PK
