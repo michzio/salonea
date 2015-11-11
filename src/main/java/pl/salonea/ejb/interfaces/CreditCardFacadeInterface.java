@@ -45,6 +45,7 @@ public interface CreditCardFacadeInterface extends AbstractFacadeInterface<Credi
     List<CreditCard> findExpirationDateBetween(Date startDate, Date endDate, Integer start, Integer limit);
     List<CreditCard> findExpirationDateBetweenByClient(Date startDate, Date endDate, Client client);
     List<CreditCard> findExpirationDateBetweenByClient(Date startDate, Date endDate, Client client, Integer start, Integer limit);
+    Integer deleteForClient(Client client);
     Integer deleteWithExpirationDateBefore(Date date);
     Integer deleteWithExpirationDateBeforeForClient(Date date, Client client);
     Integer deleteWithExpirationDateAfter(Date date);

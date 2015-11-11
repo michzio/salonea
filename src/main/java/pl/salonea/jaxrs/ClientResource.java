@@ -1696,5 +1696,30 @@ public class ClientResource {
             return Response.status(Status.OK).entity(updatedCreditCard).build();
         }
 
+        /**
+         * Method that removes subset of Credit Card entities from database for given Client.
+         * The client id is passed through path params.
+         */
+        @DELETE
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response removeClientCreditCards( @PathParam("clientId") Long clientId,
+                                                 @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "removing subset of Credit Card entities for given Client by executing ClientResource.CreditCardResource.removeClientCreditCards(clientId) method of REST API");
+
+            // find client entity for which to remove credit cards
+            Client client = clientFacade.find(clientId);
+            if(client == null)
+                throw new NotFoundException("Could not find client for id " + clientId + ".");
+
+            // remove all specified entities from database
+            Integer noOfDeleted = creditCardFacade.deleteForClient(client);
+
+            // create response returning number of deleted entities
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(noOfDeleted), 200, "number of deleted credit cards for client with id " + clientId);
+
+            return Response.status(Status.OK).entity(responseEntity).build();
+        }
     }
 }

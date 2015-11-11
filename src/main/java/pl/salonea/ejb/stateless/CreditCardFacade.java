@@ -285,6 +285,13 @@ public class CreditCardFacade extends AbstractFacade<CreditCard> implements Cred
     }
 
     @Override
+    public Integer deleteForClient(Client client) {
+        Query query = getEntityManager().createNamedQuery(CreditCard.DELETE_FOR_CLIENT);
+        query.setParameter("client", client);
+        return query.executeUpdate();
+    }
+
+    @Override
     public Integer deleteWithExpirationDateBefore(Date date) {
 
         Query query = getEntityManager().createNamedQuery(CreditCard.DELETE_WITH_EXPIRATION_DATE_BEFORE);

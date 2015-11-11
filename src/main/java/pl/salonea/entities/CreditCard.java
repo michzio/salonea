@@ -23,7 +23,7 @@ import java.util.List;
 
 @Entity
 @IdClass(CreditCardId.class)
-@Table(name = "credit_card")
+@Table(name = "credit_card", uniqueConstraints = { @UniqueConstraint(columnNames = {"card_no", "expiration_date"}) } )
 @Access(AccessType.PROPERTY)
 @NamedQueries({
         @NamedQuery(name = CreditCard.FIND_BY_CLIENT, query = "SELECT cc FROM CreditCard cc WHERE cc.client = :client"),
@@ -39,6 +39,7 @@ import java.util.List;
         @NamedQuery(name = CreditCard.FIND_EXPIRATION_DATE_BEFORE_BY_CLIENT, query = "SELECT cc FROM CreditCard cc WHERE cc.client = :client AND cc.expirationDate <= :date"),
         @NamedQuery(name = CreditCard.FIND_EXPIRATION_DATE_BETWEEN, query = "SELECT cc FROM CreditCard cc WHERE cc.expirationDate >= :start_date AND cc.expirationDate <= :end_date"),
         @NamedQuery(name = CreditCard.FIND_EXPIRATION_DATE_BETWEEN_BY_CLIENT, query = "SELECT cc FROM CreditCard cc WHERE cc.client = :client AND cc.expirationDate >= :start_date AND cc.expirationDate <= :end_date"),
+        @NamedQuery(name = CreditCard.DELETE_FOR_CLIENT, query = "DELETE FROM CreditCard cc WHERE cc.client = :client"),
         @NamedQuery(name = CreditCard.DELETE_WITH_EXPIRATION_DATE_BEFORE, query = "DELETE FROM CreditCard cc WHERE cc.expirationDate <= :date"),
         @NamedQuery(name = CreditCard.DELETE_WITH_EXPIRATION_DATE_BEFORE_FOR_CLIENT, query = "DELETE FROM CreditCard cc WHERE cc.client = :client AND cc.expirationDate <= :date"),
         @NamedQuery(name = CreditCard.DELETE_WITH_EXPIRATION_DATE_AFTER, query = "DELETE FROM CreditCard cc WHERE cc.expirationDate >= :date"),
@@ -67,6 +68,7 @@ public class CreditCard implements Serializable {
     public static final String FIND_EXPIRATION_DATE_BEFORE_BY_CLIENT = "CreditCard.findExpirationDateBeforeByClient";
     public static final String FIND_EXPIRATION_DATE_BETWEEN = "CreditCard.findExpirationDateBetween";
     public static final String FIND_EXPIRATION_DATE_BETWEEN_BY_CLIENT = "CreditCard.findExpirationDateBetweenByClient";
+    public static final String DELETE_FOR_CLIENT = "CreditCard.deleteForClient";
     public static final String DELETE_WITH_EXPIRATION_DATE_BEFORE = "CreditCard.deleteWithExpirationDateBefore";
     public static final String DELETE_WITH_EXPIRATION_DATE_BEFORE_FOR_CLIENT = "CreditCard.deleteWithExpirationDateBeforeForClient";
     public static final String DELETE_WITH_EXPIRATION_DATE_AFTER = "CreditCard.deleteWithExpirationDateAfter";
