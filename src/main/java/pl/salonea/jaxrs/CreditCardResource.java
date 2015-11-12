@@ -279,6 +279,109 @@ public class CreditCardResource {
     }
 
     /**
+     * Method removes subset of Credit Card entities from database expiring before given date.
+     * The expiration date is passed through path param.
+     */
+    @DELETE
+    @Path("/expiring-before/{expirationDate : \\S+}")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response removeCreditCardsExpiringBefore( @PathParam("expirationDate") RESTDateTime expirationDate,
+                                                     @BeanParam GenericBeanParam params ) throws ForbiddenException, BadRequestException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "removing subset of Credit Card entities expiring before given date by executing " +
+                "CreditCardResource.removeCreditCardsExpiringBefore(expirationDate) method of REST API");
+
+        if(expirationDate == null)
+            throw new BadRequestException("Expiration date param cannot be null.");
+
+        // remove specified entities from database
+        Integer noOfDeleted = creditCardFacade.deleteWithExpirationDateBefore(expirationDate);
+
+        // create response returning number of deleted entities
+        ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(noOfDeleted), 200, "number of deleted credit cards expiring before " + expirationDate);
+
+        return Response.status(Status.OK).entity(responseEntity).build();
+    }
+
+    /**
+     * Method removes subset of Credit Card entities from database
+     * expiring between given start and end dates.
+     * The start date and end date are passed through query params.
+     */
+    @DELETE
+    @Path("/expiring-between")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response removeCreditCardsExpiringBetween( @BeanParam DateBetweenBeanParam params ) throws ForbiddenException, BadRequestException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "removing subset of Credit Card entities expiring between given start and end dates " +
+                "by executing CreditCardResource.removeCreditCardsExpiringBetween(dates) method of REST API");
+
+        // check correctness of query params
+        if(params.getStartDate() == null || params.getEndDate() == null)
+            throw new BadRequestException("Start date or end date query param not specified for request.");
+
+        if(params.getStartDate().after(params.getEndDate()))
+            throw new BadRequestException("Start date is after end date.");
+
+        // remove specified entities from database
+        Integer noOfDeleted = creditCardFacade.deleteWithExpirationDateBetween(params.getStartDate(), params.getEndDate());
+
+        // create response returning number of deleted entities
+        ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(noOfDeleted), 200, "number of deleted credit cards expiring after " + params.getStartDate() + " and before " + params.getEndDate());
+
+        return Response.status(Status.OK).entity(responseEntity).build();
+    }
+
+    /**
+     * Method removes subset of Credit Card entities from database that have already expired.
+     */
+    @DELETE
+    @Path("/expired")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response removeCreditCardsThatExpired( @BeanParam GenericBeanParam params ) throws ForbiddenException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "removing subset of Credit Card entities that have already expired by executing " +
+                "CreditCardResource.removeCreditCardsThatExpired() method of REST API");
+
+        // remove specified entities from database
+        Integer noOfDeleted = creditCardFacade.deleteExpired();
+
+        // create response returning number of deleted entities
+        ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(noOfDeleted), 200, "number of deleted credit cards that have already expired");
+
+        return Response.status(Status.OK).entity(responseEntity).build();
+    }
+
+    /**
+     * Method removes subset of Credit Card entities from database for given card type.
+     * The card type is passed through path param.
+     */
+    @DELETE
+    @Path("/typed/{cardType : \\S+}")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response removeCreditCardsByCardType( @PathParam("cardType") CreditCardType cardType,
+                                                 @BeanParam GenericBeanParam params ) throws ForbiddenException, BadRequestException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "removing subset of Credit Card entities for given card type by executing " +
+                "CreditCardResource.removeCreditCardsByCardType(cardType) method of REST API");
+
+        if(cardType == null)
+            throw new BadRequestException("Card type param cannot be null.");
+
+        // remove specified entities from database
+        Integer noOfDeleted = creditCardFacade.deleteWithType(cardType);
+
+        // create response returning number of deleted entities
+        ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(noOfDeleted), 200, "number of deleted credit cards for card type " + cardType);
+
+        return Response.status(Status.OK).entity(responseEntity).build();
+    }
+
+    /**
      * This method enables to populate list of resources and each individual resource with hypermedia links
      */
     public static void populateWithHATEOASLinks(ResourceList<CreditCard> creditCards, UriInfo uriInfo, Integer offset, Integer limit) {

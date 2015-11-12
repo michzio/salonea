@@ -2047,7 +2047,8 @@ public class ClientResource {
         /**
          * Method that removes subset of Credit Card entities from database
          * for given Client and expiration date between given start and end dates.
-         * The client id, start date and end date are passed through path params.
+         * The client id is passed through path param,
+         * start date and end date are passed through query params.
          */
         @DELETE
         @Path("/expiring-between")
