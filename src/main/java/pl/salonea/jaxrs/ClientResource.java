@@ -24,7 +24,6 @@ import pl.salonea.jaxrs.wrappers.ProviderWrapper;
 import javax.ejb.EJBException;
 import javax.ejb.EJBTransactionRolledbackException;
 import javax.inject.Inject;
-import javax.print.attribute.standard.Media;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -2081,5 +2080,65 @@ public class ClientResource {
             return Response.status(Status.OK).entity(responseEntity).build();
         }
 
+        /**
+         * Method that removes subset of Credit Card entities from database
+         * for given Client that have already expired.
+         * The client id is passed through path param.
+         */
+        @DELETE
+        @Path("/expired")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response removeClientCreditCardsThatExpired( @PathParam("clientId") Long clientId,
+                                                            @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "removing subset of Credit Card entities for given Client that have already expired " +
+                    "by executing ClientResource.CreditCardResource.removeClientCreditCardsThatExpired(clientId) method of REST API");
+
+            // find client entity for which to remove credit cards
+            Client client = clientFacade.find(clientId);
+            if(client == null)
+                throw new NotFoundException("Could not find client for id " + clientId + ".");
+
+            // remove specified entities from database
+            Integer noOfDeleted = creditCardFacade.deleteExpiredForClient(client);
+
+            // create response returning number of deleted entities
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(noOfDeleted), 200, "number of deleted credit cards for client with id " + clientId + " that have already expired");
+
+            return Response.status(Status.OK).entity(responseEntity).build();
+        }
+
+        /**
+         * Method that removes subset of Credit Card entities from database
+         * for given client and card type. The client id and card type are passed through path params.
+         */
+        @DELETE
+        @Path("/typed/{cardType : \\S+}")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response removeClientCreditCardsByCardType( @PathParam("clientId") Long clientId,
+                                                           @PathParam("cardType") CreditCardType cardType,
+                                                           @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "removing subset of Credit Card entities for given Client and card type " +
+                    "by executing ClientResource.CreditCardResource.removeClientCreditCardsByCardType(clientId, cardType) method of REST API");
+
+            // find client entity for which to remove credit cards
+            Client client = clientFacade.find(clientId);
+            if(client == null)
+                throw new NotFoundException("Could not find client for id " + clientId + ".");
+
+            if(cardType == null)
+                throw new BadRequestException("Card type param cannot be null.");
+
+            // remove specified entities from database
+            Integer noOfDeleted = creditCardFacade.deleteWithTypeForClient(cardType, client);
+
+            // create response returning number of deleted entities
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(noOfDeleted), 200, "number of deleted credit cards for client with id " + clientId + " and card type " + cardType);
+
+            return Response.status(Status.OK).entity(responseEntity).build();
+        }
     }
 }
