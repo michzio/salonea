@@ -1938,8 +1938,148 @@ public class ClientResource {
         }
 
         /**
+         * Method that returns subset of Credit Card entities for given Client
+         * and expiration date between given the earliest date and the latest date.
+         * The client id, the earliest date (start date) and the latest date (end date)
+         * are passed through path params.
+         */
+        @GET
+        @Path("/expiring-between")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getClientCreditCardsExpiringBetween( @PathParam("clientId") Long clientId,
+                                                             @BeanParam DateBetweenBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning credit cards for given client expiring between given start and end date using " +
+                   "ClientResource.CreditCardResource.getClientCreditCardsExpiringBetween(clientId, dates) method of REST API" );
+
+            // check correctness of query params
+            if(params.getStartDate() == null || params.getEndDate() == null)
+                throw new BadRequestException("Start date or end date query param not specified for request.");
+
+            if(params.getStartDate().after(params.getEndDate()))
+                throw new BadRequestException("Start date is after end date.");
+
+            // find client entity for which to get associated credit cards
+            Client client = clientFacade.find(clientId);
+            if(client == null)
+                throw new NotFoundException("Could not find client for id " + clientId + ".");
+
+            // find credit cards by given criteria (client, start and end expiration dates)
+            ResourceList<CreditCard> creditCards = new ResourceList<>(
+                    creditCardFacade.findExpirationDateBetweenByClient(params.getStartDate(), params.getEndDate(), client, params.getOffset(), params.getLimit()));
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.CreditCardResource.populateWithHATEOASLinks(creditCards, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(creditCards).build();
+        }
+
+        /**
          * Additional methods removing subset of resources by given criteria
          */
+
+        /**
+         * Method that removes subset of Credit Card entities from database
+         * for given Client and expiration date after given date.
+         * The client id and date are passed through path params.
+         */
+        @DELETE
+        @Path("/expiring-after/{expirationDate : \\S+}")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response removeClientCreditCardsExpiringAfter( @PathParam("clientId") Long clientId,
+                                                              @PathParam("expirationDate") RESTDateTime expirationDate,
+                                                              @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "removing subset of Credit Card entities for given Client expiring after given date " +
+                    "by executing ClientResource.CreditCardResource.removeClientCreditCardsExpiringAfter(clientId, expirationDate) method of REST API");
+
+            // find client entity for which to remove credit cards
+            Client client = clientFacade.find(clientId);
+            if(client == null)
+                throw new NotFoundException("Could not find client for id " + clientId + ".");
+
+            if(expirationDate == null)
+                throw new BadRequestException("Expiration date param cannot be null.");
+
+            // remove specified entities from database
+            Integer noOfDeleted = creditCardFacade.deleteWithExpirationDateAfterForClient(expirationDate, client);
+
+            // create response returning number of deleted entities
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(noOfDeleted), 200, "number of deleted credit cards for client with id " + clientId + " and expiring after " + expirationDate);
+
+            return Response.status(Status.OK).entity(responseEntity).build();
+        }
+
+        /**
+         * Method that removes subset of Credit Card entities from database
+         * for given Client and expiration date before given date.
+         * The client id and date are passed through path params.
+         */
+        @DELETE
+        @Path("/expiring-before/{expirationDate : \\S+}")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response removeClientCreditCardsExpiringBefore( @PathParam("clientId") Long clientId,
+                                                               @PathParam("expirationDate") RESTDateTime expirationDate,
+                                                               @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "removing subset of Credit Card entities for given Client expiring before given date " +
+                "by executing ClientResource.CreditCardResource.removeClientCreditCardsExpiringBefore(clientId, expirationDate) method of REST API");
+
+            // find client entity for which to remove credit cards
+            Client client = clientFacade.find(clientId);
+            if(client == null)
+                throw new NotFoundException("Could not find client for id " + clientId + ".");
+
+            if(expirationDate == null)
+                throw new BadRequestException("Expiration date param cannot be null.");
+
+            // remove specified entities from database
+            Integer noOfDeleted = creditCardFacade.deleteWithExpirationDateBeforeForClient(expirationDate, client);
+
+            // create response returning number of deleted entities
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(noOfDeleted), 200, "number of deleted credit cards for client with id " + clientId + " and expiring before " + expirationDate);
+
+            return Response.status(Status.OK).entity(responseEntity).build();
+        }
+
+        /**
+         * Method that removes subset of Credit Card entities from database
+         * for given Client and expiration date between given start and end dates.
+         * The client id, start date and end date are passed through path params.
+         */
+        @DELETE
+        @Path("/expiring-between")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response removeClientCreditCardsExpiringBetween( @PathParam("clientId") Long clientId,
+                                                                @BeanParam DateBetweenBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "removing subset of Credit Card entities for given Client expiring between given start and end dates " +
+                    "by executing ClientResource.CreditCardResource.removeClientCreditCardsExpiringBetween(clientId, dates) method of REST API");
+
+            // check correctness of query params
+            if(params.getStartDate() == null || params.getEndDate() == null)
+                throw new BadRequestException("Start date or end date query param not specified for request.");
+
+            if(params.getStartDate().after(params.getEndDate()))
+                throw new BadRequestException("Start date is after end date.");
+
+            // find client entity for which to remove credit cards
+            Client client = clientFacade.find(clientId);
+            if(client == null)
+                throw new NotFoundException("Could not find client for id " + clientId + ".");
+
+            // remove specified entities from database
+            Integer noOfDeleted = creditCardFacade.deleteWithExpirationDateBetweenForClient(params.getStartDate(), params.getEndDate(), client);
+
+            // create response returning number of deleted entities
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(noOfDeleted), 200, "number of deleted credit cards for client with id " + clientId + " and expiring after " + params.getStartDate() + " and before " + params.getEndDate());
+
+            return Response.status(Status.OK).entity(responseEntity).build();
+        }
 
     }
 }

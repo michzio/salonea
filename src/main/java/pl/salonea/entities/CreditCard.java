@@ -44,7 +44,7 @@ import java.util.List;
         @NamedQuery(name = CreditCard.DELETE_WITH_EXPIRATION_DATE_BEFORE, query = "DELETE FROM CreditCard cc WHERE cc.expirationDate <= :date"),
         @NamedQuery(name = CreditCard.DELETE_WITH_EXPIRATION_DATE_BEFORE_FOR_CLIENT, query = "DELETE FROM CreditCard cc WHERE cc.client = :client AND cc.expirationDate <= :date"),
         @NamedQuery(name = CreditCard.DELETE_WITH_EXPIRATION_DATE_AFTER, query = "DELETE FROM CreditCard cc WHERE cc.expirationDate >= :date"),
-        @NamedQuery(name = CreditCard.DELETE_WITH_EXPIRATION_DATE_AFTER_FOR_CLIENT, query = "DELETE FROM CreditCard cc WHERE cc.client = :client AND cc.expirationDate <= :date"),
+        @NamedQuery(name = CreditCard.DELETE_WITH_EXPIRATION_DATE_AFTER_FOR_CLIENT, query = "DELETE FROM CreditCard cc WHERE cc.client = :client AND cc.expirationDate >= :date"),
         @NamedQuery(name = CreditCard.DELETE_WITH_EXPIRATION_DATE_BETWEEN, query = "DELETE FROM CreditCard cc WHERE cc.expirationDate >= :start_date AND cc.expirationDate <= :end_date"),
         @NamedQuery(name = CreditCard.DELETE_WITH_EXPIRATION_DATE_BETWEEN_FOR_CLIENT, query = "DELETE FROM CreditCard cc WHERE cc.client = :client AND cc.expirationDate >= :start_date AND cc.expirationDate <= :end_date"),
         @NamedQuery(name = CreditCard.DELETE_EXPIRED, query = "DELETE FROM CreditCard cc WHERE cc.expirationDate < current_timestamp"),
