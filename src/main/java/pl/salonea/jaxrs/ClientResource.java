@@ -1939,8 +1939,8 @@ public class ClientResource {
         /**
          * Method that returns subset of Credit Card entities for given Client
          * and expiration date between given the earliest date and the latest date.
-         * The client id, the earliest date (start date) and the latest date (end date)
-         * are passed through path params.
+         * The client id is passed through path param and  the earliest date (start date)
+         * and the latest date (end date) are passed through query params.
          */
         @GET
         @Path("/expiring-between")

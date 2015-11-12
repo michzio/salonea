@@ -379,8 +379,8 @@ public class CreditCardFacade extends AbstractFacade<CreditCard> implements Cred
     }
 
     @Override
-    public Integer countByClient(Client client) {
-        TypedQuery<Integer> query = getEntityManager().createNamedQuery(CreditCard.COUNT_BY_CLIENT, Integer.class);
+    public Long countByClient(Client client) {
+        TypedQuery<Long> query = getEntityManager().createNamedQuery(CreditCard.COUNT_BY_CLIENT, Long.class);
         query.setParameter("client", client);
         return query.getSingleResult();
     }

@@ -57,7 +57,7 @@ public interface CreditCardFacadeInterface extends AbstractFacadeInterface<Credi
     Integer deleteWithType(CreditCardType cardType);
     Integer deleteWithTypeForClient(CreditCardType cardType, Client client);
     Integer deleteById(CreditCardId creditCardId);
-    Integer countByClient(Client client);
+    Long countByClient(Client client);
     List<CreditCard> findByMultipleCriteria(List<Client> clients, List<CreditCardType> cardTypes, String cardNumber, String cardHolder, Boolean expired, Date theEarliestExpirationDate, Date theLatestExpirationDate);
     List<CreditCard> findByMultipleCriteria(List<Client> clients, List<CreditCardType> cardTypes, String cardNumber, String cardHolder, Boolean expired, Date theEarliestExpirationDate, Date theLatestExpirationDate, Integer start, Integer limit);
 
