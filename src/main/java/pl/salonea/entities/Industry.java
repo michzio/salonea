@@ -16,6 +16,7 @@ import java.util.Set;
 
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.PROPERTY)
+@XmlType(propOrder = {"industryId", "name", "description"})
 
 @Entity
 @Table(name="industry")
@@ -25,6 +26,8 @@ import java.util.Set;
         @NamedQuery(name = Industry.FIND_BY_ID_EAGERLY, query = "SELECT i FROM Industry i LEFT JOIN FETCH i.providers WHERE i.industryId = :industryId"),
         @NamedQuery(name = Industry.FIND_FOR_NAME, query = "SELECT i FROM Industry i WHERE i.name = :name"),
         @NamedQuery(name = Industry.FIND_BY_NAME, query = "SELECT i FROM Industry i WHERE i.name LIKE :name"),
+        @NamedQuery(name = Industry.FIND_BY_DESCRIPTION, query = "SELECT i FROM Industry i WHERE i.description LIKE :description"),
+        @NamedQuery(name = Industry.FIND_BY_KEYWORD, query = "SELECT i FROM Industry i WHERE i.name LIKE :keyword OR i.description LIKE :keyword"),
         @NamedQuery(name = Industry.FIND_BY_PROVIDER, query = "SELECT i FROM Industry i WHERE :provider MEMBER OF i.providers"),
         @NamedQuery(name = Industry.FIND_BY_PROVIDER_EAGERLY, query = "SELECT i FROM Industry i INNER JOIN FETCH i.providers p  WHERE p = :provider")
 })
@@ -34,6 +37,8 @@ public class Industry implements Serializable {
     public static final String FIND_BY_ID_EAGERLY = "Industry.findByIdEagerly";
     public static final String FIND_FOR_NAME = "Industry.findForName";
     public static final String FIND_BY_NAME = "Industry.findByName";
+    public static final String FIND_BY_DESCRIPTION = "Industry.findByDescription";
+    public static final String FIND_BY_KEYWORD = "Industry.findByKeyword";
     public static final String FIND_BY_PROVIDER = "Industry.findByProvider";
     public static final String FIND_BY_PROVIDER_EAGERLY = "Industry.findByProviderEagerly";
 

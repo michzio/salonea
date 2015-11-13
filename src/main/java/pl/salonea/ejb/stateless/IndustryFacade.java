@@ -91,6 +91,40 @@ public class IndustryFacade extends AbstractFacade<Industry> implements Industry
     }
 
     @Override
+    public List<Industry> findByDescription(String description) {
+        return findByDescription(description, null, null);
+    }
+
+    @Override
+    public List<Industry> findByDescription(String description, Integer start, Integer limit) {
+
+        TypedQuery<Industry> query = getEntityManager().createNamedQuery(Industry.FIND_BY_DESCRIPTION, Industry.class);
+        query.setParameter("description", "%" + description + "%");
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
+    public List<Industry> findByKeyword(String keyword) {
+        return findByKeyword(keyword, null, null);
+    }
+
+    @Override
+    public List<Industry> findByKeyword(String keyword, Integer start, Integer limit) {
+
+        TypedQuery<Industry> query = getEntityManager().createNamedQuery(Industry.FIND_BY_KEYWORD, Industry.class);
+        query.setParameter("keyword", "%" + keyword + "%");
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
     public List<Industry> findByProvider(Provider provider) {
         return findByProvider(provider, null, null);
     }

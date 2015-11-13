@@ -4,9 +4,11 @@ import pl.salonea.ejb.stateless.IndustryFacade;
 import pl.salonea.ejb.stateless.ProviderFacade;
 import pl.salonea.entities.Industry;
 import pl.salonea.entities.Provider;
+import pl.salonea.jaxrs.bean_params.IndustryBeanParam;
 import pl.salonea.jaxrs.bean_params.ProviderBeanParam;
 import pl.salonea.jaxrs.exceptions.ForbiddenException;
 import pl.salonea.jaxrs.exceptions.NotFoundException;
+import pl.salonea.jaxrs.utils.RESTToolkit;
 import pl.salonea.jaxrs.utils.ResourceList;
 import pl.salonea.jaxrs.utils.hateoas.Link;
 import pl.salonea.jaxrs.wrappers.IndustryWrapper;
@@ -35,6 +37,42 @@ public class IndustryResource {
     private IndustryFacade industryFacade;
     @Inject
     private ProviderFacade providerFacade;
+
+    /**
+     * Method returns all Industry resources
+     * They can be additionally filtered or paginated by @QueryParams
+     */
+    @GET
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getIndustries( @BeanParam IndustryBeanParam params ) throws ForbiddenException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning all Industries by executing IndustryResource.getIndustries() method of REST API");
+
+        Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+        ResourceList<Industry> industries = null;
+
+        if(noOfParams > 0) {
+            logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+            // get industries filtered by criteria provided in query params
+            industries = new ResourceList<>(
+                    industryFacade.findByMultipleCriteria(params.getProviders(), params.getName(), params.getDescription(), params.getOffset(), params.getLimit())
+            );
+
+        } else {
+            logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+            // get all industries without filtering (eventually paginated)
+            industries = new ResourceList<>( industryFacade.findAll(params.getOffset(), params.getLimit()) );
+        }
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        IndustryResource.populateWithHATEOASLinks(industries, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(industries).build();
+    }
 
     @GET
     @Path("/count")
@@ -117,6 +155,22 @@ public class IndustryResource {
                                                     .path(IndustryResource.class)
                                                     .build())
                                     .rel("industries").build());
+
+        // associated collections links with with pattern: http://localhost:port/app/rest/{resources}/{id}/{relationship}
+
+        // providers
+        try {
+            Method providersMethod = IndustryResource.class.getMethod("getProviderResource");
+            industry.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(IndustryResource.class)
+                    .path(providersMethod)
+                    .resolveTemplate("industryId", industry.getIndustryId().toString())
+                    .build())
+                    .rel("providers").build());
+
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        }
 
     }
 

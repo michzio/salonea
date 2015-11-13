@@ -17,6 +17,10 @@ public interface IndustryFacadeInterface extends AbstractFacadeInterface<Industr
     Industry findForName(String name);
     List<Industry> findByName(String name);
     List<Industry> findByName(String name, Integer start, Integer limit);
+    List<Industry> findByDescription(String description);
+    List<Industry> findByDescription(String description, Integer start, Integer limit);
+    List<Industry> findByKeyword(String keyword);
+    List<Industry> findByKeyword(String keyword, Integer start, Integer limit);
     List<Industry> findByProvider(Provider provider);
     List<Industry> findByProvider(Provider provider, Integer start, Integer limit);
     List<Industry> findByProviderEagerly(Provider provider);
