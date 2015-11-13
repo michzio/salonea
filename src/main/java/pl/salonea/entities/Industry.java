@@ -16,13 +16,13 @@ import java.util.Set;
 
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.PROPERTY)
-@XmlType(propOrder = {"industryId", "name", "description"})
+@XmlType(propOrder = {"industryId", "name", "description", "links"})
 
 @Entity
 @Table(name="industry")
 @Access(AccessType.PROPERTY)
 @NamedQueries({
-        @NamedQuery(name = Industry.FIND_ALL_EAGERLY, query = "SELECT i FROM Industry i LEFT JOIN FETCH i.providers"),
+        @NamedQuery(name = Industry.FIND_ALL_EAGERLY, query = "SELECT DISTINCT i FROM Industry i LEFT JOIN FETCH i.providers"),
         @NamedQuery(name = Industry.FIND_BY_ID_EAGERLY, query = "SELECT i FROM Industry i LEFT JOIN FETCH i.providers WHERE i.industryId = :industryId"),
         @NamedQuery(name = Industry.FIND_FOR_NAME, query = "SELECT i FROM Industry i WHERE i.name = :name"),
         @NamedQuery(name = Industry.FIND_BY_NAME, query = "SELECT i FROM Industry i WHERE i.name LIKE :name"),
@@ -49,7 +49,7 @@ public class Industry implements Serializable {
     private Set<Provider> providers = new HashSet<>();
 
     // HATEOAS support for RESTFul web service in JAX-RS
-    private Set<Link> links = new HashSet<>();
+    private List<Link> links = new ArrayList<>();
 
     /* constructors */
 
@@ -136,11 +136,11 @@ public class Industry implements Serializable {
     @XmlElementWrapper(name = "links")
     @XmlElement(name = "link")
     @Transient
-    public Set<Link> getLinks() {
+    public List<Link> getLinks() {
         return links;
     }
 
-    public void setLinks(Set<Link> links) {
+    public void setLinks(List<Link> links) {
         this.links = links;
     }
 }

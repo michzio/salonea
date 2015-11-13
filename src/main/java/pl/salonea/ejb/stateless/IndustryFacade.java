@@ -38,6 +38,19 @@ public class IndustryFacade extends AbstractFacade<Industry> implements Industry
     }
 
     @Override
+    public Industry update(Industry industry, Boolean retainTransientFields) {
+
+        if(retainTransientFields) {
+            // keep current collection attributes of resource (and other marked @XmlTransient)
+            Industry currentIndustry = findByIdEagerly(industry.getIndustryId());
+            if(currentIndustry != null) {
+                industry.setProviders(currentIndustry.getProviders());
+            }
+        }
+        return update(industry);
+    }
+
+    @Override
     public List<Industry> findAllEagerly() {
         return findAllEagerly(null, null);
     }

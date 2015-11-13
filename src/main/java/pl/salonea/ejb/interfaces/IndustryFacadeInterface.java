@@ -11,6 +11,7 @@ import java.util.List;
 public interface IndustryFacadeInterface extends AbstractFacadeInterface<Industry> {
 
     // concrete interface
+    Industry update(Industry industry, Boolean retainTransientFields);
     List<Industry> findAllEagerly();
     List<Industry> findAllEagerly(Integer start, Integer limit);
     Industry findByIdEagerly(Long industryId);

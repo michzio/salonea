@@ -4,15 +4,20 @@ import pl.salonea.ejb.stateless.IndustryFacade;
 import pl.salonea.ejb.stateless.ProviderFacade;
 import pl.salonea.entities.Industry;
 import pl.salonea.entities.Provider;
+import pl.salonea.jaxrs.bean_params.GenericBeanParam;
 import pl.salonea.jaxrs.bean_params.IndustryBeanParam;
 import pl.salonea.jaxrs.bean_params.ProviderBeanParam;
+import pl.salonea.jaxrs.exceptions.ExceptionHandler;
 import pl.salonea.jaxrs.exceptions.ForbiddenException;
 import pl.salonea.jaxrs.exceptions.NotFoundException;
+import pl.salonea.jaxrs.exceptions.UnprocessableEntityException;
 import pl.salonea.jaxrs.utils.RESTToolkit;
 import pl.salonea.jaxrs.utils.ResourceList;
 import pl.salonea.jaxrs.utils.hateoas.Link;
 import pl.salonea.jaxrs.wrappers.IndustryWrapper;
 
+import javax.ejb.EJBException;
+import javax.ejb.EJBTransactionRolledbackException;
 import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -20,6 +25,7 @@ import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import java.lang.reflect.Method;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -72,6 +78,160 @@ public class IndustryResource {
         IndustryResource.populateWithHATEOASLinks(industries, params.getUriInfo(), params.getOffset(), params.getLimit());
 
         return Response.status(Status.OK).entity(industries).build();
+    }
+
+    @GET
+    @Path("/eagerly")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getIndustriesEagerly( @BeanParam IndustryBeanParam params ) throws ForbiddenException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning all Industries eagerly by executing IndustryResource.getIndustriesEagerly() method of REST API");
+
+        Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+        ResourceList<IndustryWrapper> industries = null;
+
+        if(noOfParams > 0) {
+            logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+            // get industries filtered by criteria provided in query params
+            industries = new ResourceList<>(
+                    IndustryWrapper.wrap(
+                            industryFacade.findByMultipleCriteriaEagerly(params.getProviders(), params.getName(), params.getDescription(), params.getOffset(), params.getLimit())
+                    )
+            );
+        } else {
+            logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+            // get all industries without filtering (eventually paginated)
+            industries = new ResourceList<>( IndustryWrapper.wrap(industryFacade.findAllEagerly(params.getOffset(), params.getLimit())) );
+        }
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        IndustryResource.populateWithHATEOASLinks(industries, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(industries).build();
+    }
+
+    /**
+     * Method matches specific Industry resource by identifier and returns its instance
+     */
+    @GET
+    @Path("/{industryId : \\d+}") // catch only numeric identifiers
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getIndustry( @PathParam("industryId") Long industryId,
+                                 @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning given Industry by executing IndustryResource.getIndustry(industryId) method of REST API");
+
+        Industry foundIndustry = industryFacade.find(industryId);
+        if(foundIndustry == null)
+            throw new NotFoundException("Could not find industry id for id " + industryId + ".");
+
+        // adding hypermedia links to industry resource
+       IndustryResource.populateWithHATEOASLinks(foundIndustry, params.getUriInfo());
+
+        return Response.status(Status.OK).entity(foundIndustry).build();
+    }
+
+    /**
+     * Method matches specific Industry resource by identifier and returns its instance fetching it eagerly
+     */
+    @GET
+    @Path("/{industryId : \\d+}/eagerly")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getIndustryEagerly( @PathParam("industryId") Long industryId,
+                                        @BeanParam GenericBeanParam params  ) throws ForbiddenException, NotFoundException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning given Industry eagerly by executing IndustryResource.getIndustryEagerly(industryId) method of REST API");
+
+        Industry foundIndustry = industryFacade.findByIdEagerly(industryId);
+        if(foundIndustry == null)
+            throw new NotFoundException("Could not find industry for id " + industryId + ".");
+
+        // wrapping Industry into IndustryWrapper in order to marshall eagerly fetched associated collection of entities
+        IndustryWrapper wrappedIndustry = new IndustryWrapper(foundIndustry);
+
+        // adding hypermedia links to wrapped industry resource
+        IndustryResource.populateWithHATEOASLinks(wrappedIndustry, params.getUriInfo());
+
+        return Response.status(Status.OK).entity(wrappedIndustry).build();
+    }
+
+    /**
+     * Method that takes Industry as XML or JSON and creates its new instance in database
+     */
+    @POST
+    @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response createIndustry( Industry industry,
+                                    @BeanParam GenericBeanParam params ) throws ForbiddenException, UnprocessableEntityException, InternalServerErrorException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "creating new Industry by executing IndustryResource.createIndustry(industry) method of REST API");
+
+        Industry createdIndustry = null;
+        URI locationURI = null;
+
+        try {
+            // persist new resource in database
+            createdIndustry = industryFacade.create(industry);
+
+            // populate created resource with hypermedia links
+           IndustryResource.populateWithHATEOASLinks(createdIndustry, params.getUriInfo());
+
+            // construct link to newly created resource to return in HTTP header
+            String createdIndustryId = String.valueOf(createdIndustry.getIndustryId());
+            locationURI = params.getUriInfo().getBaseUriBuilder().path(IndustryResource.class).path(createdIndustryId).build();
+
+        } catch (EJBTransactionRolledbackException ex) {
+            ExceptionHandler.handleEJBTransactionRolledbackException(ex);
+        } catch (EJBException ex) {
+            ExceptionHandler.handleEJBException(ex);
+        } catch (Exception ex) {
+            throw new InternalServerErrorException(ExceptionHandler.ENTITY_CREATION_ERROR_MESSAGE);
+        }
+
+        return Response.created(locationURI).entity(createdIndustry).build();
+    }
+
+    /**
+     * Method that takes updated Industry as XML or JSON and its ID as path param.
+     * It updates Industry in database for provided ID.
+     */
+    @PUT
+    @Path("/{industryId : \\d+}") // catch only numeric identifiers
+    @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response updateIndustry( @PathParam("industryId") Long industryId,
+                                    Industry industry,
+                                    @BeanParam GenericBeanParam params ) throws ForbiddenException, UnprocessableEntityException, InternalServerErrorException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "updating existing Industry by executing IndustryResource.updateIndustry(industryId, industry) method of REST API");
+
+        // set resource ID passed in path param on updated resource object
+        industry.setIndustryId(industryId);
+
+        Industry updatedIndustry = null;
+        try {
+            // reflect updated resource object in database
+            updatedIndustry = industryFacade.update(industry, true);
+            // populate created resource with hypermedia links
+            IndustryResource.populateWithHATEOASLinks(updatedIndustry, params.getUriInfo());
+
+        } catch (EJBTransactionRolledbackException ex) {
+            ExceptionHandler.handleEJBTransactionRolledbackException(ex);
+        } catch (EJBException ex) {
+            ExceptionHandler.handleEJBException(ex);
+        } catch (Exception ex) {
+            throw new InternalServerErrorException(ExceptionHandler.ENTITY_UPDATE_ERROR_MESSAGE);
+        }
+
+        return Response.status(Status.OK).entity(updatedIndustry).build();
     }
 
     @GET
@@ -156,10 +316,19 @@ public class IndustryResource {
                                                     .build())
                                     .rel("industries").build());
 
-        // associated collections links with with pattern: http://localhost:port/app/rest/{resources}/{id}/{relationship}
-
-        // providers
         try {
+            // self eagerly link with pattern http://localhost:port/app/rest/{resources}/{id}/eagerly
+            Method industryEagerlyMethod = IndustryResource.class.getMethod("getIndustryEagerly", Long.class, GenericBeanParam.class);
+            industry.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(IndustryResource.class)
+                    .path(industryEagerlyMethod)
+                    .resolveTemplate("industryId", industry.getIndustryId().toString())
+                    .build())
+                    .rel("industry-eagerly").build());
+
+            // associated collections links with with pattern: http://localhost:port/app/rest/{resources}/{id}/{relationship}
+
+            // providers
             Method providersMethod = IndustryResource.class.getMethod("getProviderResource");
             industry.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
                     .path(IndustryResource.class)
