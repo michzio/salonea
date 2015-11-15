@@ -14,9 +14,7 @@ import javax.validation.constraints.Past;
 import javax.validation.constraints.Size;
 import javax.xml.bind.annotation.*;
 import java.io.Serializable;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 @XmlRootElement(name = "corporation")
 @XmlAccessorType(XmlAccessType.PROPERTY)
@@ -71,7 +69,7 @@ public class Corporation extends UUIDEntity implements Serializable {
     private Set<Provider> providers = new HashSet<>();
 
     // HATEOAS support for RESTFul web service in JAX-RS
-    private Set<Link> links = new HashSet<>();
+    private List<Link> links = new ArrayList<>();
 
     /* constructors */
 
@@ -228,11 +226,11 @@ public class Corporation extends UUIDEntity implements Serializable {
     @XmlElementWrapper(name = "links")
     @XmlElement(name = "link")
     @Transient
-    public Set<Link> getLinks() {
+    public List<Link> getLinks() {
         return links;
     }
 
-    public void setLinks(Set<Link> links) {
+    public void setLinks(List<Link> links) {
         this.links = links;
     }
 }

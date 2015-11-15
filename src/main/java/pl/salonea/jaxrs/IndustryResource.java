@@ -131,7 +131,7 @@ public class IndustryResource {
 
         Industry foundIndustry = industryFacade.find(industryId);
         if(foundIndustry == null)
-            throw new NotFoundException("Could not find industry id for id " + industryId + ".");
+            throw new NotFoundException("Could not find industry for id " + industryId + ".");
 
         // adding hypermedia links to industry resource
        IndustryResource.populateWithHATEOASLinks(foundIndustry, params.getUriInfo());
@@ -447,7 +447,7 @@ public class IndustryResource {
                     .build())
                     .rel("industry-eagerly").build());
 
-            // associated collections links with with pattern: http://localhost:port/app/rest/{resources}/{id}/{relationship}
+            // associated collections links with pattern: http://localhost:port/app/rest/{resources}/{id}/{relationship}
 
             // providers
             Method providersMethod = IndustryResource.class.getMethod("getProviderResource");
