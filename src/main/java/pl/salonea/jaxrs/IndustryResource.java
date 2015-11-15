@@ -6,6 +6,7 @@ import pl.salonea.entities.Industry;
 import pl.salonea.entities.Provider;
 import pl.salonea.jaxrs.bean_params.GenericBeanParam;
 import pl.salonea.jaxrs.bean_params.IndustryBeanParam;
+import pl.salonea.jaxrs.bean_params.PaginationBeanParam;
 import pl.salonea.jaxrs.bean_params.ProviderBeanParam;
 import pl.salonea.jaxrs.exceptions.ExceptionHandler;
 import pl.salonea.jaxrs.exceptions.ForbiddenException;
@@ -13,8 +14,10 @@ import pl.salonea.jaxrs.exceptions.NotFoundException;
 import pl.salonea.jaxrs.exceptions.UnprocessableEntityException;
 import pl.salonea.jaxrs.utils.RESTToolkit;
 import pl.salonea.jaxrs.utils.ResourceList;
+import pl.salonea.jaxrs.utils.ResponseWrapper;
 import pl.salonea.jaxrs.utils.hateoas.Link;
 import pl.salonea.jaxrs.wrappers.IndustryWrapper;
+import pl.salonea.jaxrs.wrappers.ProviderWrapper;
 
 import javax.ejb.EJBException;
 import javax.ejb.EJBTransactionRolledbackException;
@@ -234,14 +237,116 @@ public class IndustryResource {
         return Response.status(Status.OK).entity(updatedIndustry).build();
     }
 
+    /**
+     * Method that removes Industry entity from database for given ID.
+     * The ID is passed through path param.
+     */
+    @DELETE
+    @Path("/{industryId : \\d+}")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response removeIndustry( @PathParam("industryId") Long industryId,
+                                    @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "removing given Industry by executing IndustryResource.removeIndustry(industryId) method of REST API");
+
+        // find Industry entity that should be deleted
+        Industry toDeleteIndustry = industryFacade.find(industryId);
+        // throw exception if entity hasn't been found
+        if(toDeleteIndustry == null)
+            throw new NotFoundException("Could not find industry to delete for given id" + industryId + ".");
+
+        // remove entity from database
+        industryFacade.remove(toDeleteIndustry);
+
+        return Response.status(Status.NO_CONTENT).build();
+    }
+
+    /**
+     * Additional methods returning a subset of resources based on given criteria
+     * You can also achieve similar results by applying @QueryParams to generic method
+     * returning all resources in order to filter and limit them.
+     */
+
+    /**
+     * Method returns number of Industry entities in database
+     */
     @GET
     @Path("/count")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response countIndustries( @HeaderParam("authToken") String authToken ) throws ForbiddenException {
+    public Response countIndustries( @BeanParam GenericBeanParam params ) throws ForbiddenException {
 
-        if(authToken == null) throw new ForbiddenException("Unauthorized access to web service.");
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning number of industries by executing IndustryResource.countIndustries() method of REST API");
 
-        return null;
+        ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(industryFacade.count()), 200, "number of industries");
+        return Response.status(Status.OK).entity(responseEntity).build();
+    }
+
+    /**
+     * Method returns subset of Industry entities for given name.
+     * The name is passed through path param.
+     */
+    @GET
+    @Path("/named/{name : \\S+}")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getIndustriesByName( @PathParam("name") String name,
+                                         @BeanParam PaginationBeanParam params ) throws ForbiddenException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning industries for given name using IndustryResource.getIndustriesByName(name) method of REST API");
+
+        // find industries by given criteria
+        ResourceList<Industry> industries = new ResourceList<>( industryFacade.findByName(name, params.getOffset(), params.getLimit()) );
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        IndustryResource.populateWithHATEOASLinks(industries, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(industries).build();
+    }
+
+    /**
+     * Method returns subset of Industry entities for given description.
+     * The description is passed through path param.
+     */
+    @GET
+    @Path("/described/{description : \\S+}")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getIndustriesByDescription( @PathParam("description") String description,
+                                                @BeanParam PaginationBeanParam params ) throws ForbiddenException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning industries for given description using IndustryResource.getIndustriesByDescription(description) method of REST API");
+
+        // find industries by given criteria
+        ResourceList<Industry> industries = new ResourceList<>( industryFacade.findByDescription(description, params.getOffset(), params.getLimit()) );
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        IndustryResource.populateWithHATEOASLinks(industries, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(industries).build();
+    }
+
+    /**
+     * Method returns subset of Industry entities for given keyword.
+     * The keyword is passed through path param.
+     */
+    @GET
+    @Path("/containing-keyword/{keyword : \\S+}")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getIndustriesByKeyword( @PathParam("keyword") String keyword,
+                                            @BeanParam PaginationBeanParam params ) throws ForbiddenException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning industries for given keyword using IndustryResource.getIndustriesByKeyword(keyword) method of REST API");
+
+        // find industries by given criteria
+        ResourceList<Industry> industries = new ResourceList<>( industryFacade.findByKeyword(keyword, params.getOffset(), params.getLimit()) );
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        IndustryResource.populateWithHATEOASLinks(industries, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(industries).build();
     }
 
     /**
@@ -266,13 +371,29 @@ public class IndustryResource {
         try {
 
             // count resources hypermedia link
-            Method countMethod = IndustryResource.class.getMethod("countIndustries", String.class);
+            Method countMethod = IndustryResource.class.getMethod("countIndustries", GenericBeanParam.class);
             industries.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(IndustryResource.class).path(countMethod).build()).rel("count").build() );
 
             // get all resources hypermedia link
             industries.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(IndustryResource.class).build()).rel("industries").build() );
 
-            // TODO
+            // get all resources eagerly hypermedia link
+            Method industriesEagerlyMethod = IndustryResource.class.getMethod("getIndustriesEagerly", IndustryBeanParam.class);
+            industries.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(IndustryResource.class)
+                    .path(industriesEagerlyMethod)
+                    .build())
+                    .rel("industries-eagerly").build());
+
+            // get subset of resources hypermedia links
+            // named
+            industries.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(IndustryResource.class).path("named").build()).rel("named").build() );
+
+            // described
+            industries.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(IndustryResource.class).path("described").build()).rel("described").build() );
+
+            // containing-keyword
+            industries.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(IndustryResource.class).path("containing-keyword").build()).rel("containing-keyword").build() );
 
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
@@ -337,6 +458,16 @@ public class IndustryResource {
                     .build())
                     .rel("providers").build());
 
+            // providers-eagerly
+            Method providersEagerlyMethod = IndustryResource.ProviderResource.class.getMethod("getIndustryProvidersEagerly", Long.class, ProviderBeanParam.class);
+            industry.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(IndustryResource.class)
+                    .path(providersMethod)
+                    .path(providersEagerlyMethod)
+                    .resolveTemplate("industryId", industry.getIndustryId().toString())
+                    .build())
+                    .rel("providers-eagerly").build());
+
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
         }
@@ -356,7 +487,7 @@ public class IndustryResource {
         public Response getIndustryProviders(@PathParam("industryId") Long industryId,
                                              @BeanParam ProviderBeanParam params) throws ForbiddenException, NotFoundException {
 
-            if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            RESTToolkit.authorizeAccessToWebService(params);
             logger.log(Level.INFO, "returning providers for given industry using IndustryResource.ProviderResource.getIndustryProviders(industryId) method of REST API");
 
             // find industry entity for which to get associated providers
@@ -396,6 +527,52 @@ public class IndustryResource {
 
             return Response.status(Status.OK).entity(providers).build();
         }
+
+        @GET
+        @Path("/eagerly")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getIndustryProvidersEagerly( @PathParam("industryId") Long industryId,
+                                                     @BeanParam ProviderBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning subset of Provider entities for given Industry eagerly using IndustryResource.ProviderResource.getIndustryProvidersEagerly(industryId) method of REST API");
+
+            // find industry entity for which to get associated providers
+            Industry industry = industryFacade.find(industryId);
+            if(industry == null)
+                throw new NotFoundException("Could not find industry for id " + industryId + ".");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<ProviderWrapper> providers = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Industry> industries = new ArrayList<>();
+                industries.add(industry);
+
+                // get providers for given industry eagerly filtered by given params
+                providers = new ResourceList<>(
+                        ProviderWrapper.wrap(
+                                providerFacade.findByMultipleCriteriaEagerly(params.getCorporations(), params.getProviderTypes(), industries, params.getPaymentMethods(),
+                                        params.getServices(), params.getRated(), params.getMinAvgRating(), params.getMaxAvgRating(), params.getRatingClients(), params.getProviderName(),
+                                        params.getDescription(), params.getOffset(), params.getLimit())
+                        )
+                );
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get providers for given industry eagerly without filtering (eventually paginated)
+                providers = new ResourceList<>( ProviderWrapper.wrap(providerFacade.findByIndustryEagerly(industry, params.getOffset(), params.getLimit())) );
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.ProviderResource.populateWithHATEOASLinks(providers, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(providers).build();
+        }
+
 
     }
 }

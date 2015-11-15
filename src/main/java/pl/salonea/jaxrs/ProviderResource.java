@@ -584,6 +584,16 @@ public class ProviderResource {
                     .build())
                     .rel("industries").build());
 
+            // industries eagerly relationship
+            Method industriesEagerlyMethod = ProviderResource.IndustryResource.class.getMethod("getProviderIndustriesEagerly", Long.class, IndustryBeanParam.class);
+            provider.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ProviderResource.class)
+                    .path(industriesMethod)
+                    .path(industriesEagerlyMethod)
+                    .resolveTemplate("userId", provider.getUserId().toString())
+                    .build())
+                    .rel("industries-eagerly").build());
+
             // payment-methods relationship
             Method paymentMethodsMethod = ProviderResource.class.getMethod("getPaymentMethodResource");
             provider.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
@@ -630,7 +640,7 @@ public class ProviderResource {
                     .rel("rating-clients").build());
 
             // rating-clients eagerly
-            Method ratingClientsEagerlyMethod = ClientResource.class.getMethod("getProviderRatingClientsEagerly", Long.class, ClientBeanParam.class);
+            Method ratingClientsEagerlyMethod = ProviderResource.ClientResource.class.getMethod("getProviderRatingClientsEagerly", Long.class, ClientBeanParam.class);
             provider.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
                     .path(ProviderResource.class)
                     .path(ratingClientsMethod)

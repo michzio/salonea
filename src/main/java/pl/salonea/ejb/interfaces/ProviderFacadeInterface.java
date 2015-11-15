@@ -22,6 +22,8 @@ public interface ProviderFacadeInterface extends AbstractFacadeInterface<Provide
     List<Provider> findByType(ProviderType providerType, Integer start, Integer limit);
     List<Provider> findByIndustry(Industry industry);
     List<Provider> findByIndustry(Industry industry, Integer start, Integer limit);
+    List<Provider> findByIndustryEagerly(Industry industry);
+    List<Provider> findByIndustryEagerly(Industry industry, Integer start, Integer limit);
     List<Provider> findByPaymentMethod(PaymentMethod paymentMethod);
     List<Provider> findByPaymentMethod(PaymentMethod paymentMethod, Integer start, Integer limit);
     List<Provider> findBySuppliedService(Service service);

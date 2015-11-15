@@ -22,13 +22,15 @@ import java.util.Set;
 @PrimaryKeyJoinColumn(name = "provider_id")
 @Access(AccessType.PROPERTY)
 @NamedQueries({
-        @NamedQuery(name = Provider.FIND_ALL_EAGERLY, query = "SELECT p FROM Provider p LEFT JOIN FETCH p.industries LEFT JOIN FETCH p.acceptedPaymentMethods LEFT JOIN FETCH p.servicePoints " +
+        @NamedQuery(name = Provider.FIND_ALL_EAGERLY, query = "SELECT DISTINCT p FROM Provider p LEFT JOIN FETCH p.industries LEFT JOIN FETCH p.acceptedPaymentMethods LEFT JOIN FETCH p.servicePoints " +
                 "LEFT JOIN FETCH p.suppliedServiceOffers LEFT JOIN FETCH p.receivedRatings "),
         @NamedQuery(name = Provider.FIND_BY_ID_EAGERLY, query = "SELECT p FROM Provider p LEFT JOIN FETCH p.industries LEFT JOIN FETCH p.acceptedPaymentMethods LEFT JOIN FETCH p.servicePoints " +
                 "LEFT JOIN FETCH p.suppliedServiceOffers LEFT JOIN FETCH p.receivedRatings WHERE p.userId = :providerId" ),
         @NamedQuery(name = Provider.FIND_BY_CORPORATION, query = "SELECT p FROM Provider p WHERE p.corporation = :corporation"),
         @NamedQuery(name = Provider.FIND_BY_TYPE, query = "SELECT p FROM Provider p WHERE p.type = :provider_type"),
         @NamedQuery(name = Provider.FIND_BY_INDUSTRY, query = "SELECT p FROM Provider p WHERE :industry MEMBER OF p.industries"),
+        @NamedQuery(name = Provider.FIND_BY_INDUSTRY_EAGERLY, query = "SELECT DISTINCT p FROM Provider p LEFT JOIN FETCH p.industries i LEFT JOIN FETCH p.acceptedPaymentMethods LEFT JOIN FETCH p.servicePoints " +
+                "LEFT JOIN FETCH p.suppliedServiceOffers LEFT JOIN FETCH p.receivedRatings WHERE :industry MEMBER OF p.industries"),
         @NamedQuery(name = Provider.FIND_BY_PAYMENT_METHOD, query = "SELECT p FROM Provider p WHERE :payment_method MEMBER OF p.acceptedPaymentMethods"),
         @NamedQuery(name = Provider.FIND_BY_SUPPLIED_SERVICE, query = "SELECT p FROM Provider p INNER JOIN p.suppliedServiceOffers ps WHERE ps.service = :service"),
         @NamedQuery(name = Provider.FIND_RATED, query = "SELECT p FROM Provider p WHERE SIZE(p.receivedRatings) > 0"),
@@ -36,7 +38,7 @@ import java.util.Set;
         @NamedQuery(name = Provider.FIND_ON_AVG_RATED_ABOVE, query = "SELECT p FROM Provider p INNER JOIN p.receivedRatings pr GROUP BY p HAVING AVG(pr.clientRating) >= :avg_rating"),
         @NamedQuery(name = Provider.FIND_ON_AVG_RATED_BELOW, query = "SELECT p FROM Provider p INNER JOIN p.receivedRatings pr GROUP BY p HAVING AVG(pr.clientRating) <= :avg_rating"),
         @NamedQuery(name = Provider.FIND_RATED_BY_CLIENT, query = "SELECT p FROM Provider p INNER JOIN p.receivedRatings pr WHERE pr.client = :client"),
-        @NamedQuery(name = Provider.FIND_RATED_BY_CLIENT_EAGERLY, query = "SELECT p FROM Provider p LEFT JOIN FETCH p.industries LEFT JOIN FETCH p.acceptedPaymentMethods LEFT JOIN FETCH p.servicePoints " +
+        @NamedQuery(name = Provider.FIND_RATED_BY_CLIENT_EAGERLY, query = "SELECT DISTINCT p FROM Provider p LEFT JOIN FETCH p.industries LEFT JOIN FETCH p.acceptedPaymentMethods LEFT JOIN FETCH p.servicePoints " +
                 "LEFT JOIN FETCH p.suppliedServiceOffers LEFT JOIN FETCH p.receivedRatings pr WHERE pr.client = :client"),
 })
 @CorporateOwner
@@ -47,6 +49,7 @@ public class Provider extends Firm {
     public static final String FIND_BY_CORPORATION = "Provider.findByCorporation";
     public static final String FIND_BY_TYPE = "Provider.findByType";
     public static final String FIND_BY_INDUSTRY = "Provider.findByIndustry";
+    public static final String FIND_BY_INDUSTRY_EAGERLY = "Provider.findByIndustryEagerly";
     public static final String FIND_BY_PAYMENT_METHOD = "Provider.findByPaymentMethod";
     public static final String FIND_BY_SUPPLIED_SERVICE = "Provider.findBySuppliedService";
     public static final String FIND_RATED = "Provider.findRated";
