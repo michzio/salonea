@@ -26,18 +26,34 @@ import java.util.Set;
 @Table(name = "corporation")
 @Access(AccessType.PROPERTY)
 @NamedQueries({
+        @NamedQuery(name = Corporation.FIND_ALL_EAGERLY, query = "SELECT DISTINCT c FROM Corporation c LEFT JOIN FETCH c.providers"),
+        @NamedQuery(name = Corporation.FIND_BY_ID_EAGERLY, query = "SELECT c FROM Corporation c LEFT JOIN FETCH c.providers WHERE c.corporationId = :corporationId"),
         @NamedQuery(name = Corporation.FIND_BY_ADDRESS,  query = "SELECT c FROM Corporation c WHERE c.address.city LIKE :city AND c.address.state LIKE :state " +
                 "AND c.address.country LIKE :country AND c.address.street LIKE :street AND c.address.zipCode LIKE :zip_code"),
         @NamedQuery(name = Corporation.FIND_BY_NAME, query = "SELECT c FROM Corporation c WHERE c.corporationName LIKE :name"),
+        @NamedQuery(name = Corporation.FIND_BY_DESCRIPTION, query = "SELECT c FROM Corporation c WHERE c.description LIKE :description"),
+        @NamedQuery(name = Corporation.FIND_BY_HISTORY, query = "SELECT c FROM Corporation c WHERE c.history LIKE :history"),
+        @NamedQuery(name = Corporation.FIND_BY_KEYWORD, query = "SELECT c FROM Corporation c WHERE c.corporationName LIKE :keyword OR c.description LIKE :keyword OR c.history LIKE :keyword"),
         @NamedQuery(name = Corporation.FIND_OPEN_AFTER, query = "SELECT c FROM Corporation c WHERE c.openingDate >= :date"),
-        @NamedQuery(name = Corporation.FIND_OPEN_BEFORE, query = "SELECT c FROM Corporation c WHERE c.openingDate <= :date")
+        @NamedQuery(name = Corporation.FIND_OPEN_BEFORE, query = "SELECT c FROM Corporation c WHERE c.openingDate <= :date"),
+        @NamedQuery(name = Corporation.FIND_OPEN_BETWEEN, query = "SELECT c FROM Corporation c WHERE c.openingDate >= :startDate AND c.openingDate <= :endDate"),
+        @NamedQuery(name = Corporation.FIND_FOR_PROVIDER, query = "SELECT c FROM Corporation c WHERE :provider MEMBER OF c.providers"),
+        @NamedQuery(name = Corporation.FIND_FOR_PROVIDER_EAGERLY, query = "SELECT c FROM Corporation c INNER JOIN FETCH c.providers p WHERE p = :provider"),
 })
 public class Corporation extends UUIDEntity implements Serializable {
 
+    public static final String FIND_ALL_EAGERLY = "Corporation.findAllEagerly";
+    public static final String FIND_BY_ID_EAGERLY = "Corporation.findByIdEagerly";
     public static final String FIND_BY_ADDRESS = "Corporation.findByAddress";
     public static final String FIND_BY_NAME = "Corporation.findByName";
+    public static final String FIND_BY_DESCRIPTION = "Corporation.findByDescription";
+    public static final String FIND_BY_HISTORY = "Corporation.findByHistory";
+    public static final String FIND_BY_KEYWORD = "Corporation.findByKeyword";
     public static final String FIND_OPEN_AFTER = "Corporation.findOpenAfter";
     public static final String FIND_OPEN_BEFORE = "Corporation.findOpenBefore";
+    public static final String FIND_OPEN_BETWEEN = "Corporation.findOpenBetween";
+    public static final String FIND_FOR_PROVIDER = "Corporation.findForProvider";
+    public static final String FIND_FOR_PROVIDER_EAGERLY = "Corporation.findForProviderEagerly";
 
     private Long corporationId;
     private String corporationName;
