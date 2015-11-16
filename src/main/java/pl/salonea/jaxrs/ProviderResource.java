@@ -12,6 +12,7 @@ import pl.salonea.jaxrs.exceptions.*;
 import pl.salonea.jaxrs.exceptions.ForbiddenException;
 import pl.salonea.jaxrs.exceptions.NotFoundException;
 import pl.salonea.jaxrs.exceptions.BadRequestException;
+import pl.salonea.jaxrs.utils.RESTToolkit;
 import pl.salonea.jaxrs.utils.RequestWrapper;
 import pl.salonea.jaxrs.utils.ResourceList;
 import pl.salonea.jaxrs.utils.ResponseWrapper;

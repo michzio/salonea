@@ -200,10 +200,17 @@ public class StartupBean {
         provider1.getIndustries().add(industry1);
         provider2.getIndustries().add(industry1);
 
+        Calendar openingDate = Calendar.getInstance();
+        openingDate.add(Calendar.YEAR, -10);
+
         Address address5 = new Address("Wrocławska", "15", "29-100", "Kraków", "Małopolska", "Poland");
         Corporation corporation1 = new Corporation("Medical Corporation", "medical.png", address5);
+        corporation1.setOpeningDate(openingDate.getTime());
+
         Address address6 = new Address("Poznańska", "15", "29-100", "Poznań", "Wielkopolska", "Poland");
         Corporation corporation2 = new Corporation("Hair and Style Corporation", "hair_and_style.png", address6);
+        openingDate.add(Calendar.YEAR, -10);
+        corporation2.setOpeningDate(openingDate.getTime());
 
         provider1.setCorporation(corporation1);
         provider2.setCorporation(corporation1);

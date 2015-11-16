@@ -174,12 +174,12 @@ public class CorporationFacade extends AbstractFacade<Corporation> implements Co
     }
 
     @Override
-    public List<Corporation> findOpenAfter(Date date) {
-        return findOpenAfter(date, null, null);
+    public List<Corporation> findOpenedAfter(Date date) {
+        return findOpenedAfter(date, null, null);
     }
 
     @Override
-    public List<Corporation> findOpenAfter(Date date, Integer start, Integer limit) {
+    public List<Corporation> findOpenedAfter(Date date, Integer start, Integer limit) {
 
         TypedQuery<Corporation> query = getEntityManager().createNamedQuery(Corporation.FIND_OPEN_AFTER, Corporation.class);
         query.setParameter("date", date);
@@ -191,12 +191,12 @@ public class CorporationFacade extends AbstractFacade<Corporation> implements Co
     }
 
     @Override
-    public List<Corporation> findOpenBefore(Date date) {
-        return findOpenBefore(date, null, null);
+    public List<Corporation> findOpenedBefore(Date date) {
+        return findOpenedBefore(date, null, null);
     }
 
     @Override
-    public List<Corporation> findOpenBefore(Date date, Integer start, Integer limit) {
+    public List<Corporation> findOpenedBefore(Date date, Integer start, Integer limit) {
 
         TypedQuery<Corporation> query = getEntityManager().createNamedQuery(Corporation.FIND_OPEN_BEFORE, Corporation.class);
         query.setParameter("date", date);
@@ -208,12 +208,12 @@ public class CorporationFacade extends AbstractFacade<Corporation> implements Co
     }
 
     @Override
-    public List<Corporation> findOpenBetween(Date startDate, Date endDate) {
-        return findOpenBetween(startDate, endDate, null, null);
+    public List<Corporation> findOpenedBetween(Date startDate, Date endDate) {
+        return findOpenedBetween(startDate, endDate, null, null);
     }
 
     @Override
-    public List<Corporation> findOpenBetween(Date startDate, Date endDate, Integer start, Integer limit) {
+    public List<Corporation> findOpenedBetween(Date startDate, Date endDate, Integer start, Integer limit) {
 
         TypedQuery<Corporation> query = getEntityManager().createNamedQuery(Corporation.FIND_OPEN_BETWEEN, Corporation.class);
         query.setParameter("startDate", startDate);
@@ -223,30 +223,6 @@ public class CorporationFacade extends AbstractFacade<Corporation> implements Co
             query.setMaxResults(limit);
         }
         return query.getResultList();
-    }
-
-    @Override
-    public Corporation findForProvider(Provider provider) {
-
-        TypedQuery<Corporation> query = getEntityManager().createNamedQuery(Corporation.FIND_FOR_PROVIDER, Corporation.class);
-        query.setParameter("provider", provider);
-        try {
-            return query.getSingleResult();
-        } catch (NoResultException | NonUniqueResultException ex) {
-            return null;
-        }
-    }
-
-    @Override
-    public Corporation findForProviderEagerly(Provider provider) {
-
-        TypedQuery<Corporation> query = getEntityManager().createNamedQuery(Corporation.FIND_FOR_PROVIDER_EAGERLY, Corporation.class);
-        query.setParameter("provider", provider);
-        try {
-            return query.getSingleResult();
-        } catch (NoResultException | NonUniqueResultException ex) {
-            return null;
-        }
     }
 
     @Override

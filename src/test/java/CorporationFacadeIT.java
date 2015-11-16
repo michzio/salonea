@@ -121,8 +121,8 @@ public class CorporationFacadeIT {
         corporationFacade.create(corporation3);
 
         cal.add(Calendar.YEAR, -15);
-        List<Corporation> oldCorpos = corporationFacade.findOpenBefore(cal.getTime());
-        List<Corporation> newCorpos = corporationFacade.findOpenAfter(cal.getTime());
+        List<Corporation> oldCorpos = corporationFacade.findOpenedBefore(cal.getTime());
+        List<Corporation> newCorpos = corporationFacade.findOpenedAfter(cal.getTime());
 
         assertTrue("There should be only one legacy corporation.", oldCorpos.size() == 1);
         assertTrue("There should be two new corporations.", newCorpos.size() == 2);

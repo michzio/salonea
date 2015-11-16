@@ -5,11 +5,11 @@ import pl.salonea.ejb.stateless.ProviderFacade;
 import pl.salonea.embeddables.Address;
 import pl.salonea.entities.Corporation;
 import pl.salonea.entities.Provider;
-import pl.salonea.jaxrs.bean_params.CorporationBeanParam;
-import pl.salonea.jaxrs.bean_params.GenericBeanParam;
-import pl.salonea.jaxrs.bean_params.ProviderBeanParam;
-import pl.salonea.jaxrs.exceptions.ExceptionHandler;
-import pl.salonea.jaxrs.exceptions.UnprocessableEntityException;
+import pl.salonea.jaxrs.bean_params.*;
+import pl.salonea.jaxrs.exceptions.*;
+import pl.salonea.jaxrs.exceptions.ForbiddenException;
+import pl.salonea.jaxrs.exceptions.NotFoundException;
+import pl.salonea.jaxrs.utils.RESTDateTime;
 import pl.salonea.jaxrs.utils.RESTToolkit;
 import pl.salonea.jaxrs.utils.ResourceList;
 
@@ -17,11 +17,12 @@ import javax.ejb.EJBException;
 import javax.ejb.EJBTransactionRolledbackException;
 import javax.inject.Inject;
 import javax.ws.rs.*;
-import pl.salonea.jaxrs.exceptions.ForbiddenException;
-import pl.salonea.jaxrs.exceptions.NotFoundException;
+
+import pl.salonea.jaxrs.utils.ResponseWrapper;
 import pl.salonea.jaxrs.utils.hateoas.Link;
 import pl.salonea.jaxrs.wrappers.CorporationWrapper;
 
+import pl.salonea.jaxrs.exceptions.BadRequestException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
@@ -69,8 +70,8 @@ public class CorporationResource {
 
             // get corporations filtered by criteria provided in query params
             corporations = new ResourceList<>(
-                    corporationFacade.findByMultipleCriteria( params.getProviders(), params.getName(), params.getDescription(), params.getHistory(),
-                            params.getStartOpeningDate(), params.getEndOpeningDate(), corporationAddress, params.getOffset(), params.getLimit() )
+                    corporationFacade.findByMultipleCriteria(params.getProviders(), params.getName(), params.getDescription(), params.getHistory(),
+                            params.getStartOpeningDate(), params.getEndOpeningDate(), corporationAddress, params.getOffset(), params.getLimit())
             );
 
         } else {
@@ -271,16 +272,211 @@ public class CorporationResource {
     }
 
     /**
-     *
+     * Additional methods returning a subset of resources based on given criteria
+     * You can also achieve similar results by applying @QueryParams to generic method
+     * returning all resources in order to filter and limit them
+     */
+
+    /**
+     * Method returns number of Corporation entities in database
      */
     @GET
     @Path("/count")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response countCorporations( @HeaderParam("authToken") String authToken ) throws ForbiddenException {
+    public Response countCorporations( @BeanParam GenericBeanParam params ) throws ForbiddenException {
 
-        if(authToken == null) throw new ForbiddenException("Unauthorized access to web service.");
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning number of corporations by executing CorporationResource.countCorporations() method of REST API");
 
-        return null;
+        ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(corporationFacade.count()), 200, "number of corporations");
+        return Response.status(Status.OK).entity(responseEntity).build();
+    }
+
+    /**
+     * Method returns subset of Corporation entities for given name.
+     * The name is passed through path param.
+     */
+    @GET
+    @Path("/named/{name : \\S+}")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getCorporationsByName( @PathParam("name") String name,
+                                           @BeanParam PaginationBeanParam params ) throws ForbiddenException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning corporations for given name using CorporationResource.getCorporationsByName(name) method of REST API");
+
+        // find corporations by given criteria
+        ResourceList<Corporation> corporations = new ResourceList<>( corporationFacade.findByName(name, params.getOffset(), params.getLimit()) );
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        CorporationResource.populateWithHATEOASLinks(corporations, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(corporations).build();
+    }
+
+    /**
+     * Method returns subset of Corporation entities for given description.
+     * The description is passed through path param.
+     */
+    @GET
+    @Path("/described/{description : \\S+}")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getCorporationsByDescription( @PathParam("description") String description,
+                                                  @BeanParam PaginationBeanParam params ) throws ForbiddenException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning corporations for given description using CorporationResource.getCorporationsByDescription(description) method of REST API");
+
+        // find corporations by given criteria
+        ResourceList<Corporation> corporations = new ResourceList<>( corporationFacade.findByDescription(description, params.getOffset(), params.getLimit()) );
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        CorporationResource.populateWithHATEOASLinks(corporations, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(corporations).build();
+    }
+
+    /**
+     * Method returns subset of Corporation entities for given history
+     * The history is passed through path param.
+     */
+    @GET
+    @Path("/by-history/{history : \\S+}")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getCorporationsByHistory( @PathParam("history") String history,
+                                              @BeanParam PaginationBeanParam params ) throws ForbiddenException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning corporations for given history using CorporationResource.getCorporationsByHistory(history) method of REST API");
+
+        // find corporations by given criteria
+        ResourceList<Corporation> corporations = new ResourceList<>( corporationFacade.findByHistory(history, params.getOffset(), params.getLimit()) );
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        CorporationResource.populateWithHATEOASLinks(corporations, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(corporations).build();
+    }
+
+    /**
+     * Method returns subset of Corporation entities for given keyword.
+     * The keyword is passed through path param.
+     */
+    @GET
+    @Path("/containing-keyword/{keyword : \\S+}")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getCorporationsByKeyword( @PathParam("keyword") String keyword,
+                                              @BeanParam PaginationBeanParam params ) throws ForbiddenException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning corporations for given keyword using CorporationResource.getCorporationsByKeyword(keyword) method of REST API");
+
+        // find corporations by given criteria
+        ResourceList<Corporation> corporations = new ResourceList<>( corporationFacade.findByKeyword(keyword, params.getOffset(), params.getLimit()) );
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        CorporationResource.populateWithHATEOASLinks(corporations, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(corporations).build();
+    }
+
+    /**
+     * Method returns subset of Corporation entities opened after given opening date.
+     * The opening date is passed through path param.
+     */
+    @GET
+    @Path("/opened-after/{openingDate : \\S+}")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getCorporationsOpenedAfter( @PathParam("openingDate") RESTDateTime openingDate,
+                                                @BeanParam PaginationBeanParam params ) throws ForbiddenException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning corporations opened after given opening date using CorporationResource.getCorporationsOpenedAfter(openingDate) method of REST API");
+
+        // find corporations by given criteria
+        ResourceList<Corporation> corporations = new ResourceList<>( corporationFacade.findOpenedAfter(openingDate, params.getOffset(), params.getLimit()) );
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        CorporationResource.populateWithHATEOASLinks(corporations, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(corporations).build();
+    }
+
+    /**
+     * Method returns subset of Corporation entities opened before given opening date.
+     * The opening date is passed through path param.
+     */
+    @GET
+    @Path("/opened-before/{openingDate : \\S+}")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getCorporationsOpenedBefore( @PathParam("openingDate") RESTDateTime openingDate,
+                                                 @BeanParam PaginationBeanParam params ) throws ForbiddenException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning corporations opened before given opening date using CorporationResource.getCorporationsOpenedBefore(openingDate) method of REST API");
+
+        // find corporations by given criteria
+        ResourceList<Corporation> corporations = new ResourceList<>( corporationFacade.findOpenedBefore(openingDate, params.getOffset(), params.getLimit()) );
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        CorporationResource.populateWithHATEOASLinks(corporations, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(corporations).build();
+    }
+
+    /**
+     * Method returns subset of Corporation entities opened between given dates.
+     * The start opening date and end opening date are passed through query params.
+     */
+    @GET
+    @Path("/opened-between")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getCorporationsOpenedBetween( @BeanParam DateBetweenBeanParam params ) throws ForbiddenException, BadRequestException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning corporations opened between given start and end date using CorporationResource.getCorporationsOpenedBetween(dates) method of REST API");
+
+        // check correctness of query params
+        if(params.getStartDate() == null || params.getEndDate() == null)
+            throw new BadRequestException("Start date or end date query param not specified for request.");
+
+        if(params.getStartDate().after(params.getEndDate()))
+            throw new BadRequestException("Start date is after end date.");
+
+        // find corporations by given criteria
+        ResourceList<Corporation> corporations = new ResourceList<>( corporationFacade.findOpenedBetween(params.getStartDate(),
+                params.getEndDate(), params.getOffset(), params.getLimit()) );
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        CorporationResource.populateWithHATEOASLinks(corporations, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(corporations).build();
+    }
+
+    /**
+     * Method returns subset of Corporation entities for given location query params (address)
+     */
+    @GET
+    @Path("/located")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getCorporationsByAddress( @BeanParam AddressBeanParam params ) throws ForbiddenException, BadRequestException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning corporations for given address query params using CorporationResource.getCorporationsByAddress(address) method of REST API");
+
+        // check correctness of query params
+        Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+        if(noOfParams < 1)
+            throw new BadRequestException("There is no address related query param in request.");
+
+        // find corporations by given criteria
+        ResourceList<Corporation> corporations = new ResourceList<>( corporationFacade.findByAddress(params.getCity(), params.getState(), params.getCountry(),
+                params.getStreet(), params.getZipCode(), params.getOffset(), params.getLimit()) );
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        CorporationResource.populateWithHATEOASLinks(corporations, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(corporations).build();
     }
 
     /**
@@ -305,7 +501,7 @@ public class CorporationResource {
         try {
 
             // count resources hypermedia link
-            Method countMethod = CorporationResource.class.getMethod("countCorporations", String.class);
+            Method countMethod = CorporationResource.class.getMethod("countCorporations", GenericBeanParam.class);
             corporations.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(CorporationResource.class).path(countMethod).build()).rel("count").build() );
 
             // get all resources hypermedia link
@@ -320,6 +516,29 @@ public class CorporationResource {
                     .rel("corporations-eagerly").build());
 
             // get subset of resources hypermedia links
+            // named
+            corporations.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(CorporationResource.class).path("named").build()).rel("named").build() );
+
+            // described
+            corporations.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(CorporationResource.class).path("described").build()).rel("described").build() );
+
+            // by-history
+            corporations.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(CorporationResource.class).path("by-history").build()).rel("by-history").build() );
+
+            // containing-keyword
+            corporations.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(CorporationResource.class).path("containing-keyword").build()).rel("containing-keyword").build() );
+
+            // opened-after
+            corporations.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(CorporationResource.class).path("opened-after").build()).rel("opened-after").build() );
+
+            // opened-before
+            corporations.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(CorporationResource.class).path("opened-before").build()).rel("opened-before").build() );
+
+            // opened-between
+            corporations.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(CorporationResource.class).path("opened-between").build()).rel("opened-between").build() );
+
+            // located
+            corporations.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(CorporationResource.class).path("located").build()).rel("located").build() );
 
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
@@ -405,7 +624,7 @@ public class CorporationResource {
         public Response getCorporationProviders(@PathParam("corporationId") Long corporationId,
                                                 @BeanParam ProviderBeanParam params) throws ForbiddenException, NotFoundException {
 
-            if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            RESTToolkit.authorizeAccessToWebService(params);
             logger.log(Level.INFO, "returning providers for given corporation using CorporationResource.ProviderResource.getCorporationProviders(corporationId) method of REST API");
 
             // find corporation entity for which to get associated providers
@@ -414,9 +633,7 @@ public class CorporationResource {
                 throw new NotFoundException("Could not find corporation for id " + corporationId + ".");
 
             // calculate number of filter query params
-            Integer noOfParams = params.getUriInfo().getQueryParameters().size();
-            if(params.getOffset() != null) noOfParams -= 1;
-            if(params.getLimit() != null) noOfParams -= 1;
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
 
             ResourceList<Provider> providers = null;
 
@@ -445,6 +662,9 @@ public class CorporationResource {
             return Response.status(Response.Status.OK).entity(providers).build();
         }
 
+        /**
+         *
+         */
         // TODO eagerly all
 
     }
