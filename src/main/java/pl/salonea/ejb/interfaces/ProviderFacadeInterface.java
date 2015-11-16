@@ -18,6 +18,8 @@ public interface ProviderFacadeInterface extends AbstractFacadeInterface<Provide
     Provider findByIdEagerly(Long providerId);
     List<Provider> findByCorporation(Corporation corporation);
     List<Provider> findByCorporation(Corporation corporation, Integer start, Integer limit);
+    List<Provider> findByCorporationEagerly(Corporation corporation);
+    List<Provider> findByCorporationEagerly(Corporation corporation, Integer start, Integer limit);
     List<Provider> findByType(ProviderType providerType);
     List<Provider> findByType(ProviderType providerType, Integer start, Integer limit);
     List<Provider> findByIndustry(Industry industry);

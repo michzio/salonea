@@ -95,6 +95,23 @@ public class ProviderFacade extends AbstractFacade<Provider> implements Provider
     }
 
     @Override
+    public List<Provider> findByCorporationEagerly(Corporation corporation) {
+        return findByCorporationEagerly(corporation, null, null);
+    }
+
+    @Override
+    public List<Provider> findByCorporationEagerly(Corporation corporation, Integer start, Integer limit) {
+
+        TypedQuery<Provider> query = getEntityManager().createNamedQuery(Provider.FIND_BY_CORPORATION_EAGERLY, Provider.class);
+        query.setParameter("corporation", corporation);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
     public List<Provider> findByType(ProviderType providerType) {
         return findByType(providerType, null, null);
     }

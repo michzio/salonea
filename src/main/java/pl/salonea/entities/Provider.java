@@ -27,6 +27,8 @@ import java.util.Set;
         @NamedQuery(name = Provider.FIND_BY_ID_EAGERLY, query = "SELECT p FROM Provider p LEFT JOIN FETCH p.industries LEFT JOIN FETCH p.acceptedPaymentMethods LEFT JOIN FETCH p.servicePoints " +
                 "LEFT JOIN FETCH p.suppliedServiceOffers LEFT JOIN FETCH p.receivedRatings WHERE p.userId = :providerId" ),
         @NamedQuery(name = Provider.FIND_BY_CORPORATION, query = "SELECT p FROM Provider p WHERE p.corporation = :corporation"),
+        @NamedQuery(name = Provider.FIND_BY_CORPORATION_EAGERLY, query = "SELECT DISTINCT p FROM Provider p LEFT JOIN FETCH p.industries LEFT JOIN FETCH p.acceptedPaymentMethods LEFT JOIN FETCH p.servicePoints " +
+                "LEFT JOIN FETCH p.suppliedServiceOffers LEFT JOIN FETCH p.receivedRatings WHERE p.corporation = :corporation"),
         @NamedQuery(name = Provider.FIND_BY_TYPE, query = "SELECT p FROM Provider p WHERE p.type = :provider_type"),
         @NamedQuery(name = Provider.FIND_BY_INDUSTRY, query = "SELECT p FROM Provider p WHERE :industry MEMBER OF p.industries"),
         @NamedQuery(name = Provider.FIND_BY_INDUSTRY_EAGERLY, query = "SELECT DISTINCT p FROM Provider p LEFT JOIN FETCH p.industries i LEFT JOIN FETCH p.acceptedPaymentMethods LEFT JOIN FETCH p.servicePoints " +
@@ -47,6 +49,7 @@ public class Provider extends Firm {
     public static final String FIND_ALL_EAGERLY = "Provider.findAllEagerly";
     public static final String FIND_BY_ID_EAGERLY = "Provider.findByIdEagerly";
     public static final String FIND_BY_CORPORATION = "Provider.findByCorporation";
+    public static final String FIND_BY_CORPORATION_EAGERLY = "Provider.findByCorporationEagerly";
     public static final String FIND_BY_TYPE = "Provider.findByType";
     public static final String FIND_BY_INDUSTRY = "Provider.findByIndustry";
     public static final String FIND_BY_INDUSTRY_EAGERLY = "Provider.findByIndustryEagerly";

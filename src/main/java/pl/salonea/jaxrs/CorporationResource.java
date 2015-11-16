@@ -23,6 +23,8 @@ import pl.salonea.jaxrs.utils.hateoas.Link;
 import pl.salonea.jaxrs.wrappers.CorporationWrapper;
 
 import pl.salonea.jaxrs.exceptions.BadRequestException;
+import pl.salonea.jaxrs.wrappers.ProviderWrapper;
+
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
@@ -599,11 +601,19 @@ public class CorporationResource {
             corporation.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
                         .path(CorporationResource.class)
                         .path(providersMethod)
-                        .resolveTemplate("corporationId",corporation.getCorporationId().toString())
+                        .resolveTemplate("corporationId", corporation.getCorporationId().toString())
                         .build())
                         .rel("providers").build());
 
-            // providers-eagerly TODO
+            // providers-eagerly
+            Method providersEagerlyMethod = CorporationResource.ProviderResource.class.getMethod("getCorporationProvidersEagerly", Long.class, ProviderBeanParam.class);
+            corporation.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                        .path(CorporationResource.class)
+                        .path(providersMethod)
+                        .path(providersEagerlyMethod)
+                        .resolveTemplate("corporationId", corporation.getCorporationId().toString())
+                        .build())
+                        .rel("providers-eagerly").build());
 
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
@@ -663,9 +673,54 @@ public class CorporationResource {
         }
 
         /**
-         *
+         * Method returns subset of Provider entities for given Corporation fetching it eagerly
+         * The corporation id is passed through path param.
          */
-        // TODO eagerly all
+        @GET
+        @Path("/eagerly")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getCorporationProvidersEagerly( @PathParam("corporationId") Long corporationId,
+                                                        @BeanParam ProviderBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning providers eagerly for given corporation using CorporationResource.ProviderResource.getCorporationProvidersEagerly(corporationId) method of REST API");
+
+            // find corporation entity for which to get associated providers
+            Corporation corporation = corporationFacade.find(corporationId);
+            if(corporation == null)
+                throw new NotFoundException("Could not find corporation for id " + corporationId + ".");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<ProviderWrapper> providers = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Corporation> corporations = new ArrayList<>();
+                corporations.add(corporation);
+
+                // get providers eagerly for given corporation filtered by given params
+                providers = new ResourceList<>(
+                        ProviderWrapper.wrap(
+                                providerFacade.findByMultipleCriteriaEagerly(corporations, params.getProviderTypes(), params.getIndustries(), params.getPaymentMethods(),
+                                        params.getServices(), params.getRated(), params.getMinAvgRating(), params.getMaxAvgRating(), params.getRatingClients(),
+                                        params.getProviderName(), params.getDescription(), params.getOffset(), params.getLimit())
+                        )
+                );
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get providers eagerly for given corporation without filtering
+                providers = new ResourceList<>( ProviderWrapper.wrap(providerFacade.findByCorporationEagerly(corporation, params.getOffset(), params.getLimit())) );
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.ProviderResource.populateWithHATEOASLinks(providers, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(providers).build();
+        }
 
     }
 
