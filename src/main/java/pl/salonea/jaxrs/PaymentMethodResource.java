@@ -2,11 +2,14 @@ package pl.salonea.jaxrs;
 
 import pl.salonea.ejb.stateless.PaymentMethodFacade;
 import pl.salonea.ejb.stateless.ProviderFacade;
+import pl.salonea.entities.Industry;
 import pl.salonea.entities.PaymentMethod;
 import pl.salonea.entities.Provider;
+import pl.salonea.jaxrs.bean_params.PaymentMethodBeanParam;
 import pl.salonea.jaxrs.bean_params.ProviderBeanParam;
 import pl.salonea.jaxrs.exceptions.NotFoundException;
 import pl.salonea.jaxrs.exceptions.ForbiddenException;
+import pl.salonea.jaxrs.utils.RESTToolkit;
 import pl.salonea.jaxrs.utils.ResourceList;
 import pl.salonea.jaxrs.utils.hateoas.Link;
 import pl.salonea.jaxrs.wrappers.PaymentMethodWrapper;
@@ -36,6 +39,46 @@ public class PaymentMethodResource {
     @Inject
     private ProviderFacade providerFacade;
 
+    /**
+     * Method returns all Payment Method resources
+     * They can be additionally filtered or paginated by @QueryParams
+     */
+    @GET
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getPaymentMethods( @BeanParam PaymentMethodBeanParam params ) throws ForbiddenException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning all Payment Methods by executing PaymentMethodResource.getPaymentMethods() method of REST API");
+
+        Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+        ResourceList<PaymentMethod> paymentMethods = null;
+
+        if(noOfParams > 0) {
+            logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+            // get all payment methods filtered by criteria provided in query params
+            paymentMethods = new ResourceList<>(
+                    paymentMethodFacade.findByMultipleCriteria(params.getProviders(), params.getName(), params.getDescription(), params.getInAdvance(), params.getOffset(), params.getLimit())
+            );
+
+        } else {
+            logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+            // get all payment methods without filtering (eventually paginated)
+            paymentMethods = new ResourceList<>( paymentMethodFacade.findAll(params.getOffset(), params.getLimit()) );
+
+        }
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        PaymentMethodResource.populateWithHATEOASLinks(paymentMethods, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(paymentMethods).build();
+    }
+
+    /**
+     *
+     */
     @GET
     @Path("/count")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
@@ -172,5 +215,7 @@ public class PaymentMethodResource {
 
             return Response.status(Status.OK).entity(providers).build();
         }
+
+        // TODO eagerly
     }
 }
