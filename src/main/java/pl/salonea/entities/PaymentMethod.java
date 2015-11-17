@@ -12,21 +12,25 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlTransient;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Entity
 @Table(name = "payment_method")
 @Access(AccessType.PROPERTY)
 @NamedQueries({
-        @NamedQuery(name = PaymentMethod.FIND_ALL_EAGERLY, query = "SELECT pm FROM PaymentMethod pm LEFT JOIN FETCH pm.acceptingProviders"),
+        @NamedQuery(name = PaymentMethod.FIND_ALL_EAGERLY, query = "SELECT DISTINCT pm FROM PaymentMethod pm LEFT JOIN FETCH pm.acceptingProviders"),
         @NamedQuery(name = PaymentMethod.FIND_BY_ID_EAGERLY, query = "SELECT pm FROM PaymentMethod pm LEFT JOIN FETCH pm.acceptingProviders WHERE pm.id = :paymentMethodId"),
         @NamedQuery(name = PaymentMethod.FIND_FOR_NAME, query = "SELECT pm FROM PaymentMethod pm WHERE pm.name = :name"),
         @NamedQuery(name = PaymentMethod.FIND_BY_NAME, query = "SELECT pm FROM PaymentMethod pm WHERE pm.name LIKE :name"),
+        @NamedQuery(name = PaymentMethod.FIND_BY_DESCRIPTION, query = "SELECT pm FROM PaymentMethod pm WHERE pm.description LIKE :description"),
+        @NamedQuery(name = PaymentMethod.FIND_BY_KEYWORD, query = "SELECT pm FROM PaymentMethod pm WHERE pm.name LIKE :keyword OR pm.description LIKE :keyword"),
         @NamedQuery(name = PaymentMethod.FIND_IN_ADVANCE, query = "SELECT pm FROM PaymentMethod pm WHERE pm.inAdvance = :in_advance"),
         @NamedQuery(name = PaymentMethod.FIND_BY_NAME_AND_IN_ADVANCE, query = "SELECT pm FROM PaymentMethod pm WHERE pm.name LIKE :name AND pm.inAdvance = :in_advance"),
         @NamedQuery(name = PaymentMethod.FIND_BY_PROVIDER, query = "SELECT pm FROM PaymentMethod pm WHERE :provider MEMBER OF pm.acceptingProviders"),
-        @NamedQuery(name = PaymentMethod.FIND_BY_PROVIDER_EAGERLY, query = "SELECT pm FROM PaymentMethod pm INNER JOIN FETCH pm.acceptingProviders p WHERE p = :provider")
+        @NamedQuery(name = PaymentMethod.FIND_BY_PROVIDER_EAGERLY, query = "SELECT DISTINCT pm FROM PaymentMethod pm INNER JOIN FETCH pm.acceptingProviders p WHERE p = :provider")
 })
 public class PaymentMethod implements Serializable {
 
@@ -34,6 +38,8 @@ public class PaymentMethod implements Serializable {
     public static final String FIND_BY_ID_EAGERLY = "PaymentMethod.findByIdEagerly";
     public static final String FIND_FOR_NAME = "PaymentMethod.findForName";
     public static final String FIND_BY_NAME = "PaymentMethod.findByName";
+    public static final String FIND_BY_DESCRIPTION = "PaymentMethod.findByDescription";
+    public static final String FIND_BY_KEYWORD = "PaymentMethod.findByKeyword";
     public static final String FIND_IN_ADVANCE = "PaymentMethod.findInAdvance";
     public static final String FIND_BY_NAME_AND_IN_ADVANCE = "PaymentMethod.findByNameAndInAdvance";
     public static final String FIND_BY_PROVIDER = "PaymentMethod.findByProvider";
@@ -47,7 +53,7 @@ public class PaymentMethod implements Serializable {
     private Set<Provider> acceptingProviders = new HashSet<>();
 
     // HATEOAS support for RESTFul web service in JAX-RS
-    private Set<Link> links = new HashSet<>();
+    private List<Link> links = new ArrayList<>();
 
     /* constructors */
 
@@ -144,11 +150,11 @@ public class PaymentMethod implements Serializable {
     @XmlElementWrapper(name = "links")
     @XmlElement(name = "link")
     @Transient
-    public Set<Link> getLinks() {
+    public List<Link> getLinks() {
         return links;
     }
 
-    public void setLinks(Set<Link> links) {
+    public void setLinks(List<Link> links) {
         this.links = links;
     }
 }

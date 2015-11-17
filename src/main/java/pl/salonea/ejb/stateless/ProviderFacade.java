@@ -180,6 +180,23 @@ public class ProviderFacade extends AbstractFacade<Provider> implements Provider
     }
 
     @Override
+    public List<Provider> findByPaymentMethodEagerly(PaymentMethod paymentMethod) {
+        return findByPaymentMethodEagerly(paymentMethod, null, null);
+    }
+
+    @Override
+    public List<Provider> findByPaymentMethodEagerly(PaymentMethod paymentMethod, Integer start, Integer limit) {
+
+        TypedQuery<Provider> query = getEntityManager().createNamedQuery(Provider.FIND_BY_PAYMENT_METHOD_EAGERLY, Provider.class);
+        query.setParameter("payment_method", paymentMethod);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
     public List<Provider> findBySuppliedService(Service service) {
         return findBySuppliedService(service, null, null);
     }

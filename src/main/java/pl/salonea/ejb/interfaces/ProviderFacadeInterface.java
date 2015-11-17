@@ -28,6 +28,8 @@ public interface ProviderFacadeInterface extends AbstractFacadeInterface<Provide
     List<Provider> findByIndustryEagerly(Industry industry, Integer start, Integer limit);
     List<Provider> findByPaymentMethod(PaymentMethod paymentMethod);
     List<Provider> findByPaymentMethod(PaymentMethod paymentMethod, Integer start, Integer limit);
+    List<Provider> findByPaymentMethodEagerly(PaymentMethod paymentMethod);
+    List<Provider> findByPaymentMethodEagerly(PaymentMethod paymentMethod, Integer start, Integer limit);
     List<Provider> findBySuppliedService(Service service);
     List<Provider> findBySuppliedService(Service service, Integer start, Integer limit);
     List<Provider> findRated();

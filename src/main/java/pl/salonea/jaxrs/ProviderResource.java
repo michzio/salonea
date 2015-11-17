@@ -604,6 +604,16 @@ public class ProviderResource {
                     .build())
                     .rel("payment-methods").build());
 
+            // payment-methods eagerly relationship
+            Method paymentMethodsEagerlyMethod = ProviderResource.PaymentMethodResource.class.getMethod("getProviderPaymentMethodsEagerly", Long.class, PaymentMethodBeanParam.class);
+            provider.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ProviderResource.class)
+                    .path(paymentMethodsMethod)
+                    .path(paymentMethodsEagerlyMethod)
+                    .resolveTemplate("userId", provider.getUserId().toString())
+                    .build())
+                    .rel("payment-methods-eagerly").build());
+
             // service-points relationship
             Method servicePointsMethod = ProviderResource.class.getMethod("getServicePointResource");
             provider.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()

@@ -37,6 +37,19 @@ public class PaymentMethodFacade extends AbstractFacade<PaymentMethod> implement
 
 
     @Override
+    public PaymentMethod update(PaymentMethod paymentMethod, Boolean retainTransientFields) {
+
+        if (retainTransientFields) {
+            // keep current collection attributes of resource (and other marked @XmlTransient)
+            PaymentMethod currentPaymentMethod = findByIdEagerly(paymentMethod.getId());
+            if (currentPaymentMethod != null) {
+                paymentMethod.setAcceptingProviders(currentPaymentMethod.getAcceptingProviders());
+            }
+        }
+        return update(paymentMethod);
+    }
+
+    @Override
     public List<PaymentMethod> findAllEagerly() {
         return findAllEagerly(null, null);
     }
@@ -53,7 +66,7 @@ public class PaymentMethodFacade extends AbstractFacade<PaymentMethod> implement
     }
 
     @Override
-    public PaymentMethod findByIdEagerly(Long paymentMethodId) {
+    public PaymentMethod findByIdEagerly(Integer paymentMethodId) {
 
         TypedQuery<PaymentMethod> query = getEntityManager().createNamedQuery(PaymentMethod.FIND_BY_ID_EAGERLY, PaymentMethod.class);
         query.setParameter("paymentMethodId", paymentMethodId);
@@ -82,6 +95,40 @@ public class PaymentMethodFacade extends AbstractFacade<PaymentMethod> implement
 
         TypedQuery<PaymentMethod> query = getEntityManager().createNamedQuery(PaymentMethod.FIND_BY_NAME, PaymentMethod.class);
         query.setParameter("name", "%" + name + "%");
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
+    public List<PaymentMethod> findByDescription(String description) {
+        return findByDescription(description, null, null);
+    }
+
+    @Override
+    public List<PaymentMethod> findByDescription(String description, Integer start, Integer limit) {
+
+        TypedQuery<PaymentMethod> query = getEntityManager().createNamedQuery(PaymentMethod.FIND_BY_DESCRIPTION, PaymentMethod.class);
+        query.setParameter("description", "%" + description + "%");
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
+    public List<PaymentMethod> findByKeyword(String keyword) {
+        return findByKeyword(keyword, null, null);
+    }
+
+    @Override
+    public List<PaymentMethod> findByKeyword(String keyword, Integer start, Integer limit) {
+
+        TypedQuery<PaymentMethod> query = getEntityManager().createNamedQuery(PaymentMethod.FIND_BY_KEYWORD, PaymentMethod.class);
+        query.setParameter("keyword", "%" + keyword + "%");
         if(start != null && limit != null) {
             query.setFirstResult(start);
             query.setMaxResults(limit);

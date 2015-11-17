@@ -11,12 +11,17 @@ import java.util.List;
 public interface PaymentMethodFacadeInterface extends AbstractFacadeInterface<PaymentMethod> {
 
     // concrete interface
+    PaymentMethod update(PaymentMethod paymentMethod, Boolean retainTransientFields);
     List<PaymentMethod> findAllEagerly();
     List<PaymentMethod> findAllEagerly(Integer start, Integer limit);
-    PaymentMethod findByIdEagerly(Long paymentMethodId);
+    PaymentMethod findByIdEagerly(Integer paymentMethodId);
     PaymentMethod findForName(String name);
     List<PaymentMethod> findByName(String name);
     List<PaymentMethod> findByName(String name, Integer start, Integer limit);
+    List<PaymentMethod> findByDescription(String description);
+    List<PaymentMethod> findByDescription(String description, Integer start, Integer limit);
+    List<PaymentMethod> findByKeyword(String keyword);
+    List<PaymentMethod> findByKeyword(String keyword, Integer start, Integer limit);
     List<PaymentMethod> findInAdvance(Boolean inAdvance);
     List<PaymentMethod> findInAdvance(Boolean inAdvance, Integer start, Integer limit);
     List<PaymentMethod> findByNameAndInAdvance(String name, Boolean inAdvance);

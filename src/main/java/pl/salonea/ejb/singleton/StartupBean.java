@@ -90,7 +90,7 @@ public class StartupBean {
         populateProviders();
         populateClients();
         populateCreditCards();
-
+        populatePaymentMethods();
     }
 
     private void populateUserAccounts() {
@@ -217,6 +217,7 @@ public class StartupBean {
         provider3.setCorporation(corporation2);
 
         PaymentMethod cash = new PaymentMethod("cash", false);
+        cash.setDescription("This method enables to pay in cash after service.");
         provider1.getAcceptedPaymentMethods().add(cash);
         provider4.getAcceptedPaymentMethods().add(cash);
         cash.getAcceptingProviders().add(provider1);
@@ -333,6 +334,23 @@ public class StartupBean {
             cardFacade.create(card3);
             cardFacade.create(card4);
         }
+    }
+
+    private void populatePaymentMethods() {
+
+        PaymentMethod creditCardInAdvance = new PaymentMethod("Credit Card", true);
+        creditCardInAdvance.setDescription("Paying by credit card via internet in advance.");
+        PaymentMethod creditCardInTerminal = new PaymentMethod("Credit Card in Terminal", false);
+        creditCardInTerminal.setDescription("Paying by credit card in terminal after service on spot.");
+        PaymentMethod bankTransfer = new PaymentMethod("Bank Transfer", true);
+        bankTransfer.setDescription("Bank Transfer in advance");
+        PaymentMethod transactionalSystem = new PaymentMethod("Transactional System", true);
+        transactionalSystem.setDescription("Paying by transactional system provided by third party company.");
+
+        paymentMethodFacade.create(creditCardInAdvance);
+        paymentMethodFacade.create(creditCardInTerminal);
+        paymentMethodFacade.create(bankTransfer);
+        paymentMethodFacade.create(transactionalSystem);
     }
 
 
