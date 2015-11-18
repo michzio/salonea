@@ -23,6 +23,11 @@ import java.lang.reflect.Method;
 @Path("/service-points")
 public class ServicePointResource {
 
+
+
+    /**
+     * Method returns number of Service Point entities in database
+     */
     @GET
     @Path("/count")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
