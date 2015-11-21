@@ -623,6 +623,57 @@ public class ProviderResource {
                     .build())
                     .rel("service-points").build());
 
+            // service-points eagerly link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}
+            Method servicePointsEagerlyMethod = ProviderResource.ServicePointResource.class.getMethod("getProviderServicePointsEagerly", Long.class, ServicePointBeanParam.class);
+            provider.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ProviderResource.class)
+                    .path(servicePointsMethod)
+                    .path(servicePointsEagerlyMethod)
+                    .resolveTemplate("userId", provider.getUserId().toString())
+                    .build())
+                    .rel("service-points-eagerly").build());
+
+
+            // service-points count link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/count
+            Method countServicePointsByProviderMethod = ProviderResource.ServicePointResource.class.getMethod("countServicePointsByProvider", Long.class, GenericBeanParam.class);
+            provider.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ProviderResource.class)
+                    .path(servicePointsMethod)
+                    .path(countServicePointsByProviderMethod)
+                    .resolveTemplate("userId", provider.getUserId().toString())
+                    .build())
+                    .rel("service-points-count").build());
+
+            // service-points address link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/address
+            Method addressMethod = ProviderResource.ServicePointResource.class.getMethod("getProviderServicePointsByAddress", Long.class, AddressBeanParam.class);
+            provider.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ProviderResource.class)
+                    .path(servicePointsMethod)
+                    .path(addressMethod)
+                    .resolveTemplate("userId", provider.getUserId().toString())
+                    .build())
+                    .rel("service-points-address").build());
+
+            // service-points coordinates square link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/coordinates-square
+            Method coordinatesSquareMethod = ProviderResource.ServicePointResource.class.getMethod("getProviderServicePointsByCoordinatesSquare", Long.class, CoordinatesSquareBeanParam.class);
+            provider.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ProviderResource.class)
+                    .path(servicePointsMethod)
+                    .path(coordinatesSquareMethod)
+                    .resolveTemplate("userId", provider.getUserId().toString())
+                    .build())
+                    .rel("service-points-coordinates-square").build());
+
+            // service-points coordinates circle link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/coordinates-circle
+            Method coordinatesCircleMethod = ProviderResource.ServicePointResource.class.getMethod("getProviderServicePointsByCoordinatesCircle", Long.class, CoordinatesCircleBeanParam.class);
+            provider.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ProviderResource.class)
+                    .path(servicePointsMethod)
+                    .path(coordinatesCircleMethod)
+                    .resolveTemplate("userId", provider.getUserId().toString())
+                    .build())
+                    .rel("service-points-coordinates-circle").build());
+
             // provider-services
             Method providerServicesMethod = ProviderResource.class.getMethod("getProviderServiceResource");
             provider.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
@@ -1254,10 +1305,14 @@ public class ProviderResource {
         @Path("/address")
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
         public Response getProviderServicePointsByAddress(@PathParam("userId") Long userId,
-                                                          @BeanParam AddressBeanParam params) throws ForbiddenException, NotFoundException {
+                                                          @BeanParam AddressBeanParam params) throws ForbiddenException, NotFoundException, BadRequestException {
 
             if (params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
             logger.log(Level.INFO, "returning service points for given provider and address related params using ProviderResource.ServicePointResource.getProviderServicePointsByAddress(userId, address) method of REST API");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+            if(noOfParams < 1)
+                throw new BadRequestException("There is no location related query param in request.");
 
             // find provider entity for which to get associated service points
             Provider provider = providerFacade.find(userId);
