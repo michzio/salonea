@@ -200,6 +200,16 @@ public class ServiceResource {
                     .build())
                     .rel("service-points-coordinates-square").build());
 
+            // service-points coordinates circle link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/coordinates-circle
+            Method coordinatesCircleMethod = ServiceResource.ServicePointResource.class.getMethod("getServiceServicePointsByCoordinatesCircle", Integer.class, CoordinatesCircleBeanParam.class);
+            service.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ServiceResource.class)
+                    .path(servicePointsMethod)
+                    .path(coordinatesCircleMethod)
+                    .resolveTemplate("serviceId", service.getServiceId().toString())
+                    .build())
+                    .rel("service-points-coordinates-circle").build());
+
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
         }
@@ -521,6 +531,41 @@ public class ServiceResource {
             ResourceList<ServicePoint> servicePoints = new ResourceList<>(
                     servicePointFacade.findByServiceAndCoordinatesSquare(service, params.getMinLongitudeWGS84(), params.getMinLatitudeWGS84(),
                             params.getMaxLongitudeWGS84(), params.getMaxLatitudeWGS84(), params.getOffset(), params.getLimit())
+            );
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.ServicePointResource.populateWithHATEOASLinks(servicePoints, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(servicePoints).build();
+        }
+
+        /**
+         * Method returns subset of Service Point entities for given Service entity and
+         * Coordinates Circle related params. The service id is passed through path param.
+         * Coordinates Circle params are passed through query params.
+         */
+        @GET
+        @Path("/coordinates-circle")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getServiceServicePointsByCoordinatesCircle( @PathParam("serviceId") Integer serviceId,
+                                                                    @BeanParam CoordinatesCircleBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning service points for given service and coordinates circle params using " +
+                    "ServiceResource.ServicePointResource.getServiceServicePointsByCoordinatesCircle(serviceId, coordinatesCircle) method of REST API");
+
+            if (params.getLongitudeWGS84() == null || params.getLatitudeWGS84() == null || params.getRadius() == null)
+                throw new BadRequestException("All coordinates circle query params must be specified.");
+
+            // find service entity for which to get associated service points
+            Service service = serviceFacade.find(serviceId);
+            if(service == null)
+                throw new NotFoundException("Could not find service for id " + serviceId + ".");
+
+            // find service points by given criteria
+            ResourceList<ServicePoint> servicePoints = new ResourceList<>(
+                    servicePointFacade.findByServiceAndCoordinatesCircle(service, params.getLongitudeWGS84(),
+                            params.getLatitudeWGS84(), params.getRadius(), params.getOffset(), params.getLimit())
             );
 
             // result resources need to be populated with hypermedia links to enable resource discovery
