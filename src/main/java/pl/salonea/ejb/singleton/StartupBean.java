@@ -72,6 +72,10 @@ public class StartupBean {
     private EmployeeRatingFacade employeeRatingFacade;
     @Inject
     private CreditCardFacade cardFacade;
+    @Inject
+    private TermFacade termFacade;
+    @Inject
+    private TermEmployeeWorkOnFacade termEmployeeWorkOnFacade;
 
     public StartupBean() { }
 
@@ -91,6 +95,7 @@ public class StartupBean {
         populateClients();
         populateCreditCards();
         populatePaymentMethods();
+        populateEmployeeWorkOnWorkStation();
     }
 
     private void populateUserAccounts() {
@@ -351,6 +356,46 @@ public class StartupBean {
         paymentMethodFacade.create(creditCardInTerminal);
         paymentMethodFacade.create(bankTransfer);
         paymentMethodFacade.create(transactionalSystem);
+    }
+
+    private void populateEmployeeWorkOnWorkStation() {
+
+        Provider hairdressingProvider = providerFacade.find(9L);
+        Employee hairdresserEmployee = employeeFacade.find(11L);
+
+        Address hairdressingPointAddress = new Address("Mazowiecka", "160", "00-001", "Warszawa", "Mazowieckie", "Poland");
+        ServicePoint hairdressingPoint = new ServicePoint(hairdressingProvider, 1, hairdressingPointAddress);
+        hairdressingPoint.setLongitudeWGS84(21.0049911f);
+        hairdressingPoint.setLatitudeWGS84(52.2261594f);
+
+        WorkStation hairdressingChair1 = new WorkStation(hairdressingPoint, 1, WorkStationType.CHAIR);
+        WorkStation hairdressingChair2 = new WorkStation(hairdressingPoint, 2, WorkStationType.CHAIR);
+
+        servicePointFacade.create(hairdressingPoint);
+        workStationFacade.create(hairdressingChair1);
+        workStationFacade.create(hairdressingChair2);
+
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(2015, Calendar.DECEMBER, 20, 9, 0, 0);
+        Date startDate20122015 = calendar.getTime();
+        calendar.set(Calendar.HOUR_OF_DAY, 17);
+        Date endDate20122015 = calendar.getTime();
+
+        calendar.set(2016, Calendar.JANUARY, 10, 8, 0, 0);
+        Date startDate10012016 = calendar.getTime();
+        calendar.set(Calendar.HOUR_OF_DAY, 16);
+        Date endDate10012016 = calendar.getTime();
+
+        Term term20122015 = new Term(startDate20122015, endDate20122015);
+        Term term10012016 = new Term(startDate10012016, endDate10012016);
+
+        TermEmployeeWorkOn hairdresserTermOnChair1 = new TermEmployeeWorkOn(hairdresserEmployee, term20122015, hairdressingChair1);
+        TermEmployeeWorkOn hairdresserTermOnChair2 = new TermEmployeeWorkOn(hairdresserEmployee, term10012016, hairdressingChair2);
+
+        termFacade.create(term20122015);
+        termFacade.create(term10012016);
+        termEmployeeWorkOnFacade.create(hairdresserTermOnChair1);
+        termEmployeeWorkOnFacade.create(hairdresserTermOnChair2);
     }
 
 

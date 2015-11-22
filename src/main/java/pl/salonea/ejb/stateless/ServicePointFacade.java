@@ -956,7 +956,7 @@ public class ServicePointFacade extends AbstractFacade<ServicePoint> implements 
         // FROM
         Root<ServicePoint> servicePoint = criteriaQuery.from(ServicePoint.class);
         // SELECT
-        criteriaQuery.select(servicePoint);
+        criteriaQuery.select(servicePoint).distinct(true);
 
         // INNER JOIN-s
         Join<ServicePoint, Provider> provider = null;

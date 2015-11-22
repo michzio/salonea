@@ -484,7 +484,7 @@ public class ServiceResource {
 
             Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
             if(noOfParams < 1)
-                throw new pl.salonea.jaxrs.exceptions.BadRequestException("There is no address related query param in request.");
+                throw new BadRequestException("There is no address related query param in request.");
 
             // find service entity for which to get associated service points
             Service service = serviceFacade.find(serviceId);
