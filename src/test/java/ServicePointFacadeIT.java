@@ -152,7 +152,7 @@ public class ServicePointFacadeIT {
         List<Provider> providers = new ArrayList<>();
         providers.add(provider1);
         providers.add(provider2);
-        List<ServicePoint> points = pointFacade.findByMultipleCriteria(providers, null, null, null, null, null);
+        List<ServicePoint> points = pointFacade.findByMultipleCriteria(providers, null, null, null, null, null, null);
         assertTrue("There should be five Service Points for both Providers.", points.size() == 5);
 
         pointFacade.deleteByProvider(provider1);
@@ -372,15 +372,15 @@ public class ServicePointFacadeIT {
         address.setStreet("morska");
         address.setCountry("Poland");
 
-        List<ServicePoint> multiPoints = pointFacade.findByMultipleCriteria(providers, null, null, corporations, null, null, address);
+        List<ServicePoint> multiPoints = pointFacade.findByMultipleCriteria(providers, null, null, null, corporations, null, null, address);
         assertTrue("There should be found only one Service Point matching to given multiple criteria.", multiPoints.size() == 1);
         assertTrue(multiPoints.contains(point22));
 
-        List<ServicePoint> multiPoints2 = pointFacade.findByMultipleCriteria(providers, null, null, null, null, null, new CoordinatesCircle(14.0f, 53.0f, 1.0));
+        List<ServicePoint> multiPoints2 = pointFacade.findByMultipleCriteria(providers, null, null, null, null, null, null, new CoordinatesCircle(14.0f, 53.0f, 1.0));
         assertTrue("There should be found three Service Point matching to given multiple criteria.", multiPoints2.size() == 3);
         assertTrue(multiPoints2.contains(point21) && multiPoints2.contains(point22) && multiPoints2.contains(point32));
 
-        List<ServicePoint> multiPoints3 = pointFacade.findByMultipleCriteria(providers, null, null, null, null, null, new CoordinatesSquare(14.5f, 53.0f, 15.5f, 54.0f));
+        List<ServicePoint> multiPoints3 = pointFacade.findByMultipleCriteria(providers, null, null, null, null, null, null, new CoordinatesSquare(14.5f, 53.0f, 15.5f, 54.0f));
         assertTrue("There should be found two Service Point matching to given multiple criteria.", multiPoints3.size() == 2);
         assertTrue(multiPoints3.contains(point22) && multiPoints3.contains(point31));
 

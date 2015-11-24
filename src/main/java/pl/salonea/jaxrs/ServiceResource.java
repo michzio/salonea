@@ -12,6 +12,7 @@ import pl.salonea.jaxrs.utils.RESTToolkit;
 import pl.salonea.jaxrs.utils.ResourceList;
 import pl.salonea.jaxrs.utils.ResponseWrapper;
 import pl.salonea.jaxrs.utils.hateoas.Link;
+import pl.salonea.jaxrs.wrappers.ProviderWrapper;
 import pl.salonea.jaxrs.wrappers.ServicePointWrapper;
 import pl.salonea.jaxrs.wrappers.ServiceWrapper;
 
@@ -149,7 +150,14 @@ public class ServiceResource {
                     .rel("providers").build());
 
             // providers eagerly relationship
-            // TODO
+            Method providersEagerlyMethod = ServiceResource.ProviderResource.class.getMethod("getServiceProvidersEagerly", Integer.class, ProviderBeanParam.class);
+            service.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ServiceResource.class)
+                    .path(providersMethod)
+                    .path(providersEagerlyMethod)
+                    .resolveTemplate("serviceId", service.getServiceId().toString())
+                    .build())
+                    .rel("providers-eagerly").build());
 
             // service-points relationship
             Method servicePointsMethod = ServiceResource.class.getMethod("getServicePointResource");
@@ -236,10 +244,7 @@ public class ServiceResource {
             if(service == null)
                 throw new NotFoundException("Could not find service for id " + serviceId + ".");
 
-            // calculate number of filter query params
-            Integer noOfParams = params.getUriInfo().getQueryParameters().size();
-            if(params.getOffset() != null) noOfParams -= 1;
-            if(params.getLimit() != null) noOfParams -= 1;
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
 
             ResourceList<Provider> providers = null;
 
@@ -259,7 +264,7 @@ public class ServiceResource {
             } else {
                 logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
 
-                // get providers for given service without filtering
+                // get providers for given service without filtering (eventually paginated)
                 providers = new ResourceList<>( providerFacade.findBySuppliedService(service, params.getOffset(), params.getLimit()) );
             }
 
@@ -269,7 +274,52 @@ public class ServiceResource {
             return Response.status(Status.OK).entity(providers).build();
         }
 
-        // TODO Providers eagerly
+        @GET
+        @Path("/eagerly")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getServiceProvidersEagerly( @PathParam("serviceId") Integer serviceId,
+                                                    @BeanParam ProviderBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning subset of Provider entities for given Service eagerly using ServiceResource.ProviderResource.getServiceProvidersEagerly(serviceId) method of REST API");
+
+            // find service entity for which to get associated providers
+            Service service = serviceFacade.find(serviceId);
+            if(service == null)
+                throw new NotFoundException("Could not find service for id " + serviceId + ".");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<ProviderWrapper> providers = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Service> services = new ArrayList<>();
+                services.add(service);
+
+                // get providers for given service eagerly filtered by given params.
+                providers = new ResourceList<>(
+                        ProviderWrapper.wrap(
+                                providerFacade.findByMultipleCriteriaEagerly(params.getCorporations(), params.getProviderTypes(), params.getIndustries(), params.getPaymentMethods(),
+                                        services, params.getRated(), params.getMinAvgRating(), params.getMaxAvgRating(), params.getRatingClients(),
+                                        params.getProviderName(), params.getDescription(), params.getOffset(), params.getLimit())
+                        )
+                );
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get providers for given service eagerly without filtering (eventually paginated)
+                providers = new ResourceList<>( ProviderWrapper.wrap(providerFacade.findBySuppliedServiceEagerly(service, params.getOffset(), params.getLimit())) );
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.ProviderResource.populateWithHATEOASLinks(providers, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(providers).build();
+
+        }
+
     }
 
     public class ServicePointResource {
@@ -310,7 +360,7 @@ public class ServiceResource {
                         throw new BadRequestException("Query params cannot include address params and coordinates square params or coordinates circle params at the same time.");
                     // only address params
                     servicePoints = new ResourceList<>(
-                            servicePointFacade.findByMultipleCriteria(params.getProviders(), services, params.getEmployees(),
+                            servicePointFacade.findByMultipleCriteria(params.getProviders(), services, params.getProviderServices(), params.getEmployees(),
                                     params.getCorporations(), params.getIndustries(), params.getServiceCategories(), params.getAddress(),
                                     params.getOffset(), params.getLimit())
                     );
@@ -320,7 +370,7 @@ public class ServiceResource {
                         throw new BadRequestException("Query params cannot include coordinates square params and address params or coordinates circle params at the same time.");
                     // only coordinates square params
                     servicePoints = new ResourceList<>(
-                            servicePointFacade.findByMultipleCriteria(params.getProviders(), services, params.getEmployees(),
+                            servicePointFacade.findByMultipleCriteria(params.getProviders(), services, params.getProviderServices(), params.getEmployees(),
                                     params.getCorporations(), params.getIndustries(), params.getServiceCategories(), params.getCoordinatesSquare(),
                                     params.getOffset(), params.getLimit())
                     );
@@ -330,7 +380,7 @@ public class ServiceResource {
                         throw new BadRequestException("Query params cannot include coordinates circle params and address params or coordinates square params at the same time.");
                     // only coordinates circle params
                     servicePoints = new ResourceList<>(
-                            servicePointFacade.findByMultipleCriteria(params.getProviders(), services, params.getEmployees(),
+                            servicePointFacade.findByMultipleCriteria(params.getProviders(), services, params.getProviderServices(), params.getEmployees(),
                                     params.getCorporations(), params.getIndustries(), params.getServiceCategories(), params.getCoordinatesCircle(),
                                     params.getOffset(), params.getLimit())
                     );
@@ -338,7 +388,7 @@ public class ServiceResource {
                 } else {
                     // no location params
                     servicePoints = new ResourceList<>(
-                            servicePointFacade.findByMultipleCriteria(params.getProviders(), services, params.getEmployees(),
+                            servicePointFacade.findByMultipleCriteria(params.getProviders(), services, params.getProviderServices(), params.getEmployees(),
                                     params.getCorporations(), params.getIndustries(), params.getServiceCategories(), params.getOffset(), params.getLimit())
                     );
                 }
@@ -386,7 +436,7 @@ public class ServiceResource {
                     // only address params
                     servicePoints = new ResourceList<>(
                             ServicePointWrapper.wrap(
-                                    servicePointFacade.findByMultipleCriteriaEagerly(params.getProviders(), services, params.getEmployees(),
+                                    servicePointFacade.findByMultipleCriteriaEagerly(params.getProviders(), services, params.getProviderServices(), params.getEmployees(),
                                             params.getCorporations(), params.getIndustries(), params.getServiceCategories(), params.getAddress(),
                                             params.getOffset(), params.getLimit())
                             )
@@ -397,7 +447,7 @@ public class ServiceResource {
                     // only coordinates square params
                     servicePoints = new ResourceList<>(
                             ServicePointWrapper.wrap(
-                                    servicePointFacade.findByMultipleCriteriaEagerly(params.getProviders(), services, params.getEmployees(),
+                                    servicePointFacade.findByMultipleCriteriaEagerly(params.getProviders(), services, params.getProviderServices(), params.getEmployees(),
                                             params.getCorporations(), params.getIndustries(), params.getServiceCategories(), params.getCoordinatesSquare(),
                                             params.getOffset(), params.getLimit())
                             )
@@ -409,7 +459,7 @@ public class ServiceResource {
                     // only coordinates circle params
                     servicePoints = new ResourceList<>(
                             ServicePointWrapper.wrap(
-                                    servicePointFacade.findByMultipleCriteriaEagerly(params.getProviders(), services, params.getEmployees(),
+                                    servicePointFacade.findByMultipleCriteriaEagerly(params.getProviders(), services, params.getProviderServices(), params.getEmployees(),
                                             params.getCorporations(), params.getIndustries(), params.getServiceCategories(), params.getCoordinatesCircle(),
                                             params.getOffset(), params.getLimit())
                             )
@@ -419,7 +469,7 @@ public class ServiceResource {
                     // no location params
                     servicePoints = new ResourceList<>(
                             ServicePointWrapper.wrap(
-                                    servicePointFacade.findByMultipleCriteriaEagerly(params.getProviders(), services, params.getEmployees(),
+                                    servicePointFacade.findByMultipleCriteriaEagerly(params.getProviders(), services, params.getProviderServices(), params.getEmployees(),
                                             params.getCorporations(), params.getIndustries(), params.getServiceCategories(), params.getOffset(), params.getLimit())
                             )
                     );

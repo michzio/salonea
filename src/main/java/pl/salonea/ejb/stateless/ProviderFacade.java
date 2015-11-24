@@ -214,6 +214,23 @@ public class ProviderFacade extends AbstractFacade<Provider> implements Provider
     }
 
     @Override
+    public List<Provider> findBySuppliedServiceEagerly(Service service) {
+        return findBySuppliedServiceEagerly(service, null, null);
+    }
+
+    @Override
+    public List<Provider> findBySuppliedServiceEagerly(Service service, Integer start, Integer limit) {
+
+        TypedQuery<Provider> query = getEntityManager().createNamedQuery(Provider.FIND_BY_SUPPLIED_SERVICE_EAGERLY, Provider.class);
+        query.setParameter("service", service);
+        if (start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
     public List<Provider> findRated() {
         return findRated(null, null);
     }

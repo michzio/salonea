@@ -3,6 +3,7 @@ package pl.salonea.jaxrs.bean_params;
 import pl.salonea.ejb.stateless.*;
 import pl.salonea.embeddables.Address;
 import pl.salonea.entities.*;
+import pl.salonea.entities.idclass.ProviderServiceId;
 import pl.salonea.jaxrs.exceptions.NotFoundException;
 import pl.salonea.utils.CoordinatesCircle;
 import pl.salonea.utils.CoordinatesSquare;
@@ -20,6 +21,7 @@ public class ServicePointBeanParam extends PaginationBeanParam {
 
     private @QueryParam("providerId") List<Long> providerIds;
     private @QueryParam("serviceId") List<Integer> serviceIds;
+    private @QueryParam("providerServiceId") List<ProviderServiceId> providerServiceIds; // {providerId}+{serviceId} composite PK
     private @QueryParam("employeeId") List<Long> employeeIds;
     private @QueryParam("corporationId") List<Long> corporationIds;
     private @QueryParam("industryId") List<Long> industryIds;
@@ -30,21 +32,18 @@ public class ServicePointBeanParam extends PaginationBeanParam {
 
     @Inject
     private ProviderFacade providerFacade;
-
     @Inject
     private ServiceFacade serviceFacade;
-
     @Inject
     private EmployeeFacade employeeFacade;
-
     @Inject
     private CorporationFacade corporationFacade;
-
     @Inject
     private IndustryFacade industryFacade;
-
     @Inject
     private ServiceCategoryFacade serviceCategoryFacade;
+    @Inject
+    private ProviderServiceFacade providerServiceFacade;
 
     public List<Long> getProviderIds() {
         return providerIds;
@@ -76,6 +75,23 @@ public class ServicePointBeanParam extends PaginationBeanParam {
             final List<Service> services = serviceFacade.find( new ArrayList<>(getServiceIds()) );
             if(services.size() != getServiceIds().size()) throw new NotFoundException("Could not find services for all provided ids.");
             return services;
+        }
+        return null;
+    }
+
+    public List<ProviderServiceId> getProviderServiceIds() {
+        return providerServiceIds;
+    }
+
+    public void setProviderServiceIds(List<ProviderServiceId> providerServiceIds) {
+        this.providerServiceIds = providerServiceIds;
+    }
+
+    public List<ProviderService> getProviderServices() throws NotFoundException {
+        if(getProviderServiceIds() != null && getProviderServiceIds().size() > 0) {
+            final List<ProviderService> providerServices = providerServiceFacade.find( new ArrayList<>(getProviderServiceIds()) );
+            if(providerServices.size() != getProviderServiceIds().size()) throw new NotFoundException("Could not find provider services for all provided ids.");
+            return providerServices;
         }
         return null;
     }

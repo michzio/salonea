@@ -598,7 +598,7 @@ public class EmployeeResource {
                         throw new BadRequestException("Query params cannot include address params and coordinates square or coordinates circle params at the same time.");
                     // only address params
                     servicePoints = new ResourceList<>(
-                            servicePointFacade.findByMultipleCriteria(params.getProviders(), params.getServices(), employees,
+                            servicePointFacade.findByMultipleCriteria(params.getProviders(), params.getServices(), params.getProviderServices(), employees,
                                     params.getCorporations(), params.getIndustries(), params.getServiceCategories(), params.getAddress(),
                                     params.getOffset(), params.getLimit())
                     );
@@ -608,7 +608,7 @@ public class EmployeeResource {
                         throw new BadRequestException("Query params cannot include coordinates square params and address params or coordinates circle params at the same time.");
                     // only coordinates square params
                     servicePoints = new ResourceList<>(
-                            servicePointFacade.findByMultipleCriteria(params.getProviders(), params.getServices(), employees,
+                            servicePointFacade.findByMultipleCriteria(params.getProviders(), params.getServices(), params.getProviderServices(), employees,
                                     params.getCorporations(), params.getIndustries(), params.getServiceCategories(), params.getCoordinatesSquare(),
                                     params.getOffset(), params.getLimit())
                     );
@@ -618,7 +618,7 @@ public class EmployeeResource {
                         throw  new BadRequestException("Query params cannot include coordinates circle params and address params or coordinates square params at the same time.");
                     // only coordinates circle params
                     servicePoints = new ResourceList<>(
-                            servicePointFacade.findByMultipleCriteria(params.getProviders(), params.getServices(), employees,
+                            servicePointFacade.findByMultipleCriteria(params.getProviders(), params.getServices(), params.getProviderServices(), employees,
                                     params.getCorporations(), params.getIndustries(), params.getServiceCategories(), params.getCoordinatesCircle(),
                                     params.getOffset(), params.getLimit())
                     );
@@ -626,7 +626,7 @@ public class EmployeeResource {
                 } else {
                     // no location params
                     servicePoints = new ResourceList<>(
-                            servicePointFacade.findByMultipleCriteria(params.getProviders(), params.getServices(), employees,
+                            servicePointFacade.findByMultipleCriteria(params.getProviders(), params.getServices(), params.getProviderServices(), employees,
                                     params.getCorporations(), params.getIndustries(), params.getServiceCategories(), params.getOffset(), params.getLimit())
                     );
                 }
@@ -673,7 +673,7 @@ public class EmployeeResource {
                     // only address params
                     servicePoints = new ResourceList<>(
                             ServicePointWrapper.wrap(
-                                    servicePointFacade.findByMultipleCriteriaEagerly(params.getProviders(), params.getServices(), employees,
+                                    servicePointFacade.findByMultipleCriteriaEagerly(params.getProviders(), params.getServices(), params.getProviderServices(), employees,
                                             params.getCorporations(), params.getIndustries(), params.getServiceCategories(), params.getAddress(),
                                             params.getOffset(), params.getLimit())
                             )
@@ -684,7 +684,7 @@ public class EmployeeResource {
                     // only coordinates square params
                     servicePoints = new ResourceList<>(
                             ServicePointWrapper.wrap(
-                                    servicePointFacade.findByMultipleCriteriaEagerly(params.getProviders(), params.getServices(), employees,
+                                    servicePointFacade.findByMultipleCriteriaEagerly(params.getProviders(), params.getServices(), params.getProviderServices(), employees,
                                             params.getCorporations(), params.getIndustries(), params.getServiceCategories(), params.getCoordinatesSquare(),
                                             params.getOffset(), params.getLimit())
                             )
@@ -695,7 +695,7 @@ public class EmployeeResource {
                     // only coordinates circle params
                     servicePoints = new ResourceList<>(
                             ServicePointWrapper.wrap(
-                                    servicePointFacade.findByMultipleCriteriaEagerly(params.getProviders(), params.getServices(), employees,
+                                    servicePointFacade.findByMultipleCriteriaEagerly(params.getProviders(), params.getServices(), params.getProviderServices(), employees,
                                             params.getCorporations(), params.getIndustries(), params.getServiceCategories(), params.getCoordinatesCircle(),
                                             params.getOffset(), params.getLimit())
                             )
@@ -704,7 +704,7 @@ public class EmployeeResource {
                     // no location params
                     servicePoints = new ResourceList<>(
                             ServicePointWrapper.wrap(
-                                    servicePointFacade.findByMultipleCriteriaEagerly(params.getProviders(), params.getServices(), employees,
+                                    servicePointFacade.findByMultipleCriteriaEagerly(params.getProviders(), params.getServices(), params.getProviderServices(), employees,
                                             params.getCorporations(), params.getIndustries(), params.getServiceCategories(), params.getOffset(), params.getLimit())
                             )
                     );

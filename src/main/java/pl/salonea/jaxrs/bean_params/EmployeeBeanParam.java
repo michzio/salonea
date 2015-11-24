@@ -34,22 +34,16 @@ public class EmployeeBeanParam extends DateBetweenBeanParam { // incl. Paginatio
 
     @Inject
     private SkillFacade skillFacade;
-
     @Inject
     private EducationFacade educationFacade;
-
     @Inject
     private ServiceFacade serviceFacade;
-
     @Inject
     private ProviderServiceFacade providerServiceFacade;
-
     @Inject
     private ServicePointFacade servicePointFacade;
-
     @Inject
     private WorkStationFacade workStationFacade;
-
     @Inject
     private ClientFacade clientFacade;
 

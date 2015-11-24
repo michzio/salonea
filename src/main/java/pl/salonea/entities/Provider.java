@@ -37,6 +37,8 @@ import java.util.Set;
         @NamedQuery(name = Provider.FIND_BY_PAYMENT_METHOD_EAGERLY, query = "SELECT DISTINCT p FROM Provider p LEFT JOIN FETCH p.industries LEFT JOIN FETCH p.acceptedPaymentMethods pm LEFT JOIN FETCH p.servicePoints " +
                 "LEFT JOIN FETCH p.suppliedServiceOffers LEFT JOIN FETCH p.receivedRatings WHERE :payment_method MEMBER OF p.acceptedPaymentMethods"),
         @NamedQuery(name = Provider.FIND_BY_SUPPLIED_SERVICE, query = "SELECT p FROM Provider p INNER JOIN p.suppliedServiceOffers ps WHERE ps.service = :service"),
+        @NamedQuery(name = Provider.FIND_BY_SUPPLIED_SERVICE_EAGERLY, query = "SELECT DISTINCT p FROM Provider p LEFT JOIN FETCH p.industries LEFT JOIN FETCH p.acceptedPaymentMethods LEFT JOIN FETCH p.servicePoints " +
+                "LEFT JOIN FETCH p.suppliedServiceOffers ps LEFT JOIN FETCH p.receivedRatings WHERE ps.service = :service"),
         @NamedQuery(name = Provider.FIND_RATED, query = "SELECT p FROM Provider p WHERE SIZE(p.receivedRatings) > 0"),
         @NamedQuery(name = Provider.FIND_UNRATED, query = "SELECT p FROM Provider p WHERE SIZE(p.receivedRatings) = 0"),
         @NamedQuery(name = Provider.FIND_ON_AVG_RATED_ABOVE, query = "SELECT p FROM Provider p INNER JOIN p.receivedRatings pr GROUP BY p HAVING AVG(pr.clientRating) >= :avg_rating"),
@@ -58,6 +60,7 @@ public class Provider extends Firm {
     public static final String FIND_BY_PAYMENT_METHOD = "Provider.findByPaymentMethod";
     public static final String FIND_BY_PAYMENT_METHOD_EAGERLY = "Provider.findByPaymentMethodEagerly";
     public static final String FIND_BY_SUPPLIED_SERVICE = "Provider.findBySuppliedService";
+    public static final String FIND_BY_SUPPLIED_SERVICE_EAGERLY = "Provider.findBySuppliedServiceEagerly";
     public static final String FIND_RATED = "Provider.findRated";
     public static final String FIND_UNRATED = "Provider.findUnrated";
     public static final String FIND_ON_AVG_RATED_ABOVE = "Provider.findOnAvgRatedAbove";
