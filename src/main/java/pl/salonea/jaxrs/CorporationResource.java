@@ -965,7 +965,7 @@ public class CorporationResource {
 
         /**
          * Method that counts Service Point entities for given Corporation resource.
-         * The corporation id is passed through path params.
+         * The corporation id is passed through path param.
          */
         @GET
         @Path("/count")
