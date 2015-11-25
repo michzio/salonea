@@ -503,7 +503,6 @@ public class ServiceResource {
         public Response countServicePointsByService( @PathParam("serviceId") Integer serviceId,
                                                      @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
 
-
             RESTToolkit.authorizeAccessToWebService(params);
             logger.log(Level.INFO, "returning number of service points for given service by executing " +
                     "ServiceResource.ServicePointResource.countServicePointsByService(serviceId) method of REST API");

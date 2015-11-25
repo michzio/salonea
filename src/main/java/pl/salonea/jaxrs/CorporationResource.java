@@ -640,7 +640,6 @@ public class CorporationResource {
                     .build())
                     .rel("service-points").build());
 
-
             // service-points eagerly relationship
             Method servicePointsEagerlyMethod = CorporationResource.ServicePointResource.class.getMethod("getCorporationServicePointsEagerly", Long.class, ServicePointBeanParam.class);
             corporation.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
@@ -650,6 +649,46 @@ public class CorporationResource {
                     .resolveTemplate("corporationId", corporation.getCorporationId().toString())
                     .build())
                     .rel("service-points-eagerly").build());
+
+            // service-points count link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/count
+            Method countServicePointsByCorporationMethod = CorporationResource.ServicePointResource.class.getMethod("countServicePointsByCorporation", Long.class, GenericBeanParam.class);
+            corporation.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(CorporationResource.class)
+                    .path(servicePointsMethod)
+                    .path(countServicePointsByCorporationMethod)
+                    .resolveTemplate("corporationId", corporation.getCorporationId().toString())
+                    .build())
+                    .rel("service-points-count").build());
+
+            // service-points address link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/address
+            Method addressMethod = CorporationResource.ServicePointResource.class.getMethod("getCorporationServicePointsByAddress", Long.class, AddressBeanParam.class);
+            corporation.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(CorporationResource.class)
+                    .path(servicePointsMethod)
+                    .path(addressMethod)
+                    .resolveTemplate("corporationId", corporation.getCorporationId().toString())
+                    .build())
+                    .rel("service-points-address").build());
+
+            // service-points coordinates-square link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/coordinates-square
+            Method coordinatesSquareMethod = CorporationResource.ServicePointResource.class.getMethod("getCorporationServicePointsByCoordinatesSquare", Long.class, CoordinatesSquareBeanParam.class);
+            corporation.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(CorporationResource.class)
+                    .path(servicePointsMethod)
+                    .path(coordinatesSquareMethod)
+                    .resolveTemplate("corporationId", corporation.getCorporationId().toString())
+                    .build())
+                    .rel("service-points-coordinates-square").build());
+
+            // service-points coordinates-circle link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/coordinates-circle
+            Method coordinatesCircleMethod = CorporationResource.ServicePointResource.class.getMethod("getCorporationServicePointsByCoordinatesCircle", Long.class, CoordinatesCircleBeanParam.class);
+            corporation.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(CorporationResource.class)
+                    .path(servicePointsMethod)
+                    .path(coordinatesCircleMethod)
+                    .resolveTemplate("corporationId", corporation.getCorporationId().toString())
+                    .build())
+                    .rel("service-points-coordinates-circle").build());
 
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
@@ -928,7 +967,131 @@ public class CorporationResource {
          * Method that counts Service Point entities for given Corporation resource.
          * The corporation id is passed through path params.
          */
+        @GET
+        @Path("/count")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response countServicePointsByCorporation( @PathParam("corporationId") Long corporationId,
+                                                         @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
 
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning number of service points for given corporation by executing " +
+                    "CorporationResource.ServicePointResource.countServicePointsByCorporation(corporationId) method of REST API");
+
+            // find corporation entity for which to count service points
+            Corporation corporation =  corporationFacade.find(corporationId);
+            if(corporation == null)
+                throw new NotFoundException("Could not find corporation for id " + corporationId + ".");
+
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(servicePointFacade.countByCorporation(corporation)), 200, "number of service points for corporation with id " + corporation.getCorporationId());
+            return Response.status(Status.OK).entity(responseEntity).build();
+        }
+
+        /**
+         * Method returns subset of Service Point entities for given Corporation entity and
+         * Address related query params. The corporation id is passed through path param.
+         * Address params are passed through query params.
+         */
+        @GET
+        @Path("/address")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getCorporationServicePointsByAddress( @PathParam("corporationId") Long corporationId,
+                                                              @BeanParam AddressBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning service points for given corporation and address related params using " +
+                    "CorporationResource.ServicePointResource.getCorporationServicePointsByAddress(corporationId, address) method of REST API");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+            if(noOfParams < 1)
+                throw new BadRequestException("There is no address related query param in request.");
+
+            // find corporation entity for which to get associated service points
+            Corporation corporation =  corporationFacade.find(corporationId);
+            if(corporation == null)
+                throw new NotFoundException("Could not find corporation for id " + corporationId + ".");
+
+            // find service points by given criteria
+            ResourceList<ServicePoint> servicePoints = new ResourceList<>(
+                    servicePointFacade.findByCorporationAndAddress(corporation, params.getCity(), params.getState(), params.getCountry(),
+                            params.getStreet(), params.getZipCode(), params.getOffset(), params.getLimit())
+            );
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.ServicePointResource.populateWithHATEOASLinks(servicePoints, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(servicePoints).build();
+        }
+
+        /**
+         * Method returns subset of Service Point entities for given Corporation entity and
+         * Coordinates Square related params. The corporation id is passed through path param.
+         * Coordinates Square params are passed through query params.
+         */
+        @GET
+        @Path("/coordinates-square")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getCorporationServicePointsByCoordinatesSquare( @PathParam("corporationId") Long corporationId,
+                                                                        @BeanParam CoordinatesSquareBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning service points for given corporation and coordinates square params using " +
+                    "CorporationResource.ServicePointResource.getCorporationServicePointsByCoordinatesSquare(corporationId, coordinatesSquare) method of REST API");
+
+            if(params.getMinLongitudeWGS84() == null || params.getMinLatitudeWGS84() == null ||
+                    params.getMaxLongitudeWGS84() == null || params.getMaxLatitudeWGS84() == null)
+                throw new BadRequestException("All coordinates square query params must be specified.");
+
+            // find corporation entity for which to get associated service points
+            Corporation corporation =  corporationFacade.find(corporationId);
+            if(corporation == null)
+                throw new NotFoundException("Could not find corporation for id " + corporationId + ".");
+
+            // find service points by given criteria
+            ResourceList<ServicePoint> servicePoints = new ResourceList<>(
+                    servicePointFacade.findByCorporationAndCoordinatesSquare(corporation, params.getMinLongitudeWGS84(), params.getMinLatitudeWGS84(),
+                            params.getMaxLongitudeWGS84(), params.getMaxLatitudeWGS84(), params.getOffset(), params.getLimit())
+            );
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.ServicePointResource.populateWithHATEOASLinks(servicePoints, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(servicePoints).build();
+        }
+
+        /**
+         * Method returns subset of Service Point entities for given Corporation entity and
+         * Coordinates Circle related params. The corporation id is passed through path param.
+         * Coordinates Circle param are passed through query params.
+         */
+        @GET
+        @Path("/coordinates-circle")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getCorporationServicePointsByCoordinatesCircle( @PathParam("corporationId") Long corporationId,
+                                                                        @BeanParam CoordinatesCircleBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning service points for given corporation and coordinates circle params using " +
+                    "CorporationResource.ServicePointResource.getCorporationServicePointsByCoordinatesCircle(corporationId, coordinatesCircle) method of REST API");
+
+            if(params.getLongitudeWGS84() == null || params.getLatitudeWGS84() == null || params.getRadius() == null)
+                throw new BadRequestException("All coordinates circle query params must be specified.");
+
+            // find corporation entity for which to get associated service points
+            Corporation corporation =  corporationFacade.find(corporationId);
+            if(corporation == null)
+                throw new NotFoundException("Could not find corporation for id " + corporationId + ".");
+
+            // find service points by given criteria
+            ResourceList<ServicePoint> servicePoints = new ResourceList<>(
+                    servicePointFacade.findByCorporationAndCoordinatesCircle(corporation, params.getLongitudeWGS84(),
+                            params.getLatitudeWGS84(), params.getRadius(), params.getOffset(), params.getLimit())
+            );
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.ServicePointResource.populateWithHATEOASLinks(servicePoints, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(servicePoints).build();
+        }
 
     }
 

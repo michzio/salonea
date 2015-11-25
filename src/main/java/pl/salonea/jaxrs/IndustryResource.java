@@ -4,14 +4,8 @@ import pl.salonea.ejb.stateless.IndustryFacade;
 import pl.salonea.ejb.stateless.ProviderFacade;
 import pl.salonea.entities.Industry;
 import pl.salonea.entities.Provider;
-import pl.salonea.jaxrs.bean_params.GenericBeanParam;
-import pl.salonea.jaxrs.bean_params.IndustryBeanParam;
-import pl.salonea.jaxrs.bean_params.PaginationBeanParam;
-import pl.salonea.jaxrs.bean_params.ProviderBeanParam;
-import pl.salonea.jaxrs.exceptions.ExceptionHandler;
-import pl.salonea.jaxrs.exceptions.ForbiddenException;
-import pl.salonea.jaxrs.exceptions.NotFoundException;
-import pl.salonea.jaxrs.exceptions.UnprocessableEntityException;
+import pl.salonea.jaxrs.bean_params.*;
+import pl.salonea.jaxrs.exceptions.*;
 import pl.salonea.jaxrs.utils.RESTToolkit;
 import pl.salonea.jaxrs.utils.ResourceList;
 import pl.salonea.jaxrs.utils.ResponseWrapper;
@@ -33,6 +27,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import pl.salonea.jaxrs.exceptions.BadRequestException;
+import pl.salonea.jaxrs.exceptions.ForbiddenException;
+import pl.salonea.jaxrs.exceptions.NotFoundException;
 
 /**
  * Created by michzio on 12/09/2015.
@@ -358,7 +355,10 @@ public class IndustryResource {
         return new ProviderResource();
     }
 
-    // helper methods e.g. to populate resources/resource lists with HATEOAS links
+    @Path("/{industryId : \\d+}/service-points")
+    public ServicePointResource getServicePointResource() {
+        return new ServicePointResource();
+    }
 
     /**
      * This method enables to populate list of resources and each individual resource on list with hypermedia links
@@ -449,6 +449,10 @@ public class IndustryResource {
 
             // associated collections links with pattern: http://localhost:port/app/rest/{resources}/{id}/{relationship}
 
+            /**
+             * Providers associated with current Industry resource
+             */
+
             // providers
             Method providersMethod = IndustryResource.class.getMethod("getProviderResource");
             industry.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
@@ -467,6 +471,29 @@ public class IndustryResource {
                     .resolveTemplate("industryId", industry.getIndustryId().toString())
                     .build())
                     .rel("providers-eagerly").build());
+
+            /**
+             * Service Points associated with current Industry resource
+             */
+
+            // service-points relationship
+            Method servicePointsMethod = IndustryResource.class.getMethod("getServicePointResource");
+            industry.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(IndustryResource.class)
+                    .path(servicePointsMethod)
+                    .resolveTemplate("industryId", industry.getIndustryId().toString())
+                    .build())
+                    .rel("service-points").build());
+
+            // service-points eagerly relationship
+
+            // service-points count link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/count
+
+            // service-points address link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/address
+
+            // service-points coordinates-square link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/coordinates-square
+
+            // service-points coordinates-circle link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/coordinates-circle
 
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
@@ -572,7 +599,38 @@ public class IndustryResource {
 
             return Response.status(Status.OK).entity(providers).build();
         }
+    }
 
+    public class ServicePointResource {
+
+        public ServicePointResource() { }
+
+        /**
+         * Method returns subset of Service Point entities for given Industry.
+         * The industry id is passed through path param.
+         * They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getIndustryServicePoints( @PathParam("industryId") Long industryId,
+                                                  @BeanParam ServicePointBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning subset of Service Point entities for given Industry using " +
+                    "IndustryResource.ServicePointResource.getIndustryServicePoints(industryId) method of REST API");
+
+            // find industry entity for which to get associated service points
+            Industry industry = industryFacade.find(industryId);
+            if(industry == null)
+                throw new NotFoundException("Could not find industry for id " + industryId + ".");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+
+
+            return null;
+        }
 
     }
+
 }
