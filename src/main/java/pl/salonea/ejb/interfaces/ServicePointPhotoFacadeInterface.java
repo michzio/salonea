@@ -10,6 +10,10 @@ import java.util.List;
 public interface ServicePointPhotoFacadeInterface extends AbstractFacadeInterface<ServicePointPhoto> {
 
     // concrete interface
+    List<ServicePointPhoto> findAllEagerly();
+    List<ServicePointPhoto> findAllEagerly(Integer start, Integer limit);
+    ServicePointPhoto findByIdEagerly(Long photoId);
+
     List<ServicePointPhoto> findByFileName(String fileName);
     List<ServicePointPhoto> findByFileName(String fileName, Integer start, Integer limit);
     List<ServicePointPhoto> findByDescription(String description);
@@ -28,15 +32,33 @@ public interface ServicePointPhotoFacadeInterface extends AbstractFacadeInterfac
     List<ServicePointPhoto> findByAllTagNames(List<String> tagNames, Integer start, Integer limit);
     List<ServicePointPhoto> findByKeywordIncludingTags(String keyword);
     List<ServicePointPhoto> findByKeywordIncludingTags(String keyword, Integer start, Integer limit);
+
     List<ServicePointPhoto> findByServicePoint(ServicePoint servicePoint);
     List<ServicePointPhoto> findByServicePoint(ServicePoint servicePoint, Integer start, Integer limit);
     List<ServicePointPhoto> findByProvider(Provider provider);
     List<ServicePointPhoto> findByProvider(Provider provider, Integer start, Integer limit);
     List<ServicePointPhoto> findByCorporation(Corporation corporation);
     List<ServicePointPhoto> findByCorporation(Corporation corporation, Integer start, Integer limit);
+
+    Long countByServicePoint(ServicePoint servicePoint);
+    Long countByProvider(Provider provider);
+    Long countByCorporation(Corporation corporation);
+
+    Integer deleteByServicePoint(ServicePoint servicePoint);
+
     List<ServicePointPhoto> findByMultipleCriteria(List<String> keywords, List<ServicePoint> servicePoints, List<Provider> providers, List<Corporation> corporations);
+    List<ServicePointPhoto> findByMultipleCriteria(List<String> keywords, List<ServicePoint> servicePoints, List<Provider> providers, List<Corporation> corporations, Integer start, Integer limit);
     List<ServicePointPhoto> findByMultipleCriteria(List<String> keywords, List<String> tagNames, List<ServicePoint> servicePoints, List<Provider> providers, List<Corporation> corporations);
+    List<ServicePointPhoto> findByMultipleCriteria(List<String> keywords, List<String> tagNames, List<ServicePoint> servicePoints, List<Provider> providers, List<Corporation> corporations, Integer start, Integer limit);
     List<ServicePointPhoto> findByMultipleCriteria(List<String> fileNames, List<String> descriptions, List<String> tagNames, List<ServicePoint> servicePoints, List<Provider> providers, List<Corporation> corporations);
+    List<ServicePointPhoto> findByMultipleCriteria(List<String> fileNames, List<String> descriptions, List<String> tagNames, List<ServicePoint> servicePoints, List<Provider> providers, List<Corporation> corporations, Integer start, Integer limit);
+
+    List<ServicePointPhoto> findByMultipleCriteriaEagerly(List<String> keywords, List<ServicePoint> servicePoints, List<Provider> providers, List<Corporation> corporations);
+    List<ServicePointPhoto> findByMultipleCriteriaEagerly(List<String> keywords, List<ServicePoint> servicePoints, List<Provider> providers, List<Corporation> corporations, Integer start, Integer limit);
+    List<ServicePointPhoto> findByMultipleCriteriaEagerly(List<String> keywords, List<String> tagNames, List<ServicePoint> servicePoints, List<Provider> providers, List<Corporation> corporations);
+    List<ServicePointPhoto> findByMultipleCriteriaEagerly(List<String> keywords, List<String> tagNames, List<ServicePoint> servicePoints, List<Provider> providers, List<Corporation> corporations, Integer start, Integer limit);
+    List<ServicePointPhoto> findByMultipleCriteriaEagerly(List<String> fileNames, List<String> descriptions, List<String> tagNames, List<ServicePoint> servicePoints, List<Provider> providers, List<Corporation> corporations);
+    List<ServicePointPhoto> findByMultipleCriteriaEagerly(List<String> fileNames, List<String> descriptions, List<String> tagNames, List<ServicePoint> servicePoints, List<Provider> providers, List<Corporation> corporations, Integer start, Integer limit);
 
     @javax.ejb.Local
     interface Local extends ServicePointPhotoFacadeInterface { }

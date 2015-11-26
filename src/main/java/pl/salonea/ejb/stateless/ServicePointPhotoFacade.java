@@ -6,8 +6,7 @@ import pl.salonea.entities.*;
 import javax.ejb.LocalBean;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
-import javax.persistence.EntityManager;
-import javax.persistence.TypedQuery;
+import javax.persistence.*;
 import javax.persistence.criteria.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,6 +29,34 @@ public class ServicePointPhotoFacade extends AbstractFacade<ServicePointPhoto>
 
     public ServicePointPhotoFacade() {
         super(ServicePointPhoto.class);
+    }
+
+    @Override
+    public List<ServicePointPhoto> findAllEagerly() {
+        return findAllEagerly(null, null);
+    }
+
+    @Override
+    public List<ServicePointPhoto> findAllEagerly(Integer start, Integer limit) {
+
+        TypedQuery<ServicePointPhoto> query = getEntityManager().createNamedQuery(ServicePointPhoto.FIND_ALL_EAGERLY, ServicePointPhoto.class);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
+    public ServicePointPhoto findByIdEagerly(Long photoId) {
+
+        TypedQuery<ServicePointPhoto> query = getEntityManager().createNamedQuery(ServicePointPhoto.FIND_BY_ID_EAGERLY, ServicePointPhoto.class);
+        query.setParameter("photo_id", photoId);
+        try {
+            return query.getSingleResult();
+        } catch (NoResultException | NonUniqueResultException ex) {
+            return null;
+        }
     }
 
     @Override
@@ -251,29 +278,108 @@ public class ServicePointPhotoFacade extends AbstractFacade<ServicePointPhoto>
     }
 
     @Override
+    public Long countByServicePoint(ServicePoint servicePoint) {
+
+        TypedQuery<Long> query = getEntityManager().createNamedQuery(ServicePointPhoto.COUNT_BY_SERVICE_POINT, Long.class);
+        query.setParameter("service_point", servicePoint);
+        return query.getSingleResult();
+    }
+
+    @Override
+    public Long countByProvider(Provider provider) {
+
+        TypedQuery<Long> query = getEntityManager().createNamedQuery(ServicePointPhoto.COUNT_BY_PROVIDER, Long.class);
+        query.setParameter("provider", provider);
+        return query.getSingleResult();
+    }
+
+    @Override
+    public Long countByCorporation(Corporation corporation) {
+
+        TypedQuery<Long> query = getEntityManager().createNamedQuery(ServicePointPhoto.COUNT_BY_CORPORATION, Long.class);
+        query.setParameter("corporation", corporation);
+        return query.getSingleResult();
+    }
+
+    @Override
+    public Integer deleteByServicePoint(ServicePoint servicePoint) {
+
+        Query query = getEntityManager().createNamedQuery(ServicePointPhoto.DELETE_BY_SERVICE_POINT);
+        query.setParameter("service_point", servicePoint);
+        return query.executeUpdate();
+    }
+
+    @Override
     public List<ServicePointPhoto> findByMultipleCriteria(List<String> keywords, List<ServicePoint> servicePoints,
                                                           List<Provider> providers, List<Corporation> corporations) {
-        return findByMultipleCriteria(true, keywords, true,  keywords, true, keywords,  servicePoints, providers, corporations);
+        return findByMultipleCriteria(keywords, servicePoints, providers, corporations, null, null);
+    }
+
+    @Override
+    public List<ServicePointPhoto> findByMultipleCriteria(List<String> keywords, List<ServicePoint> servicePoints, List<Provider> providers, List<Corporation> corporations, Integer start, Integer limit) {
+
+        return findByMultipleCriteria(true, keywords, true,  keywords, true, keywords,  servicePoints, providers, corporations, false, start, limit);
     }
 
     @Override
     public List<ServicePointPhoto> findByMultipleCriteria(List<String> keywords, List<String> tagNames,
                                                           List<ServicePoint> servicePoints, List<Provider> providers,
                                                           List<Corporation> corporations) {
-        return findByMultipleCriteria(true, keywords, true,  keywords, false,  tagNames, servicePoints, providers, corporations);
+        return findByMultipleCriteria(keywords, tagNames, servicePoints, providers, corporations, null, null);
+    }
+
+    @Override
+    public List<ServicePointPhoto> findByMultipleCriteria(List<String> keywords, List<String> tagNames, List<ServicePoint> servicePoints, List<Provider> providers, List<Corporation> corporations, Integer start, Integer limit) {
+        return findByMultipleCriteria(true, keywords, true,  keywords, false,  tagNames, servicePoints, providers, corporations, false, start, limit);
     }
 
     @Override
     public List<ServicePointPhoto> findByMultipleCriteria(List<String> fileNames, List<String> descriptions,
                                                           List<String> tagNames, List<ServicePoint> servicePoints,
                                                           List<Provider> providers, List<Corporation> corporations) {
-        return findByMultipleCriteria(false, fileNames, false, descriptions, false, tagNames, servicePoints, providers, corporations);
+        return findByMultipleCriteria(fileNames, descriptions, tagNames, servicePoints, providers, corporations, null, null);
+    }
+
+    @Override
+    public List<ServicePointPhoto> findByMultipleCriteria(List<String> fileNames, List<String> descriptions, List<String> tagNames, List<ServicePoint> servicePoints, List<Provider> providers, List<Corporation> corporations, Integer start, Integer limit) {
+        return findByMultipleCriteria(false, fileNames, false, descriptions, false, tagNames, servicePoints, providers, corporations, false, start, limit);
+    }
+
+    @Override
+    public List<ServicePointPhoto> findByMultipleCriteriaEagerly(List<String> keywords, List<ServicePoint> servicePoints, List<Provider> providers, List<Corporation> corporations) {
+        return findByMultipleCriteriaEagerly(keywords, servicePoints, providers, corporations, null, null);
+    }
+
+    @Override
+    public List<ServicePointPhoto> findByMultipleCriteriaEagerly(List<String> keywords, List<ServicePoint> servicePoints, List<Provider> providers, List<Corporation> corporations, Integer start, Integer limit) {
+        return findByMultipleCriteria(true, keywords, true,  keywords, true, keywords,  servicePoints, providers, corporations, true, start, limit);
+    }
+
+    @Override
+    public List<ServicePointPhoto> findByMultipleCriteriaEagerly(List<String> keywords, List<String> tagNames, List<ServicePoint> servicePoints, List<Provider> providers, List<Corporation> corporations) {
+        return findByMultipleCriteriaEagerly(keywords, tagNames, servicePoints, providers, corporations, null, null);
+    }
+
+    @Override
+    public List<ServicePointPhoto> findByMultipleCriteriaEagerly(List<String> keywords, List<String> tagNames, List<ServicePoint> servicePoints, List<Provider> providers, List<Corporation> corporations, Integer start, Integer limit) {
+        return findByMultipleCriteria(true, keywords, true,  keywords, false,  tagNames, servicePoints, providers, corporations, true, start, limit);
+    }
+
+    @Override
+    public List<ServicePointPhoto> findByMultipleCriteriaEagerly(List<String> fileNames, List<String> descriptions, List<String> tagNames, List<ServicePoint> servicePoints, List<Provider> providers, List<Corporation> corporations) {
+        return findByMultipleCriteriaEagerly(fileNames, descriptions, tagNames, servicePoints, providers, corporations, null, null);
+    }
+
+    @Override
+    public List<ServicePointPhoto> findByMultipleCriteriaEagerly(List<String> fileNames, List<String> descriptions, List<String> tagNames, List<ServicePoint> servicePoints, List<Provider> providers, List<Corporation> corporations, Integer start, Integer limit) {
+        return findByMultipleCriteria(false, fileNames, false, descriptions, false, tagNames, servicePoints, providers, corporations, true, start, limit);
     }
 
     private List<ServicePointPhoto> findByMultipleCriteria(Boolean orWithFileNames, List<String> fileNames, Boolean orWithDescriptions,
                                                            List<String> descriptions, Boolean orWithTagNames,
                                                            List<String> tagNames, List<ServicePoint> servicePoints,
-                                                           List<Provider> providers, List<Corporation> corporations) {
+                                                           List<Provider> providers, List<Corporation> corporations,
+                                                           Boolean eagerly, Integer start, Integer limit ) {
 
         CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
         CriteriaQuery<ServicePointPhoto> criteriaQuery = criteriaBuilder.createQuery(ServicePointPhoto.class);
@@ -317,7 +423,7 @@ public class ServicePointPhotoFacade extends AbstractFacade<ServicePointPhoto>
             if(orWithDescriptions) {
                 orPredicates.add( criteriaBuilder.or(orDescriptionPredicates.toArray(new Predicate[] {})) );
             } else {
-                predicates.add( criteriaBuilder.or(orDescriptionPredicates.toArray(new Predicate[] {})) );
+                predicates.add(criteriaBuilder.or(orDescriptionPredicates.toArray(new Predicate[]{})));
             }
         }
 
@@ -337,6 +443,14 @@ public class ServicePointPhotoFacade extends AbstractFacade<ServicePointPhoto>
             } else {
                 predicates.add( criteriaBuilder.or(orTagNamePredicates.toArray(new Predicate[] {})) );
             }
+
+            if(eagerly) {
+                // then fetch associated collection of entities
+                photo.fetch("tags", JoinType.INNER);
+            }
+        } else if(eagerly) {
+            // then left fetch associated collection of entities
+            photo.fetch("tags", JoinType.LEFT);
         }
 
         if(orPredicates.size() > 0)
@@ -367,6 +481,10 @@ public class ServicePointPhotoFacade extends AbstractFacade<ServicePointPhoto>
         criteriaQuery.where(predicates.toArray(new Predicate[] { }));
 
         TypedQuery<ServicePointPhoto> query = getEntityManager().createQuery(criteriaQuery);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
         return query.getResultList();
     }
 
