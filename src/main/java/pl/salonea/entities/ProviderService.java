@@ -23,6 +23,7 @@ import java.util.Set;
 
 @XmlRootElement(name = "provider-service")
 @XmlAccessorType(XmlAccessType.PROPERTY)
+@XmlType(propOrder = {"provider", "service", "description", "serviceDuration", "price", "priceType", "priceCurrencyCode", "discount", "links" })
 
 @Entity
 @IdClass(ProviderServiceId.class)

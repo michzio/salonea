@@ -2,11 +2,15 @@ package pl.salonea.jaxrs;
 
 import pl.salonea.ejb.stateless.ServicePointPhotoFacade;
 import pl.salonea.entities.ServicePointPhoto;
+import pl.salonea.entities.Tag;
+import pl.salonea.jaxrs.bean_params.GenericBeanParam;
 import pl.salonea.jaxrs.bean_params.ServicePointPhotoBeanParam;
 import pl.salonea.jaxrs.exceptions.BadRequestException;
 import pl.salonea.jaxrs.exceptions.ForbiddenException;
 import pl.salonea.jaxrs.utils.RESTToolkit;
 import pl.salonea.jaxrs.utils.ResourceList;
+import pl.salonea.jaxrs.utils.hateoas.Link;
+import pl.salonea.jaxrs.wrappers.ServicePointPhotoWrapper;
 
 import javax.inject.Inject;
 import javax.ws.rs.BeanParam;
@@ -17,6 +21,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
+import java.lang.reflect.Method;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -87,8 +92,83 @@ public class ServicePointPhotoResource {
         return Response.status(Status.OK).entity(photos).build();
     }
 
+    /**
+     * This method enables to populate list of resources and each individual resource on list with hypermedia links
+     */
     public static void populateWithHATEOASLinks(ResourceList photos, UriInfo uriInfo, Integer offset, Integer limit) {
 
+        // navigation links through collection of resources
+        ResourceList.generateNavigationLinks(photos, uriInfo, offset, limit);
 
+        try {
+            // count resources hypermedia link
+            Method countMethod = ServicePointPhotoResource.class.getMethod("countPhotos", GenericBeanParam.class);
+            photos.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(ServicePointPhotoResource.class).path(countMethod).build()).rel("count").build() );
+
+            // get all resources hypermedia link
+            photos.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(ServicePointPhotoResource.class).build()).rel("photos").build() );
+
+            // get all resources eagerly hypermedia link
+
+            // get subset of resources hypermedia links
+
+
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        }
+
+        for (Object object : photos.getResources()) {
+            if(object instanceof ServicePointPhoto) {
+                ServicePointPhotoResource.populateWithHATEOASLinks( (ServicePointPhoto) object, uriInfo );
+            } else if(object instanceof ServicePointPhotoWrapper) {
+                ServicePointPhotoResource.populateWithHATEOASLinks( (ServicePointPhotoWrapper) object, uriInfo );
+            }
+        }
+    }
+
+    /**
+     * This method enables to populate each individual resource wrapper with hypermedia links
+     */
+    public static void populateWithHATEOASLinks(ServicePointPhotoWrapper photoWrapper, UriInfo uriInfo) {
+
+        ServicePointPhotoResource.populateWithHATEOASLinks(photoWrapper.getPhoto(), uriInfo);
+
+        for(Tag tag : photoWrapper.getTags())
+            pl.salonea.jaxrs.TagResource.populateWithHATEOASLinks(tag, uriInfo);
+    }
+
+    /**
+     * This method enables to populate each individual resource with hypermedia links
+     */
+    public static void populateWithHATEOASLinks(ServicePointPhoto photo, UriInfo uriInfo) {
+
+        // self link with pattern: http://localhost:port/app/rest/{resources}/{id}
+        photo.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                                                  .path(ServicePointPhotoResource.class)
+                                                  .path(photo.getPhotoId().toString())
+                                                  .build())
+                                    .rel("self").build());
+
+        // collection link with pattern: http://localhost:port/app/rest/{resources}
+        photo.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                                                  .path(ServicePointPhotoResource.class)
+                                                  .build())
+                                  .rel("photos").build());
+
+        try {
+            // self eagerly link with pattern http://localhost:port/app/rest/{resources}/{id}/eagerly
+            Method photoEagerlyMethod = ServicePointPhotoResource.class.getMethod("getPhotoEagerly", Long.class, GenericBeanParam.class);
+            photo.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ServicePointPhotoResource.class)
+                    .path(photoEagerlyMethod)
+                    .resolveTemplate("photoId", photo.getPhotoId().toString())
+                    .build())
+                    .rel("photo-eagerly").build() );
+
+            // associated collections links with pattern: http://localhost:port/app/rest/{resources}/{id}/{relationship}
+
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        }
     }
 }
