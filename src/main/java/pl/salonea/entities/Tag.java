@@ -2,15 +2,21 @@ package pl.salonea.entities;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import pl.salonea.jaxrs.utils.hateoas.Link;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import javax.xml.bind.annotation.*;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
-
+@XmlRootElement(name = "tag")
+@XmlAccessorType(XmlAccessType.PROPERTY)
+@XmlType(propOrder = {"tagId", "tagName", "links"})
 
 @Entity
 @Table(name = "tag")
@@ -38,6 +44,9 @@ public class Tag implements Serializable {
     private Set<ServicePointPhoto> taggedPhotos = new HashSet<>();
     private Set<VirtualTour> taggedVirtualTours = new HashSet<>();
     // TODO potentially other tagged things like employees, providers, news, etc.
+
+    /* HATEOAS support for RESTful web service in JAX-RS */
+    private List<Link> links = new ArrayList<>();
 
     /* constructors */
 
@@ -74,6 +83,7 @@ public class Tag implements Serializable {
 
     /* many-to-many relationships */
 
+    @XmlTransient
     @ManyToMany(mappedBy = "tags", cascade = { CascadeType.MERGE })
     public Set<ServicePointPhoto> getTaggedPhotos() {
         return taggedPhotos;
@@ -83,6 +93,7 @@ public class Tag implements Serializable {
         this.taggedPhotos = taggedPhotos;
     }
 
+    @XmlTransient
     @ManyToMany(mappedBy = "tags", cascade = { CascadeType.MERGE })
     public Set<VirtualTour> getTaggedVirtualTours() {
         return taggedVirtualTours;
@@ -113,5 +124,16 @@ public class Tag implements Serializable {
                 // if deriving: .appendSuper(super.equals(obj)).
                 .append(getTagName(), rhs.getTagName())
                 .isEquals();
+    }
+
+    @XmlElementWrapper(name = "links")
+    @XmlElement(name = "link")
+    @Transient
+    public List<Link> getLinks() {
+        return links;
+    }
+
+    public void setLinks(List<Link> links) {
+        this.links = links;
     }
 }

@@ -3,12 +3,20 @@ package pl.salonea.entities;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import pl.salonea.constraints.VirtualTourName;
+import pl.salonea.jaxrs.utils.hateoas.Link;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
+import javax.xml.bind.annotation.*;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+
+@XmlRootElement(name = "virtual-tour")
+@XmlAccessorType(XmlAccessType.PROPERTY)
+@XmlType(propOrder = {"tourId", "fileName", "description", "servicePoint", "links"})
 
 @Entity
 @Table(name = "virtual_tour")
@@ -49,6 +57,9 @@ public class VirtualTour implements Serializable {
     /* relationships */
     private ServicePoint servicePoint; // composite FK
     private Set<Tag> tags = new HashSet<>();
+
+    /* HATEOAS support for RESTful web service in JAX-RS */
+    private List<Link> links = new ArrayList<>();
 
     /* constructors */
 
@@ -113,6 +124,7 @@ public class VirtualTour implements Serializable {
 
     /* other relationships */
 
+    @XmlTransient
     @ManyToMany
     @JoinTable(name = "tour_tagged_with",
             joinColumns = @JoinColumn(name = "virtual_tour_id", nullable = false),
@@ -147,5 +159,16 @@ public class VirtualTour implements Serializable {
                 // if deriving: .appendSuper(super.equals(obj)).
                 .append(getFileName(), rhs.getFileName())
                 .isEquals();
+    }
+
+    @XmlElementWrapper(name = "links")
+    @XmlElement(name = "link")
+    @Transient
+    public List<Link> getLinks() {
+        return links;
+    }
+
+    public void setLinks(List<Link> links) {
+        this.links = links;
     }
 }
