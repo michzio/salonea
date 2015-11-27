@@ -4,6 +4,8 @@ import pl.salonea.jaxrs.bean_params.GenericBeanParam;
 import pl.salonea.jaxrs.bean_params.PaginationBeanParam;
 import pl.salonea.jaxrs.exceptions.ForbiddenException;
 
+import java.util.Collection;
+
 /**
  * Created by michzio on 04/11/2015.
  */
@@ -29,5 +31,9 @@ public class RESTToolkit {
     public static void authorizeAccessToWebService(GenericBeanParam params) throws ForbiddenException {
 
         if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+    }
+
+    public static <T> Boolean isSet(Collection<T> collection) {
+        return collection != null && collection.size() > 0;
     }
 }

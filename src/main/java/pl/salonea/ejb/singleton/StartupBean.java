@@ -3,6 +3,7 @@ package pl.salonea.ejb.singleton;
 import pl.salonea.ejb.stateless.*;
 import pl.salonea.embeddables.Address;
 import pl.salonea.entities.*;
+import pl.salonea.entities.idclass.ServicePointId;
 import pl.salonea.enums.CreditCardType;
 import pl.salonea.enums.Gender;
 import pl.salonea.enums.ProviderType;
@@ -76,6 +77,12 @@ public class StartupBean {
     private TermFacade termFacade;
     @Inject
     private TermEmployeeWorkOnFacade termEmployeeWorkOnFacade;
+    @Inject
+    private ServicePointPhotoFacade photoFacade;
+    @Inject
+    private TagFacade tagFacade;
+    @Inject
+    private VirtualTourFacade virtualTourFacade;
 
     public StartupBean() { }
 
@@ -96,6 +103,7 @@ public class StartupBean {
         populateCreditCards();
         populatePaymentMethods();
         populateEmployeeWorkOnWorkStation();
+        populateServicePointAssets();
     }
 
     private void populateUserAccounts() {
@@ -398,5 +406,41 @@ public class StartupBean {
         termEmployeeWorkOnFacade.create(hairdresserTermOnChair2);
     }
 
+    private void populateServicePointAssets() {
+
+        ServicePoint servicePoint = servicePointFacade.find(new ServicePointId(7L, 2));
+
+        ServicePointPhoto photo1 = new ServicePointPhoto("photo1OfServicePoint72.png", servicePoint);
+        ServicePointPhoto photo2 = new ServicePointPhoto("photo2OfServicePoint72.png", servicePoint);
+        photo1.setDescription("Reception photo.");
+        photo2.setDescription("Room photo.");
+
+        photoFacade.create(photo1);
+        photoFacade.create(photo2);
+
+        VirtualTour tour1 = new VirtualTour("virtualTour1OfServicePoint72.swf", servicePoint);
+        VirtualTour tour2 = new VirtualTour("virtualTour2OfServicePoint72.swf", servicePoint);
+        tour1.setDescription("Reception virtual tour movie.");
+        tour2.setDescription("Room virtual tour movie.");
+
+        virtualTourFacade.create(tour1);
+        virtualTourFacade.create(tour2);
+
+        Tag roomTag = new Tag("room");
+        Tag receptionTag = new Tag("reception");
+
+        tagFacade.create(roomTag);
+        tagFacade.create(receptionTag);
+
+        photo1.getTags().add(receptionTag);
+        photo2.getTags().add(roomTag);
+        tour1.getTags().add(receptionTag);
+        tour2.getTags().add(roomTag);
+
+        roomTag.getTaggedPhotos().add(photo2);
+        roomTag.getTaggedVirtualTours().add(tour2);
+        receptionTag.getTaggedPhotos().add(photo1);
+        receptionTag.getTaggedVirtualTours().add(tour1);
+    }
 
 }

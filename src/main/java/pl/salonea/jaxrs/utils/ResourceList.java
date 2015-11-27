@@ -56,6 +56,12 @@ public class ResourceList<T> {
             @XmlElement(name = "credit-card", type = CreditCard.class),
             @XmlElement(name = "corporation", type = Corporation.class),
             @XmlElement(name = "corporation", type = CorporationWrapper.class),
+            @XmlElement(name = "photo", type = ServicePointPhoto.class),
+            @XmlElement(name = "photo", type = ServicePointPhotoWrapper.class),
+            @XmlElement(name = "virtual-tour", type = VirtualTour.class),
+            @XmlElement(name = "virtual-tour", type = VirtualTourWrapper.class),
+            @XmlElement(name = "tag", type = Tag.class),
+            @XmlElement(name = "tag", type = TagWrapper.class),
     })
     public List<T> getResources() {
         return resources;
