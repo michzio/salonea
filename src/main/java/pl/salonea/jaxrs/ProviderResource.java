@@ -66,6 +66,8 @@ public class ProviderResource {
     private ServiceCategoryFacade serviceCategoryFacade;
     @Inject
     private ProviderRatingFacade providerRatingFacade;
+    @Inject
+    private ServicePointPhotoFacade servicePointPhotoFacade;
 
     /**
      * Method returns all Provider resources
@@ -716,7 +718,7 @@ public class ProviderResource {
                     .rel("service-point-photos").build());
 
             // service-point-photos eagerly
-            Method servicePointPhotosEagerlyMethod = null;
+            Method servicePointPhotosEagerlyMethod = ProviderResource.ServicePointPhotoResource.class.getMethod("getProviderServicePointPhotosEagerly", Long.class, ServicePointPhotoBeanParam.class);
             provider.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
                     .path(ProviderResource.class)
                     .path(servicePointPhotosMethod)
@@ -726,7 +728,7 @@ public class ProviderResource {
                     .rel("service-point-photos-eagerly").build());
 
             // service-point-photos count
-            Method countServicePointPhotosByProviderMethod = null;
+            Method countServicePointPhotosByProviderMethod = ProviderResource.ServicePointPhotoResource.class.getMethod("countServicePointPhotosByProvider", Long.class, GenericBeanParam.class);
             provider.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
                     .path(ProviderResource.class)
                     .path(servicePointPhotosMethod)
@@ -2298,10 +2300,7 @@ public class ProviderResource {
             if(provider == null)
                 throw new NotFoundException("Could not find provider for id " + providerId + ".");
 
-            // calculate number of filter query params
-            Integer noOfParams = params.getUriInfo().getQueryParameters().size();
-            if(params.getOffset() != null) noOfParams -= 1;
-            if(params.getLimit() != null) noOfParams -= 1;
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
 
             ResourceList<ClientWrapper> clients = null;
 
@@ -2341,5 +2340,172 @@ public class ProviderResource {
         }
     }
 
+    public class ServicePointPhotoResource {
 
+        public ServicePointPhotoResource() { }
+
+        /**
+         * Method returns subset of Service Point Photo entities for given Provider entity.
+         * The provider id is passed through path param.
+         */
+        @GET
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getProviderServicePointPhotos( @PathParam("userId") Long providerId,
+                                                       @BeanParam ServicePointPhotoBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning service point photos for given provider using " +
+                    "ProviderResource.ServicePointPhotoResource.getProviderServicePointPhotos(providerId) method of REST API");
+
+            // find provider entity for which to get associated service point photos
+            Provider provider = providerFacade.find(providerId);
+            if(provider == null)
+                throw new NotFoundException("Could not find provider for id " + providerId + ".");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<ServicePointPhoto> photos = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Provider> providers = new ArrayList<>();
+                providers.add(provider);
+
+                // get service point photos for given provider filtered by given params
+
+                if( RESTToolkit.isSet(params.getKeywords()) ) {
+                    if( RESTToolkit.isSet(params.getFileNames()) || RESTToolkit.isSet(params.getDescriptions()) )
+                        throw new BadRequestException("Query params cannot include keywords and fileNames or descriptions at the same time.");
+
+                    if( RESTToolkit.isSet(params.getTagNames()) ) {
+                        // find by keywords and tag names
+                        photos = new ResourceList<>(
+                                servicePointPhotoFacade.findByMultipleCriteria(params.getKeywords(), params.getTagNames(), params.getServicePoints(),
+                                        providers, params.getCorporations(), params.getTags(), params.getOffset(), params.getLimit())
+                        );
+                    } else {
+                        // find only by keywords
+                        photos = new ResourceList<>(
+                                servicePointPhotoFacade.findByMultipleCriteria(params.getKeywords(), params.getServicePoints(), providers,
+                                        params.getCorporations(), params.getTags(), params.getOffset(), params.getLimit())
+                        );
+                    }
+                } else {
+                    // find by fileNames, descriptions or tagNames
+                    photos = new ResourceList<>(
+                            servicePointPhotoFacade.findByMultipleCriteria(params.getFileNames(), params.getDescriptions(), params.getTagNames(),
+                                    params.getServicePoints(), providers, params.getCorporations(), params.getTags(), params.getOffset(), params.getLimit())
+                    );
+                }
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get service point photos for given provider without filtering
+                photos = new ResourceList<>( servicePointPhotoFacade.findByProvider(provider, params.getOffset(), params.getLimit()) );
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.ServicePointPhotoResource.populateWithHATEOASLinks(photos, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(photos).build();
+        }
+
+        /**
+         * Method returns subset of Service Point Photo entities for given Provider fetching them eagerly
+         * The provider id is passed through path param.
+         */
+        @GET
+        @Path("/eagerly")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getProviderServicePointPhotosEagerly( @PathParam("userId") Long providerId,
+                                                              @BeanParam ServicePointPhotoBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException  {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning service point photos eagerly for given provider using " +
+                    "ProviderResource.ServicePointPhotoResource.getProviderServicePointPhotosEagerly(providerId) method of REST API");
+
+            // find provider entity for which to get associated service point photos
+            Provider provider = providerFacade.find(providerId);
+            if(provider == null)
+                throw new NotFoundException("Could not find provider for id " + providerId + ".");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<ServicePointPhotoWrapper> photos = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Provider> providers = new ArrayList<>();
+                providers.add(provider);
+
+                // get service point photos eagerly for given provider filtered by given params
+
+                if( RESTToolkit.isSet(params.getKeywords()) ) {
+                    if( RESTToolkit.isSet(params.getFileNames()) || RESTToolkit.isSet(params.getDescriptions()) )
+                        throw new BadRequestException("Query params cannot include keywords and fileNames or descriptions at the same time.");
+
+                    if( RESTToolkit.isSet(params.getTagNames()) ) {
+                        // find by keywords and tag names
+                        photos = new ResourceList<>(
+                                ServicePointPhotoWrapper.wrap(
+                                        servicePointPhotoFacade.findByMultipleCriteriaEagerly(params.getKeywords(), params.getTagNames(), params.getServicePoints(),
+                                                providers, params.getCorporations(), params.getTags(), params.getOffset(), params.getLimit())
+                                )
+                        );
+                    } else {
+                        // find only by keywords
+                        photos = new ResourceList<>(
+                                ServicePointPhotoWrapper.wrap(
+                                        servicePointPhotoFacade.findByMultipleCriteriaEagerly(params.getKeywords(), params.getServicePoints(), providers,
+                                                params.getCorporations(), params.getTags(), params.getOffset(), params.getLimit())
+                                )
+                        );
+                    }
+                } else {
+                    // find by fileNames, descriptions or tagNames
+                    photos = new ResourceList<>(
+                            ServicePointPhotoWrapper.wrap(
+                                    servicePointPhotoFacade.findByMultipleCriteriaEagerly(params.getFileNames(), params.getDescriptions(), params.getTagNames(),
+                                            params.getServicePoints(), providers, params.getCorporations(), params.getTags(), params.getOffset(), params.getLimit())
+                            )
+                    );
+                }
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get service point photos eagerly for given provider without filtering
+                photos = new ResourceList<>( ServicePointPhotoWrapper.wrap(servicePointPhotoFacade.findByProviderEagerly(provider, params.getOffset(), params.getLimit())) );
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.ServicePointPhotoResource.populateWithHATEOASLinks(photos, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(photos).build();
+        }
+
+        /**
+         * Method that count Service Point Photo entities for given Provider resource.
+         * The provider id is passed through path param.
+         */
+        @GET
+        @Path("/count")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response countServicePointPhotosByProvider( @PathParam("userId") Long providerId,
+                                                           @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning number of service point photos for given provider by executing " +
+                    "ProviderResource.ServicePointPhotoResource.countServicePointPhotosByProvider(providerId) method of REST API");
+
+            // find provider entity for which to count service point photos
+            Provider provider = providerFacade.find(providerId);
+            if(provider == null)
+                throw new NotFoundException("Could not find provider for id " + providerId + ".");
+
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(servicePointPhotoFacade.countByProvider(provider)), 200, "number of service point photos for provider with id " + provider.getUserId());
+            return Response.status(Status.OK).entity(responseEntity).build();
+        }
+    }
 }

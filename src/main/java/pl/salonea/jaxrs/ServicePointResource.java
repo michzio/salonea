@@ -1,8 +1,12 @@
 package pl.salonea.jaxrs;
 
 import pl.salonea.ejb.stateless.ServicePointFacade;
+import pl.salonea.ejb.stateless.ServicePointPhotoFacade;
 import pl.salonea.entities.ServicePoint;
+import pl.salonea.entities.ServicePointPhoto;
+import pl.salonea.entities.idclass.ServicePointId;
 import pl.salonea.jaxrs.bean_params.*;
+import pl.salonea.jaxrs.exceptions.UnprocessableEntityException;
 import pl.salonea.jaxrs.utils.RESTToolkit;
 import pl.salonea.jaxrs.utils.ResourceList;
 import pl.salonea.jaxrs.utils.ResponseWrapper;
@@ -10,6 +14,8 @@ import pl.salonea.jaxrs.utils.hateoas.Link;
 import pl.salonea.jaxrs.wrappers.ServicePointWrapper;
 
 import javax.inject.Inject;
+import javax.transaction.*;
+import javax.transaction.NotSupportedException;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -32,7 +38,70 @@ public class ServicePointResource {
     private static final Logger logger = Logger.getLogger(ServicePointResource.class.getName());
 
     @Inject
+    private UserTransaction utx;
+
+    @Inject
     private ServicePointFacade servicePointFacade;
+    @Inject
+    private ServicePointPhotoFacade servicePointPhotoFacade;
+
+    @Inject
+    private ProviderResource providerResource;
+
+
+    /**
+     * Alternative methods to access Service Point resource
+     */
+    @GET
+    @Path("/{providerId: \\d+}+{servicePointNumber: \\d+}")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getServicePoint(@PathParam("providerId") Long providerId,
+                                    @PathParam("servicePointNumber") Integer servicePointNumber,
+                                    @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+        return providerResource.getServicePointResource().getServicePoint(providerId, servicePointNumber, params);
+    }
+
+    @GET
+    @Path("/{providerId: \\d+}+{servicePointNumber: \\d+}/eagerly")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getServicePointEagerly(@PathParam("providerId") Long providerId,
+                                           @PathParam("servicePointNumber") Integer servicePointNumber,
+                                           @BeanParam GenericBeanParam params) throws ForbiddenException, NotFoundException {
+
+        return providerResource.getServicePointResource().getServicePointEagerly(providerId, servicePointNumber, params);
+    }
+
+    @POST
+    @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response createServicePoint(ServicePoint servicePoint,
+                                       @BeanParam GenericBeanParam params) throws ForbiddenException, UnprocessableEntityException, InternalServerErrorException {
+
+        return providerResource.getServicePointResource().createServicePoint(servicePoint.getProvider().getUserId(), servicePoint, params);
+    }
+
+    @PUT
+    @Path("/{providerId: \\d+}+{servicePointNumber: \\d+}")
+    @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response updateServicePoint(@PathParam("providerId") Long providerId,
+                                       @PathParam("servicePointNumber") Integer servicePointNumber,
+                                       ServicePoint servicePoint,
+                                       @BeanParam GenericBeanParam params) throws ForbiddenException, UnprocessableEntityException, InternalServerErrorException {
+
+        return providerResource.getServicePointResource().updateServicePoint(providerId, servicePointNumber, servicePoint, params);
+    }
+
+    @DELETE
+    @Path("/{providerId: \\d+}+{servicePointNumber: \\d+}")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response removeServicePoint(@PathParam("providerId") Long providerId,
+                                       @PathParam("servicePointNumber") Integer servicePointNumber,
+                                       @BeanParam GenericBeanParam params) throws ForbiddenException, NotFoundException, InternalServerErrorException {
+
+        return providerResource.getServicePointResource().removeServicePoint(providerId, servicePointNumber, params);
+    }
 
     /**
      * Method returns all Service Point entities
@@ -275,6 +344,15 @@ public class ServicePointResource {
     }
 
     /**
+     * related subresources (through relationships)
+     */
+
+    @Path("/{providerId: \\d+}+{servicePointNumber: \\d+}/photos")
+    public PhotoResource getServicePointPhotoResource() {
+        return new PhotoResource();
+    }
+
+    /**
      * This method enables to populate list of resources and each individual resource on list with hypermedia links
      */
     public static void populateWithHATEOASLinks(ResourceList servicePoints, UriInfo uriInfo, Integer offset, Integer limit) {
@@ -381,6 +459,42 @@ public class ServicePointResource {
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
         }
+    }
 
+    /* related ServicePointPhoto subresource */
+    public class PhotoResource {
+
+        public PhotoResource() { }
+
+        /**
+         * Method that counts Service Point Photo entities for given Service Point resource.
+         * The provider id and service point number are passed through path params.
+         */
+        @GET
+        @Path("/count")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response countServicePointPhotosByServicePoint( @PathParam("providerId") Long providerId,
+                                                               @PathParam("servicePointNumber") Integer servicePointNumber,
+                                                               @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException,
+                /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning number of service point photos for given service point by executing " +
+                    "ServicePointResource.PhotoResource.countServicePointPhotosByServicePoint(providerId, servicePointNumber) method of REST API");
+
+            utx.begin();
+
+            // find service point entity for which to count photos
+            ServicePoint servicePoint = servicePointFacade.find(new ServicePointId(providerId, servicePointNumber));
+            if(servicePoint == null)
+                throw new NotFoundException("Could not find service point for id (" + providerId + "," + servicePointNumber + ").");
+
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(servicePointPhotoFacade.countByServicePoint(servicePoint)), 200,
+                    "number of photos for service point with id (" + providerId + ","+ servicePointNumber + ").");
+
+            utx.commit();
+
+            return Response.status(Status.OK).entity(responseEntity).build();
+        }
     }
 }

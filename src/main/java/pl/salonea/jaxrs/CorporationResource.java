@@ -1270,6 +1270,7 @@ public class CorporationResource {
                 corporations.add(corporation);
 
                 // get service point photos eagerly for given corporation filtered by given params
+
                 if( RESTToolkit.isSet(params.getKeywords()) ) {
                     if( RESTToolkit.isSet(params.getFileNames()) || RESTToolkit.isSet(params.getDescriptions()) )
                         throw new BadRequestException("Query params cannot include keywords and fileNames or descriptions at the same time.");
