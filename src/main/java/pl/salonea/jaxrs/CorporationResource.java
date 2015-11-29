@@ -3,10 +3,12 @@ package pl.salonea.jaxrs;
 import pl.salonea.ejb.stateless.CorporationFacade;
 import pl.salonea.ejb.stateless.ProviderFacade;
 import pl.salonea.ejb.stateless.ServicePointFacade;
+import pl.salonea.ejb.stateless.ServicePointPhotoFacade;
 import pl.salonea.embeddables.Address;
 import pl.salonea.entities.Corporation;
 import pl.salonea.entities.Provider;
 import pl.salonea.entities.ServicePoint;
+import pl.salonea.entities.ServicePointPhoto;
 import pl.salonea.jaxrs.bean_params.*;
 import pl.salonea.jaxrs.exceptions.*;
 import pl.salonea.jaxrs.exceptions.ForbiddenException;
@@ -53,6 +55,8 @@ public class CorporationResource {
     private ProviderFacade providerFacade;
     @Inject
     private ServicePointFacade servicePointFacade;
+    @Inject
+    private ServicePointPhotoFacade servicePointPhotoFacade;
 
     /**
      * Method returns all Corporation resources
@@ -500,6 +504,9 @@ public class CorporationResource {
         return new ServicePointResource();
     }
 
+    @Path("/{corporationId : \\d+}/service-point-photos}")
+    public ServicePointPhotoResource getServicePointPhotoResource() { return  new ServicePointPhotoResource(); }
+
     /**
      * This method enables to populate list of resources and each individual resource on list with hypermedia links
      */
@@ -689,6 +696,20 @@ public class CorporationResource {
                     .resolveTemplate("corporationId", corporation.getCorporationId().toString())
                     .build())
                     .rel("service-points-coordinates-circle").build());
+
+            /**
+             * Service Point Photos associated with current Corporation resource
+             */
+
+            // service-point-photos relationship
+            Method servicePointPhotosMethod = CorporationResource.class.getMethod("getServicePointPhotoResource");
+            corporation.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(CorporationResource.class)
+                    .path(servicePointPhotosMethod)
+                    .resolveTemplate("corporationId", corporation.getCorporationId().toString())
+                    .build())
+                    .rel("service-point-photos").build());
+
 
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
@@ -1093,6 +1114,78 @@ public class CorporationResource {
             return Response.status(Status.OK).entity(servicePoints).build();
         }
 
+    }
+
+    public class ServicePointPhotoResource {
+
+        public ServicePointPhotoResource() { }
+
+        /**
+         * Method returns subset of Service Point Photo entities for given Corporation entity.
+         * The corporation id is passed through path param.
+         */
+        @GET
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getCorporationServicePointPhotos( @PathParam("corporationId") Long corporationId,
+                                                          @BeanParam ServicePointPhotoBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning service point photos for given corporation using CorporationResource.ServicePointPhotoResource.getCorporationServicePointPhotos(corporationId) method of REST API");
+
+            // find corporation entity for which to get associated service point photos
+            Corporation corporation = corporationFacade.find(corporationId);
+            if(corporation == null)
+                throw new NotFoundException("Could not find corporation for id " + corporationId + ".");
+
+            // calculate number of filter query params
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<ServicePointPhoto> photos = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Corporation> corporations = new ArrayList<>();
+                corporations.add(corporation);
+
+                // get service point photos for given corporation filtered by given params
+
+                if( RESTToolkit.isSet(params.getKeywords()) ) {
+                    if( RESTToolkit.isSet(params.getFileNames()) || RESTToolkit.isSet(params.getDescriptions()) )
+                        throw new BadRequestException("Query params cannot include keywords and fileNames or descriptions at the same time.");
+
+                    if( RESTToolkit.isSet(params.getTagNames()) ) {
+                        // find by keywords and tag names
+                        photos = new ResourceList<>(
+                                servicePointPhotoFacade.findByMultipleCriteria(params.getKeywords(), params.getTagNames(), params.getServicePoints(),
+                                        params.getProviders(), corporations, params.getOffset(), params.getLimit())
+                        );
+                    } else {
+                        // find only by keywords
+                        photos = new ResourceList<>(
+                                servicePointPhotoFacade.findByMultipleCriteria(params.getKeywords(), params.getServicePoints(), params.getProviders(),
+                                        corporations, params.getOffset(), params.getLimit())
+                        );
+                    }
+                } else {
+                    // find by fileNames, descriptions or tagNames
+                    photos = new ResourceList<>(
+                            servicePointPhotoFacade.findByMultipleCriteria(params.getFileNames(), params.getDescriptions(), params.getTagNames(),
+                                    params.getServicePoints(), params.getProviders(), corporations, params.getOffset(), params.getLimit())
+                    );
+                }
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get service point photos for given corporation without filtering
+                photos = new ResourceList<>( servicePointPhotoFacade.findByCorporation(corporation, params.getOffset(), params.getLimit()) );
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.ServicePointPhotoResource.populateWithHATEOASLinks(photos, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(photos).build();
+        }
     }
 
 }

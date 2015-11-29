@@ -1,6 +1,7 @@
 package pl.salonea.ejb.interfaces;
 
 import pl.salonea.entities.*;
+import pl.salonea.entities.idclass.ServicePointId;
 
 import java.util.List;
 
@@ -10,6 +11,8 @@ import java.util.List;
 public interface ServicePointPhotoFacadeInterface extends AbstractFacadeInterface<ServicePointPhoto> {
 
     // concrete interface
+    ServicePointPhoto createForServicePoint(ServicePointId servicePointId, ServicePointPhoto photo);
+    ServicePointPhoto updateWithServicePoint(ServicePointId servicePointId, ServicePointPhoto photo);
     List<ServicePointPhoto> findAllEagerly();
     List<ServicePointPhoto> findAllEagerly(Integer start, Integer limit);
     ServicePointPhoto findByIdEagerly(Long photoId);
@@ -39,12 +42,16 @@ public interface ServicePointPhotoFacadeInterface extends AbstractFacadeInterfac
     List<ServicePointPhoto> findByProvider(Provider provider, Integer start, Integer limit);
     List<ServicePointPhoto> findByCorporation(Corporation corporation);
     List<ServicePointPhoto> findByCorporation(Corporation corporation, Integer start, Integer limit);
+    List<ServicePointPhoto> findByTag(Tag tag);
+    List<ServicePointPhoto> findByTag(Tag tag, Integer start, Integer limit);
 
     Long countByServicePoint(ServicePoint servicePoint);
     Long countByProvider(Provider provider);
     Long countByCorporation(Corporation corporation);
+    Long countByTag(Tag tag);
 
     Integer deleteByServicePoint(ServicePoint servicePoint);
+    Integer deleteById(Long photoId);
 
     List<ServicePointPhoto> findByMultipleCriteria(List<String> keywords, List<ServicePoint> servicePoints, List<Provider> providers, List<Corporation> corporations);
     List<ServicePointPhoto> findByMultipleCriteria(List<String> keywords, List<ServicePoint> servicePoints, List<Provider> providers, List<Corporation> corporations, Integer start, Integer limit);

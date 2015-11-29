@@ -2,6 +2,7 @@ package pl.salonea.ejb.stateless;
 
 import pl.salonea.ejb.interfaces.ServicePointPhotoFacadeInterface;
 import pl.salonea.entities.*;
+import pl.salonea.entities.idclass.ServicePointId;
 
 import javax.ejb.LocalBean;
 import javax.ejb.Stateless;
@@ -29,6 +30,24 @@ public class ServicePointPhotoFacade extends AbstractFacade<ServicePointPhoto>
 
     public ServicePointPhotoFacade() {
         super(ServicePointPhoto.class);
+    }
+
+    @Override
+    public ServicePointPhoto createForServicePoint(ServicePointId servicePointId, ServicePointPhoto photo) {
+
+        ServicePoint foundServicePoint = getEntityManager().find(ServicePoint.class, servicePointId);
+        photo.setServicePoint(foundServicePoint);
+
+        return create(photo);
+    }
+
+    @Override
+    public ServicePointPhoto updateWithServicePoint(ServicePointId servicePointId, ServicePointPhoto photo) {
+
+        ServicePoint foundServicePoint = getEntityManager().find(ServicePoint.class, servicePointId);
+        photo.setServicePoint(foundServicePoint);
+
+        return update(photo);
     }
 
     @Override
@@ -218,7 +237,7 @@ public class ServicePointPhotoFacade extends AbstractFacade<ServicePointPhoto>
     public List<ServicePointPhoto> findByKeywordIncludingTags(String keyword, Integer start, Integer limit) {
 
         TypedQuery<ServicePointPhoto> query = getEntityManager().createNamedQuery(ServicePointPhoto.FIND_BY_KEYWORD_INCLUDING_TAGS, ServicePointPhoto.class);
-        query.setParameter("keyword", keyword);
+        query.setParameter("keyword", "%" + keyword + "%");
         if(start != null && limit != null) {
             query.setFirstResult(start);
             query.setMaxResults(limit);
@@ -278,6 +297,23 @@ public class ServicePointPhotoFacade extends AbstractFacade<ServicePointPhoto>
     }
 
     @Override
+    public List<ServicePointPhoto> findByTag(Tag tag) {
+        return findByTag(tag);
+    }
+
+    @Override
+    public List<ServicePointPhoto> findByTag(Tag tag, Integer start, Integer limit) {
+
+        TypedQuery<ServicePointPhoto> query = getEntityManager().createNamedQuery(ServicePointPhoto.FIND_BY_TAG, ServicePointPhoto.class);
+        query.setParameter("tag", tag);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
     public Long countByServicePoint(ServicePoint servicePoint) {
 
         TypedQuery<Long> query = getEntityManager().createNamedQuery(ServicePointPhoto.COUNT_BY_SERVICE_POINT, Long.class);
@@ -302,10 +338,26 @@ public class ServicePointPhotoFacade extends AbstractFacade<ServicePointPhoto>
     }
 
     @Override
+    public Long countByTag(Tag tag) {
+
+        TypedQuery<Long> query = getEntityManager().createNamedQuery(ServicePointPhoto.COUNT_BY_TAG, Long.class);
+        query.setParameter("tag", tag);
+        return query.getSingleResult();
+    }
+
+    @Override
     public Integer deleteByServicePoint(ServicePoint servicePoint) {
 
         Query query = getEntityManager().createNamedQuery(ServicePointPhoto.DELETE_BY_SERVICE_POINT);
         query.setParameter("service_point", servicePoint);
+        return query.executeUpdate();
+    }
+
+    @Override
+    public Integer deleteById(Long photoId) {
+
+        Query query = getEntityManager().createNamedQuery(ServicePointPhoto.DELETE_BY_ID);
+        query.setParameter("photo_id", photoId);
         return query.executeUpdate();
     }
 

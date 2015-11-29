@@ -36,12 +36,13 @@ import java.util.Set;
         @NamedQuery(name = ServicePointPhoto.FIND_BY_SERVICE_POINT, query = "SELECT photo FROM ServicePointPhoto photo WHERE photo.servicePoint = :service_point"),
         @NamedQuery(name = ServicePointPhoto.FIND_BY_PROVIDER, query = "SELECT photo FROM ServicePointPhoto photo INNER JOIN photo.servicePoint sp WHERE sp.provider = :provider"),
         @NamedQuery(name = ServicePointPhoto.FIND_BY_CORPORATION, query = "SELECT photo FROM ServicePointPhoto photo INNER JOIN photo.servicePoint sp INNER JOIN sp.provider p WHERE p.corporation = :corporation"),
+        @NamedQuery(name = ServicePointPhoto.FIND_BY_TAG, query = "SELECT photo FROM ServicePointPhoto photo WHERE :tag MEMBER OF photo.tags"),
         @NamedQuery(name = ServicePointPhoto.COUNT_BY_SERVICE_POINT, query = "SELECT COUNT(photo) FROM ServicePointPhoto photo WHERE photo.servicePoint = :service_point"),
         @NamedQuery(name = ServicePointPhoto.COUNT_BY_PROVIDER, query = "SELECT COUNT(photo) FROM ServicePointPhoto photo INNER JOIN photo.servicePoint sp WHERE sp.provider = :provider"),
         @NamedQuery(name = ServicePointPhoto.COUNT_BY_CORPORATION, query = "SELECT COUNT(photo) FROM ServicePointPhoto photo INNER JOIN photo.servicePoint sp INNER JOIN sp.provider p WHERE p.corporation = :corporation"),
+        @NamedQuery(name = ServicePointPhoto.COUNT_BY_TAG, query = "SELECT COUNT(photo) FROM ServicePointPhoto photo WHERE :tag MEMBER OF photo.tags"),
         @NamedQuery(name = ServicePointPhoto.DELETE_BY_SERVICE_POINT, query = "DELETE FROM ServicePointPhoto photo WHERE photo.servicePoint = :service_point"),
-
-
+        @NamedQuery(name = ServicePointPhoto.DELETE_BY_ID, query = "DELETE FROM ServicePointPhoto photo WHERE photo.photoId = :photo_id"),
 })
 public class ServicePointPhoto implements Serializable {
 
@@ -58,10 +59,13 @@ public class ServicePointPhoto implements Serializable {
     public static final String FIND_BY_SERVICE_POINT = "ServicePointPhoto.findByServicePoint";
     public static final String FIND_BY_PROVIDER = "ServicePointPhoto.findByProvider";
     public static final String FIND_BY_CORPORATION = "ServicePointPhoto.findByCorporation";
+    public static final String FIND_BY_TAG = "ServicePointPhoto.findByTag";
     public static final String COUNT_BY_SERVICE_POINT = "ServicePointPhoto.countByServicePoint";
     public static final String COUNT_BY_PROVIDER = "ServicePointPhoto.countByProvider";
     public static final String COUNT_BY_CORPORATION = "ServicePointPhoto.countByCorporation";
+    public static final String COUNT_BY_TAG = "ServicePointPhoto.countByTag";
     public static final String DELETE_BY_SERVICE_POINT = "ServicePointPhoto.deleteByServicePoint";
+    public static final String DELETE_BY_ID = "ServicePointPhoto.deleteById";
 
     private Long photoId; // PK
 

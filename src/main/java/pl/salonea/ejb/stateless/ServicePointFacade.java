@@ -40,8 +40,8 @@ public class ServicePointFacade extends AbstractFacade<ServicePoint> implements 
 
         Provider foundProvider = getEntityManager().find(Provider.class, providerId);
         servicePoint.setProvider(foundProvider);
-        getEntityManager().persist(servicePoint);
-        return servicePoint;
+
+        return create(servicePoint);
     }
 
     @Override
