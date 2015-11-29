@@ -69,20 +69,20 @@ public class ServicePointPhotoResource {
                     // find by keywords and tag names
                     photos = new ResourceList<>(
                             servicePointPhotoFacade.findByMultipleCriteria(params.getKeywords(), params.getTagNames(), params.getServicePoints(),
-                                    params.getProviders(), params.getCorporations(), params.getOffset(), params.getLimit())
+                                    params.getProviders(), params.getCorporations(), params.getTags(), params.getOffset(), params.getLimit())
                     );
                 } else {
                     // find only by keywords
                     photos = new ResourceList<>(
                             servicePointPhotoFacade.findByMultipleCriteria(params.getKeywords(), params.getServicePoints(), params.getProviders(),
-                                    params.getCorporations(), params.getOffset(), params.getLimit())
+                                    params.getCorporations(), params.getTags(), params.getOffset(), params.getLimit())
                     );
                 }
             } else {
                 // find by fileNames, descriptions or tagNames
                 photos = new ResourceList<>(
                         servicePointPhotoFacade.findByMultipleCriteria(params.getFileNames(), params.getDescriptions(), params.getTagNames(),
-                                params.getServicePoints(), params.getProviders(), params.getCorporations(), params.getOffset(), params.getLimit())
+                                params.getServicePoints(), params.getProviders(), params.getCorporations(), params.getTags(), params.getOffset(), params.getLimit())
                 );
             }
 
@@ -123,7 +123,7 @@ public class ServicePointPhotoResource {
                     photos = new ResourceList<>(
                             ServicePointPhotoWrapper.wrap(
                                     servicePointPhotoFacade.findByMultipleCriteriaEagerly(params.getKeywords(), params.getTagNames(), params.getServicePoints(),
-                                            params.getProviders(), params.getCorporations(), params.getOffset(), params.getLimit())
+                                            params.getProviders(), params.getCorporations(), params.getTags(), params.getOffset(), params.getLimit())
                             )
                     );
                 } else {
@@ -131,7 +131,7 @@ public class ServicePointPhotoResource {
                     photos = new ResourceList<>(
                             ServicePointPhotoWrapper.wrap(
                                     servicePointPhotoFacade.findByMultipleCriteriaEagerly(params.getKeywords(), params.getServicePoints(), params.getProviders(),
-                                            params.getCorporations(), params.getOffset(), params.getLimit())
+                                            params.getCorporations(), params.getTags(), params.getOffset(), params.getLimit())
                             )
                     );
                 }
@@ -140,7 +140,7 @@ public class ServicePointPhotoResource {
                 photos = new ResourceList<>(
                         ServicePointPhotoWrapper.wrap(
                                 servicePointPhotoFacade.findByMultipleCriteriaEagerly(params.getFileNames(), params.getDescriptions(), params.getTagNames(),
-                                        params.getServicePoints(), params.getProviders(), params.getCorporations(), params.getOffset(), params.getLimit())
+                                        params.getServicePoints(), params.getProviders(), params.getCorporations(), params.getTags(), params.getOffset(), params.getLimit())
                         )
                 );
             }

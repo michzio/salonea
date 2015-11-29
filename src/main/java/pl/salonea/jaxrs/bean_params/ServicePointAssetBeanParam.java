@@ -3,9 +3,11 @@ package pl.salonea.jaxrs.bean_params;
 import pl.salonea.ejb.stateless.CorporationFacade;
 import pl.salonea.ejb.stateless.ProviderFacade;
 import pl.salonea.ejb.stateless.ServicePointFacade;
+import pl.salonea.ejb.stateless.TagFacade;
 import pl.salonea.entities.Corporation;
 import pl.salonea.entities.Provider;
 import pl.salonea.entities.ServicePoint;
+import pl.salonea.entities.Tag;
 import pl.salonea.entities.idclass.ServicePointId;
 import pl.salonea.jaxrs.exceptions.NotFoundException;
 
@@ -26,6 +28,7 @@ public class ServicePointAssetBeanParam extends PaginationBeanParam {
     private @QueryParam("servicePointId") List<ServicePointId> servicePointIds; // {providerId}+{servicePointNumber} composite PK
     private @QueryParam("providerId") List<Long> providerIds;
     private @QueryParam("corporationId") List<Long> corporationIds;
+    private @QueryParam("tagId") List<Long> tagIds;
 
     @Inject
     private ServicePointFacade servicePointFacade;
@@ -33,6 +36,8 @@ public class ServicePointAssetBeanParam extends PaginationBeanParam {
     private ProviderFacade providerFacade;
     @Inject
     private CorporationFacade corporationFacade;
+    @Inject
+    private TagFacade tagFacade;
 
     public List<String> getFileNames() {
         return fileNames;
@@ -113,6 +118,23 @@ public class ServicePointAssetBeanParam extends PaginationBeanParam {
             final List<Corporation> corporations = corporationFacade.find( new ArrayList<>(getCorporationIds()) );
             if(corporations.size() != getCorporationIds().size()) throw new NotFoundException("Could not find corporations for all provided ids.");
             return corporations;
+        }
+        return null;
+    }
+
+    public List<Long> getTagIds() {
+        return tagIds;
+    }
+
+    public void setTagIds(List<Long> tagIds) {
+        this.tagIds = tagIds;
+    }
+
+    public List<Tag> getTags() throws NotFoundException {
+        if(getTagIds() != null && getTagIds().size() > 0) {
+            final List<Tag> tags = tagFacade.find( new ArrayList<>(getTagIds()) );
+            if(tags.size() != getTagIds().size()) throw new NotFoundException("Could not find tags for all provided ids.");
+            return tags;
         }
         return null;
     }

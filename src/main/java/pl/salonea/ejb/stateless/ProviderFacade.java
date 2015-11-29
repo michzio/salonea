@@ -331,6 +331,14 @@ public class ProviderFacade extends AbstractFacade<Provider> implements Provider
     }
 
     @Override
+    public Long countByCorporation(Corporation corporation) {
+
+        TypedQuery<Long> query = getEntityManager().createNamedQuery(Provider.COUNT_BY_CORPORATION, Long.class);
+        query.setParameter("corporation", corporation);
+        return query.getSingleResult();
+    }
+
+    @Override
     public List<Provider> findByMultipleCriteria(List<Corporation> corporations, List<ProviderType> types, List<Industry> industries, List<PaymentMethod> paymentMethods, List<Service> services, Boolean rated, Double minAvgRating, Double maxAvgRating, List<Client> clients, String providerName, String description) {
         return findByMultipleCriteria(corporations, types, industries, paymentMethods, services, rated, minAvgRating, maxAvgRating, clients, providerName, description, null, null);
     }

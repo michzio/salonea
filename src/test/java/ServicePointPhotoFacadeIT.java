@@ -368,7 +368,7 @@ public class ServicePointPhotoFacadeIT {
         providers.add(provider2);
         List<String> keywords = new ArrayList<>();
         keywords.add("png");
-        List<ServicePointPhoto> multiPhotos = photoFacade.findByMultipleCriteria(keywords,  null,  servicePoints, providers, null);
+        List<ServicePointPhoto> multiPhotos = photoFacade.findByMultipleCriteria(keywords,  null,  servicePoints, providers, null, null);
         utx.commit();
 
         assertTrue("There should be two Photos satisfying given criteria.", multiPhotos.size() == 2);

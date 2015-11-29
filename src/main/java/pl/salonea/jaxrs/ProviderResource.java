@@ -46,34 +46,24 @@ public class ProviderResource {
 
     @Inject
     private ProviderFacade providerFacade;
-
     @Inject
     private CorporationFacade corporationFacade;
-
     @Inject
     private IndustryFacade industryFacade;
-
     @Inject
     private PaymentMethodFacade paymentMethodFacade;
-
     @Inject
     private ServiceFacade serviceFacade;
-
     @Inject
     private ClientFacade clientFacade;
-
     @Inject
     private ServicePointFacade servicePointFacade;
-
     @Inject
     private ProviderServiceFacade providerServiceFacade;
-
     @Inject
     private EmployeeFacade employeeFacade;
-
     @Inject
     private ServiceCategoryFacade serviceCategoryFacade;
-
     @Inject
     private ProviderRatingFacade providerRatingFacade;
 
@@ -469,6 +459,11 @@ public class ProviderResource {
     @Path("/{userId: \\d+}/rating-clients")
     public ClientResource getClientResource() { return new ClientResource(); }
 
+    @Path("/{userId: \\d+}/service-point-photos")
+    public ServicePointPhotoResource getServicePointPhotoResource()  {
+        return new ServicePointPhotoResource();
+    }
+
     // private helper methods e.g. to populate resources/resource lists with HATEOAS links
 
     /**
@@ -710,6 +705,35 @@ public class ProviderResource {
                     .resolveTemplate("userId", provider.getUserId().toString())
                     .build())
                     .rel("rating-clients-eagerly").build());
+
+            // service-point-photos
+            Method servicePointPhotosMethod = ProviderResource.class.getMethod("getServicePointPhotoResource");
+            provider.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ProviderResource.class)
+                    .path(servicePointPhotosMethod)
+                    .resolveTemplate("userId", provider.getUserId().toString())
+                    .build())
+                    .rel("service-point-photos").build());
+
+            // service-point-photos eagerly
+            Method servicePointPhotosEagerlyMethod = null;
+            provider.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ProviderResource.class)
+                    .path(servicePointPhotosMethod)
+                    .path(servicePointPhotosEagerlyMethod)
+                    .resolveTemplate("userId", provider.getUserId().toString())
+                    .build())
+                    .rel("service-point-photos-eagerly").build());
+
+            // service-point-photos count
+            Method countServicePointPhotosByProviderMethod = null;
+            provider.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ProviderResource.class)
+                    .path(servicePointPhotosMethod)
+                    .path(countServicePointPhotosByProviderMethod)
+                    .resolveTemplate("userId", provider.getUserId().toString())
+                    .build())
+                    .rel("service-point-photos-count").build());
 
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
@@ -2316,4 +2340,6 @@ public class ProviderResource {
             return Response.status(Status.OK).entity(clients).build();
         }
     }
+
+
 }

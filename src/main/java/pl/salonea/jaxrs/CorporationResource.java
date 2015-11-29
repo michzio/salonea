@@ -28,6 +28,7 @@ import pl.salonea.jaxrs.wrappers.CorporationWrapper;
 
 import pl.salonea.jaxrs.exceptions.BadRequestException;
 import pl.salonea.jaxrs.wrappers.ProviderWrapper;
+import pl.salonea.jaxrs.wrappers.ServicePointPhotoWrapper;
 import pl.salonea.jaxrs.wrappers.ServicePointWrapper;
 
 import javax.ws.rs.core.MediaType;
@@ -504,7 +505,7 @@ public class CorporationResource {
         return new ServicePointResource();
     }
 
-    @Path("/{corporationId : \\d+}/service-point-photos}")
+    @Path("/{corporationId : \\d+}/service-point-photos")
     public ServicePointPhotoResource getServicePointPhotoResource() { return  new ServicePointPhotoResource(); }
 
     /**
@@ -516,7 +517,6 @@ public class CorporationResource {
         ResourceList.generateNavigationLinks(corporations, uriInfo, offset, limit);
 
         try {
-
             // count resources hypermedia link
             Method countMethod = CorporationResource.class.getMethod("countCorporations", GenericBeanParam.class);
             corporations.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(CorporationResource.class).path(countMethod).build()).rel("count").build() );
@@ -634,6 +634,16 @@ public class CorporationResource {
                         .build())
                         .rel("providers-eagerly").build());
 
+            // providers count link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/count
+            Method countProvidersByCorporationMethod = CorporationResource.ProviderResource.class.getMethod("countProvidersByCorporation", Long.class, GenericBeanParam.class);
+            corporation.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(CorporationResource.class)
+                    .path(providersMethod)
+                    .path(countProvidersByCorporationMethod)
+                    .resolveTemplate("corporationId", corporation.getCorporationId().toString())
+                    .build())
+                    .rel("providers-count").build());
+
             /**
              * Service Points associated with current Corporation resource
              */
@@ -710,6 +720,25 @@ public class CorporationResource {
                     .build())
                     .rel("service-point-photos").build());
 
+            // service-point-photos eagerly relationship
+            Method servicePointPhotosEagerlyMethod = CorporationResource.ServicePointPhotoResource.class.getMethod("getCorporationServicePointPhotosEagerly", Long.class, ServicePointPhotoBeanParam.class);
+            corporation.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(CorporationResource.class)
+                    .path(servicePointPhotosMethod)
+                    .path(servicePointPhotosEagerlyMethod)
+                    .resolveTemplate("corporationId", corporation.getCorporationId().toString())
+                    .build())
+                    .rel("service-point-photos-eagerly").build());
+
+            // service-point-photos count link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/count
+            Method countServicePointPhotosByCorporationMethod = CorporationResource.ServicePointPhotoResource.class.getMethod("countServicePointPhotosByCorporation", Long.class, GenericBeanParam.class);
+            corporation.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(CorporationResource.class)
+                    .path(servicePointPhotosMethod)
+                    .path(countServicePointPhotosByCorporationMethod)
+                    .resolveTemplate("corporationId", corporation.getCorporationId().toString())
+                    .build())
+                    .rel("service-point-photos-count").build());
 
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
@@ -816,6 +845,29 @@ public class CorporationResource {
             pl.salonea.jaxrs.ProviderResource.populateWithHATEOASLinks(providers, params.getUriInfo(), params.getOffset(), params.getLimit());
 
             return Response.status(Status.OK).entity(providers).build();
+        }
+
+        /**
+         * Method that counts Provider entities for given Corporation.
+         * The corporation id is passed through path param.
+         */
+        @GET
+        @Path("/count")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response countProvidersByCorporation( @PathParam("corporationId") Long corporationId,
+                                                     @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning number of providers for given corporation by executing " +
+                    "CorporationResource.ProviderResource.countProvidersByCorporation(corporationId) method of REST API");
+
+            // find corporation entity for which to count providers
+            Corporation corporation = corporationFacade.find(corporationId);
+            if(corporation == null)
+                throw new NotFoundException("Could not find corporation for id " + corporationId + ".");
+
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(providerFacade.countByCorporation(corporation)), 200, "number of providers for corporation with id " + corporation.getCorporationId());
+            return Response.status(Status.OK).entity(responseEntity).build();
         }
     }
 
@@ -1113,7 +1165,6 @@ public class CorporationResource {
 
             return Response.status(Status.OK).entity(servicePoints).build();
         }
-
     }
 
     public class ServicePointPhotoResource {
@@ -1130,7 +1181,8 @@ public class CorporationResource {
                                                           @BeanParam ServicePointPhotoBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException {
 
             RESTToolkit.authorizeAccessToWebService(params);
-            logger.log(Level.INFO, "returning service point photos for given corporation using CorporationResource.ServicePointPhotoResource.getCorporationServicePointPhotos(corporationId) method of REST API");
+            logger.log(Level.INFO, "returning service point photos for given corporation using " +
+                    "CorporationResource.ServicePointPhotoResource.getCorporationServicePointPhotos(corporationId) method of REST API");
 
             // find corporation entity for which to get associated service point photos
             Corporation corporation = corporationFacade.find(corporationId);
@@ -1158,20 +1210,20 @@ public class CorporationResource {
                         // find by keywords and tag names
                         photos = new ResourceList<>(
                                 servicePointPhotoFacade.findByMultipleCriteria(params.getKeywords(), params.getTagNames(), params.getServicePoints(),
-                                        params.getProviders(), corporations, params.getOffset(), params.getLimit())
+                                        params.getProviders(), corporations, params.getTags(), params.getOffset(), params.getLimit())
                         );
                     } else {
                         // find only by keywords
                         photos = new ResourceList<>(
                                 servicePointPhotoFacade.findByMultipleCriteria(params.getKeywords(), params.getServicePoints(), params.getProviders(),
-                                        corporations, params.getOffset(), params.getLimit())
+                                        corporations, params.getTags(), params.getOffset(), params.getLimit())
                         );
                     }
                 } else {
                     // find by fileNames, descriptions or tagNames
                     photos = new ResourceList<>(
                             servicePointPhotoFacade.findByMultipleCriteria(params.getFileNames(), params.getDescriptions(), params.getTagNames(),
-                                    params.getServicePoints(), params.getProviders(), corporations, params.getOffset(), params.getLimit())
+                                    params.getServicePoints(), params.getProviders(), corporations, params.getTags(), params.getOffset(), params.getLimit())
                     );
                 }
             } else {
@@ -1186,6 +1238,102 @@ public class CorporationResource {
 
             return Response.status(Status.OK).entity(photos).build();
         }
-    }
 
+        /**
+         * Method returns subset of Service Point Photo entities for given Corporation fetching it eagerly
+         * The corporation id is passed through path param.
+         */
+        @GET
+        @Path("/eagerly")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getCorporationServicePointPhotosEagerly( @PathParam("corporationId") Long corporationId,
+                                                                 @BeanParam ServicePointPhotoBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning service point photos eagerly for given corporation using " +
+                    "CorporationResource.ServicePointPhotoResource.getCorporationServicePointPhotosEagerly(corporationId) method of REST API");
+
+            // find corporation entity for which to get associated service point photos
+            Corporation corporation = corporationFacade.find(corporationId);
+            if(corporation == null)
+                throw new NotFoundException("Could not find corporation for id " + corporationId + ".");
+
+            // calculate number of filter query params
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<ServicePointPhotoWrapper> photos = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Corporation> corporations = new ArrayList<>();
+                corporations.add(corporation);
+
+                // get service point photos eagerly for given corporation filtered by given params
+                if( RESTToolkit.isSet(params.getKeywords()) ) {
+                    if( RESTToolkit.isSet(params.getFileNames()) || RESTToolkit.isSet(params.getDescriptions()) )
+                        throw new BadRequestException("Query params cannot include keywords and fileNames or descriptions at the same time.");
+
+                    if( RESTToolkit.isSet(params.getTagNames()) ) {
+                        // find by keywords and tag names
+                        photos = new ResourceList<>(
+                                ServicePointPhotoWrapper.wrap(
+                                        servicePointPhotoFacade.findByMultipleCriteriaEagerly(params.getKeywords(), params.getTagNames(), params.getServicePoints(),
+                                                params.getProviders(), corporations, params.getTags(), params.getOffset(), params.getLimit())
+                                )
+                        );
+                    } else {
+                        // find only by keywords
+                        photos = new ResourceList<>(
+                                ServicePointPhotoWrapper.wrap(
+                                        servicePointPhotoFacade.findByMultipleCriteriaEagerly(params.getKeywords(), params.getServicePoints(), params.getProviders(),
+                                                corporations, params.getTags(), params.getOffset(), params.getLimit())
+                                )
+                        );
+                    }
+                } else {
+                    // find by fileNames, descriptions or tagNames
+                    photos = new ResourceList<>(
+                            ServicePointPhotoWrapper.wrap(
+                                    servicePointPhotoFacade.findByMultipleCriteriaEagerly(params.getFileNames(), params.getDescriptions(), params.getTagNames(),
+                                            params.getServicePoints(), params.getProviders(), corporations, params.getTags(), params.getOffset(), params.getLimit())
+                            )
+                    );
+                }
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get service point photos eagerly for given corporation without filtering
+                photos = new ResourceList<>( ServicePointPhotoWrapper.wrap(servicePointPhotoFacade.findByCorporationEagerly(corporation, params.getOffset(), params.getLimit())) );
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.ServicePointPhotoResource.populateWithHATEOASLinks(photos, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(photos).build();
+        }
+
+        /**
+         * Method that counts Service Point Photo entities for given Corporation resource.
+         * The corporation id is passed through path param.
+         */
+        @GET
+        @Path("/count")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response countServicePointPhotosByCorporation( @PathParam("corporationId") Long corporationId,
+                                                              @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning number of service point photos for given corporation by executing " +
+                    "CorporationResource.ServicePointPhotoResource.countServicePointPhotosByCorporation(corporationId) method of REST API");
+
+            // find corporation entity for which to count service point photos
+            Corporation corporation =  corporationFacade.find(corporationId);
+            if(corporation == null)
+                throw new NotFoundException("Could not find corporation for id " + corporationId + ".");
+
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(servicePointPhotoFacade.countByCorporation(corporation)), 200, "number of service point photos for corporation with id " + corporation.getCorporationId());
+            return Response.status(Status.OK).entity(responseEntity).build();
+        }
+    }
 }

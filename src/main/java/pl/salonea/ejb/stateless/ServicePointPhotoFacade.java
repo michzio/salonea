@@ -3,6 +3,7 @@ package pl.salonea.ejb.stateless;
 import pl.salonea.ejb.interfaces.ServicePointPhotoFacadeInterface;
 import pl.salonea.entities.*;
 import pl.salonea.entities.idclass.ServicePointId;
+import pl.salonea.jaxrs.bean_params.ServicePointPhotoBeanParam;
 
 import javax.ejb.LocalBean;
 import javax.ejb.Stateless;
@@ -263,6 +264,23 @@ public class ServicePointPhotoFacade extends AbstractFacade<ServicePointPhoto>
     }
 
     @Override
+    public List<ServicePointPhoto> findByServicePointEagerly(ServicePoint servicePoint) {
+        return findByServicePointEagerly(servicePoint, null, null);
+    }
+
+    @Override
+    public List<ServicePointPhoto> findByServicePointEagerly(ServicePoint servicePoint, Integer start, Integer limit) {
+
+        TypedQuery<ServicePointPhoto> query = getEntityManager().createNamedQuery(ServicePointPhoto.FIND_BY_SERVICE_POINT_EAGERLY, ServicePointPhoto.class);
+        query.setParameter("service_point", servicePoint);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
     public List<ServicePointPhoto> findByProvider(Provider provider) {
         return findByProvider(provider, null, null);
     }
@@ -271,6 +289,23 @@ public class ServicePointPhotoFacade extends AbstractFacade<ServicePointPhoto>
     public List<ServicePointPhoto> findByProvider(Provider provider, Integer start, Integer limit) {
 
         TypedQuery<ServicePointPhoto> query = getEntityManager().createNamedQuery(ServicePointPhoto.FIND_BY_PROVIDER, ServicePointPhoto.class);
+        query.setParameter("provider", provider);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
+    public List<ServicePointPhoto> findByProviderEagerly(Provider provider) {
+        return findByProviderEagerly(provider, null, null);
+    }
+
+    @Override
+    public List<ServicePointPhoto> findByProviderEagerly(Provider provider, Integer start, Integer limit) {
+
+        TypedQuery<ServicePointPhoto> query = getEntityManager().createNamedQuery(ServicePointPhoto.FIND_BY_PROVIDER_EAGERLY, ServicePointPhoto.class);
         query.setParameter("provider", provider);
         if(start != null && limit != null) {
             query.setFirstResult(start);
@@ -297,6 +332,23 @@ public class ServicePointPhotoFacade extends AbstractFacade<ServicePointPhoto>
     }
 
     @Override
+    public List<ServicePointPhoto> findByCorporationEagerly(Corporation corporation) {
+        return findByCorporationEagerly(corporation, null, null);
+    }
+
+    @Override
+    public List<ServicePointPhoto> findByCorporationEagerly(Corporation corporation, Integer start, Integer limit) {
+
+        TypedQuery<ServicePointPhoto> query = getEntityManager().createNamedQuery(ServicePointPhoto.FIND_BY_CORPORATION_EAGERLY, ServicePointPhoto.class);
+        query.setParameter("corporation", corporation);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
     public List<ServicePointPhoto> findByTag(Tag tag) {
         return findByTag(tag);
     }
@@ -305,6 +357,23 @@ public class ServicePointPhotoFacade extends AbstractFacade<ServicePointPhoto>
     public List<ServicePointPhoto> findByTag(Tag tag, Integer start, Integer limit) {
 
         TypedQuery<ServicePointPhoto> query = getEntityManager().createNamedQuery(ServicePointPhoto.FIND_BY_TAG, ServicePointPhoto.class);
+        query.setParameter("tag", tag);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
+    public List<ServicePointPhoto> findByTagEagerly(Tag tag) {
+        return findByTagEagerly(tag, null, null);
+    }
+
+    @Override
+    public List<ServicePointPhoto> findByTagEagerly(Tag tag, Integer start, Integer limit) {
+
+        TypedQuery<ServicePointPhoto> query = getEntityManager().createNamedQuery(ServicePointPhoto.FIND_BY_TAG_EAGERLY, ServicePointPhoto.class);
         query.setParameter("tag", tag);
         if(start != null && limit != null) {
             query.setFirstResult(start);
@@ -363,75 +432,75 @@ public class ServicePointPhotoFacade extends AbstractFacade<ServicePointPhoto>
 
     @Override
     public List<ServicePointPhoto> findByMultipleCriteria(List<String> keywords, List<ServicePoint> servicePoints,
-                                                          List<Provider> providers, List<Corporation> corporations) {
-        return findByMultipleCriteria(keywords, servicePoints, providers, corporations, null, null);
+                                                          List<Provider> providers, List<Corporation> corporations, List<Tag> tags) {
+        return findByMultipleCriteria(keywords, servicePoints, providers, corporations, tags, null, null);
     }
 
     @Override
-    public List<ServicePointPhoto> findByMultipleCriteria(List<String> keywords, List<ServicePoint> servicePoints, List<Provider> providers, List<Corporation> corporations, Integer start, Integer limit) {
+    public List<ServicePointPhoto> findByMultipleCriteria(List<String> keywords, List<ServicePoint> servicePoints, List<Provider> providers, List<Corporation> corporations, List<Tag> tags, Integer start, Integer limit) {
 
-        return findByMultipleCriteria(true, keywords, true,  keywords, true, keywords,  servicePoints, providers, corporations, false, start, limit);
+        return findByMultipleCriteria(true, keywords, true,  keywords, true, keywords,  servicePoints, providers, corporations, tags, false, start, limit);
     }
 
     @Override
     public List<ServicePointPhoto> findByMultipleCriteria(List<String> keywords, List<String> tagNames,
                                                           List<ServicePoint> servicePoints, List<Provider> providers,
-                                                          List<Corporation> corporations) {
-        return findByMultipleCriteria(keywords, tagNames, servicePoints, providers, corporations, null, null);
-    }
+                                                          List<Corporation> corporations, List<Tag> tags) {
+        return findByMultipleCriteria(keywords, tagNames, servicePoints, providers, corporations, tags, null, null);
+}
 
     @Override
-    public List<ServicePointPhoto> findByMultipleCriteria(List<String> keywords, List<String> tagNames, List<ServicePoint> servicePoints, List<Provider> providers, List<Corporation> corporations, Integer start, Integer limit) {
-        return findByMultipleCriteria(true, keywords, true,  keywords, false,  tagNames, servicePoints, providers, corporations, false, start, limit);
+    public List<ServicePointPhoto> findByMultipleCriteria(List<String> keywords, List<String> tagNames, List<ServicePoint> servicePoints, List<Provider> providers, List<Corporation> corporations, List<Tag> tags, Integer start, Integer limit) {
+        return findByMultipleCriteria(true, keywords, true,  keywords, false,  tagNames, servicePoints, providers, corporations, tags, false, start, limit);
     }
 
     @Override
     public List<ServicePointPhoto> findByMultipleCriteria(List<String> fileNames, List<String> descriptions,
                                                           List<String> tagNames, List<ServicePoint> servicePoints,
-                                                          List<Provider> providers, List<Corporation> corporations) {
-        return findByMultipleCriteria(fileNames, descriptions, tagNames, servicePoints, providers, corporations, null, null);
+                                                          List<Provider> providers, List<Corporation> corporations, List<Tag> tags) {
+        return findByMultipleCriteria(fileNames, descriptions, tagNames, servicePoints, providers, corporations, tags, null, null);
     }
 
     @Override
-    public List<ServicePointPhoto> findByMultipleCriteria(List<String> fileNames, List<String> descriptions, List<String> tagNames, List<ServicePoint> servicePoints, List<Provider> providers, List<Corporation> corporations, Integer start, Integer limit) {
-        return findByMultipleCriteria(false, fileNames, false, descriptions, false, tagNames, servicePoints, providers, corporations, false, start, limit);
+    public List<ServicePointPhoto> findByMultipleCriteria(List<String> fileNames, List<String> descriptions, List<String> tagNames, List<ServicePoint> servicePoints, List<Provider> providers, List<Corporation> corporations, List<Tag> tags, Integer start, Integer limit) {
+        return findByMultipleCriteria(false, fileNames, false, descriptions, false, tagNames, servicePoints, providers, corporations, tags, false, start, limit);
     }
 
     @Override
-    public List<ServicePointPhoto> findByMultipleCriteriaEagerly(List<String> keywords, List<ServicePoint> servicePoints, List<Provider> providers, List<Corporation> corporations) {
-        return findByMultipleCriteriaEagerly(keywords, servicePoints, providers, corporations, null, null);
+    public List<ServicePointPhoto> findByMultipleCriteriaEagerly(List<String> keywords, List<ServicePoint> servicePoints, List<Provider> providers, List<Corporation> corporations, List<Tag> tags) {
+        return findByMultipleCriteriaEagerly(keywords, servicePoints, providers, corporations, tags, null, null);
     }
 
     @Override
-    public List<ServicePointPhoto> findByMultipleCriteriaEagerly(List<String> keywords, List<ServicePoint> servicePoints, List<Provider> providers, List<Corporation> corporations, Integer start, Integer limit) {
-        return findByMultipleCriteria(true, keywords, true,  keywords, true, keywords,  servicePoints, providers, corporations, true, start, limit);
+    public List<ServicePointPhoto> findByMultipleCriteriaEagerly(List<String> keywords, List<ServicePoint> servicePoints, List<Provider> providers, List<Corporation> corporations, List<Tag> tags, Integer start, Integer limit) {
+        return findByMultipleCriteria(true, keywords, true,  keywords, true, keywords,  servicePoints, providers, corporations, tags, true, start, limit);
     }
 
     @Override
-    public List<ServicePointPhoto> findByMultipleCriteriaEagerly(List<String> keywords, List<String> tagNames, List<ServicePoint> servicePoints, List<Provider> providers, List<Corporation> corporations) {
-        return findByMultipleCriteriaEagerly(keywords, tagNames, servicePoints, providers, corporations, null, null);
+    public List<ServicePointPhoto> findByMultipleCriteriaEagerly(List<String> keywords, List<String> tagNames, List<ServicePoint> servicePoints, List<Provider> providers, List<Corporation> corporations, List<Tag> tags) {
+        return findByMultipleCriteriaEagerly(keywords, tagNames, servicePoints, providers, corporations, tags, null, null);
     }
 
     @Override
-    public List<ServicePointPhoto> findByMultipleCriteriaEagerly(List<String> keywords, List<String> tagNames, List<ServicePoint> servicePoints, List<Provider> providers, List<Corporation> corporations, Integer start, Integer limit) {
-        return findByMultipleCriteria(true, keywords, true,  keywords, false,  tagNames, servicePoints, providers, corporations, true, start, limit);
+    public List<ServicePointPhoto> findByMultipleCriteriaEagerly(List<String> keywords, List<String> tagNames, List<ServicePoint> servicePoints, List<Provider> providers, List<Corporation> corporations, List<Tag> tags, Integer start, Integer limit) {
+        return findByMultipleCriteria(true, keywords, true,  keywords, false,  tagNames, servicePoints, providers, corporations, tags, true, start, limit);
     }
 
     @Override
-    public List<ServicePointPhoto> findByMultipleCriteriaEagerly(List<String> fileNames, List<String> descriptions, List<String> tagNames, List<ServicePoint> servicePoints, List<Provider> providers, List<Corporation> corporations) {
-        return findByMultipleCriteriaEagerly(fileNames, descriptions, tagNames, servicePoints, providers, corporations, null, null);
+    public List<ServicePointPhoto> findByMultipleCriteriaEagerly(List<String> fileNames, List<String> descriptions, List<String> tagNames, List<ServicePoint> servicePoints, List<Provider> providers, List<Corporation> corporations, List<Tag> tags) {
+        return findByMultipleCriteriaEagerly(fileNames, descriptions, tagNames, servicePoints, providers, corporations, tags, null, null);
     }
 
     @Override
-    public List<ServicePointPhoto> findByMultipleCriteriaEagerly(List<String> fileNames, List<String> descriptions, List<String> tagNames, List<ServicePoint> servicePoints, List<Provider> providers, List<Corporation> corporations, Integer start, Integer limit) {
-        return findByMultipleCriteria(false, fileNames, false, descriptions, false, tagNames, servicePoints, providers, corporations, true, start, limit);
+    public List<ServicePointPhoto> findByMultipleCriteriaEagerly(List<String> fileNames, List<String> descriptions, List<String> tagNames, List<ServicePoint> servicePoints, List<Provider> providers, List<Corporation> corporations, List<Tag> tags, Integer start, Integer limit) {
+        return findByMultipleCriteria(false, fileNames, false, descriptions, false, tagNames, servicePoints, providers, corporations, tags, true, start, limit);
     }
 
     private List<ServicePointPhoto> findByMultipleCriteria(Boolean orWithFileNames, List<String> fileNames, Boolean orWithDescriptions,
                                                            List<String> descriptions, Boolean orWithTagNames,
                                                            List<String> tagNames, List<ServicePoint> servicePoints,
                                                            List<Provider> providers, List<Corporation> corporations,
-                                                           Boolean eagerly, Integer start, Integer limit ) {
+                                                           List<Tag> tags, Boolean eagerly, Integer start, Integer limit ) {
 
         CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
         CriteriaQuery<ServicePointPhoto> criteriaQuery = criteriaBuilder.createQuery(ServicePointPhoto.class);
@@ -479,6 +548,8 @@ public class ServicePointPhotoFacade extends AbstractFacade<ServicePointPhoto>
             }
         }
 
+        Fetch<ServicePointPhotoBeanParam, Tag> fetchTags = null;
+
         if(tagNames != null && tagNames.size() > 0) {
 
             if(tag == null) tag = photo.join(ServicePointPhoto_.tags);
@@ -496,13 +567,10 @@ public class ServicePointPhotoFacade extends AbstractFacade<ServicePointPhoto>
                 predicates.add( criteriaBuilder.or(orTagNamePredicates.toArray(new Predicate[] {})) );
             }
 
-            if(eagerly) {
+            if(eagerly && fetchTags == null) {
                 // then fetch associated collection of entities
-                photo.fetch("tags", JoinType.INNER);
+                fetchTags = photo.fetch("tags", JoinType.INNER);
             }
-        } else if(eagerly) {
-            // then left fetch associated collection of entities
-            photo.fetch("tags", JoinType.LEFT);
         }
 
         if(orPredicates.size() > 0)
@@ -527,6 +595,23 @@ public class ServicePointPhotoFacade extends AbstractFacade<ServicePointPhoto>
             if(provider == null) provider = servicePoint.join(ServicePoint_.provider);
 
             predicates.add( provider.get(Provider_.corporation).in(corporations) );
+        }
+
+        if(tags != null && tags.size() > 0) {
+
+            if(tag == null) tag = photo.join(ServicePointPhoto_.tags);
+
+            predicates.add(tag.in(tags));
+
+            if(eagerly && fetchTags == null) {
+                // then fetch associated collection of entities
+                fetchTags = photo.fetch("tags", JoinType.INNER);
+            }
+        }
+
+        if(eagerly && fetchTags == null) {
+            // then left fetch associated collection of entities
+            fetchTags = photo.fetch("tags", JoinType.LEFT);
         }
 
         // WHERE predicate1 AND predicate2 AND ... AND predicateN
