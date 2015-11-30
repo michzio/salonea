@@ -4,6 +4,7 @@ import pl.salonea.ejb.stateless.ServicePointFacade;
 import pl.salonea.ejb.stateless.ServicePointPhotoFacade;
 import pl.salonea.entities.ServicePoint;
 import pl.salonea.entities.ServicePointPhoto;
+import pl.salonea.entities.VirtualTour;
 import pl.salonea.entities.idclass.ServicePointId;
 import pl.salonea.jaxrs.bean_params.*;
 import pl.salonea.jaxrs.exceptions.UnprocessableEntityException;
@@ -11,6 +12,7 @@ import pl.salonea.jaxrs.utils.RESTToolkit;
 import pl.salonea.jaxrs.utils.ResourceList;
 import pl.salonea.jaxrs.utils.ResponseWrapper;
 import pl.salonea.jaxrs.utils.hateoas.Link;
+import pl.salonea.jaxrs.wrappers.ServicePointPhotoWrapper;
 import pl.salonea.jaxrs.wrappers.ServicePointWrapper;
 
 import javax.inject.Inject;
@@ -21,6 +23,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import pl.salonea.jaxrs.exceptions.ForbiddenException;
@@ -410,12 +414,13 @@ public class ServicePointResource {
 
         ServicePointResource.populateWithHATEOASLinks(servicePointWrapper.getServicePoint(), uriInfo);
 
-       /* for(ServicePointPhoto photo : servicePointWrapper.getPhotos())
+        for(ServicePointPhoto photo : servicePointWrapper.getPhotos())
             pl.salonea.jaxrs.ServicePointPhotoResource.populateWithHATEOASLinks(photo, uriInfo);
 
         for(VirtualTour tour : servicePointWrapper.getVirtualTours())
             pl.salonea.jaxrs.VirtualTourResource.populateWithHATEOASLinks(tour, uriInfo);
 
+      /*
         for(WorkStation workStation : servicePointWrapper.getWorkStations())
             pl.salonea.jaxrs.WorkStationResource.populateWithHATEOASLinks(workStation, uriInfo);  TODO
        */
@@ -454,7 +459,40 @@ public class ServicePointResource {
                     .build())
                     .rel("service-point-eagerly").build());
 
-           // TODO
+            // associated collections links with pattern: http://localhost:port/app/rest/{resources}/{id}/{relationship}
+
+            // service-point-photos
+            Method servicePointPhotosMethod = ServicePointResource.class.getMethod("getServicePointPhotoResource");
+            servicePoint.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ServicePointResource.class)
+                    .path(servicePointPhotosMethod)
+                    .resolveTemplate("providerId",servicePoint.getProvider().getUserId().toString())
+                    .resolveTemplate("servicePointNumber", servicePoint.getServicePointNumber().toString())
+                    .build())
+                    .rel("service-point-photos").build());
+
+            // service-point-photos eagerly
+            Method servicePointPhotosEagerlyMethod = ServicePointResource.PhotoResource.class.getMethod("getServicePointPhotosEagerly", Long.class, Integer.class, ServicePointPhotoBeanParam.class);
+            servicePoint.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ServicePointResource.class)
+                    .path(servicePointPhotosMethod)
+                    .path(servicePointPhotosEagerlyMethod)
+                    .resolveTemplate("providerId", servicePoint.getProvider().getUserId().toString())
+                    .resolveTemplate("servicePointNumber", servicePoint.getServicePointNumber().toString())
+                    .build())
+                    .rel("service-point-photos-eagerly").build());
+
+            // service-point-photos count
+            Method countServicePointPhotosByServicePoint = ServicePointResource.PhotoResource.class.getMethod("countServicePointPhotosByServicePoint", Long.class, Integer.class, GenericBeanParam.class);
+            servicePoint.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ServicePointResource.class)
+                    .path(servicePointPhotosMethod)
+                    .path(countServicePointPhotosByServicePoint)
+                    .resolveTemplate("providerId",servicePoint.getProvider().getUserId().toString())
+                    .resolveTemplate("servicePointNumber", servicePoint.getServicePointNumber().toString())
+                    .build())
+                    .rel("service-point-photos-count").build());
+
 
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
@@ -465,6 +503,159 @@ public class ServicePointResource {
     public class PhotoResource {
 
         public PhotoResource() { }
+
+        /**
+         * Method returns subset of Service Point Photo entities for given Service Point entity.
+         * The provider id and service point number are passed through path param.
+         */
+        @GET
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getServicePointPhotos( @PathParam("providerId") Long providerId,
+                                               @PathParam("servicePointNumber") Integer servicePointNumber,
+                                               @BeanParam ServicePointPhotoBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning service point photos for given service point using " +
+                    "ServicePointResource.PhotoResource.getServicePointPhotos(providerId, servicePointNumber) method of REST API");
+
+            utx.begin();
+
+            // find service point entity for which to get associated service point photos
+            ServicePoint servicePoint = servicePointFacade.find(new ServicePointId(providerId, servicePointNumber));
+            if(servicePoint == null)
+                throw new NotFoundException("Could not find service point for id (" + providerId + "," + servicePointNumber + ").");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<ServicePointPhoto> photos = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<ServicePoint> servicePoints = new ArrayList<>();
+                servicePoints.add(servicePoint);
+
+                // get photos for given service point filtered by given params
+
+                if( RESTToolkit.isSet(params.getKeywords()) ) {
+                    if( RESTToolkit.isSet(params.getFileNames()) || RESTToolkit.isSet(params.getDescriptions()) )
+                        throw new BadRequestException("Query params cannot include keywords and fileNames or descriptions at the same time.");
+
+                    if( RESTToolkit.isSet(params.getTagNames()) ) {
+                        // find by keywords and tag names
+                        photos = new ResourceList<>(
+                                servicePointPhotoFacade.findByMultipleCriteria(params.getKeywords(), params.getTagNames(), servicePoints,
+                                        params.getProviders(), params.getCorporations(), params.getTags(), params.getOffset(), params.getLimit())
+                        );
+                    } else {
+                        // find only by keywords
+                        photos = new ResourceList<>(
+                                servicePointPhotoFacade.findByMultipleCriteria(params.getKeywords(), servicePoints, params.getProviders(),
+                                        params.getCorporations(), params.getTags(), params.getOffset(), params.getLimit())
+                        );
+                    }
+                } else {
+                    // find by fileNames, descriptions or tagNames
+                    photos = new ResourceList<>(
+                            servicePointPhotoFacade.findByMultipleCriteria(params.getFileNames(), params.getDescriptions(), params.getTagNames(),
+                                    servicePoints, params.getProviders(), params.getCorporations(), params.getTags(), params.getOffset(), params.getLimit())
+                    );
+                }
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get photos for given service point without filtering
+                photos = new ResourceList<>( servicePointPhotoFacade.findByServicePoint(servicePoint, params.getOffset(), params.getLimit()) );
+            }
+
+            utx.commit();
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.ServicePointPhotoResource.populateWithHATEOASLinks(photos, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(photos).build();
+        }
+
+        /**
+         * Method returns subset of Service Point Photo entities for given Service Point fetching them eagerly.
+         * The provider id and service point number are passed through path param.
+         */
+        @GET
+        @Path("/eagerly")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getServicePointPhotosEagerly( @PathParam("providerId") Long providerId,
+                                                      @PathParam("servicePointNumber") Integer servicePointNumber,
+                                                      @BeanParam ServicePointPhotoBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning service point photos eagerly for given service point using " +
+                    "ServicePointResource.PhotoResource.getServicePointPhotosEagerly(providerId, servicePointNumber) method of REST API");
+
+            utx.begin();
+
+            // find service point entity for which to get associated service point photos
+            ServicePoint servicePoint = servicePointFacade.find(new ServicePointId(providerId, servicePointNumber));
+            if(servicePoint == null)
+                throw new NotFoundException("Could not find service point for id (" + providerId + "," + servicePointNumber + ").");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<ServicePointPhotoWrapper> photos = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<ServicePoint> servicePoints = new ArrayList<>();
+                servicePoints.add(servicePoint);
+
+                // get photos eagerly for given service point filtered by given params
+
+                if( RESTToolkit.isSet(params.getKeywords()) ) {
+                    if( RESTToolkit.isSet(params.getFileNames()) || RESTToolkit.isSet(params.getDescriptions()) )
+                        throw new BadRequestException("Query params cannot include keywords and fileNames or descriptions at the same time.");
+
+                    if( RESTToolkit.isSet(params.getTagNames()) ) {
+                        // find by keywords and tag names
+                        photos = new ResourceList<>(
+                                ServicePointPhotoWrapper.wrap(
+                                        servicePointPhotoFacade.findByMultipleCriteriaEagerly(params.getKeywords(), params.getTagNames(), servicePoints,
+                                                params.getProviders(), params.getCorporations(), params.getTags(), params.getOffset(), params.getLimit())
+                                )
+                        );
+                    } else {
+                        // find only by keywords
+                        photos = new ResourceList<>(
+                                ServicePointPhotoWrapper.wrap(
+                                        servicePointPhotoFacade.findByMultipleCriteriaEagerly(params.getKeywords(), servicePoints, params.getProviders(),
+                                                params.getCorporations(), params.getTags(), params.getOffset(), params.getLimit())
+                                )
+                        );
+                    }
+                } else {
+                    // find by fileNames, descriptions or tagNames
+                    photos = new ResourceList<>(
+                            ServicePointPhotoWrapper.wrap(
+                                    servicePointPhotoFacade.findByMultipleCriteriaEagerly(params.getFileNames(), params.getDescriptions(), params.getTagNames(),
+                                            servicePoints, params.getProviders(), params.getCorporations(), params.getTags(), params.getOffset(), params.getLimit())
+                            )
+                    );
+                }
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get photos eagerly for given service point without filtering
+                photos = new ResourceList<>( ServicePointPhotoWrapper.wrap(servicePointPhotoFacade.findByServicePointEagerly(servicePoint, params.getOffset(), params.getLimit())) );
+            }
+
+            utx.commit();
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.ServicePointPhotoResource.populateWithHATEOASLinks(photos, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(photos).build();
+        }
 
         /**
          * Method that counts Service Point Photo entities for given Service Point resource.
