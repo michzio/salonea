@@ -1,14 +1,8 @@
 package pl.salonea.jaxrs;
 
-import pl.salonea.ejb.stateless.CorporationFacade;
-import pl.salonea.ejb.stateless.ProviderFacade;
-import pl.salonea.ejb.stateless.ServicePointFacade;
-import pl.salonea.ejb.stateless.ServicePointPhotoFacade;
+import pl.salonea.ejb.stateless.*;
 import pl.salonea.embeddables.Address;
-import pl.salonea.entities.Corporation;
-import pl.salonea.entities.Provider;
-import pl.salonea.entities.ServicePoint;
-import pl.salonea.entities.ServicePointPhoto;
+import pl.salonea.entities.*;
 import pl.salonea.jaxrs.bean_params.*;
 import pl.salonea.jaxrs.exceptions.*;
 import pl.salonea.jaxrs.exceptions.ForbiddenException;
@@ -24,12 +18,9 @@ import javax.ws.rs.*;
 
 import pl.salonea.jaxrs.utils.ResponseWrapper;
 import pl.salonea.jaxrs.utils.hateoas.Link;
-import pl.salonea.jaxrs.wrappers.CorporationWrapper;
+import pl.salonea.jaxrs.wrappers.*;
 
 import pl.salonea.jaxrs.exceptions.BadRequestException;
-import pl.salonea.jaxrs.wrappers.ProviderWrapper;
-import pl.salonea.jaxrs.wrappers.ServicePointPhotoWrapper;
-import pl.salonea.jaxrs.wrappers.ServicePointWrapper;
 
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -58,6 +49,8 @@ public class CorporationResource {
     private ServicePointFacade servicePointFacade;
     @Inject
     private ServicePointPhotoFacade servicePointPhotoFacade;
+    @Inject
+    private VirtualTourFacade virtualTourFacade;
 
     /**
      * Method returns all Corporation resources
@@ -506,9 +499,10 @@ public class CorporationResource {
     }
 
     @Path("/{corporationId : \\d+}/service-point-photos")
-    public ServicePointPhotoResource getServicePointPhotoResource() { return  new ServicePointPhotoResource(); }
+    public ServicePointPhotoResource getServicePointPhotoResource() { return new ServicePointPhotoResource(); }
 
-    @Path("/{corporationId : \\d+}/")
+    @Path("/{corporationId : \\d+}/virtual-tours")
+    public VirtualTourResource getVirtualTourResource() { return new VirtualTourResource(); }
 
     /**
      * This method enables to populate list of resources and each individual resource on list with hypermedia links
@@ -741,6 +735,39 @@ public class CorporationResource {
                     .resolveTemplate("corporationId", corporation.getCorporationId().toString())
                     .build())
                     .rel("service-point-photos-count").build());
+
+            /**
+             * Virtual Tours associated with current Corporation resource
+             */
+
+            // virtual-tours relationship
+            Method virtualToursMethod = CorporationResource.class.getMethod("getVirtualTourResource");
+            corporation.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(CorporationResource.class)
+                    .path(virtualToursMethod)
+                    .resolveTemplate("corporationId", corporation.getCorporationId().toString())
+                    .build())
+                    .rel("virtual-tours").build());
+
+            // virtual-tours eagerly relationship
+            Method virtualToursEagerlyMethod = CorporationResource.VirtualTourResource.class.getMethod("getCorporationVirtualToursEagerly", Long.class, VirtualTourBeanParam.class);
+            corporation.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(CorporationResource.class)
+                    .path(virtualToursMethod)
+                    .path(virtualToursEagerlyMethod)
+                    .resolveTemplate("corporationId", corporation.getCorporationId().toString())
+                    .build())
+                    .rel("virtual-tours-eagerly").build());
+
+            // virtual-tours count link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/count
+            Method countVirtualToursByCorporationMethod = VirtualTourResource.class.getMethod("countVirtualToursByCorporation", Long.class, GenericBeanParam.class);
+            corporation.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(CorporationResource.class)
+                    .path(virtualToursMethod)
+                    .path(countVirtualToursByCorporationMethod)
+                    .resolveTemplate("corporationId", corporation.getCorporationId().toString())
+                    .build())
+                    .rel("virtual-tours-count").build());
 
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
@@ -1336,6 +1363,180 @@ public class CorporationResource {
                 throw new NotFoundException("Could not find corporation for id " + corporationId + ".");
 
             ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(servicePointPhotoFacade.countByCorporation(corporation)), 200, "number of service point photos for corporation with id " + corporation.getCorporationId());
+            return Response.status(Status.OK).entity(responseEntity).build();
+        }
+    }
+
+    public class VirtualTourResource {
+
+        public VirtualTourResource() { }
+
+        /**
+         * Method returns subset of Virtual Tour entities for given Corporation entity.
+         * The corporation id is passed through path param.
+         */
+        @GET
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getCorporationVirtualTours( @PathParam("corporationId") Long corporationId,
+                                                    @BeanParam VirtualTourBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning virtual tours for given corporation using " +
+                    "CorporationResource.VirtualTourResource.getCorporationVirtualTours(corporationId) method of REST API");
+
+            // find corporation entity for which to get associated virtual tours
+            Corporation corporation = corporationFacade.find(corporationId);
+            if(corporation == null)
+                throw new NotFoundException("Could not find corporation for id " + corporationId + ".");
+
+            // calculate number of filter query params
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<VirtualTour> virtualTours = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Corporation> corporations = new ArrayList<>();
+                corporations.add(corporation);
+
+                // get virtual tours for given corporation filtered by given params
+
+                if( RESTToolkit.isSet(params.getKeywords()) ) {
+                    if( RESTToolkit.isSet(params.getFileNames()) || RESTToolkit.isSet(params.getDescriptions()) )
+                        throw new BadRequestException("Query params cannot include keywords and fileNames or descriptions at the same time.");
+
+                    if( RESTToolkit.isSet(params.getTagNames()) ) {
+                        // find by keywords and tag names
+                        virtualTours = new ResourceList<>(
+                                virtualTourFacade.findByMultipleCriteria(params.getKeywords(), params.getTagNames(), params.getServicePoints(),
+                                        params.getProviders(), corporations, params.getTags(), params.getOffset(), params.getLimit())
+                        );
+                    } else {
+                        // find only by keywords
+                        virtualTours = new ResourceList<>(
+                                virtualTourFacade.findByMultipleCriteria(params.getKeywords(), params.getServicePoints(), params.getProviders(),
+                                        corporations, params.getTags(), params.getOffset(), params.getLimit())
+                        );
+                    }
+                } else {
+                    // find by fileNames, descriptions or tagNames
+                    virtualTours = new ResourceList<>(
+                            virtualTourFacade.findByMultipleCriteria(params.getFileNames(), params.getDescriptions(), params.getTagNames(),
+                                    params.getServicePoints(), params.getProviders(), corporations, params.getTags(), params.getOffset(), params.getLimit())
+                    );
+                }
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get virtual tours for given corporation without filtering (eventually paginated)
+                virtualTours = new ResourceList<>( virtualTourFacade.findByCorporation(corporation, params.getOffset(), params.getLimit()) );
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.VirtualTourResource.populateWithHATEOASLinks(virtualTours, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(virtualTours).build();
+        }
+
+        /**
+         * Method returns subset of Virtual Tour entities for given Corporation fetching them eagerly
+         * The corporation id is passed through path param.
+         */
+        @GET
+        @Path("/eagerly")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getCorporationVirtualToursEagerly( @PathParam("corporationId") Long corporationId,
+                                                           @BeanParam VirtualTourBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning virtual tours eagerly for given corporation using " +
+                    "CorporationResource.VirtualTourResource.getCorporationVirtualToursEagerly(corporationId) method of REST API");
+
+            // find corporation entity for which to get associated virtual tours
+            Corporation corporation = corporationFacade.find(corporationId);
+            if(corporation == null)
+                throw new NotFoundException("Could not find corporation for id " + corporationId + ".");
+
+            // calculate number of filter query params
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<VirtualTourWrapper> virtualTours = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Corporation> corporations = new ArrayList<>();
+                corporations.add(corporation);
+
+                // get virtual tours eagerly for given corporation filtered by given params
+
+                if( RESTToolkit.isSet(params.getKeywords()) ) {
+                    if( RESTToolkit.isSet(params.getFileNames()) || RESTToolkit.isSet(params.getDescriptions()) )
+                        throw new BadRequestException("Query params cannot include keywords and fileNames or descriptions at the same time.");
+
+                    if( RESTToolkit.isSet(params.getTagNames()) ) {
+                        // find by keywords and tag names
+                        virtualTours = new ResourceList<>(
+                                VirtualTourWrapper.wrap(
+                                        virtualTourFacade.findByMultipleCriteriaEagerly(params.getKeywords(), params.getTagNames(), params.getServicePoints(),
+                                                params.getProviders(), corporations, params.getTags(), params.getOffset(), params.getLimit())
+                                )
+                        );
+                    } else {
+                        // find only by keywords
+                        virtualTours = new ResourceList<>(
+                                VirtualTourWrapper.wrap(
+                                        virtualTourFacade.findByMultipleCriteriaEagerly(params.getKeywords(), params.getServicePoints(), params.getProviders(),
+                                                corporations, params.getTags(), params.getOffset(), params.getLimit())
+                                )
+                        );
+                    }
+                } else {
+                    // find by fileNames, descriptions or tagNames
+                    virtualTours = new ResourceList<>(
+                            VirtualTourWrapper.wrap(
+                                    virtualTourFacade.findByMultipleCriteriaEagerly(params.getFileNames(), params.getDescriptions(), params.getTagNames(),
+                                            params.getServicePoints(), params.getProviders(), corporations, params.getTags(), params.getOffset(), params.getLimit())
+                            )
+                    );
+                }
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get virtual tours eagerly for given corporation without filtering (eventually paginated)
+                virtualTours = new ResourceList<>( VirtualTourWrapper.wrap(virtualTourFacade.findByCorporationEagerly(corporation, params.getOffset(), params.getLimit())) );
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.VirtualTourResource.populateWithHATEOASLinks(virtualTours, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(virtualTours).build();
+        }
+
+        /**
+         * Method that counts Virtual Tour entities for given Corporation resource.
+         * The corporation id is passed through path param.
+         */
+        @GET
+        @Path("/count")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response countVirtualToursByCorporation( @PathParam("corporationId") Long corporationId,
+                                                        @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning number of virtual tours for given corporation by executing " +
+                    "CorporationResource.VirtualTourResource.countVirtualToursByCorporation(corporationId) method of REST API");
+
+            // find corporation entity for which to count virtual tours
+            Corporation corporation = corporationFacade.find(corporationId);
+            if(corporation == null)
+                throw new NotFoundException("Could not find corporation for id " + corporationId + ".");
+
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(virtualTourFacade.countByCorporation(corporation)), 200,
+                    "number of virtual tours for corporation with id " + corporation.getCorporationId());
+
             return Response.status(Status.OK).entity(responseEntity).build();
         }
     }
