@@ -2,6 +2,7 @@ package pl.salonea.jaxrs;
 
 import pl.salonea.ejb.stateless.ServicePointFacade;
 import pl.salonea.ejb.stateless.ServicePointPhotoFacade;
+import pl.salonea.ejb.stateless.VirtualTourFacade;
 import pl.salonea.entities.ServicePoint;
 import pl.salonea.entities.ServicePointPhoto;
 import pl.salonea.entities.VirtualTour;
@@ -30,6 +31,8 @@ import java.util.logging.Logger;
 import pl.salonea.jaxrs.exceptions.ForbiddenException;
 import pl.salonea.jaxrs.exceptions.NotFoundException;
 import pl.salonea.jaxrs.exceptions.BadRequestException;
+import pl.salonea.jaxrs.wrappers.VirtualTourWrapper;
+
 import javax.ws.rs.core.Response.Status;
 
 /**
@@ -48,6 +51,8 @@ public class ServicePointResource {
     private ServicePointFacade servicePointFacade;
     @Inject
     private ServicePointPhotoFacade servicePointPhotoFacade;
+    @Inject
+    private VirtualTourFacade virtualTourFacade;
 
     @Inject
     private ProviderResource providerResource;
@@ -356,6 +361,11 @@ public class ServicePointResource {
         return new PhotoResource();
     }
 
+    @Path("/{providerId: \\d+}+{servicePointNumber: \\d+}/virtual-tours")
+    public VirtualTourResource getVirtualTourResource() {
+        return new VirtualTourResource();
+    }
+
     /**
      * This method enables to populate list of resources and each individual resource on list with hypermedia links
      */
@@ -404,7 +414,6 @@ public class ServicePointResource {
                 ServicePointResource.populateWithHATEOASLinks( (ServicePointWrapper) object, uriInfo);
             }
         }
-
     }
 
     /**
@@ -466,7 +475,7 @@ public class ServicePointResource {
             servicePoint.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
                     .path(ServicePointResource.class)
                     .path(servicePointPhotosMethod)
-                    .resolveTemplate("providerId",servicePoint.getProvider().getUserId().toString())
+                    .resolveTemplate("providerId", servicePoint.getProvider().getUserId().toString())
                     .resolveTemplate("servicePointNumber", servicePoint.getServicePointNumber().toString())
                     .build())
                     .rel("service-point-photos").build());
@@ -483,16 +492,47 @@ public class ServicePointResource {
                     .rel("service-point-photos-eagerly").build());
 
             // service-point-photos count
-            Method countServicePointPhotosByServicePoint = ServicePointResource.PhotoResource.class.getMethod("countServicePointPhotosByServicePoint", Long.class, Integer.class, GenericBeanParam.class);
+            Method countServicePointPhotosByServicePointMethod = ServicePointResource.PhotoResource.class.getMethod("countServicePointPhotosByServicePoint", Long.class, Integer.class, GenericBeanParam.class);
             servicePoint.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
                     .path(ServicePointResource.class)
                     .path(servicePointPhotosMethod)
-                    .path(countServicePointPhotosByServicePoint)
+                    .path(countServicePointPhotosByServicePointMethod)
                     .resolveTemplate("providerId",servicePoint.getProvider().getUserId().toString())
                     .resolveTemplate("servicePointNumber", servicePoint.getServicePointNumber().toString())
                     .build())
                     .rel("service-point-photos-count").build());
 
+            // virtual-tours
+            Method virtualToursMethod = ServicePointResource.class.getMethod("getVirtualTourResource");
+            servicePoint.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ServicePointResource.class)
+                    .path(virtualToursMethod)
+                    .resolveTemplate("providerId",servicePoint.getProvider().getUserId().toString())
+                    .resolveTemplate("servicePointNumber", servicePoint.getServicePointNumber().toString())
+                    .build())
+                    .rel("virtual-tours").build());
+
+            // virtual-tours eagerly
+            Method virtualToursEagerlyMethod = ServicePointResource.VirtualTourResource.class.getMethod("getServicePointVirtualToursEagerly", Long.class, Integer.class, VirtualTourBeanParam.class);
+            servicePoint.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ServicePointResource.class)
+                    .path(virtualToursMethod)
+                    .path(virtualToursEagerlyMethod)
+                    .resolveTemplate("providerId", servicePoint.getProvider().getUserId().toString())
+                    .resolveTemplate("servicePointNumber", servicePoint.getServicePointNumber().toString())
+                    .build())
+                    .rel("virtual-tours-eagerly").build());
+
+            // virtual-tours count
+            Method countVirtualToursByServicePointMethod = ServicePointResource.VirtualTourResource.class.getMethod("countVirtualToursByServicePoint", Long.class, Integer.class, GenericBeanParam.class);
+            servicePoint.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ServicePointResource.class)
+                    .path(virtualToursMethod)
+                    .path(countVirtualToursByServicePointMethod)
+                    .resolveTemplate("providerId",servicePoint.getProvider().getUserId().toString())
+                    .resolveTemplate("servicePointNumber", servicePoint.getServicePointNumber().toString())
+                    .build())
+                    .rel("virtual-tours-count").build());
 
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
@@ -667,7 +707,7 @@ public class ServicePointResource {
         public Response countServicePointPhotosByServicePoint( @PathParam("providerId") Long providerId,
                                                                @PathParam("servicePointNumber") Integer servicePointNumber,
                                                                @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException,
-                /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
 
             RESTToolkit.authorizeAccessToWebService(params);
             logger.log(Level.INFO, "returning number of service point photos for given service point by executing " +
@@ -688,4 +728,196 @@ public class ServicePointResource {
             return Response.status(Status.OK).entity(responseEntity).build();
         }
     }
+
+    /* related VirtualTour subresource */
+    public class VirtualTourResource {
+
+        public VirtualTourResource() { }
+
+        /**
+         * Method returns subset of Virtual Tour entities for given Service Point entity.
+         * The provider id and service point number are passed through path param.
+         */
+        @GET
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getServicePointVirtualTours( @PathParam("providerId") Long providerId,
+                                                     @PathParam("servicePointNumber") Integer servicePointNumber,
+                                                     @BeanParam VirtualTourBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException
+        {
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning virtual tours for given service point using " +
+                    "ServicePointResource.VirtualTourResource.getServicePointVirtualTours(providerId, servicePointNumber) method of REST API");
+
+            utx.begin();
+
+            // find service point entity for which to get associated virtual tours
+            ServicePoint servicePoint = servicePointFacade.find(new ServicePointId(providerId, servicePointNumber));
+            if(servicePoint == null)
+                throw new NotFoundException("Could not find service point for id (" + providerId + "," + servicePointNumber + ").");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<VirtualTour> virtualTours = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<ServicePoint> servicePoints = new ArrayList<>();
+                servicePoints.add(servicePoint);
+
+                // get virtual tours for given service point filtered by given params
+
+                if( RESTToolkit.isSet(params.getKeywords()) ) {
+                    if( RESTToolkit.isSet(params.getFileNames()) || RESTToolkit.isSet(params.getDescriptions()) )
+                        throw new BadRequestException("Query params cannot include keywords and fileNames or descriptions at the same time.");
+
+                    if( RESTToolkit.isSet(params.getTagNames()) ) {
+                        // find by keywords and tag names
+                        virtualTours = new ResourceList<>(
+                                virtualTourFacade.findByMultipleCriteria(params.getKeywords(), params.getTagNames(), servicePoints,
+                                        params.getProviders(), params.getCorporations(), params.getTags(), params.getOffset(), params.getLimit())
+                        );
+                    } else {
+                        // find only by keywords
+                        virtualTours = new ResourceList<>(
+                                virtualTourFacade.findByMultipleCriteria(params.getKeywords(), servicePoints, params.getProviders(),
+                                        params.getCorporations(), params.getTags(), params.getOffset(), params.getLimit())
+                        );
+                    }
+                } else {
+                    // find by fileNames, descriptions or tagNames
+                    virtualTours = new ResourceList<>(
+                            virtualTourFacade.findByMultipleCriteria(params.getFileNames(), params.getDescriptions(), params.getTagNames(),
+                                    servicePoints, params.getProviders(), params.getCorporations(), params.getTags(), params.getOffset(), params.getLimit())
+                    );
+                }
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get virtual tours for given service point without filtering (eventually paginated)
+                virtualTours = new ResourceList<>( virtualTourFacade.findByServicePoint(servicePoint, params.getOffset(), params.getLimit()) );
+            }
+
+            utx.commit();
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.VirtualTourResource.populateWithHATEOASLinks(virtualTours, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(virtualTours).build();
+        }
+
+        /**
+         * Method returns subset of Virtual Tour entities for given Service Point fetching them eagerly.
+         * The provider id and service point number are passed through path param.
+         */
+        @GET
+        @Path("/eagerly")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getServicePointVirtualToursEagerly( @PathParam("providerId") Long providerId,
+                                                            @PathParam("servicePointNumber") Integer servicePointNumber,
+                                                            @BeanParam VirtualTourBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning virtual tours eagerly for given service point using " +
+                    "ServicePointResource.VirtualTourResource.getServicePointVirtualToursEagerly(providerId, servicePointNumber) method of REST API");
+
+            utx.begin();
+
+            // find service point entity for which to get associated virtual tours
+            ServicePoint servicePoint = servicePointFacade.find(new ServicePointId(providerId, servicePointNumber));
+            if(servicePoint == null)
+                throw new NotFoundException("Could not find service point for id (" + providerId + "," + servicePointNumber + ").");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<VirtualTourWrapper> virtualTours = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<ServicePoint> servicePoints = new ArrayList<>();
+                servicePoints.add(servicePoint);
+
+                // get virtual tours eagerly for given service point filtered by given params
+
+                if( RESTToolkit.isSet(params.getKeywords()) ) {
+                    if( RESTToolkit.isSet(params.getFileNames()) || RESTToolkit.isSet(params.getDescriptions()) )
+                        throw new BadRequestException("Query params cannot include keywords and fileNames or descriptions at the same time.");
+
+                    if( RESTToolkit.isSet(params.getTagNames()) ) {
+                        // find by keywords and tag names
+                        virtualTours = new ResourceList<>(
+                                VirtualTourWrapper.wrap(
+                                        virtualTourFacade.findByMultipleCriteriaEagerly(params.getKeywords(), params.getTagNames(), servicePoints,
+                                                params.getProviders(), params.getCorporations(), params.getTags(), params.getOffset(), params.getLimit())
+                                )
+                        );
+                    } else {
+                        // find only by keywords
+                        virtualTours = new ResourceList<>(
+                                VirtualTourWrapper.wrap(
+                                        virtualTourFacade.findByMultipleCriteriaEagerly(params.getKeywords(), servicePoints, params.getProviders(),
+                                                params.getCorporations(), params.getTags(), params.getOffset(), params.getLimit())
+                                )
+                        );
+                    }
+                } else {
+                    // find by fileNames, descriptions or tagNames
+                    virtualTours = new ResourceList<>(
+                            VirtualTourWrapper.wrap(
+                                    virtualTourFacade.findByMultipleCriteriaEagerly(params.getFileNames(), params.getDescriptions(), params.getTagNames(),
+                                            servicePoints, params.getProviders(), params.getCorporations(), params.getTags(), params.getOffset(), params.getLimit())
+                            )
+                    );
+                }
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get virtual tours for given service point without filtering (eventually paginated)
+                virtualTours = new ResourceList<>( VirtualTourWrapper.wrap(virtualTourFacade.findByServicePointEagerly(servicePoint, params.getOffset(), params.getLimit())) );
+            }
+
+            utx.commit();
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.VirtualTourResource.populateWithHATEOASLinks(virtualTours, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(virtualTours).build();
+        }
+
+        /**
+         * Method that counts Virtual Tour entities for given Service Point resource.
+         * The provider id and service point number are passed through path params.
+         */
+        @GET
+        @Path("/count")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response countVirtualToursByServicePoint( @PathParam("providerId") Long providerId,
+                                                         @PathParam("servicePointNumber") Integer servicePointNumber,
+                                                         @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning number of virtual tours for given service point by executing " +
+                    "ServicePointResource.VirtualTourResource.countVirtualToursByServicePoint(providerId, servicePointNumber) method of REST API");
+
+            utx.begin();
+
+            // find service point entity for which to count virtual tours
+            ServicePoint servicePoint = servicePointFacade.find(new ServicePointId(providerId, servicePointNumber));
+            if(servicePoint == null)
+                throw new NotFoundException("Could not find service point for id (" + providerId + "," + servicePointNumber + ").");
+
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(virtualTourFacade.countByServicePoint(servicePoint)), 200,
+                    "number of virtual tours for service point with id (" + providerId + "," + servicePointNumber + ").");
+
+            utx.commit();
+
+            return Response.status(Status.OK).entity(responseEntity).build();
+        }
+
+    }
+
 }

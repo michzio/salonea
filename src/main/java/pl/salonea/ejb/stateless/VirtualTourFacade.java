@@ -2,12 +2,12 @@ package pl.salonea.ejb.stateless;
 
 import pl.salonea.ejb.interfaces.VirtualTourFacadeInterface;
 import pl.salonea.entities.*;
+import pl.salonea.entities.idclass.ServicePointId;
 
 import javax.ejb.LocalBean;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
-import javax.persistence.EntityManager;
-import javax.persistence.TypedQuery;
+import javax.persistence.*;
 import javax.persistence.criteria.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +31,52 @@ public class VirtualTourFacade extends AbstractFacade<VirtualTour> implements Vi
         super(VirtualTour.class);
     }
 
+
+    @Override
+    public VirtualTour createForServicePoint(ServicePointId servicePointId, VirtualTour virtualTour) {
+
+        ServicePoint foundServicePoint = getEntityManager().find(ServicePoint.class, servicePointId);
+        virtualTour.setServicePoint(foundServicePoint);
+
+        return create(virtualTour);
+    }
+
+    @Override
+    public VirtualTour updateWithServicePoint(ServicePointId servicePointId, VirtualTour virtualTour) {
+
+        ServicePoint foundServicePoint = getEntityManager().find(ServicePoint.class, servicePointId);
+        virtualTour.setServicePoint(foundServicePoint);
+
+        return update(virtualTour);
+    }
+
+    @Override
+    public List<VirtualTour> findAllEagerly() {
+        return findAllEagerly(null, null);
+    }
+
+    @Override
+    public List<VirtualTour> findAllEagerly(Integer start, Integer limit) {
+
+        TypedQuery<VirtualTour> query = getEntityManager().createNamedQuery(VirtualTour.FIND_ALL_EAGERLY, VirtualTour.class);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
+    public VirtualTour findByIdEagerly(Long tourId) {
+
+        TypedQuery<VirtualTour> query = getEntityManager().createNamedQuery(VirtualTour.FIND_BY_ID_EAGERLY, VirtualTour.class);
+        query.setParameter("tour_id", tourId);
+        try {
+            return query.getSingleResult();
+        } catch (NoResultException | NonUniqueResultException ex) {
+            return null;
+        }
+    }
 
     @Override
     public List<VirtualTour> findByFileName(String fileName) {
@@ -191,7 +237,7 @@ public class VirtualTourFacade extends AbstractFacade<VirtualTour> implements Vi
     public List<VirtualTour> findByKeywordIncludingTags(String keyword, Integer start, Integer limit) {
 
         TypedQuery<VirtualTour> query = getEntityManager().createNamedQuery(VirtualTour.FIND_BY_KEYWORD_INCLUDING_TAGS, VirtualTour.class);
-        query.setParameter("keyword", keyword);
+        query.setParameter("keyword", "%" + keyword + "%");
         if(start != null && limit != null) {
             query.setFirstResult(start);
             query.setMaxResults(limit);
@@ -208,6 +254,23 @@ public class VirtualTourFacade extends AbstractFacade<VirtualTour> implements Vi
     public List<VirtualTour> findByServicePoint(ServicePoint servicePoint, Integer start, Integer limit) {
 
         TypedQuery<VirtualTour> query = getEntityManager().createNamedQuery(VirtualTour.FIND_BY_SERVICE_POINT, VirtualTour.class);
+        query.setParameter("service_point", servicePoint);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
+    public List<VirtualTour> findByServicePointEagerly(ServicePoint servicePoint) {
+        return findByServicePointEagerly(servicePoint, null, null);
+    }
+
+    @Override
+    public List<VirtualTour> findByServicePointEagerly(ServicePoint servicePoint, Integer start, Integer limit) {
+
+        TypedQuery<VirtualTour> query = getEntityManager().createNamedQuery(VirtualTour.FIND_BY_SERVICE_POINT_EAGERLY, VirtualTour.class);
         query.setParameter("service_point", servicePoint);
         if(start != null && limit != null) {
             query.setFirstResult(start);
@@ -234,6 +297,23 @@ public class VirtualTourFacade extends AbstractFacade<VirtualTour> implements Vi
     }
 
     @Override
+    public List<VirtualTour> findByProviderEagerly(Provider provider) {
+        return findByProviderEagerly(provider, null, null);
+    }
+
+    @Override
+    public List<VirtualTour> findByProviderEagerly(Provider provider, Integer start, Integer limit) {
+
+        TypedQuery<VirtualTour> query = getEntityManager().createNamedQuery(VirtualTour.FIND_BY_PROVIDER_EAGERLY, VirtualTour.class);
+        query.setParameter("provider", provider);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
     public List<VirtualTour> findByCorporation(Corporation corporation) {
         return findByCorporation(corporation, null, null);
     }
@@ -251,24 +331,169 @@ public class VirtualTourFacade extends AbstractFacade<VirtualTour> implements Vi
     }
 
     @Override
-    public List<VirtualTour> findByMultipleCriteria(List<String> keywords, List<ServicePoint> servicePoints, List<Provider> providers, List<Corporation> corporations) {
-        return findByMultipleCriteria(true, keywords, true,  keywords, true, keywords,  servicePoints, providers, corporations);
+    public List<VirtualTour> findByCorporationEagerly(Corporation corporation) {
+        return findByCorporationEagerly(corporation, null, null);
     }
 
     @Override
-    public List<VirtualTour> findByMultipleCriteria(List<String> keywords, List<String> tagNames, List<ServicePoint> servicePoints, List<Provider> providers, List<Corporation> corporations) {
-        return findByMultipleCriteria(true, keywords, true,  keywords, false,  tagNames, servicePoints, providers, corporations);
+    public List<VirtualTour> findByCorporationEagerly(Corporation corporation, Integer start, Integer limit) {
+
+        TypedQuery<VirtualTour> query = getEntityManager().createNamedQuery(VirtualTour.FIND_BY_CORPORATION_EAGERLY, VirtualTour.class);
+        query.setParameter("corporation", corporation);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
     }
 
     @Override
-    public List<VirtualTour> findByMultipleCriteria(List<String> fileNames, List<String> descriptions, List<String> tagNames, List<ServicePoint> servicePoints, List<Provider> providers, List<Corporation> corporations) {
-        return findByMultipleCriteria(false, fileNames, false, descriptions, false, tagNames, servicePoints, providers, corporations);
+    public List<VirtualTour> findByTag(Tag tag) {
+        return findByTag(tag, null, null);
+    }
+
+    @Override
+    public List<VirtualTour> findByTag(Tag tag, Integer start, Integer limit) {
+
+        TypedQuery<VirtualTour> query = getEntityManager().createNamedQuery(VirtualTour.FIND_BY_TAG, VirtualTour.class);
+        query.setParameter("tag", tag);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
+    public List<VirtualTour> findByTagEagerly(Tag tag) {
+        return findByTagEagerly(tag, null, null);
+    }
+
+    @Override
+    public List<VirtualTour> findByTagEagerly(Tag tag, Integer start, Integer limit) {
+
+        TypedQuery<VirtualTour> query = getEntityManager().createNamedQuery(VirtualTour.FIND_BY_TAG_EAGERLY, VirtualTour.class);
+        query.setParameter("tag", tag);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
+    public Long countByServicePoint(ServicePoint servicePoint) {
+
+        TypedQuery<Long> query = getEntityManager().createNamedQuery(VirtualTour.COUNT_BY_SERVICE_POINT, Long.class);
+        query.setParameter("service_point", servicePoint);
+        return query.getSingleResult();
+    }
+
+    @Override
+    public Long countByProvider(Provider provider) {
+
+        TypedQuery<Long> query = getEntityManager().createNamedQuery(VirtualTour.COUNT_BY_PROVIDER, Long.class);
+        query.setParameter("provider", provider);
+        return query.getSingleResult();
+    }
+
+    @Override
+    public Long countByCorporation(Corporation corporation) {
+
+        TypedQuery<Long> query = getEntityManager().createNamedQuery(VirtualTour.COUNT_BY_CORPORATION, Long.class);
+        query.setParameter("corporation", corporation);
+        return query.getSingleResult();
+    }
+
+    @Override
+    public Long countByTag(Tag tag) {
+
+        TypedQuery<Long> query = getEntityManager().createNamedQuery(VirtualTour.COUNT_BY_TAG, Long.class);
+        query.setParameter("tag", tag);
+        return query.getSingleResult();
+    }
+
+    @Override
+    public Integer deleteByServicePoint(ServicePoint servicePoint) {
+
+        Query query = getEntityManager().createNamedQuery(VirtualTour.DELETE_BY_SERVICE_POINT);
+        query.setParameter("service_point", servicePoint);
+        return query.executeUpdate();
+    }
+
+    @Override
+    public Integer deleteById(Long tourId) {
+
+        Query query = getEntityManager().createNamedQuery(VirtualTour.DELETE_BY_ID);
+        query.setParameter("tour_id", tourId);
+        return query.executeUpdate();
+    }
+
+    @Override
+    public List<VirtualTour> findByMultipleCriteria(List<String> keywords, List<ServicePoint> servicePoints, List<Provider> providers, List<Corporation> corporations, List<Tag> tags) {
+        return findByMultipleCriteria(keywords, servicePoints, providers, corporations, tags, null, null);
+    }
+
+    @Override
+    public List<VirtualTour> findByMultipleCriteria(List<String> keywords, List<ServicePoint> servicePoints, List<Provider> providers, List<Corporation> corporations, List<Tag> tags, Integer start, Integer limit) {
+        return findByMultipleCriteria(true, keywords, true,  keywords, true, keywords,  servicePoints, providers, corporations, tags, false, start, limit);
+    }
+
+    @Override
+    public List<VirtualTour> findByMultipleCriteria(List<String> keywords, List<String> tagNames, List<ServicePoint> servicePoints, List<Provider> providers, List<Corporation> corporations, List<Tag> tags) {
+        return findByMultipleCriteria(keywords, tagNames, servicePoints, providers, corporations, tags, null, null);
+    }
+
+    @Override
+    public List<VirtualTour> findByMultipleCriteria(List<String> keywords, List<String> tagNames, List<ServicePoint> servicePoints, List<Provider> providers, List<Corporation> corporations, List<Tag> tags, Integer start, Integer limit) {
+        return findByMultipleCriteria(true, keywords, true,  keywords, false,  tagNames, servicePoints, providers, corporations, tags, false, start, limit);
+    }
+
+    @Override
+    public List<VirtualTour> findByMultipleCriteria(List<String> fileNames, List<String> descriptions, List<String> tagNames, List<ServicePoint> servicePoints, List<Provider> providers, List<Corporation> corporations, List<Tag> tags) {
+        return findByMultipleCriteria(fileNames, descriptions, tagNames, servicePoints, providers, corporations, tags, null, null);
+    }
+
+    @Override
+    public List<VirtualTour> findByMultipleCriteria(List<String> fileNames, List<String> descriptions, List<String> tagNames, List<ServicePoint> servicePoints, List<Provider> providers, List<Corporation> corporations, List<Tag> tags, Integer start, Integer limit) {
+        return findByMultipleCriteria(false, fileNames, false, descriptions, false, tagNames, servicePoints, providers, corporations, tags, false, start, limit);
+    }
+
+    @Override
+    public List<VirtualTour> findByMultipleCriteriaEagerly(List<String> keywords, List<ServicePoint> servicePoints, List<Provider> providers, List<Corporation> corporations, List<Tag> tags) {
+        return findByMultipleCriteriaEagerly(keywords, servicePoints, providers, corporations,tags, null, null);
+    }
+
+    @Override
+    public List<VirtualTour> findByMultipleCriteriaEagerly(List<String> keywords, List<ServicePoint> servicePoints, List<Provider> providers, List<Corporation> corporations, List<Tag> tags, Integer start, Integer limit) {
+        return findByMultipleCriteria(true, keywords, true,  keywords, true, keywords,  servicePoints, providers, corporations, tags, true, start, limit);
+    }
+
+    @Override
+    public List<VirtualTour> findByMultipleCriteriaEagerly(List<String> keywords, List<String> tagNames, List<ServicePoint> servicePoints, List<Provider> providers, List<Corporation> corporations, List<Tag> tags) {
+        return findByMultipleCriteriaEagerly(keywords, tagNames, servicePoints, providers, corporations, tags, null, null);
+    }
+
+    @Override
+    public List<VirtualTour> findByMultipleCriteriaEagerly(List<String> keywords, List<String> tagNames, List<ServicePoint> servicePoints, List<Provider> providers, List<Corporation> corporations, List<Tag> tags, Integer start, Integer limit) {
+        return findByMultipleCriteria(true, keywords, true,  keywords, false,  tagNames, servicePoints, providers, corporations, tags, true, start, limit);
+    }
+
+    @Override
+    public List<VirtualTour> findByMultipleCriteriaEagerly(List<String> fileNames, List<String> descriptions, List<String> tagNames, List<ServicePoint> servicePoints, List<Provider> providers, List<Corporation> corporations, List<Tag> tags) {
+        return findByMultipleCriteriaEagerly(fileNames, descriptions, tagNames, servicePoints, providers, corporations, tags, null, null);
+    }
+
+    @Override
+    public List<VirtualTour> findByMultipleCriteriaEagerly(List<String> fileNames, List<String> descriptions, List<String> tagNames, List<ServicePoint> servicePoints, List<Provider> providers, List<Corporation> corporations, List<Tag> tags, Integer start, Integer limit) {
+        return findByMultipleCriteria(false, fileNames, false, descriptions, false, tagNames, servicePoints, providers, corporations, tags, true, start, limit);
     }
 
     private List<VirtualTour> findByMultipleCriteria(Boolean orWithFileNames, List<String> fileNames, Boolean orWithDescriptions,
-                                                           List<String> descriptions, Boolean orWithTagNames,
-                                                           List<String> tagNames, List<ServicePoint> servicePoints,
-                                                           List<Provider> providers, List<Corporation> corporations) {
+                                                     List<String> descriptions, Boolean orWithTagNames,
+                                                     List<String> tagNames, List<ServicePoint> servicePoints,
+                                                     List<Provider> providers, List<Corporation> corporations,
+                                                     List<Tag> tags, Boolean eagerly, Integer start, Integer limit) {
 
         CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
         CriteriaQuery<VirtualTour> criteriaQuery = criteriaBuilder.createQuery(VirtualTour.class);
@@ -316,6 +541,8 @@ public class VirtualTourFacade extends AbstractFacade<VirtualTour> implements Vi
             }
         }
 
+        Fetch<VirtualTour, Tag> fetchTags = null;
+
         if(tagNames != null && tagNames.size() > 0) {
 
             if(tag == null) tag = virtualTour.join(VirtualTour_.tags);
@@ -331,6 +558,11 @@ public class VirtualTourFacade extends AbstractFacade<VirtualTour> implements Vi
                 orPredicates.add( criteriaBuilder.or(orTagNamePredicates.toArray(new Predicate[] {})) );
             } else {
                 predicates.add( criteriaBuilder.or(orTagNamePredicates.toArray(new Predicate[] {})) );
+            }
+
+            if(eagerly && fetchTags == null) {
+                // then fetch associated collection of entities
+                fetchTags = virtualTour.fetch("tags", JoinType.INNER);
             }
         }
 
@@ -358,10 +590,31 @@ public class VirtualTourFacade extends AbstractFacade<VirtualTour> implements Vi
             predicates.add( provider.get(Provider_.corporation).in(corporations) );
         }
 
+        if(tags != null && tags.size() > 0) {
+
+            if(tag == null) tag = virtualTour.join(VirtualTour_.tags);
+
+            predicates.add(tag.in(tags));
+
+            if(eagerly && fetchTags == null) {
+                // then fetch associated collection of entities
+                fetchTags = virtualTour.fetch("tags", JoinType.INNER);
+            }
+        }
+
+        if(eagerly && fetchTags == null) {
+            // then left fetch associated collection of entities
+            fetchTags = virtualTour.fetch("tags", JoinType.LEFT);
+        }
+
         // WHERE predicate1 AND predicate2 AND ... AND predicateN
         criteriaQuery.where(predicates.toArray(new Predicate[] { }));
 
         TypedQuery<VirtualTour> query = getEntityManager().createQuery(criteriaQuery);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
         return query.getResultList();
     }
 }

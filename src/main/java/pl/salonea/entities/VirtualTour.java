@@ -22,6 +22,8 @@ import java.util.Set;
 @Table(name = "virtual_tour")
 @Access(AccessType.PROPERTY)
 @NamedQueries({
+        @NamedQuery(name = VirtualTour.FIND_ALL_EAGERLY, query = "SELECT DISTINCT vt FROM VirtualTour vt LEFT JOIN FETCH vt.tags t"),
+        @NamedQuery(name = VirtualTour.FIND_BY_ID_EAGERLY, query = "SELECT vt FROM VirtualTour vt LEFT JOIN FETCH vt.tags t WHERE vt.tourId = :tour_id"),
         @NamedQuery(name = VirtualTour.FIND_BY_FILE_NAME, query = "SELECT vt FROM VirtualTour vt WHERE vt.fileName LIKE :file_name"),
         @NamedQuery(name = VirtualTour.FIND_BY_DESCRIPTION, query = "SELECT vt FROM VirtualTour vt WHERE vt.description LIKE :description"),
         @NamedQuery(name = VirtualTour.FIND_BY_FILE_NAME_AND_DESCRIPTION, query = "SELECT vt FROM VirtualTour vt WHERE vt.fileName LIKE :file_name AND vt.description LIKE :description"),
@@ -31,11 +33,24 @@ import java.util.Set;
         @NamedQuery(name = VirtualTour.FIND_BY_ALL_TAG_NAMES, query = "SELECT vt FROM VirtualTour vt JOIN vt.tags tag WHERE tag.tagName IN :tag_names GROUP BY vt.tourId HAVING COUNT(vt.tourId) = :tag_count"),
         @NamedQuery(name = VirtualTour.FIND_BY_KEYWORD_INCLUDING_TAGS, query = "SELECT DISTINCT vt FROM VirtualTour vt INNER JOIN vt.tags tag WHERE vt.fileName LIKE :keyword OR vt.description LIKE :keyword OR tag.tagName LIKE :keyword"),
         @NamedQuery(name = VirtualTour.FIND_BY_SERVICE_POINT, query = "SELECT vt FROM VirtualTour vt WHERE vt.servicePoint = :service_point"),
+        @NamedQuery(name = VirtualTour.FIND_BY_SERVICE_POINT_EAGERLY, query = "SELECT DISTINCT vt FROM VirtualTour vt LEFT JOIN FETCH vt.tags WHERE vt.servicePoint = :service_point"),
         @NamedQuery(name = VirtualTour.FIND_BY_PROVIDER, query = "SELECT vt FROM VirtualTour vt INNER JOIN vt.servicePoint sp WHERE sp.provider = :provider"),
-        @NamedQuery(name = VirtualTour.FIND_BY_CORPORATION, query = "SELECT vt FROM VirtualTour vt INNER JOIN vt.servicePoint sp INNER JOIN sp.provider p WHERE p.corporation = :corporation")
+        @NamedQuery(name = VirtualTour.FIND_BY_PROVIDER_EAGERLY, query = "SELECT DISTINCT vt FROM VirtualTour vt LEFT JOIN FETCH vt.tags INNER JOIN vt.servicePoint sp WHERE sp.provider = :provider"),
+        @NamedQuery(name = VirtualTour.FIND_BY_CORPORATION, query = "SELECT vt FROM VirtualTour vt INNER JOIN vt.servicePoint sp INNER JOIN sp.provider p WHERE p.corporation = :corporation"),
+        @NamedQuery(name = VirtualTour.FIND_BY_CORPORATION_EAGERLY, query = "SELECT DISTINCT vt FROM VirtualTour vt LEFT JOIN FETCH vt.tags INNER JOIN vt.servicePoint sp INNER JOIN sp.provider p WHERE p.corporation = :corporation"),
+        @NamedQuery(name = VirtualTour.FIND_BY_TAG, query = "SELECT vt FROM VirtualTour vt WHERE :tag MEMBER OF vt.tags"),
+        @NamedQuery(name = VirtualTour.FIND_BY_TAG_EAGERLY, query = "SELECT DISTINCT vt FROM VirtualTour vt INNER JOIN FETCH vt.tags t WHERE t = :tag"),
+        @NamedQuery(name = VirtualTour.COUNT_BY_SERVICE_POINT, query = "SELECT COUNT(vt) FROM VirtualTour vt WHERE vt.servicePoint = :service_point"),
+        @NamedQuery(name = VirtualTour.COUNT_BY_PROVIDER, query = "SELECT COUNT(vt) FROM VirtualTour vt INNER JOIN vt.servicePoint sp WHERE sp.provider = :provider"),
+        @NamedQuery(name = VirtualTour.COUNT_BY_CORPORATION, query = "SELECT COUNT(vt) FROM VirtualTour vt INNER JOIN vt.servicePoint sp INNER JOIN sp.provider p WHERE p.corporation = :corporation"),
+        @NamedQuery(name = VirtualTour.COUNT_BY_TAG, query = "SELECT COUNT(vt) FROM VirtualTour vt WHERE :tag MEMBER OF vt.tags"),
+        @NamedQuery(name = VirtualTour.DELETE_BY_SERVICE_POINT, query = "DELETE FROM VirtualTour vt WHERE vt.servicePoint = :service_point"),
+        @NamedQuery(name = VirtualTour.DELETE_BY_ID, query = "DELETE FROM VirtualTour vt WHERE vt.tourId = :tour_id"),
 })
 public class VirtualTour implements Serializable {
 
+    public static final String FIND_ALL_EAGERLY = "VirtualTour.findAllEagerly";
+    public static final String FIND_BY_ID_EAGERLY = "VirtualTour.findByIdEagerly";
     public static final String FIND_BY_FILE_NAME = "VirtualTour.findByFileName";
     public static final String FIND_BY_DESCRIPTION = "VirtualTour.findByDescription";
     public static final String FIND_BY_FILE_NAME_AND_DESCRIPTION = "VirtualTour.findByFileNameAndDescription";
@@ -45,8 +60,19 @@ public class VirtualTour implements Serializable {
     public static final String FIND_BY_ALL_TAG_NAMES = "VirtualTour.findByAllTagNames";
     public static final String FIND_BY_KEYWORD_INCLUDING_TAGS = "VirtualTour.findByKeywordIncludingTags";
     public static final String FIND_BY_SERVICE_POINT = "VirtualTour.findByServicePoint";
+    public static final String FIND_BY_SERVICE_POINT_EAGERLY = "VirtualTour.findByServicePointEagerly";
     public static final String FIND_BY_PROVIDER = "VirtualTour.findByProvider";
+    public static final String FIND_BY_PROVIDER_EAGERLY = "VirtualTour.findByProviderEagerly";
     public static final String FIND_BY_CORPORATION = "VirtualTour.findByCorporation";
+    public static final String FIND_BY_CORPORATION_EAGERLY = "VirtualTour.findByCorporationEagerly";
+    public static final String FIND_BY_TAG = "VirtualTour.findByTag";
+    public static final String FIND_BY_TAG_EAGERLY = "VirtualTour.findByTagEagerly";
+    public static final String COUNT_BY_SERVICE_POINT = "VirtualTour.countByServicePoint";
+    public static final String COUNT_BY_PROVIDER = "VirtualTour.countByProvider";
+    public static final String COUNT_BY_CORPORATION = "VirtualTour.countByCorporation";
+    public static final String COUNT_BY_TAG = "VirtualTour.countByTag";
+    public static final String DELETE_BY_SERVICE_POINT = "VirtualTour.deleteByServicePoint";
+    public static final String DELETE_BY_ID = "VirtualTour.deleteById";
 
     private Long tourId; // PK
 

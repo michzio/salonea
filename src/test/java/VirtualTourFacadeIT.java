@@ -372,7 +372,7 @@ public class VirtualTourFacadeIT {
         providers.add(provider2);
         List<String> keywords = new ArrayList<>();
         keywords.add("swf");
-        List<VirtualTour> multiTours = virtualTourFacade.findByMultipleCriteria(keywords,  null,  servicePoints, providers, null);
+        List<VirtualTour> multiTours = virtualTourFacade.findByMultipleCriteria(keywords,  null,  servicePoints, providers, null, null);
         utx.commit();
 
         assertTrue("There should be four Virtual Tours satisfying given criteria.", multiTours.size() == 4);

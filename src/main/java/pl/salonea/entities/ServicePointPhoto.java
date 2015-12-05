@@ -23,7 +23,7 @@ import java.util.Set;
 @Table(name = "service_point_photo")
 @Access(AccessType.PROPERTY)
 @NamedQueries({
-        @NamedQuery(name = ServicePointPhoto.FIND_ALL_EAGERLY, query = "SELECT photo FROM ServicePointPhoto photo LEFT JOIN FETCH photo.tags t"),
+        @NamedQuery(name = ServicePointPhoto.FIND_ALL_EAGERLY, query = "SELECT DISTINCT photo FROM ServicePointPhoto photo LEFT JOIN FETCH photo.tags t"),
         @NamedQuery(name = ServicePointPhoto.FIND_BY_ID_EAGERLY, query = "SELECT photo FROM ServicePointPhoto photo LEFT JOIN FETCH photo.tags t WHERE photo.photoId = :photo_id"),
         @NamedQuery(name = ServicePointPhoto.FIND_BY_FILE_NAME, query = "SELECT photo FROM ServicePointPhoto photo WHERE photo.fileName LIKE :file_name"),
         @NamedQuery(name = ServicePointPhoto.FIND_BY_DESCRIPTION, query = "SELECT photo FROM ServicePointPhoto photo WHERE photo.description LIKE :description"),
@@ -34,13 +34,13 @@ import java.util.Set;
         @NamedQuery(name = ServicePointPhoto.FIND_BY_ALL_TAG_NAMES, query = "SELECT photo FROM ServicePointPhoto photo JOIN photo.tags tag WHERE tag.tagName IN :tag_names GROUP BY photo.photoId HAVING COUNT(photo.photoId) = :tag_count"),
         @NamedQuery(name = ServicePointPhoto.FIND_BY_KEYWORD_INCLUDING_TAGS, query = "SELECT DISTINCT photo FROM ServicePointPhoto photo INNER JOIN photo.tags tag WHERE photo.fileName LIKE :keyword OR photo.description LIKE :keyword OR tag.tagName LIKE :keyword"),
         @NamedQuery(name = ServicePointPhoto.FIND_BY_SERVICE_POINT, query = "SELECT photo FROM ServicePointPhoto photo LEFT JOIN FETCH photo.tags WHERE photo.servicePoint = :service_point"),
-        @NamedQuery(name = ServicePointPhoto.FIND_BY_SERVICE_POINT_EAGERLY, query = "SELECT photo FROM ServicePointPhoto photo LEFT JOIN FETCH photo.tags WHERE photo.servicePoint = :service_point"),
+        @NamedQuery(name = ServicePointPhoto.FIND_BY_SERVICE_POINT_EAGERLY, query = "SELECT DISTINCT photo FROM ServicePointPhoto photo LEFT JOIN FETCH photo.tags WHERE photo.servicePoint = :service_point"),
         @NamedQuery(name = ServicePointPhoto.FIND_BY_PROVIDER, query = "SELECT photo FROM ServicePointPhoto photo INNER JOIN photo.servicePoint sp WHERE sp.provider = :provider"),
-        @NamedQuery(name = ServicePointPhoto.FIND_BY_PROVIDER_EAGERLY, query = "SELECT photo FROM ServicePointPhoto photo LEFT JOIN FETCH photo.tags INNER JOIN photo.servicePoint sp WHERE sp.provider = :provider"),
+        @NamedQuery(name = ServicePointPhoto.FIND_BY_PROVIDER_EAGERLY, query = "SELECT DISTINCT photo FROM ServicePointPhoto photo LEFT JOIN FETCH photo.tags INNER JOIN photo.servicePoint sp WHERE sp.provider = :provider"),
         @NamedQuery(name = ServicePointPhoto.FIND_BY_CORPORATION, query = "SELECT photo FROM ServicePointPhoto photo INNER JOIN photo.servicePoint sp INNER JOIN sp.provider p WHERE p.corporation = :corporation"),
-        @NamedQuery(name = ServicePointPhoto.FIND_BY_CORPORATION_EAGERLY, query = "SELECT photo FROM ServicePointPhoto photo LEFT JOIN FETCH photo.tags INNER JOIN photo.servicePoint sp INNER JOIN sp.provider p WHERE p.corporation = :corporation"),
+        @NamedQuery(name = ServicePointPhoto.FIND_BY_CORPORATION_EAGERLY, query = "SELECT DISTINCT photo FROM ServicePointPhoto photo LEFT JOIN FETCH photo.tags INNER JOIN photo.servicePoint sp INNER JOIN sp.provider p WHERE p.corporation = :corporation"),
         @NamedQuery(name = ServicePointPhoto.FIND_BY_TAG, query = "SELECT photo FROM ServicePointPhoto photo WHERE :tag MEMBER OF photo.tags"),
-        @NamedQuery(name = ServicePointPhoto.FIND_BY_TAG_EAGERLY, query = "SELECT photo FROM ServicePointPhoto photo INNER JOIN FETCH photo.tags t WHERE t = :tag"),
+        @NamedQuery(name = ServicePointPhoto.FIND_BY_TAG_EAGERLY, query = "SELECT DISTINCT photo FROM ServicePointPhoto photo INNER JOIN FETCH photo.tags t WHERE t = :tag"),
         @NamedQuery(name = ServicePointPhoto.COUNT_BY_SERVICE_POINT, query = "SELECT COUNT(photo) FROM ServicePointPhoto photo WHERE photo.servicePoint = :service_point"),
         @NamedQuery(name = ServicePointPhoto.COUNT_BY_PROVIDER, query = "SELECT COUNT(photo) FROM ServicePointPhoto photo INNER JOIN photo.servicePoint sp WHERE sp.provider = :provider"),
         @NamedQuery(name = ServicePointPhoto.COUNT_BY_CORPORATION, query = "SELECT COUNT(photo) FROM ServicePointPhoto photo INNER JOIN photo.servicePoint sp INNER JOIN sp.provider p WHERE p.corporation = :corporation"),

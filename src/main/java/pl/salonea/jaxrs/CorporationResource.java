@@ -508,6 +508,8 @@ public class CorporationResource {
     @Path("/{corporationId : \\d+}/service-point-photos")
     public ServicePointPhotoResource getServicePointPhotoResource() { return  new ServicePointPhotoResource(); }
 
+    @Path("/{corporationId : \\d+}/")
+
     /**
      * This method enables to populate list of resources and each individual resource on list with hypermedia links
      */

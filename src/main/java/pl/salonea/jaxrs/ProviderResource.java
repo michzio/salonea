@@ -68,6 +68,8 @@ public class ProviderResource {
     private ProviderRatingFacade providerRatingFacade;
     @Inject
     private ServicePointPhotoFacade servicePointPhotoFacade;
+    @Inject
+    private VirtualTourFacade virtualTourFacade;
 
     /**
      * Method returns all Provider resources
@@ -466,7 +468,10 @@ public class ProviderResource {
         return new ServicePointPhotoResource();
     }
 
-    // private helper methods e.g. to populate resources/resource lists with HATEOAS links
+    @Path("/{userId: \\d+}/virtual-tours")
+    public VirtualTourResource getVirtualTourResource() { return new VirtualTourResource(); }
+
+    // helper methods e.g. to populate resources/resource lists with HATEOAS links
 
     /**
      * This method enables to populate list of resources and each individual resource on list with hypermedia links
@@ -736,6 +741,35 @@ public class ProviderResource {
                     .resolveTemplate("userId", provider.getUserId().toString())
                     .build())
                     .rel("service-point-photos-count").build());
+
+            // virtual-tours
+            Method virtualToursMethod = ProviderResource.class.getMethod("getVirtualTourResource");
+            provider.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ProviderResource.class)
+                    .path(virtualToursMethod)
+                    .resolveTemplate("userId", provider.getUserId().toString())
+                    .build())
+                    .rel("virtual-tours").build());
+
+            // virtual-tours eagerly
+            Method virtualToursEagerlyMethod = ProviderResource.VirtualTourResource.class.getMethod("getProviderVirtualToursEagerly", Long.class, VirtualTourBeanParam.class);
+            provider.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ProviderResource.class)
+                    .path(virtualToursMethod)
+                    .path(virtualToursEagerlyMethod)
+                    .resolveTemplate("userId", provider.getUserId().toString())
+                    .build())
+                    .rel("virtual-tours-eagerly").build());
+
+            // virtual-tours count
+            Method countVirtualToursByProviderMethod = ProviderResource.VirtualTourResource.class.getMethod("countVirtualToursByProvider", Long.class, GenericBeanParam.class);
+            provider.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ProviderResource.class)
+                    .path(virtualToursMethod)
+                    .path(countVirtualToursByProviderMethod)
+                    .resolveTemplate("userId", provider.getUserId().toString())
+                    .build())
+                    .rel("virtual-tours-count").build());
 
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
@@ -2505,6 +2539,176 @@ public class ProviderResource {
                 throw new NotFoundException("Could not find provider for id " + providerId + ".");
 
             ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(servicePointPhotoFacade.countByProvider(provider)), 200, "number of service point photos for provider with id " + provider.getUserId());
+            return Response.status(Status.OK).entity(responseEntity).build();
+        }
+    }
+
+    public class VirtualTourResource {
+
+        public VirtualTourResource() { }
+
+        /**
+         * Method returns subset of Virtual Tour entities for given Provider entity.
+         * The provider id is passed through path param.
+         */
+        @GET
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getProviderVirtualTours( @PathParam("userId") Long providerId,
+                                                 @BeanParam VirtualTourBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning virtual tours for given provider using " +
+                    "ProviderResource.VirtualTourResource.getProviderVirtualTours(providerId) method of REST API");
+
+            // find provider entity for which to get associated virtual tours
+            Provider provider = providerFacade.find(providerId);
+            if(provider == null)
+                throw new NotFoundException("Could not find provider for id " + providerId + ".");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<VirtualTour> virtualTours = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Provider> providers = new ArrayList<>();
+                providers.add(provider);
+
+                // get virtual tours for given provider filtered by given params
+
+                if( RESTToolkit.isSet(params.getKeywords()) ) {
+                    if( RESTToolkit.isSet(params.getFileNames()) || RESTToolkit.isSet(params.getDescriptions()) )
+                        throw new BadRequestException("Query params cannot include keywords and fileNames or descriptions at the same time.");
+
+                    if( RESTToolkit.isSet(params.getTagNames()) ) {
+                        // find by keywords and tag names
+                        virtualTours = new ResourceList<>(
+                                virtualTourFacade.findByMultipleCriteria(params.getKeywords(), params.getTagNames(), params.getServicePoints(),
+                                        providers, params.getCorporations(), params.getTags(), params.getOffset(), params.getLimit())
+                        );
+                    } else {
+                        // find only by keywords
+                        virtualTours = new ResourceList<>(
+                                virtualTourFacade.findByMultipleCriteria(params.getKeywords(), params.getServicePoints(), providers,
+                                        params.getCorporations(), params.getTags(), params.getOffset(), params.getLimit())
+                        );
+                    }
+                } else {
+                    // find by fileNames, descriptions or tagNames
+                    virtualTours = new ResourceList<>(
+                            virtualTourFacade.findByMultipleCriteria(params.getFileNames(), params.getDescriptions(), params.getTagNames(),
+                                    params.getServicePoints(), providers, params.getCorporations(), params.getTags(), params.getOffset(), params.getLimit())
+                    );
+                }
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get virtual tours for given provider without filtering (eventually paginated)
+                virtualTours = new ResourceList<>( virtualTourFacade.findByProvider(provider, params.getOffset(), params.getLimit()) );
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.VirtualTourResource.populateWithHATEOASLinks(virtualTours, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(virtualTours).build();
+        }
+
+        /**
+         * Method returns subset of Virtual Tour entities for given Provider fetching them eagerly.
+         * The provider id is passed through path param.
+         */
+        @GET
+        @Path("/eagerly")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getProviderVirtualToursEagerly( @PathParam("userId") Long providerId,
+                                                        @BeanParam VirtualTourBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning virtual tours eagerly for given provider using " +
+                    "ProviderResource.VirtualTourResource.getProviderVirtualToursEagerly(providerId) method of REST API");
+
+            // find provider entity for which to get associated virtual tours
+            Provider provider = providerFacade.find(providerId);
+            if(provider == null)
+                throw new NotFoundException("Could not find provider for id " + providerId + ".");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<VirtualTourWrapper> virtualTours = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Provider> providers = new ArrayList<>();
+                providers.add(provider);
+
+                // get virtual tours eagerly for given provider filtered by given params
+
+                if( RESTToolkit.isSet(params.getKeywords()) ) {
+                    if( RESTToolkit.isSet(params.getFileNames()) || RESTToolkit.isSet(params.getDescriptions()) )
+                        throw new BadRequestException("Query params cannot include keywords and fileNames or descriptions at the same time.");
+
+                    if( RESTToolkit.isSet(params.getTagNames()) ) {
+                        // find by keywords and tag names
+                        virtualTours = new ResourceList<>(
+                                VirtualTourWrapper.wrap(
+                                        virtualTourFacade.findByMultipleCriteriaEagerly(params.getKeywords(), params.getTagNames(), params.getServicePoints(),
+                                                providers, params.getCorporations(), params.getTags(), params.getOffset(), params.getLimit())
+                                )
+                        );
+                    } else {
+                        // find only by keywords
+                        virtualTours = new ResourceList<>(
+                                VirtualTourWrapper.wrap(
+                                        virtualTourFacade.findByMultipleCriteriaEagerly(params.getKeywords(), params.getServicePoints(), providers,
+                                                params.getCorporations(), params.getTags(), params.getOffset(), params.getLimit())
+                                )
+                        );
+                    }
+                } else {
+                    // find by fileNames, descriptions or tagNames
+                    virtualTours = new ResourceList<>(
+                            VirtualTourWrapper.wrap(
+                                    virtualTourFacade.findByMultipleCriteriaEagerly(params.getFileNames(), params.getDescriptions(), params.getTagNames(),
+                                            params.getServicePoints(), providers, params.getCorporations(), params.getTags(), params.getOffset(), params.getLimit())
+                            )
+                    );
+                }
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get virtual tours eagerly for given provider without filtering (eventually paginated)
+                virtualTours = new ResourceList<>( VirtualTourWrapper.wrap(virtualTourFacade.findByProviderEagerly(provider, params.getOffset(), params.getLimit())) );
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.VirtualTourResource.populateWithHATEOASLinks(virtualTours, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(virtualTours).build();
+        }
+
+        /**
+         * Method that count Virtual Tour entities for given Provider resource.
+         * The provider id it passed through path param.
+         */
+        @GET
+        @Path("/count")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response countVirtualToursByProvider( @PathParam("userId") Long providerId,
+                                                     @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning number of virtual tours for given provider by executing " +
+                    "ProviderResource.VirtualTourResource.countVirtualToursByProvider(providerId) method of REST API");
+
+            // find provider entity for which to count virtual tours
+            Provider provider = providerFacade.find(providerId);
+            if(provider == null)
+                throw new NotFoundException("Could not find provider for id " + providerId + ".");
+
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(virtualTourFacade.countByProvider(provider)), 200,
+                    "number of virtual tours for provider with id " + provider.getUserId());
             return Response.status(Status.OK).entity(responseEntity).build();
         }
     }

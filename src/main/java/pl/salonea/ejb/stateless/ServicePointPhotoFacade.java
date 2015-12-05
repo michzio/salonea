@@ -548,7 +548,7 @@ public class ServicePointPhotoFacade extends AbstractFacade<ServicePointPhoto>
             }
         }
 
-        Fetch<ServicePointPhotoBeanParam, Tag> fetchTags = null;
+        Fetch<ServicePointPhoto, Tag> fetchTags = null;
 
         if(tagNames != null && tagNames.size() > 0) {
 

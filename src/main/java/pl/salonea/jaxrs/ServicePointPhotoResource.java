@@ -61,6 +61,8 @@ public class ServicePointPhotoResource {
         if(noOfParams > 0) {
             logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
 
+            // get all photos filtered by given query params
+
             if( RESTToolkit.isSet(params.getKeywords()) ) {
                 if( RESTToolkit.isSet(params.getFileNames()) || RESTToolkit.isSet(params.getDescriptions()) )
                     throw new BadRequestException("Query params cannot include keywords and fileNames or descriptions at the same time.");
@@ -173,7 +175,7 @@ public class ServicePointPhotoResource {
         if(foundPhoto == null)
             throw new NotFoundException("Could not find photo for id " + photoId + ".");
 
-        // adding hypermedia link to photo resource
+        // adding hypermedia links to photo resource
         ServicePointPhotoResource.populateWithHATEOASLinks(foundPhoto, params.getUriInfo());
 
         return Response.status(Status.OK).entity(foundPhoto).build();
@@ -435,7 +437,7 @@ public class ServicePointPhotoResource {
                                             @BeanParam PaginationBeanParam params ) throws ForbiddenException, BadRequestException {
 
         RESTToolkit.authorizeAccessToWebService(params);
-        logger.log(Level.INFO, "returning service point photos for all given tag names using ServicePointPhotoResource.getPhotosByAllTagNames(tagName) method of REST API");
+        logger.log(Level.INFO, "returning service point photos for all given tag names using ServicePointPhotoResource.getPhotosByAllTagNames(tagNames) method of REST API");
 
         if(tagNames.size() < 1)
             throw new BadRequestException("There must be specified at least one tag name.");
@@ -460,7 +462,7 @@ public class ServicePointPhotoResource {
                                             @BeanParam PaginationBeanParam params )  throws ForbiddenException, BadRequestException  {
 
         RESTToolkit.authorizeAccessToWebService(params);
-        logger.log(Level.INFO, "returning service point photos for any given tag names using ServicePointPhotoResource.getPhotosByAnyTagNames(tagName) method of REST API");
+        logger.log(Level.INFO, "returning service point photos for any given tag names using ServicePointPhotoResource.getPhotosByAnyTagNames(tagNames) method of REST API");
 
         if(tagNames.size() < 1)
             throw new BadRequestException("There must be specified at least one tag name.");
