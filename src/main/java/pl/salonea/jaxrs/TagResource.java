@@ -8,7 +8,9 @@ import pl.salonea.entities.Tag;
 import pl.salonea.entities.VirtualTour;
 import pl.salonea.jaxrs.bean_params.GenericBeanParam;
 import pl.salonea.jaxrs.bean_params.ServicePointPhotoBeanParam;
+import pl.salonea.jaxrs.bean_params.TagBeanParam;
 import pl.salonea.jaxrs.bean_params.VirtualTourBeanParam;
+import pl.salonea.jaxrs.exceptions.*;
 import pl.salonea.jaxrs.exceptions.BadRequestException;
 import pl.salonea.jaxrs.exceptions.ForbiddenException;
 import pl.salonea.jaxrs.exceptions.NotFoundException;
@@ -20,6 +22,9 @@ import pl.salonea.jaxrs.wrappers.ServicePointPhotoWrapper;
 import pl.salonea.jaxrs.wrappers.TagWrapper;
 import pl.salonea.jaxrs.wrappers.VirtualTourWrapper;
 
+import javax.ejb.EJBException;
+import javax.ejb.EJBTransactionRolledbackException;
+import javax.faces.view.facelets.TagException;
 import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -27,6 +32,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 import java.lang.reflect.Method;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -51,7 +57,219 @@ public class TagResource {
      * Method returns all Tag resources
      * They can be additionally filtered or paginated by @QueryParams
      */
+    @GET
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getTags( @BeanParam TagBeanParam params ) throws ForbiddenException {
 
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning all Tags by executing TagResource.getTags() method of REST API");
+
+        Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+        ResourceList<Tag> tags = null;
+
+        if(noOfParams > 0) {
+            logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+            // get tags filtered by given query params
+            tags = new ResourceList<>(
+                    tagFacade.findByMultipleCriteria(params.getTagNames(), params.getServicePointPhotos(), params.getVirtualTours(),
+                                                     params.getOffset(), params.getLimit())
+            );
+
+        } else {
+            logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+            // get tags without filtering (eventually paginated)
+            tags = new ResourceList<>( tagFacade.findAll(params.getOffset(), params.getLimit()) );
+        }
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        TagResource.populateWithHATEOASLinks(tags, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(tags).build();
+    }
+
+    @GET
+    @Path("/eagerly")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getTagsEagerly( @BeanParam TagBeanParam params ) throws ForbiddenException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning all Tags eagerly by executing TagResource.getTagsEagerly() method of REST API");
+
+        Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+        ResourceList<TagWrapper> tags = null;
+
+        if(noOfParams > 0) {
+            logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+            // get tags eagerly filtered by given query params
+            tags = new ResourceList<>(
+                    TagWrapper.wrap(
+                            tagFacade.findByMultipleCriteriaEagerly(params.getTagNames(), params.getServicePointPhotos(), params.getVirtualTours(),
+                                    params.getOffset(), params.getLimit())
+                    )
+            );
+
+        } else {
+            logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+            // get tags eagerly without filtering (eventually paginated)
+            tags = new ResourceList<>( TagWrapper.wrap(tagFacade.findAllEagerly(params.getOffset(), params.getLimit())) );
+        }
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        TagResource.populateWithHATEOASLinks(tags, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(tags).build();
+    }
+
+    /**
+     * Method matches specific Tag resource by identifier and returns its instance
+     */
+    @GET
+    @Path("/{tagId : \\d+}") // catch only numeric identifiers
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getTag( @PathParam("tagId") Long tagId,
+                            @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning given Tag by executing TagResource.getTag(tagId) method of REST API");
+
+        Tag foundTag = tagFacade.find(tagId);
+        if(foundTag == null)
+            throw new NotFoundException("Could not find tag for id " + tagId + ".");
+
+        // adding hypermedia links to tag resource
+        TagResource.populateWithHATEOASLinks(foundTag, params.getUriInfo());
+
+        return Response.status(Status.OK).entity(foundTag).build();
+    }
+
+    /**
+     * Method matches specific Tag resource by identifier and returns its instance fetching it eagerly
+     */
+    @GET
+    @Path("/{tagId : \\d+}/eagerly")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getTagEagerly( @PathParam("tagId") Long tagId,
+                                   @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning given Tag eagerly by executing TagResource.getTagEagerly(tagId) method of REST API");
+
+        Tag foundTag = tagFacade.findByIdEagerly(tagId);
+        if(foundTag == null)
+            throw new NotFoundException("Could not find tag for id " + tagId + ".");
+
+        // wrapping Tag into TagWrapper in order to marshall eagerly fetched associated collections of entities
+        TagWrapper wrappedTag = new TagWrapper(foundTag);
+
+        // adding hypermedia links to wrapped tag resource
+        TagResource.populateWithHATEOASLinks(wrappedTag, params.getUriInfo());
+
+        return Response.status(Status.OK).entity(wrappedTag).build();
+    }
+
+    /**
+     * Method that takes Tag as XML or JSON and creates its new instance in database
+     */
+    @POST
+    @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response createTag( Tag tag,
+                               @BeanParam GenericBeanParam params ) throws ForbiddenException, UnprocessableEntityException, InternalServerErrorException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "creating new Tag by executing TagResource.createTag(tag) method of REST API");
+
+        Tag createdTag = null;
+        URI locationURI = null;
+
+        try {
+            // persist new resource in database
+            createdTag = tagFacade.create(tag);
+
+            // populate created resource with hypermedia links
+            TagResource.populateWithHATEOASLinks(createdTag, params.getUriInfo());
+
+            // construct link to newly created resource to return in HTTP header
+            String createdTagId = String.valueOf(createdTag.getTagId());
+            locationURI = params.getUriInfo().getBaseUriBuilder().path(TagResource.class).path(createdTagId).build();
+
+        } catch (EJBTransactionRolledbackException ex) {
+            ExceptionHandler.handleEJBTransactionRolledbackException(ex);
+        } catch (EJBException ex) {
+            ExceptionHandler.handleEJBException(ex);
+        } catch (Exception ex) {
+            throw new InternalServerErrorException(ExceptionHandler.ENTITY_CREATION_ERROR_MESSAGE);
+        }
+
+        return Response.created(locationURI).entity(createdTag).build();
+    }
+
+    /**
+     * Method that takes updated Tag as XML or JSON and its ID as path param.
+     * It updates Tag in database for provided ID.
+     */
+    @PUT
+    @Path("/{tagId : \\d+}") // catch only numeric identifiers
+    @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response updateTag( @PathParam("tagId") Long tagId,
+                               Tag tag,
+                               @BeanParam GenericBeanParam params ) throws ForbiddenException, UnprocessableEntityException, InternalServerErrorException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "updating existing Tag by executing TagResource.updateTag(tagId, tag) method of REST API");
+
+        // set resource ID passed in path param on updated resource object
+        tag.setTagId(tagId);
+
+        Tag updatedTag = null;
+        try {
+            // reflect updated resource object in database
+            updatedTag = tagFacade.update(tag, true);
+            // populate created resource with hypermedia links
+            TagResource.populateWithHATEOASLinks(updatedTag, params.getUriInfo());
+
+        } catch (EJBTransactionRolledbackException ex) {
+            ExceptionHandler.handleEJBTransactionRolledbackException(ex);
+        } catch (EJBException ex) {
+            ExceptionHandler.handleEJBException(ex);
+        } catch (Exception ex) {
+            throw new InternalServerErrorException(ExceptionHandler.ENTITY_UPDATE_ERROR_MESSAGE);
+        }
+
+        return Response.status(Status.OK).entity(updatedTag).build();
+    }
+
+    /**
+     * Method that removes Tag entity from database for given ID.
+     * The ID is passed through path param.
+     */
+    @DELETE
+    @Path("/{tagId : \\d+}")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response removeTag( @PathParam("tagId") Long tagId,
+                               @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "removing given Tag by executing TagResource.removeTag(tagId) method of REST API");
+
+        // find Tag entity that should be deleted
+        Tag toDeleteTag = tagFacade.find(tagId);
+        // throw exception if entity hasn't been found
+        if(toDeleteTag == null)
+            throw new NotFoundException("Could not find tag to delete for given id " + tagId + ".");
+
+        // remove entity from database
+        tagFacade.remove(toDeleteTag);
+
+        return Response.status(Status.NO_CONTENT).build();
+    }
 
     /**
      * related subresources (through relationships)
@@ -82,6 +300,8 @@ public class TagResource {
             tags.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(TagResource.class).build()).rel("tags").build() );
 
             // get all resources eagerly hypermedia link
+            Method tagsEagerlyMethod = TagResource.class.getMethod("getTagsEagerly", TagBeanParam.class);
+            tags.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(TagResource.class).path(tagsEagerlyMethod).build()).rel("tags-eagerly").build() );
 
             // get subset of resources hypermedia links
 

@@ -12,6 +12,7 @@ import java.util.List;
 public interface TagFacadeInterface extends AbstractFacadeInterface<Tag> {
 
     // concrete interface
+    Tag update(Tag tag, Boolean retainTransientFields);
     List<Tag> findAllEagerly();
     List<Tag> findAllEagerly(Integer start, Integer limit);
     Tag findByIdEagerly(Long tagId);

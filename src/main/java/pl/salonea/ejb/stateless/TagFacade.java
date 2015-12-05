@@ -37,6 +37,20 @@ public class TagFacade extends AbstractFacade<Tag> implements TagFacadeInterface
     }
 
     @Override
+    public Tag update(Tag tag, Boolean retainTransientFields) {
+
+        if(retainTransientFields) {
+            // keep current collection attributes of resource (and other marked @XmlTransient)
+            Tag currentTag = findByIdEagerly(tag.getTagId());
+            if(currentTag != null) {
+                tag.setTaggedPhotos(currentTag.getTaggedPhotos());
+                tag.setTaggedVirtualTours(currentTag.getTaggedVirtualTours());
+            }
+        }
+        return update(tag);
+    }
+
+    @Override
     public List<Tag> findAllEagerly() {
         return findAllEagerly(null, null);
     }
