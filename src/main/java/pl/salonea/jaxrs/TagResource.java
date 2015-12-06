@@ -6,10 +6,7 @@ import pl.salonea.ejb.stateless.VirtualTourFacade;
 import pl.salonea.entities.ServicePointPhoto;
 import pl.salonea.entities.Tag;
 import pl.salonea.entities.VirtualTour;
-import pl.salonea.jaxrs.bean_params.GenericBeanParam;
-import pl.salonea.jaxrs.bean_params.ServicePointPhotoBeanParam;
-import pl.salonea.jaxrs.bean_params.TagBeanParam;
-import pl.salonea.jaxrs.bean_params.VirtualTourBeanParam;
+import pl.salonea.jaxrs.bean_params.*;
 import pl.salonea.jaxrs.exceptions.*;
 import pl.salonea.jaxrs.exceptions.BadRequestException;
 import pl.salonea.jaxrs.exceptions.ForbiddenException;
@@ -24,7 +21,6 @@ import pl.salonea.jaxrs.wrappers.VirtualTourWrapper;
 
 import javax.ejb.EJBException;
 import javax.ejb.EJBTransactionRolledbackException;
-import javax.faces.view.facelets.TagException;
 import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -74,7 +70,7 @@ public class TagResource {
             // get tags filtered by given query params
             tags = new ResourceList<>(
                     tagFacade.findByMultipleCriteria(params.getTagNames(), params.getServicePointPhotos(), params.getVirtualTours(),
-                                                     params.getOffset(), params.getLimit())
+                            params.getOffset(), params.getLimit())
             );
 
         } else {
@@ -272,6 +268,49 @@ public class TagResource {
     }
 
     /**
+     * Additional methods returning a subset of resources based on given criteria.
+     * You can also achieve similar results by applying @QueryParams to generic method
+     * returning all resources in order to filter and limit them.
+     */
+
+    /**
+     * Method returns number of Tag entities in database
+     */
+    @GET
+    @Path("/count")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response countTags( @BeanParam GenericBeanParam params ) throws ForbiddenException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning number of tags by executing TagResource.countTags() method of REST API");
+
+        ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(tagFacade.count()), 200, "number of tags");
+        return Response.status(Status.OK).entity(responseEntity).build();
+    }
+
+    /**
+     * Method returns subset of Tag entities for given tag name.
+     * The tag name is passed through path param.
+     */
+    @GET
+    @Path("/named/{tagName : \\S+}")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getTagsByTagName( @PathParam("tagName") String tagName,
+                                      @BeanParam PaginationBeanParam params ) throws ForbiddenException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning tags for given tag name using TagResource.getTagsByTagName(tagName) method of REST API");
+
+        // find tags by given criteria
+        ResourceList<Tag> tags = new ResourceList<>( tagFacade.findByTagName(tagName, params.getOffset(), params.getLimit()) );
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        TagResource.populateWithHATEOASLinks(tags, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(tags).build();
+    }
+
+    /**
      * related subresources (through relationships)
      */
 
@@ -304,6 +343,8 @@ public class TagResource {
             tags.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(TagResource.class).path(tagsEagerlyMethod).build()).rel("tags-eagerly").build() );
 
             // get subset of resources hypermedia links
+            // named
+            tags.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(TagResource.class).path("named").build()).rel("named").build() );
 
         } catch(NoSuchMethodException e) {
             e.printStackTrace();

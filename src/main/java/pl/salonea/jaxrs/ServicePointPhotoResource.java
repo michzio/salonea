@@ -42,6 +42,8 @@ public class ServicePointPhotoResource {
 
     @Inject
     private ServicePointPhotoFacade servicePointPhotoFacade;
+    @Inject
+    private TagResource tagResource;
 
     /**
      * Method returns all Service Point Photo resources
@@ -477,6 +479,15 @@ public class ServicePointPhotoResource {
     }
 
     /**
+     * related subresources (through relationships)
+     */
+
+    @Path("/{photoId: \\d+}/tags")
+    public TagResource getTagResource() {
+        return new TagResource();
+    }
+
+    /**
      * This method enables to populate list of resources and each individual resource on list with hypermedia links
      */
     public static void populateWithHATEOASLinks(ResourceList photos, UriInfo uriInfo, Integer offset, Integer limit) {
@@ -590,8 +601,28 @@ public class ServicePointPhotoResource {
 
             // associated collections links with pattern: http://localhost:port/app/rest/{resources}/{id}/{relationship}
 
+            /**
+             * Tags associated with current Service Point Photo resource
+             */
+
+            // tags link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}
+
+            // tags eagerly link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/eagerly
+
+            // tags count link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/count
+
+            // tags named link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/named
+
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
         }
     }
+
+    public class TagResource {
+
+        public TagResource() { }
+
+
+    }
+
 }
