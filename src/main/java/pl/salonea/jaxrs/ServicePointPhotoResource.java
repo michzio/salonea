@@ -644,8 +644,23 @@ public class ServicePointPhotoResource {
                     .rel("tags-eagerly").build());
 
             // tags count link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/count
+            Method countTagsByServicePointPhotoMethod = ServicePointPhotoResource.TagResource.class.getMethod("countTagsByServicePointPhoto", Long.class, GenericBeanParam.class);
+            photo.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ServicePointPhotoResource.class)
+                    .path(tagsMethod)
+                    .path(countTagsByServicePointPhotoMethod)
+                    .resolveTemplate("photoId", photo.getPhotoId().toString())
+                    .build())
+                    .rel("tags-count").build());
 
             // tags named link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/named
+            photo.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ServicePointPhotoResource.class)
+                    .path(tagsMethod)
+                    .path("named")
+                    .resolveTemplate("photoId", photo.getPhotoId().toString())
+                    .build())
+                    .rel("tags-named").build());
 
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
@@ -752,10 +767,59 @@ public class ServicePointPhotoResource {
             return Response.status(Status.OK).entity(tags).build();
         }
 
+        /**
+         * Method that count Tag entities for given Service Point Photo resource.
+         * The service point photo id is passed through path param.
+         */
+        @GET
+        @Path("/count")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response countTagsByServicePointPhoto( @PathParam("photoId") Long photoId,
+                                                      @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
 
-        // TODO:
-        // find by photo and tag name
-        // count by photo
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning number of tags for given service point photo by executing " +
+                    "ServicePointPhotoResource.TagResource.countTagsByServicePointPhoto(photoId) method of REST API");
+
+            // find service point photo entity for which to count tags
+            ServicePointPhoto servicePointPhoto = servicePointPhotoFacade.find(photoId);
+            if(servicePointPhoto == null)
+                throw new NotFoundException("Could not find service point photo for id " + photoId + ".");
+
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(tagFacade.countByServicePointPhoto(servicePointPhoto)), 200,
+                    "number of tags for service point photo with id " + servicePointPhoto.getPhotoId());
+            return Response.status(Status.OK).entity(responseEntity).build();
+        }
+
+        /**
+         * Method returns subset of Tag entities for given Service Point Photo entity and tag name.
+         * The service point photo id and tag name are passed through path param.
+         */
+        @GET
+        @Path("/named/{tagName : \\S+}")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getServicePointPhotoTagsByTagName( @PathParam("photoId") Long photoId,
+                                                           @PathParam("tagName") String tagName,
+                                                           @BeanParam PaginationBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning tags for given service point photo and tag name using " +
+                    "ServicePointPhotoResource.TagResource.getServicePointPhotoTagsByTagName(photoId, tagName) method of REST API");
+
+            // find service point photo entity for which to get associated tags
+            ServicePointPhoto servicePointPhoto = servicePointPhotoFacade.find(photoId);
+            if(servicePointPhoto == null)
+                throw new NotFoundException("Could not find service point photo for id " + photoId + ".");
+
+            // find tags by given criteria (service point photo and tag name)
+            ResourceList<Tag> tags = new ResourceList<>(
+                    tagFacade.findByServicePointPhotoAndTagName(servicePointPhoto, tagName, params.getOffset(), params.getLimit()) );
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.TagResource.populateWithHATEOASLinks(tags, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(tags).build();
+        }
 
     }
 
