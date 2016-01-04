@@ -9,6 +9,7 @@ import pl.salonea.entities.idclass.ServicePointId;
 import pl.salonea.jaxrs.bean_params.GenericBeanParam;
 import pl.salonea.jaxrs.bean_params.PaginationBeanParam;
 import pl.salonea.jaxrs.bean_params.ServicePointPhotoBeanParam;
+import pl.salonea.jaxrs.bean_params.TagBeanParam;
 import pl.salonea.jaxrs.exceptions.*;
 import pl.salonea.jaxrs.exceptions.BadRequestException;
 import pl.salonea.jaxrs.exceptions.ForbiddenException;
@@ -18,6 +19,7 @@ import pl.salonea.jaxrs.utils.ResourceList;
 import pl.salonea.jaxrs.utils.ResponseWrapper;
 import pl.salonea.jaxrs.utils.hateoas.Link;
 import pl.salonea.jaxrs.wrappers.ServicePointPhotoWrapper;
+import pl.salonea.jaxrs.wrappers.TagWrapper;
 
 import javax.ejb.EJBException;
 import javax.ejb.EJBTransactionRolledbackException;
@@ -31,6 +33,7 @@ import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 import java.lang.reflect.Method;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -622,8 +625,23 @@ public class ServicePointPhotoResource {
              */
 
             // tags link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}
+            Method tagsMethod = ServicePointPhotoResource.class.getMethod("getTagResource");
+            photo.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ServicePointPhotoResource.class)
+                    .path(tagsMethod)
+                    .resolveTemplate("photoId", photo.getPhotoId().toString())
+                    .build())
+                    .rel("tags").build());
 
             // tags eagerly link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/eagerly
+            Method tagsEagerlyMethod = ServicePointPhotoResource.TagResource.class.getMethod("getServicePointPhotoTagsEagerly", Long.class, TagBeanParam.class);
+            photo.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ServicePointPhotoResource.class)
+                    .path(tagsMethod)
+                    .path(tagsEagerlyMethod)
+                    .resolveTemplate("photoId", photo.getPhotoId().toString())
+                    .build())
+                    .rel("tags-eagerly").build());
 
             // tags count link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/count
 
@@ -638,10 +656,104 @@ public class ServicePointPhotoResource {
 
         public TagResource() { }
 
+        /**
+         * Method returns subset of Tag entities for given Service Point Photo entity.
+         * The service point photo id is passed through path param.
+         */
+        @GET
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getServicePointPhotoTags( @PathParam("photoId") Long photoId,
+                                                  @BeanParam TagBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning tags for given service point photo using " +
+                    "ServicePointPhotoResource.TagResource.getServicePointPhotoTags(photoId) method of REST API");
+
+            // find service point photo entity for which to get associated tags
+            ServicePointPhoto servicePointPhoto = servicePointPhotoFacade.find(photoId);
+            if(servicePointPhoto == null)
+                throw new NotFoundException("Could not find service point photo for id " + photoId + ".");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<Tag> tags = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<ServicePointPhoto> servicePointPhotos = new ArrayList<>();
+                servicePointPhotos.add(servicePointPhoto);
+
+                // get tags for given service point photo filtered by given params
+                tags = new ResourceList<>(
+                        tagFacade.findByMultipleCriteria(params.getTagNames(), servicePointPhotos, params.getVirtualTours(),
+                                params.getOffset(), params.getLimit())
+                );
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get tags for given service point photo without filtering (eventually paginated)
+                tags = new ResourceList<>( tagFacade.findByServicePointPhoto(servicePointPhoto, params.getOffset(), params.getLimit()) );
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.TagResource.populateWithHATEOASLinks(tags, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(tags).build();
+        }
+
+        /**
+         * Method returns subset of Tag entities for given Service Point Photo fetching them eagerly
+         * The service point photo id is passed through path param.
+         */
+        @GET
+        @Path("/eagerly")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getServicePointPhotoTagsEagerly( @PathParam("photoId") Long photoId,
+                                                         @BeanParam TagBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning tags eagerly for given service point photo using " +
+                    "ServicePointPhotoResource.TagResource.getServicePointPhotoTagsEagerly(photoId) method of REST API");
+
+            // find service point photo entity for which to get associated tags
+            ServicePointPhoto servicePointPhoto = servicePointPhotoFacade.find(photoId);
+            if(servicePointPhoto == null)
+                throw new NotFoundException("Could not find service point photo for id " + photoId + ".");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<TagWrapper> tags = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<ServicePointPhoto> servicePointPhotos = new ArrayList<>();
+                servicePointPhotos.add(servicePointPhoto);
+
+                // get tags eagerly for given service point photo filtered by given params
+                tags = new ResourceList<>(
+                        TagWrapper.wrap(
+                                tagFacade.findByMultipleCriteriaEagerly(params.getTagNames(), servicePointPhotos, params.getVirtualTours(),
+                                        params.getOffset(), params.getLimit())
+                        )
+                );
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get tags eagerly for given service point photo without filtering (eventually paginated)
+                tags = new ResourceList<>( TagWrapper.wrap(tagFacade.findByServicePointPhotoEagerly(servicePointPhoto, params.getOffset(), params.getLimit())) );
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.TagResource.populateWithHATEOASLinks(tags, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(tags).build();
+        }
+
 
         // TODO:
-        // find all by photo
-        // find all by photo eagerly
         // find by photo and tag name
         // count by photo
 
