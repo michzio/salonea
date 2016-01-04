@@ -727,6 +727,8 @@ public class ServicePointResource {
 
             return Response.status(Status.OK).entity(responseEntity).build();
         }
+
+        // TODO deleting Service Point Photos by Service Point
     }
 
     /* related VirtualTour subresource */
@@ -917,6 +919,8 @@ public class ServicePointResource {
 
             return Response.status(Status.OK).entity(responseEntity).build();
         }
+
+        // TODO deleting Virtual Tours by Service Point
 
     }
 

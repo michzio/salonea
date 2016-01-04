@@ -2690,7 +2690,7 @@ public class ProviderResource {
 
         /**
          * Method that count Virtual Tour entities for given Provider resource.
-         * The provider id it passed through path param.
+         * The provider id is passed through path param.
          */
         @GET
         @Path("/count")

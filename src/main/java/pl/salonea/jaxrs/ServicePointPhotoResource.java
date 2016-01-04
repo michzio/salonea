@@ -1,6 +1,7 @@
 package pl.salonea.jaxrs;
 
 import pl.salonea.ejb.stateless.ServicePointPhotoFacade;
+import pl.salonea.ejb.stateless.TagFacade;
 import pl.salonea.entities.ServicePoint;
 import pl.salonea.entities.ServicePointPhoto;
 import pl.salonea.entities.Tag;
@@ -21,6 +22,8 @@ import pl.salonea.jaxrs.wrappers.ServicePointPhotoWrapper;
 import javax.ejb.EJBException;
 import javax.ejb.EJBTransactionRolledbackException;
 import javax.inject.Inject;
+import javax.transaction.*;
+import javax.transaction.NotSupportedException;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -41,9 +44,12 @@ public class ServicePointPhotoResource {
     private static final Logger logger = Logger.getLogger(ServicePointPhotoResource.class.getName());
 
     @Inject
+    private UserTransaction utx;
+
+    @Inject
     private ServicePointPhotoFacade servicePointPhotoFacade;
     @Inject
-    private TagResource tagResource;
+    private TagFacade tagFacade;
 
     /**
      * Method returns all Service Point Photo resources
@@ -51,7 +57,8 @@ public class ServicePointPhotoResource {
      */
     @GET
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getPhotos( @BeanParam ServicePointPhotoBeanParam params ) throws ForbiddenException, BadRequestException {
+    public Response getPhotos( @BeanParam ServicePointPhotoBeanParam params ) throws ForbiddenException, BadRequestException,
+    /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
 
         RESTToolkit.authorizeAccessToWebService(params);
         logger.log(Level.INFO, "returning all Service Point Photos by executing ServicePointPhotoResource.getPhotos() method of REST API");
@@ -59,6 +66,8 @@ public class ServicePointPhotoResource {
         Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
 
         ResourceList<ServicePointPhoto> photos = null;
+
+        utx.begin();
 
         if(noOfParams > 0) {
             logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
@@ -97,6 +106,8 @@ public class ServicePointPhotoResource {
             photos = new ResourceList<>( servicePointPhotoFacade.findAll(params.getOffset(), params.getLimit()) );
         }
 
+        utx.commit();
+
         // result resources need to be populated with hypermedia links to enable resource discovery
         ServicePointPhotoResource.populateWithHATEOASLinks(photos, params.getUriInfo(), params.getOffset(), params.getLimit());
 
@@ -106,7 +117,8 @@ public class ServicePointPhotoResource {
     @GET
     @Path("/eagerly")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getPhotosEagerly( @BeanParam ServicePointPhotoBeanParam params ) throws ForbiddenException, BadRequestException {
+    public Response getPhotosEagerly( @BeanParam ServicePointPhotoBeanParam params ) throws ForbiddenException, BadRequestException,
+    /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
 
         RESTToolkit.authorizeAccessToWebService(params);
         logger.log(Level.INFO, "returning all Service Point Photos eagerly by executing ServicePointPhotoResource.getPhotosEagerly() method of REST API");
@@ -114,6 +126,8 @@ public class ServicePointPhotoResource {
         Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
 
         ResourceList<ServicePointPhotoWrapper> photos = null;
+
+        utx.begin();
 
         if(noOfParams > 0) {
             logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
@@ -154,6 +168,8 @@ public class ServicePointPhotoResource {
             // get all photos eagerly without filtering (eventually paginated)
             photos = new ResourceList<>( ServicePointPhotoWrapper.wrap(servicePointPhotoFacade.findAllEagerly(params.getOffset(), params.getLimit())) );
         }
+
+        utx.commit();
 
         // result resources need to be populated with hypermedia links to enable resource discovery
         ServicePointPhotoResource.populateWithHATEOASLinks(photos, params.getUriInfo(), params.getOffset(), params.getLimit());
@@ -622,6 +638,12 @@ public class ServicePointPhotoResource {
 
         public TagResource() { }
 
+
+        // TODO:
+        // find all by photo
+        // find all by photo eagerly
+        // find by photo and tag name
+        // count by photo
 
     }
 

@@ -18,6 +18,7 @@ import pl.salonea.jaxrs.utils.RESTToolkit;
 import pl.salonea.jaxrs.utils.ResourceList;
 import pl.salonea.jaxrs.utils.ResponseWrapper;
 import pl.salonea.jaxrs.utils.hateoas.Link;
+import pl.salonea.jaxrs.wrappers.TagWrapper;
 import pl.salonea.jaxrs.wrappers.VirtualTourWrapper;
 
 import javax.ejb.EJBException;
@@ -119,7 +120,8 @@ public class VirtualTourResource {
     @GET
     @Path("/eagerly")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getVirtualToursEagerly( @BeanParam VirtualTourBeanParam params ) throws ForbiddenException, BadRequestException {
+    public Response getVirtualToursEagerly( @BeanParam VirtualTourBeanParam params ) throws ForbiddenException, BadRequestException,
+    /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
 
         RESTToolkit.authorizeAccessToWebService(params);
         logger.log(Level.INFO, "returning all Virtual Tours eagerly by executing VirtualTourResource.getVirtualToursEagerly() method of REST API");
@@ -127,6 +129,8 @@ public class VirtualTourResource {
         Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
 
         ResourceList<VirtualTourWrapper> virtualTours = null;
+
+        utx.begin();
 
         if(noOfParams > 0) {
             logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
@@ -169,6 +173,8 @@ public class VirtualTourResource {
             // get all virtualTours without filtering (eventually paginated)
             virtualTours = new ResourceList<>( VirtualTourWrapper.wrap(virtualTourFacade.findAllEagerly(params.getOffset(), params.getLimit())) );
         }
+
+        utx.commit();
 
         // result resources need to be populated with hypermedia links to enable resource discovery
         VirtualTourResource.populateWithHATEOASLinks(virtualTours, params.getUriInfo(), params.getOffset(), params.getLimit());
@@ -630,10 +636,33 @@ public class VirtualTourResource {
                     .rel("tags").build());
 
             // tags eagerly link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/eagerly
+            Method tagsEagerlyMethod = VirtualTourResource.TagResource.class.getMethod("getVirtualTourTagsEagerly", Long.class, TagBeanParam.class);
+            virtualTour.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(VirtualTourResource.class)
+                    .path(tagsMethod)
+                    .path(tagsEagerlyMethod)
+                    .resolveTemplate("tourId", virtualTour.getTourId().toString())
+                    .build())
+                    .rel("tags-eagerly").build());
 
             // tags count link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/count
+            Method countTagsByVirtualTourMethod = VirtualTourResource.TagResource.class.getMethod("countTagsByVirtualTour", Long.class, GenericBeanParam.class);
+            virtualTour.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(VirtualTourResource.class)
+                    .path(tagsMethod)
+                    .path(countTagsByVirtualTourMethod)
+                    .resolveTemplate("tourId", virtualTour.getTourId().toString())
+                    .build())
+                    .rel("tags-count").build());
 
             // tags named link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/named
+            virtualTour.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(VirtualTourResource.class)
+                    .path(tagsMethod)
+                    .path("named")
+                    .resolveTemplate("tourId", virtualTour.getTourId().toString())
+                    .build())
+                    .rel("tags-named").build());
 
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
@@ -674,7 +703,7 @@ public class VirtualTourResource {
                 // get tags for given virtual tour filtered by given params
                 tags = new ResourceList<>(
                         tagFacade.findByMultipleCriteria(params.getTagNames(), params.getServicePointPhotos(), virtualTours,
-                                                         params.getOffset(), params.getLimit())
+                                params.getOffset(), params.getLimit())
                 );
             } else {
                 logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
@@ -682,6 +711,109 @@ public class VirtualTourResource {
                 // get tags for given virtual tour without filtering (eventually paginated)
                 tags = new ResourceList<>( tagFacade.findByVirtualTour(virtualTour, params.getOffset(), params.getLimit()) );
             }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.TagResource.populateWithHATEOASLinks(tags, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(tags).build();
+        }
+
+        /**
+         * Method returns subset of Tag entities for given Virtual Tour fetching them eagerly
+         * The virtual tour id is passed through path param.
+         */
+        @GET
+        @Path("/eagerly")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getVirtualTourTagsEagerly( @PathParam("tourId") Long tourId,
+                                                   @BeanParam TagBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning tags eagerly for given virtual tour using " +
+                    "VirtualTourResource.TagResource.getVirtualTourTagsEagerly(tourId) method of REST API");
+
+            // find virtual tour entity for which to get associated tags
+            VirtualTour virtualTour = virtualTourFacade.find(tourId);
+            if(virtualTour == null)
+                throw new NotFoundException("Could not find virtual tour for id " + tourId + ".");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<TagWrapper> tags = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<VirtualTour> virtualTours = new ArrayList<>();
+                virtualTours.add(virtualTour);
+
+                // get tags eagerly for given virtual tour filtered by given params
+                tags = new ResourceList<>(
+                        TagWrapper.wrap(
+                                tagFacade.findByMultipleCriteriaEagerly(params.getTagNames(), params.getServicePointPhotos(), virtualTours,
+                                        params.getOffset(), params.getLimit())
+                        )
+                );
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get tags eagerly for given virtual tour without filtering (eventually paginated)
+                tags = new ResourceList<>( TagWrapper.wrap(tagFacade.findByVirtualTourEagerly(virtualTour, params.getOffset(), params.getLimit())) );
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.TagResource.populateWithHATEOASLinks(tags, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(tags).build();
+        }
+
+        /**
+         * Method that count Tag entities for given Virtual Tour resource.
+         * The virtual tour id is passed through path param.
+         */
+        @GET
+        @Path("/count")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response countTagsByVirtualTour( @PathParam("tourId") Long tourId,
+                                                @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning number of tags for given virtual tour by executing " +
+                    "VirtualTourResource.TagResource.countTagsByVirtualTour(tourId) method of REST API");
+
+            // find virtual tour entity for which to count tags
+            VirtualTour virtualTour = virtualTourFacade.find(tourId);
+            if(virtualTour == null)
+                throw new NotFoundException("Could not find virtual tour for id " + tourId + ".");
+
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(tagFacade.countByVirtualTour(virtualTour)), 200,
+                    "number of tags for virtual tour with id " + virtualTour.getTourId());
+            return Response.status(Status.OK).entity(responseEntity).build();
+        }
+
+        /**
+         * Method returns subset of Tag entities for given Virtual Tour entity and tag name.
+         * The virtual tour id and tag name are passed through path param.
+         */
+        @GET
+        @Path("/named/{tagName : \\S+}")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getVirtualTourTagsByTagName( @PathParam("tourId") Long tourId,
+                                                     @PathParam("tagName") String tagName,
+                                                     @BeanParam PaginationBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning tags for given virtual tour and tag name using " +
+                    "VirtualTourResource.TagResource.getVirtualTourTagsByTagName(tourId, tagName) method of REST API");
+
+            // find virtual tour entity for which to get associated tags
+            VirtualTour virtualTour = virtualTourFacade.find(tourId);
+            if(virtualTour == null)
+                throw new NotFoundException("Could not find virtual tour for id " + tourId + ".");
+
+            // find tags by given criteria (virtual tour and tag name)
+            ResourceList<Tag> tags = new ResourceList<>(
+                    tagFacade.findByVirtualTourAndTagName(virtualTour, tagName, params.getOffset(), params.getLimit()) );
 
             // result resources need to be populated with hypermedia links to enable resource discovery
             pl.salonea.jaxrs.TagResource.populateWithHATEOASLinks(tags, params.getUriInfo(), params.getOffset(), params.getLimit());
