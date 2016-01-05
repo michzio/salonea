@@ -753,11 +753,11 @@ public class ServicePointResource {
             // remove all specified entities from database
             Integer noOfDeleted = servicePointPhotoFacade.deleteByServicePoint(servicePoint);
 
+            utx.commit();
+
             // create response returning number of deleted entities
             ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(noOfDeleted), 200,
                     "number of deleted service point photos for service point with id (" + providerId + "," + servicePointNumber +  ")");
-
-            utx.commit();
 
             return Response.status(Status.OK).entity(responseEntity).build();
         }
@@ -952,8 +952,39 @@ public class ServicePointResource {
             return Response.status(Status.OK).entity(responseEntity).build();
         }
 
-        // TODO deleting Virtual Tours by Service Point
+        /**
+         * Method that removes subset of Virtual Tour entities from database for given Service Point.
+         * The provider id and service point number are passed through path param.
+         */
+        @DELETE
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response removeServicePointVirtualTours(  @PathParam("providerId") Long providerId,
+                                                         @PathParam("servicePointNumber") Integer servicePointNumber,
+                                                         @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
 
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "removing subset of Virtual Tour entities for given Service Point by executing " +
+                    "ServicePointResource.VirtualTourResource.removeServicePointVirtualTours(providerId, servicePointNumber) method of REST API");
+
+            utx.begin();
+
+            // find service point entity for which to remove virtual tours
+            ServicePoint servicePoint = servicePointFacade.find(new ServicePointId(providerId, servicePointNumber));
+            if(servicePoint == null)
+                throw new NotFoundException("Could not find service point for id (" + providerId + "," + servicePointNumber + ").");
+
+            // remove all specified entities from database
+            Integer noOfDeleted = virtualTourFacade.deleteByServicePoint(servicePoint);
+
+            utx.commit();
+
+            // create response returning number of deleted entities
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(noOfDeleted), 200,
+                    "number of deleted virtual tours for service point with id (" + providerId + "," + servicePointNumber + ")");
+
+            return Response.status(Status.OK).entity(responseEntity).build();
+        }
 
 
     }
