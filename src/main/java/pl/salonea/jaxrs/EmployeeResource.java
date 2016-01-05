@@ -51,7 +51,44 @@ public class EmployeeResource {
     @Inject
     private ServicePointFacade servicePointFacade;
 
+    /**
+     * Method returns all Employee resources
+     * They can be additionally filtered or paginated by @QueryParams
+     */
+    @GET
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getEmployees( @BeanParam EmployeeBeanParam params ) throws ForbiddenException {
 
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning all Employees by executing EmployeeResource.getEmployees() method of REST API");
+
+        Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+        ResourceList<Employee> employees = null;
+
+        if(noOfParams > 0) {
+            logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+            // get employees filtered by criteria provided in query params
+            employees = new ResourceList<>(
+                    employeeFacade.findByMultipleCriteria(params.getDescription(), params.getJobPositions(), params.getSkills(),
+                            params.getEducations(), params.getServices(), params.getProviderServices(), params.getServicePoints(),
+                            params.getWorkStations(), params.getPeriod(), params.getStrictTerm(), params.getRated(), params.getMinAvgRating(),
+                            params.getMaxAvgRating(), params.getRatingClients(), params.getOffset(), params.getLimit())
+            );
+
+        } else {
+            logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+            // get all employees without filtering (eventually paginated)
+            employees = new ResourceList<>( employeeFacade.findAll(params.getOffset(), params.getLimit()) );
+        }
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        EmployeeResource.populateWithHATEOASLinks(employees, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(employees).build();
+    }
 
     /**
      * related subresources (through relationships)
