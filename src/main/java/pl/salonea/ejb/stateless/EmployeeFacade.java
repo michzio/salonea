@@ -8,6 +8,8 @@ import javax.ejb.LocalBean;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
+import javax.persistence.NonUniqueResultException;
 import javax.persistence.TypedQuery;
 import javax.persistence.criteria.*;
 import javax.persistence.metamodel.SingularAttribute;
@@ -32,6 +34,34 @@ public class EmployeeFacade extends AbstractFacade<Employee> implements Employee
 
     public EmployeeFacade() {
         super(Employee.class);
+    }
+
+    @Override
+    public List<Employee> findAllEagerly() {
+        return findAllEagerly(null, null);
+    }
+
+    @Override
+    public List<Employee> findAllEagerly(Integer start, Integer limit) {
+
+        TypedQuery<Employee> query = getEntityManager().createNamedQuery(Employee.FIND_ALL_EAGERLY, Employee.class);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
+    public Employee findByIdEagerly(Long employeeId) {
+
+        TypedQuery<Employee> query = getEntityManager().createNamedQuery(Employee.FIND_BY_ID_EAGERLY, Employee.class);
+        query.setParameter("employeeId", employeeId);
+        try {
+            return query.getSingleResult();
+        } catch (NoResultException | NonUniqueResultException ex) {
+            return null;
+        }
     }
 
     @Override
@@ -86,6 +116,23 @@ public class EmployeeFacade extends AbstractFacade<Employee> implements Employee
     }
 
     @Override
+    public List<Employee> findBySkillEagerly(Skill skill) {
+        return findBySkillEagerly(skill, null, null);
+    }
+
+    @Override
+    public List<Employee> findBySkillEagerly(Skill skill, Integer start, Integer limit) {
+
+        TypedQuery<Employee> query = getEntityManager().createNamedQuery(Employee.FIND_BY_SKILL_EAGERLY, Employee.class);
+        query.setParameter("skill", skill);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
     public List<Employee> findByEducation(Education education) {
         return findByEducation(education, null, null);
     }
@@ -94,6 +141,23 @@ public class EmployeeFacade extends AbstractFacade<Employee> implements Employee
     public List<Employee> findByEducation(Education education, Integer start, Integer limit) {
 
         TypedQuery<Employee> query = getEntityManager().createNamedQuery(Employee.FIND_BY_EDUCATION, Employee.class);
+        query.setParameter("education", education);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
+    public List<Employee> findByEducationEagerly(Education education) {
+        return findByEducationEagerly(education, null, null);
+    }
+
+    @Override
+    public List<Employee> findByEducationEagerly(Education education, Integer start, Integer limit) {
+
+        TypedQuery<Employee> query = getEntityManager().createNamedQuery(Employee.FIND_BY_EDUCATION_EAGERLY, Employee.class);
         query.setParameter("education", education);
         if(start != null && limit != null) {
             query.setFirstResult(start);
@@ -138,6 +202,23 @@ public class EmployeeFacade extends AbstractFacade<Employee> implements Employee
     }
 
     @Override
+    public List<Employee> findByServiceEagerly(Service service) {
+        return findByServiceEagerly(service, null, null);
+    }
+
+    @Override
+    public List<Employee> findByServiceEagerly(Service service, Integer start, Integer limit) {
+
+        TypedQuery<Employee> query = getEntityManager().createNamedQuery(Employee.FIND_BY_SERVICE_EAGERLY, Employee.class);
+        query.setParameter("service", service);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
     public List<Employee> findByProviderService(ProviderService providerService) {
         return findByProviderService(providerService, null, null);
     }
@@ -155,6 +236,23 @@ public class EmployeeFacade extends AbstractFacade<Employee> implements Employee
     }
 
     @Override
+    public List<Employee> findByProviderServiceEagerly(ProviderService providerService) {
+        return findByProviderServiceEagerly(providerService, null, null);
+    }
+
+    @Override
+    public List<Employee> findByProviderServiceEagerly(ProviderService providerService, Integer start, Integer limit) {
+
+        TypedQuery<Employee> query = getEntityManager().createNamedQuery(Employee.FIND_BY_PROVIDER_SERVICE_EAGERLY, Employee.class);
+        query.setParameter("provider_service",  providerService);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
     public List<Employee> findByServicePoint(ServicePoint servicePoint) {
         return findByServicePoint(servicePoint, null, null);
     }
@@ -163,6 +261,23 @@ public class EmployeeFacade extends AbstractFacade<Employee> implements Employee
     public List<Employee> findByServicePoint(ServicePoint servicePoint, Integer start, Integer limit) {
 
         TypedQuery<Employee> query = getEntityManager().createNamedQuery(Employee.FIND_BY_SERVICE_POINT, Employee.class);
+        query.setParameter("service_point", servicePoint);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
+    public List<Employee> findByServicePointEagerly(ServicePoint servicePoint) {
+        return findByServicePointEagerly(servicePoint, null, null);
+    }
+
+    @Override
+    public List<Employee> findByServicePointEagerly(ServicePoint servicePoint, Integer start, Integer limit) {
+
+        TypedQuery<Employee> query = getEntityManager().createNamedQuery(Employee.FIND_BY_SERVICE_POINT_EAGERLY, Employee.class);
         query.setParameter("service_point", servicePoint);
         if(start != null && limit != null) {
             query.setFirstResult(start);
@@ -218,6 +333,23 @@ public class EmployeeFacade extends AbstractFacade<Employee> implements Employee
     public List<Employee> findByWorkStation(WorkStation workStation, Integer start, Integer limit) {
 
         TypedQuery<Employee> query = getEntityManager().createNamedQuery(Employee.FIND_BY_WORK_STATION, Employee.class);
+        query.setParameter("work_station", workStation);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
+    public List<Employee> findByWorkStationEagerly(WorkStation workStation) {
+        return findByWorkStationEagerly(workStation, null, null);
+    }
+
+    @Override
+    public List<Employee> findByWorkStationEagerly(WorkStation workStation, Integer start, Integer limit) {
+
+        TypedQuery<Employee> query = getEntityManager().createNamedQuery(Employee.FIND_BY_WORK_STATION_EAGERLY, Employee.class);
         query.setParameter("work_station", workStation);
         if(start != null && limit != null) {
             query.setFirstResult(start);

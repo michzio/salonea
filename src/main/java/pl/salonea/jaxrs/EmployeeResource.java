@@ -52,6 +52,7 @@ public class EmployeeResource {
     private ServicePointFacade servicePointFacade;
 
 
+
     /**
      * related subresources (through relationships)
      */

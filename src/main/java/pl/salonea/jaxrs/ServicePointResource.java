@@ -986,7 +986,6 @@ public class ServicePointResource {
             return Response.status(Status.OK).entity(responseEntity).build();
         }
 
-
     }
 
 }
