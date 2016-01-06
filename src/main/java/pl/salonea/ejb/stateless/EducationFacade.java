@@ -50,6 +50,23 @@ public class EducationFacade extends AbstractFacade<Education> implements Educat
     }
 
     @Override
+    public List<Education> findByFaculty(String faculty) {
+        return findByFaculty(faculty, null, null);
+    }
+
+    @Override
+    public List<Education> findByFaculty(String faculty, Integer start, Integer limit) {
+
+        TypedQuery<Education> query = getEntityManager().createNamedQuery(Education.FIND_BY_FACULTY, Education.class);
+        query.setParameter("faculty", "%" + faculty + "%");
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
     public List<Education> findBySchool(String school) {
         return findBySchool(school, null, null);
     }
@@ -76,6 +93,24 @@ public class EducationFacade extends AbstractFacade<Education> implements Educat
 
         TypedQuery<Education> query = getEntityManager().createNamedQuery(Education.FIND_BY_DEGREE_AND_SCHOOL, Education.class);
         query.setParameter("degree", "%" + degree + "%");
+        query.setParameter("school", "%" + school + "%");
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
+    public List<Education> findByFacultyAndSchool(String faculty, String school) {
+        return findByFacultyAndSchool(faculty, school, null, null);
+    }
+
+    @Override
+    public List<Education> findByFacultyAndSchool(String faculty, String school, Integer start, Integer limit) {
+
+        TypedQuery<Education> query = getEntityManager().createNamedQuery(Education.FIND_BY_FACULTY_AND_SCHOOL, Education.class);
+        query.setParameter("faculty", "%" + faculty + "%");
         query.setParameter("school", "%" + school + "%");
         if(start != null && limit != null) {
             query.setFirstResult(start);
@@ -145,6 +180,14 @@ public class EducationFacade extends AbstractFacade<Education> implements Educat
     }
 
     @Override
+    public Integer deleteByFaculty(String faculty) {
+
+        Query query = getEntityManager().createNamedQuery(Education.DELETE_BY_FACULTY);
+        query.setParameter("faculty", faculty);
+        return query.executeUpdate();
+    }
+
+    @Override
     public Integer deleteBySchool(String school) {
 
         Query query = getEntityManager().createNamedQuery(Education.DELETE_BY_SCHOOL);
@@ -157,6 +200,15 @@ public class EducationFacade extends AbstractFacade<Education> implements Educat
 
         Query query = getEntityManager().createNamedQuery(Education.DELETE_BY_DEGREE_AND_SCHOOL);
         query.setParameter("degree", degree);
+        query.setParameter("school", school);
+        return query.executeUpdate();
+    }
+
+    @Override
+    public Integer deleteByFacultyAndSchool(String faculty, String school) {
+
+        Query query = getEntityManager().createNamedQuery(Education.DELETE_BY_FACULTY_AND_SCHOOL);
+        query.setParameter("faculty", faculty);
         query.setParameter("school", school);
         return query.executeUpdate();
     }
