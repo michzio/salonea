@@ -616,7 +616,7 @@ public class ProviderResource {
                     .build())
                     .rel("payment-methods-eagerly").build());
 
-            // service-points relationship
+            // service-points link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}
             Method servicePointsMethod = ProviderResource.class.getMethod("getServicePointResource");
             provider.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
                     .path(ProviderResource.class)
@@ -625,7 +625,7 @@ public class ProviderResource {
                     .build())
                     .rel("service-points").build());
 
-            // service-points eagerly link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}
+            // service-points eagerly link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/eagerly
             Method servicePointsEagerlyMethod = ProviderResource.ServicePointResource.class.getMethod("getProviderServicePointsEagerly", Long.class, ServicePointBeanParam.class);
             provider.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
                     .path(ProviderResource.class)
@@ -676,7 +676,7 @@ public class ProviderResource {
                     .build())
                     .rel("service-points-coordinates-circle").build());
 
-            // provider-services
+            // provider-services link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}
             Method providerServicesMethod = ProviderResource.class.getMethod("getProviderServiceResource");
             provider.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
                     .path(ProviderResource.class)
@@ -684,6 +684,62 @@ public class ProviderResource {
                     .resolveTemplate("userId", provider.getUserId().toString())
                     .build())
                     .rel("provider-services").build());
+
+            // provider-services eagerly link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/eagerly
+            Method providerServicesEagerlyMethod = ProviderResource.ProviderServiceResource.class.getMethod("getProviderServicesEagerly", Long.class, ProviderServiceBeanParam.class);
+            provider.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ProviderResource.class)
+                    .path(providerServicesMethod)
+                    .path(providerServicesEagerlyMethod)
+                    .resolveTemplate("userId", provider.getUserId().toString())
+                    .build())
+                    .rel("provider-services-eagerly").build());
+
+            // provider-services count link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/count
+            Method countProviderServicesByProviderMethod = ProviderResource.ProviderServiceResource.class.getMethod("countProviderServicesByProvider", Long.class, GenericBeanParam.class);
+            provider.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ProviderResource.class)
+                    .path(providerServicesMethod)
+                    .path(countProviderServicesByProviderMethod)
+                    .resolveTemplate("userId", provider.getUserId().toString())
+                    .build())
+                    .rel("provider-services-count").build());
+
+            // provider-services categorized link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/categorized-in/{categoryId}
+            provider.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ProviderResource.class)
+                    .path(providerServicesMethod)
+                    .path("categorized-in")
+                    .resolveTemplate("userId", provider.getUserId().toString())
+                    .build())
+                    .rel("provider-services-categorized").build());
+
+            // provider-services described link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/described-by/{description}
+            provider.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ProviderResource.class)
+                    .path(providerServicesMethod)
+                    .path("described-by")
+                    .resolveTemplate("userId", provider.getUserId().toString())
+                    .build())
+                    .rel("provider-services-described").build());
+
+            // provider-services discounted link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/discounted-between?minDiscount={minDiscount}&maxDiscount={maxDiscount}
+            provider.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ProviderResource.class)
+                    .path(providerServicesMethod)
+                    .path("discounted-between")
+                    .resolveTemplate("userId", provider.getUserId().toString())
+                    .build())
+                    .rel("provider-services-discounted").build());
+
+            // provider-services supplied-by-employee link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/supplied-by/{employeeId}
+            provider.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ProviderResource.class)
+                    .path(providerServicesMethod)
+                    .path("supplied-by")
+                    .resolveTemplate("userId", provider.getUserId().toString())
+                    .build())
+                    .rel("provider-services-supplied-by-employee").build());
 
             // provider-ratings
             Method providerRatingsMethod = ProviderResource.class.getMethod("getProviderRatingResource");
@@ -693,6 +749,49 @@ public class ProviderResource {
                     .resolveTemplate("userId", provider.getUserId().toString())
                     .build())
                     .rel("provider-ratings").build());
+
+            // provider-ratings count
+            Method countProviderRatingsByProviderMethod = ProviderResource.ProviderRatingResource.class.getMethod("countProviderRatings", Long.class, GenericBeanParam.class);
+            provider.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ProviderResource.class)
+                    .path(providerRatingsMethod)
+                    .path(countProviderRatingsByProviderMethod)
+                    .resolveTemplate("userId", provider.getUserId().toString())
+                    .build())
+                    .rel("provider-ratings-count").build());
+
+            Method providerAverageRatingMethod = ProviderResource.ProviderRatingResource.class.getMethod("getAverageProviderRating", Long.class, GenericBeanParam.class);
+            provider.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ProviderResource.class)
+                    .path(providerRatingsMethod)
+                    .path(providerAverageRatingMethod)
+                    .resolveTemplate("userId", provider.getUserId().toString())
+                    .build())
+                    .rel("provider-ratings-average-rating").build());
+
+            provider.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ProviderResource.class)
+                    .path(providerRatingsMethod)
+                    .path("rated")
+                    .resolveTemplate("userId", provider.getUserId().toString())
+                    .build())
+                    .rel("provider-ratings-rated").build());
+
+            provider.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ProviderResource.class)
+                    .path(providerRatingsMethod)
+                    .path("rated-above")
+                    .resolveTemplate("userId", provider.getUserId().toString())
+                    .build())
+                    .rel("provider-ratings-rated-above").build());
+
+            provider.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ProviderResource.class)
+                    .path(providerRatingsMethod)
+                    .path("rated-below")
+                    .resolveTemplate("userId", provider.getUserId().toString())
+                    .build())
+                    .rel("provider-ratings-rated-below").build());
 
             // rating-clients
             Method ratingClientsMethod = ProviderResource.class.getMethod("getClientResource");

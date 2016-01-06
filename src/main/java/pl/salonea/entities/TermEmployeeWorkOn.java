@@ -6,6 +6,10 @@ import pl.salonea.entities.idclass.TermEmployeeId;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
 
 /**
@@ -14,6 +18,10 @@ import java.io.Serializable;
  * associations that tells which work station employee
  * in given term works on.
  */
+@XmlRootElement(name = "employee-term")
+@XmlAccessorType(XmlAccessType.PROPERTY)
+@XmlType(propOrder = {"term", "employee", "workStation"})
+
 @Entity
 @Table(name = "work_on")
 @Access(AccessType.PROPERTY)

@@ -3,7 +3,6 @@ package pl.salonea.jaxrs;
 
 import pl.salonea.ejb.stateless.ProviderServiceFacade;
 import pl.salonea.ejb.stateless.ServicePointFacade;
-import pl.salonea.entities.Provider;
 import pl.salonea.entities.ProviderService;
 import pl.salonea.entities.ServicePoint;
 import pl.salonea.entities.idclass.ProviderServiceId;
@@ -14,8 +13,6 @@ import pl.salonea.jaxrs.utils.ResponseWrapper;
 import pl.salonea.jaxrs.utils.hateoas.Link;
 import pl.salonea.jaxrs.wrappers.ProviderServiceWrapper;
 
-import javax.ejb.Stateless;
-import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.transaction.*;
 import javax.transaction.NotSupportedException;
@@ -145,73 +142,6 @@ public class ProviderServiceResource {
                     .rel("provider-services").build());
 
             /**
-             * Provider related sub-collections of Provider Services
-             */
-            // sub-collection link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}
-            providerService.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
-                    .path(ProviderResource.class)
-                    .path(providerServicesMethod)
-                    .resolveTemplate("userId", providerService.getProvider().getUserId().toString())
-                    .build())
-                    .rel("provider-provider-services").build());
-
-            // sub-collection eagerly link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}
-            Method providerServicesEagerlyMethod = ProviderResource.ProviderServiceResource.class.getMethod("getProviderServicesEagerly", Long.class, ProviderServiceBeanParam.class);
-            providerService.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
-                    .path(ProviderResource.class)
-                    .path(providerServicesMethod)
-                    .path(providerServicesEagerlyMethod)
-                    .resolveTemplate("userId", providerService.getProvider().getUserId().toString())
-                    .build())
-                    .rel("provider-provider-services-eagerly").build());
-
-            // sub-collection count link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/count
-            Method countByProviderMethod = ProviderResource.ProviderServiceResource.class.getMethod("countProviderServicesByProvider", Long.class, GenericBeanParam.class);
-            providerService.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
-                    .path(ProviderResource.class)
-                    .path(providerServicesMethod)
-                    .path(countByProviderMethod)
-                    .resolveTemplate("userId", providerService.getProvider().getUserId().toString())
-                    .build())
-                    .rel("provider-provider-services-count").build());
-
-            // categorized sub-collection link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/categorized-in/{categoryId}
-            providerService.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
-                    .path(ProviderResource.class)
-                    .path(providerServicesMethod)
-                    .path("categorized-in")
-                    .resolveTemplate("userId", providerService.getProvider().getUserId().toString())
-                    .build())
-                    .rel("provider-provider-services-categorized").build());
-
-            // described sub-collection link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/described-by/{description}
-            providerService.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
-                    .path(ProviderResource.class)
-                    .path(providerServicesMethod)
-                    .path("described-by")
-                    .resolveTemplate("userId", providerService.getProvider().getUserId().toString())
-                    .build())
-                    .rel("provider-provider-services-described").build());
-
-            // discounted sub-collection link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/discounted-between?minDiscount={minDiscount}&maxDiscount={maxDiscount}
-            providerService.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
-                    .path(ProviderResource.class)
-                    .path(providerServicesMethod)
-                    .path("discounted-between")
-                    .resolveTemplate("userId", providerService.getProvider().getUserId().toString())
-                    .build())
-                    .rel("provider-provider-services-discounted").build());
-
-            // supplied-by-employee sub-collection link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/supplied-by/{employeeId}
-            providerService.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
-                    .path(ProviderResource.class)
-                    .path(providerServicesMethod)
-                    .path("supplied-by")
-                    .resolveTemplate("userId", providerService.getProvider().getUserId().toString())
-                    .build())
-                    .rel("provider-provider-services-supplied-by-employee").build());
-
-            /**
              * Service Points associated with current Provider Service resource
              */
 
@@ -228,7 +158,7 @@ public class ProviderServiceResource {
             // service-points eagerly relationship
             Method servicePointsEagerlyMethod = ProviderServiceResource.ServicePointResource.class.getMethod("getProviderServiceServicePointsEagerly", Long.class, Integer.class, ServicePointBeanParam.class);
             providerService.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
-                    .path(ProviderService.class)
+                    .path(ProviderServiceResource.class)
                     .path(servicePointsMethod)
                     .path(servicePointsEagerlyMethod)
                     .resolveTemplate("providerId", providerService.getProvider().getUserId().toString())
@@ -239,7 +169,7 @@ public class ProviderServiceResource {
             // service-points count link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/count
             Method countServicePointsByProviderServiceMethod = ProviderServiceResource.ServicePointResource.class.getMethod("countServicePointsByProviderService", Long.class, Integer.class, GenericBeanParam.class);
             providerService.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
-                    .path(ProviderService.class)
+                    .path(ProviderServiceResource.class)
                     .path(servicePointsMethod)
                     .path(countServicePointsByProviderServiceMethod)
                     .resolveTemplate("providerId", providerService.getProvider().getUserId().toString())

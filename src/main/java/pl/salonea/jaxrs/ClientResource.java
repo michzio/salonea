@@ -877,6 +877,43 @@ public class ClientResource {
                     .build())
                     .rel("provider-ratings").build());
 
+            // provider-ratings count
+            Method countProviderRatingsByClientMethod = ClientResource.ProviderRatingResource.class.getMethod("countClientProviderRatings", Long.class, GenericBeanParam.class);
+            client.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ClientResource.class)
+                    .path(providerRatingsMethod)
+                    .path(countProviderRatingsByClientMethod)
+                    .resolveTemplate("clientId", client.getClientId().toString())
+                    .build())
+                    .rel("provider-ratings-count").build());
+
+            // provider-ratings rated
+            client.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ClientResource.class)
+                    .path(providerRatingsMethod)
+                    .path("rated")
+                    .resolveTemplate("clientId",client.getClientId().toString())
+                    .build())
+                    .rel("provider-ratings-rated").build());
+
+            // provider-ratings rated-above
+            client.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ClientResource.class)
+                    .path(providerRatingsMethod)
+                    .path("rated-above")
+                    .resolveTemplate("clientId", client.getClientId().toString())
+                    .build())
+                    .rel("provider-ratings-rated-above").build());
+
+            // provider-ratings rated-below
+            client.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ClientResource.class)
+                    .path(providerRatingsMethod)
+                    .path("rated-below")
+                    .resolveTemplate("clientId", client.getClientId().toString())
+                    .build())
+                    .rel("provider-ratings-rated-below").build());
+
             // rated-providers
             Method providersMethod = ClientResource.class.getMethod("getProviderResource");
             client.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()

@@ -62,6 +62,7 @@ public class ResourceList<T> {
             @XmlElement(name = "virtual-tour", type = VirtualTourWrapper.class),
             @XmlElement(name = "tag", type = Tag.class),
             @XmlElement(name = "tag", type = TagWrapper.class),
+            @XmlElement(name = "employee-term", type = TermEmployeeWorkOn.class)
     })
     public List<T> getResources() {
         return resources;

@@ -9,6 +9,8 @@ import pl.salonea.entities.*;
 import pl.salonea.jaxrs.bean_params.*;
 
 import javax.inject.Inject;
+import javax.transaction.*;
+import javax.transaction.NotSupportedException;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -43,6 +45,9 @@ public class EmployeeResource {
     private static final Logger logger = Logger.getLogger(EmployeeResource.class.getName());
 
     @Inject
+    private UserTransaction utx;
+
+    @Inject
     private EmployeeFacade employeeFacade;
     @Inject
     private ClientFacade clientFacade;
@@ -57,7 +62,8 @@ public class EmployeeResource {
      */
     @GET
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getEmployees( @BeanParam EmployeeBeanParam params ) throws ForbiddenException {
+    public Response getEmployees( @BeanParam EmployeeBeanParam params ) throws ForbiddenException,
+    /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
 
         RESTToolkit.authorizeAccessToWebService(params);
         logger.log(Level.INFO, "returning all Employees by executing EmployeeResource.getEmployees() method of REST API");
@@ -69,6 +75,8 @@ public class EmployeeResource {
         if(noOfParams > 0) {
             logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
 
+            utx.begin();
+
             // get employees filtered by criteria provided in query params
             employees = new ResourceList<>(
                     employeeFacade.findByMultipleCriteria(params.getDescription(), params.getJobPositions(), params.getSkills(),
@@ -77,11 +85,56 @@ public class EmployeeResource {
                             params.getMaxAvgRating(), params.getRatingClients(), params.getOffset(), params.getLimit())
             );
 
+            utx.commit();
+
         } else {
             logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
 
             // get all employees without filtering (eventually paginated)
             employees = new ResourceList<>( employeeFacade.findAll(params.getOffset(), params.getLimit()) );
+        }
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        EmployeeResource.populateWithHATEOASLinks(employees, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(employees).build();
+    }
+
+    @GET
+    @Path("/eagerly")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getEmployeesEagerly( @BeanParam EmployeeBeanParam params ) throws ForbiddenException,
+    /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning all Employees eagerly by executing EmployeeResource.getEmployeesEagerly() method of REST API");
+
+        Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+        ResourceList<EmployeeWrapper> employees = null;
+
+        if(noOfParams > 0) {
+            logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+            utx.begin();
+
+            // get employees filtered by criteria provided in query params
+            employees = new ResourceList<>(
+                    EmployeeWrapper.wrap(
+                            employeeFacade.findByMultipleCriteriaEagerly(params.getDescription(), params.getJobPositions(), params.getSkills(),
+                                    params.getEducations(), params.getServices(), params.getProviderServices(), params.getServicePoints(),
+                                    params.getWorkStations(), params.getPeriod(), params.getStrictTerm(), params.getRated(), params.getMinAvgRating(),
+                                    params.getMaxAvgRating(), params.getRatingClients(), params.getOffset(), params.getLimit())
+                    )
+            );
+
+            utx.commit();
+
+        } else {
+            logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+            // get all employees without filtering (eventually paginated)
+            employees = new ResourceList<>( EmployeeWrapper.wrap(employeeFacade.findAllEagerly(params.getOffset(), params.getLimit())) );
         }
 
         // result resources need to be populated with hypermedia links to enable resource discovery
@@ -114,7 +167,7 @@ public class EmployeeResource {
      */
     public static void populateWithHATEOASLinks(ResourceList employees, UriInfo uriInfo, Integer offset, Integer limit) {
 
-        ResourceList.generateNavigationLinks(employees,uriInfo, offset, limit);
+        ResourceList.generateNavigationLinks(employees, uriInfo, offset, limit);
 
         // TODO add hypermedia links
 
