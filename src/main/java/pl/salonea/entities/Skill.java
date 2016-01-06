@@ -6,9 +6,14 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import javax.xml.bind.annotation.*;
 import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
+
+@XmlRootElement(name = "skill")
+@XmlAccessorType(XmlAccessType.PROPERTY)
+@XmlType(propOrder = {"skillId", "skillName", "description"})
 
 @Entity
 @Table(name = "skill")
@@ -84,7 +89,8 @@ public class Skill implements Serializable {
 
      /* many-to-many bidirectional relationship */
 
-    @ManyToMany(mappedBy = "skills")
+    @XmlTransient
+    @ManyToMany(mappedBy = "skills", fetch = FetchType.LAZY)
     public Set<Employee> getSkilledEmployees() {
         return skilledEmployees;
     }
