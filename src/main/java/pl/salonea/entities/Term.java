@@ -7,10 +7,15 @@ import pl.salonea.constraints.ChronologicalDates;
 import javax.persistence.*;
 import javax.validation.constraints.Future;
 import javax.validation.constraints.NotNull;
+import javax.xml.bind.annotation.*;
 import java.io.Serializable;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Set;
+
+@XmlRootElement(name = "term")
+@XmlAccessorType(XmlAccessType.PROPERTY)
+@XmlType(propOrder = {"termId", "openingTime", "closingTime"})
 
 @Entity
 @Table(name = "term",
@@ -139,6 +144,7 @@ public class Term  implements Serializable {
 
     /* one-to-many relationships */
 
+    @XmlTransient
     @OneToMany(mappedBy = "term", fetch = FetchType.LAZY, cascade = { CascadeType.REMOVE })
     public Set<TermEmployeeWorkOn> getEmployeesWorkStation() {
         return employeesWorkStation;
