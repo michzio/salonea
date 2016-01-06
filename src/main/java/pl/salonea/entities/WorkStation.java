@@ -7,10 +7,14 @@ import pl.salonea.enums.WorkStationType;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
-import javax.xml.bind.annotation.XmlTransient;
+import javax.xml.bind.annotation.*;
 import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
+
+@XmlRootElement(name = "work-station")
+@XmlAccessorType(XmlAccessType.PROPERTY)
+@XmlType(propOrder = {"workStationNumber", "servicePoint", "workStationType"})
 
 @Entity
 @Table(name = "work_station")
