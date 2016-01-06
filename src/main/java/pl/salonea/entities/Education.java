@@ -5,13 +5,16 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 import pl.salonea.constraints.Degree;
 import pl.salonea.constraints.Faculty;
 import pl.salonea.constraints.School;
+import pl.salonea.jaxrs.utils.hateoas.Link;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import javax.xml.bind.annotation.*;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @XmlRootElement(name = "education")
@@ -61,6 +64,9 @@ public class Education implements Serializable {
     private String school; // composite business key
 
     private Set<Employee> educatedEmployees = new HashSet<>();
+
+    // HATEOAS support for RESTFul web service in JAX-RS
+    private List<Link> links = new ArrayList<>();
 
     /* constructors */
 
@@ -131,6 +137,17 @@ public class Education implements Serializable {
 
     public void setEducatedEmployees(Set<Employee> employees) {
         this.educatedEmployees = employees;
+    }
+
+    @Transient
+    @XmlElementWrapper(name = "links")
+    @XmlElement(name = "link")
+    public List<Link> getLinks() {
+        return links;
+    }
+
+    public void setLinks(List<Link> links) {
+        this.links = links;
     }
 
     @Override

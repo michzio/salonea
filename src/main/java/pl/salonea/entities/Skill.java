@@ -2,13 +2,16 @@ package pl.salonea.entities;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import pl.salonea.jaxrs.utils.hateoas.Link;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import javax.xml.bind.annotation.*;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @XmlRootElement(name = "skill")
@@ -43,6 +46,9 @@ public class Skill implements Serializable {
     private String description;
 
     private Set<Employee> skilledEmployees = new HashSet<>();
+
+    // HATEOAS support for RESTFul web service in JAX-RS
+    private List<Link> links = new ArrayList<>();
 
     /* constructors */
 
@@ -97,6 +103,17 @@ public class Skill implements Serializable {
 
     public void setSkilledEmployees(Set<Employee> skilledEmployees) {
         this.skilledEmployees = skilledEmployees;
+    }
+
+    @Transient
+    @XmlElementWrapper(name = "links")
+    @XmlElement(name = "link")
+    public List<Link> getLinks() {
+        return links;
+    }
+
+    public void setLinks(List<Link> links) {
+        this.links = links;
     }
 
     @Override

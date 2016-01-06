@@ -868,6 +868,52 @@ public class ClientResource {
 
             // associated collections links with pattern: http://localhost:port/app/rest/{resources}/{id}/{relationship}
 
+            // employee-ratings
+            Method employeeRatingsMethod = ClientResource.class.getMethod("getEmployeeRatingResource");
+            client.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ClientResource.class)
+                    .path(employeeRatingsMethod)
+                    .resolveTemplate("clientId", client.getClientId().toString())
+                    .build())
+                    .rel("employee-ratings").build());
+
+            // employee-ratings count
+            Method countEmployeeRatingsByClientMethod = ClientResource.EmployeeRatingResource.class.getMethod("countClientEmployeeRatings", Long.class, GenericBeanParam.class);
+            client.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ClientResource.class)
+                    .path(employeeRatingsMethod)
+                    .path(countEmployeeRatingsByClientMethod)
+                    .resolveTemplate("clientId", client.getClientId().toString())
+                    .build())
+                    .rel("employee-ratings-count").build());
+
+            // employee-ratings rated
+            client.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ClientResource.class)
+                    .path(employeeRatingsMethod)
+                    .path("rated")
+                    .resolveTemplate("clientId", client.getClientId().toString())
+                    .build())
+                    .rel("employee-ratings-rated").build());
+
+            // employee-ratings rated-above
+            client.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ClientResource.class)
+                    .path(employeeRatingsMethod)
+                    .path("rated-above")
+                    .resolveTemplate("clientId", client.getClientId().toString())
+                    .build())
+                    .rel("employee-ratings-rated-above").build());
+
+            // employee-ratings rated-below
+            client.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ClientResource.class)
+                    .path(employeeRatingsMethod)
+                    .path("rated-below")
+                    .resolveTemplate("clientId", client.getClientId().toString())
+                    .build())
+                    .rel("employee-ratings-rated-below").build());
+
             // provider-ratings
             Method providerRatingsMethod = ClientResource.class.getMethod("getProviderRatingResource");
             client.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()

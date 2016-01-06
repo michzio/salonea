@@ -144,6 +144,27 @@ public class EmployeeResource {
     }
 
     /**
+     * Additional methods returning a subset of resources based on given criteria
+     * You can also achieve similar results by applying @QueryParams to generic method
+     * returning all resources in order to filter and limit them.
+     */
+
+    /**
+     * Method returns number of Employee entities in database
+     */
+    @GET
+    @Path("/count")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response countEmployees( @BeanParam GenericBeanParam params ) throws ForbiddenException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning number of employees by executing EmployeeResource.countEmployees() method of REST API");
+
+        ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(employeeFacade.count()), 200, "number of employees");
+        return Response.status(Status.OK).entity(responseEntity).build();
+    }
+
+    /**
      * related subresources (through relationships)
      */
 
@@ -167,9 +188,26 @@ public class EmployeeResource {
      */
     public static void populateWithHATEOASLinks(ResourceList employees, UriInfo uriInfo, Integer offset, Integer limit) {
 
+        // navigation links through collection of resources
         ResourceList.generateNavigationLinks(employees, uriInfo, offset, limit);
 
-        // TODO add hypermedia links
+        try {
+            // count resources hypermedia link
+            Method countMethod = EmployeeResource.class.getMethod("countEmployees", GenericBeanParam.class);
+            employees.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(EmployeeResource.class).path(countMethod).build()).rel("count").build() );
+
+            // get all resources hypermedia link
+            employees.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(EmployeeResource.class).build()).rel("employees").build() );
+
+            // get all resources eagerly hypermedia link
+            Method employeesEagerlyMethod = EmployeeResource.class.getMethod("getEmployeesEagerly", EmployeeBeanParam.class);
+            employees.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(EmployeeResource.class).path(employeesEagerlyMethod).build()).rel("employees-eagerly").build() );
+
+            // get subset of resources hypermedia links
+
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        }
 
         for(Object object : employees.getResources()) {
             if(object instanceof Employee) {
@@ -226,6 +264,62 @@ public class EmployeeResource {
         try {
 
             // associated collections links with pattern: http://localhost:port/app/rest/{resources}/{id}/{relationship}
+
+            // employee-ratings
+            Method employeeRatingsMethod = EmployeeResource.class.getMethod("getEmployeeRatingResource");
+            employee.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(EmployeeResource.class)
+                    .path(employeeRatingsMethod)
+                    .resolveTemplate("userId", employee.getUserId().toString())
+                    .build())
+                    .rel("employee-ratings").build());
+
+            // employee-ratings count link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/count
+            Method countEmployeeRatingsByEmployeeMethod = EmployeeResource.EmployeeRatingResource.class.getMethod("countEmployeeRatings", Long.class, GenericBeanParam.class);
+            employee.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(EmployeeResource.class)
+                    .path(employeeRatingsMethod)
+                    .path(countEmployeeRatingsByEmployeeMethod)
+                    .resolveTemplate("userId", employee.getUserId().toString())
+                    .build())
+                    .rel("employee-ratings-count").build());
+
+            // employee-ratings average rating link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/average-rating
+            Method employeeAverageRatingMethod = EmployeeResource.EmployeeRatingResource.class.getMethod("getAverageEmployeeRating", Long.class, GenericBeanParam.class);
+            employee.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(EmployeeResource.class)
+                    .path(employeeRatingsMethod)
+                    .path(employeeAverageRatingMethod)
+                    .resolveTemplate("userId", employee.getUserId().toString())
+                    .build())
+                    .rel("employee-ratings-average-rating").build());
+
+            // employee-ratings rated link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/rated
+            employee.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(EmployeeResource.class)
+                    .path(employeeRatingsMethod)
+                    .path("rated")
+                    .resolveTemplate("userId", employee.getUserId().toString())
+                    .build())
+                    .rel("employee-ratings-rated").build());
+
+            // employee-ratings rated-above link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/rated-above
+            employee.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(EmployeeResource.class)
+                    .path(employeeRatingsMethod)
+                    .path("rated-above")
+                    .resolveTemplate("userId", employee.getUserId().toString())
+                    .build())
+                    .rel("employee-ratings-rated-above").build());
+
+            // employee-ratings rated-below link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/rated-below
+            employee.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(EmployeeResource.class)
+                    .path(employeeRatingsMethod)
+                    .path("rated-below")
+                    .resolveTemplate("userId", employee.getUserId().toString())
+                    .build())
+                    .rel("employee-ratings-rated-below").build());
 
             // rating-clients
             Method ratingClientsMethod = EmployeeResource.class.getMethod("getClientResource");

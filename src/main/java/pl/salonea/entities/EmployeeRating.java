@@ -139,6 +139,17 @@ public class EmployeeRating {
         this.employeeDementi = employeeDementi;
     }
 
+    @Transient
+    @XmlElementWrapper(name = "links")
+    @XmlElement(name = "link")
+    public List<Link> getLinks() {
+        return links;
+    }
+
+    public void setLinks(List<Link> links) {
+        this.links = links;
+    }
+
     @Override
     public int hashCode() {
 
@@ -162,16 +173,5 @@ public class EmployeeRating {
                 .append(getClient(), rhs.getClient())
                 .append(getEmployee(), rhs.getEmployee())
                 .isEquals();
-    }
-
-    @Transient
-    @XmlElementWrapper(name = "links")
-    @XmlElement(name = "link")
-    public List<Link> getLinks() {
-        return links;
-    }
-
-    public void setLinks(List<Link> links) {
-        this.links = links;
     }
 }
