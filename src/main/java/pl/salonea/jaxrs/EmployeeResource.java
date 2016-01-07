@@ -8,6 +8,8 @@ import pl.salonea.embeddables.Address;
 import pl.salonea.entities.*;
 import pl.salonea.jaxrs.bean_params.*;
 
+import javax.ejb.EJBException;
+import javax.ejb.EJBTransactionRolledbackException;
 import javax.inject.Inject;
 import javax.transaction.*;
 import javax.transaction.NotSupportedException;
@@ -30,7 +32,9 @@ import pl.salonea.jaxrs.wrappers.EmployeeWrapper;
 import pl.salonea.jaxrs.wrappers.ServicePointWrapper;
 
 import java.lang.reflect.Method;
+import java.net.URI;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.logging.Level;
@@ -144,6 +148,156 @@ public class EmployeeResource {
     }
 
     /**
+     * Method matches specific Employee resource by identifier and returns its instance.
+     */
+    @GET
+    @Path("/{userId : \\d+}") // catch only numeric identifiers
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getEmployee( @PathParam("userId") Long userId,
+                                 @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning given Employee by executing EmployeeResource.getEmployee(userId) method of REST API");
+
+        Employee foundEmployee = employeeFacade.find(userId);
+        if (foundEmployee == null)
+            throw new NotFoundException("Could not find employee for id " + userId + ".");
+
+        // adding hypermedia links to employee resource
+        EmployeeResource.populateWithHATEOASLinks(foundEmployee, params.getUriInfo());
+
+        return Response.status(Status.OK).entity(foundEmployee).build();
+    }
+
+    /**
+     * Method matches specific Employee resource by identifier and returns its instance fetching it eagerly
+     */
+    @GET
+    @Path("/{userId : \\d+}/eagerly")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getEmployeeEagerly( @PathParam("userId") Long userId,
+                                        @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning given Employee eagerly by executing EmployeeResource.getEmployeeEagerly(userId) method of REST API");
+
+        Employee foundEmployee = employeeFacade.findByIdEagerly(userId);
+        if (foundEmployee == null)
+            throw new NotFoundException("Could not find employee for id " + userId + ".");
+
+        // wrapping Employee into EmployeeWrapper in order to marshall eagerly fetched associated collections of entities
+        EmployeeWrapper wrappedEmployee = new EmployeeWrapper(foundEmployee);
+
+        // adding hypermedia links to wrapped employee resource
+        EmployeeResource.populateWithHATEOASLinks(wrappedEmployee, params.getUriInfo());
+
+        return Response.status(Status.OK).entity(wrappedEmployee).build();
+    }
+
+    /**
+     * Method that takes Employee as XML or JSON and creates its new instance in database
+     */
+    @POST
+    @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response createEmployee( Employee employee,
+                                    @BeanParam GenericBeanParam params ) throws ForbiddenException, UnprocessableEntityException, InternalServerErrorException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "creating new Employee by executing EmployeeResource.createEmployee(employee) method of REST API");
+
+        if(employee.getRegistrationDate() == null) {
+            // if registration date of newly created employee hasn't been set by client set it now to the current datetime value
+            employee.setRegistrationDate(new Date());
+        }
+
+        Employee createdEmployee = null;
+        URI locationURI = null;
+
+        try {
+            // persist new resource in database
+            createdEmployee = employeeFacade.create(employee);
+
+            // populate created resource with hypermedia links
+            EmployeeResource.populateWithHATEOASLinks(createdEmployee, params.getUriInfo());
+
+            // construct link to newly created resource to return in HTTP Header
+            String createdEmployeeId = String.valueOf(createdEmployee.getUserId());
+            locationURI = params.getUriInfo().getBaseUriBuilder().path(EmployeeResource.class).path(createdEmployeeId).build();
+
+        } catch (EJBTransactionRolledbackException ex) {
+            ExceptionHandler.handleEJBTransactionRolledbackException(ex);
+        } catch (EJBException ex) {
+            ExceptionHandler.handleEJBException(ex);
+        } catch (Exception ex) {
+            throw new InternalServerErrorException(ExceptionHandler.ENTITY_CREATION_ERROR_MESSAGE);
+        }
+
+        return Response.created(locationURI).entity(createdEmployee).build();
+    }
+
+    /**
+     * Method that takes updated Employee as XML or JSON and its ID as path param.
+     * It updates Employee in database for provided ID.
+     */
+    @PUT
+    @Path("/{userId : \\d+}") // catch only numeric identifiers
+    @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response updateEmployee( @PathParam("userId") Long userId,
+                                    Employee employee,
+                                    @BeanParam GenericBeanParam params ) throws ForbiddenException, UnprocessableEntityException, InternalServerErrorException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "updating existing Employee by executing EmployeeResource.updateEmployee(userId, employee) method of REST API");
+
+        // set resource ID passed in path param on updated resource object
+        employee.setUserId(userId);
+
+        Employee updatedEmployee = null;
+        try {
+            // reflect updated resource object in database
+            updatedEmployee = employeeFacade.update(employee, true);
+            // populate created resource with hypermedia links
+            EmployeeResource.populateWithHATEOASLinks(updatedEmployee, params.getUriInfo());
+
+        } catch (EJBTransactionRolledbackException ex) {
+            ExceptionHandler.handleEJBTransactionRolledbackException(ex);
+        } catch (EJBException ex) {
+            ExceptionHandler.handleEJBException(ex);
+        } catch (Exception ex) {
+            throw new InternalServerErrorException(ExceptionHandler.ENTITY_UPDATE_ERROR_MESSAGE);
+        }
+
+        return Response.status(Status.OK).entity(updatedEmployee).build();
+    }
+
+    /**
+     * Method that removes Employee entity from database for given ID.
+     * The ID is passed through path param.
+     */
+    @DELETE
+    @Path("/{userId : \\d+}") // catch only numeric identifiers
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response removeEmployee( @PathParam("userId") Long userId,
+                                    @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "removing given Employee by executing EmployeeResource.removeEmployee(userId) method of REST API");
+
+        // find Employee entity that should be deleted
+        Employee toDeleteEmployee = employeeFacade.find(userId);
+        // throw exception if entity hasn't been found
+        if(toDeleteEmployee == null)
+            throw new NotFoundException("Could not find employee to delete for given id: " + userId + ".");
+
+        // remove entity from database
+        employeeFacade.remove(toDeleteEmployee);
+
+        return Response.status(Status.NO_CONTENT).build();
+    }
+
+    /**
      * Additional methods returning a subset of resources based on given criteria
      * You can also achieve similar results by applying @QueryParams to generic method
      * returning all resources in order to filter and limit them.
@@ -163,6 +317,54 @@ public class EmployeeResource {
         ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(employeeFacade.count()), 200, "number of employees");
         return Response.status(Status.OK).entity(responseEntity).build();
     }
+
+    /**
+     * Method returns subset of Employee entities for given description.
+     * The description is passed through path param.
+     */
+    @GET
+    @Path("/described/{description : \\S+}")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getEmployeesByDescription( @PathParam("description") String description,
+                                               @BeanParam PaginationBeanParam params ) throws ForbiddenException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning employees for given description using EmployeeResource.getEmployeesByDescription(description) method of REST API");
+
+        // find employees by given criteria
+        ResourceList<Employee> employees = new ResourceList<>( employeeFacade.findByDescription(description, params.getOffset(), params.getLimit()) );
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        EmployeeResource.populateWithHATEOASLinks(employees, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(employees).build();
+    }
+
+    /**
+     * Method returns subset of Employee entities for given job position.
+     * The job position is passed through path param.
+     */
+    @GET
+    @Path("/holding-position/{jobPosition : \\S+}")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getEmployeesByJobPosition( @PathParam("jobPosition") String jobPosition,
+                                               @BeanParam PaginationBeanParam params ) throws ForbiddenException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning employees for given job position using EmployeeResource.getEmployeesByJobPosition(jobPosition) method of REST API");
+
+        // find employees by given criteria
+        ResourceList<Employee> employees = new ResourceList<>( employeeFacade.findByJobPosition(jobPosition, params.getOffset(), params.getLimit()) );
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        EmployeeResource.populateWithHATEOASLinks(employees, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(employees).build();
+    }
+
+    /**
+     *
+     */
 
     /**
      * related subresources (through relationships)
@@ -204,6 +406,20 @@ public class EmployeeResource {
             employees.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(EmployeeResource.class).path(employeesEagerlyMethod).build()).rel("employees-eagerly").build() );
 
             // get subset of resources hypermedia links
+
+            // described
+            employees.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(EmployeeResource.class)
+                    .path("described")
+                    .build())
+                    .rel("described").build() );
+
+            // holding-position
+            employees.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(EmployeeResource.class)
+                    .path("holding-position")
+                    .build())
+                    .rel("holding-position").build() );
 
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
@@ -262,8 +478,20 @@ public class EmployeeResource {
                 .rel("employees").build());
 
         try {
+            // self eagerly link with pattern http://localhost:port/app/rest/{resources}/{id}/eagerly
+            Method employeeEagerlyMethod = EmployeeResource.class.getMethod("getEmployeeEagerly", Long.class, GenericBeanParam.class);
+            employee.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                        .path(EmployeeResource.class)
+                        .path(employeeEagerlyMethod)
+                        .resolveTemplate("userId", employee.getUserId().toString())
+                        .build())
+                        .rel("employee-eagerly").build() );
 
             // associated collections links with pattern: http://localhost:port/app/rest/{resources}/{id}/{relationship}
+
+            /**
+             * Employee Ratings associated with current Employee resource
+             */
 
             // employee-ratings
             Method employeeRatingsMethod = EmployeeResource.class.getMethod("getEmployeeRatingResource");
@@ -321,6 +549,10 @@ public class EmployeeResource {
                     .build())
                     .rel("employee-ratings-rated-below").build());
 
+            /**
+             * Clients rating current Employee resource
+             */
+
             // rating-clients
             Method ratingClientsMethod = EmployeeResource.class.getMethod("getClientResource");
             employee.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
@@ -340,6 +572,10 @@ public class EmployeeResource {
                     .resolveTemplate("userId", employee.getUserId().toString())
                     .build())
                     .rel("rating-clients-eagerly").build());
+
+            /**
+             * Service Points associated with current Employee resource
+             */
 
             // service-points relationship
             Method servicePointsMethod = EmployeeResource.class.getMethod("getServicePointResource");

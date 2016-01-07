@@ -12,6 +12,8 @@ import java.util.List;
 public interface EmployeeFacadeInterface extends AbstractFacadeInterface<Employee> {
 
     // concrete interface
+    Employee update(Employee employee, Boolean retainTransientFields);
+
     List<Employee> findAllEagerly();
     List<Employee> findAllEagerly(Integer start, Integer limit);
     Employee findByIdEagerly(Long employeeId);

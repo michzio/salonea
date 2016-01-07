@@ -37,6 +37,23 @@ public class EmployeeFacade extends AbstractFacade<Employee> implements Employee
     }
 
     @Override
+    public Employee update(Employee employee, Boolean retainTransientFields) {
+
+        if(retainTransientFields) {
+            // keep current collection attributes of resource (and other marked @XmlTransient)
+            Employee currentEmployee = findByIdEagerly(employee.getUserId());
+            if (currentEmployee != null ) {
+                employee.setEducations(currentEmployee.getEducations());
+                employee.setSkills(currentEmployee.getSkills());
+                employee.setSuppliedServices(currentEmployee.getSuppliedServices());
+                employee.setTermsOnWorkStation(currentEmployee.getTermsOnWorkStation());
+                employee.setReceivedRatings(currentEmployee.getReceivedRatings());
+            }
+        }
+        return update(employee);
+    }
+
+    @Override
     public List<Employee> findAllEagerly() {
         return findAllEagerly(null, null);
     }
