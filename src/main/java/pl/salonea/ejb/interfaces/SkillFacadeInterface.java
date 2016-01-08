@@ -25,6 +25,16 @@ public interface SkillFacadeInterface extends AbstractFacadeInterface<Skill> {
     Integer deleteByEmployee(Employee employee);
     Integer deleteBySkills(List<Skill> skills);
 
+    List<Skill> findByMultipleCriteria(List<String> skillNames, List<String> descriptions, List<Employee> employees);
+    List<Skill> findByMultipleCriteria(List<String> skillNames, List<String> descriptions, List<Employee> employees, Integer start, Integer limit);
+    List<Skill> findByMultipleCriteria(List<String> keywords, List<Employee> employees);
+    List<Skill> findByMultipleCriteria(List<String> keywords, List<Employee> employees, Integer start, Integer limit);
+
+    List<Skill> findByMultipleCriteriaEagerly(List<String> skillNames, List<String> descriptions, List<Employee> employees);
+    List<Skill> findByMultipleCriteriaEagerly(List<String> skillNames, List<String> descriptions, List<Employee> employees, Integer start, Integer limit);
+    List<Skill> findByMultipleCriteriaEagerly(List<String> keywords, List<Employee> employees);
+    List<Skill> findByMultipleCriteriaEagerly(List<String> keywords, List<Employee> employees, Integer start, Integer limit);
+
     @javax.ejb.Local
     interface Local extends SkillFacadeInterface { }
 

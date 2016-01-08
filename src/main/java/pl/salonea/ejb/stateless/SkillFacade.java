@@ -3,6 +3,7 @@ package pl.salonea.ejb.stateless;
 import pl.salonea.ejb.interfaces.SkillFacadeInterface;
 import pl.salonea.entities.Employee;
 import pl.salonea.entities.Skill;
+import pl.salonea.entities.Skill_;
 
 import javax.ejb.LocalBean;
 import javax.ejb.Stateless;
@@ -10,6 +11,8 @@ import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import javax.persistence.TypedQuery;
+import javax.persistence.criteria.*;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -141,5 +144,123 @@ public class SkillFacade extends AbstractFacade<Skill> implements SkillFacadeInt
         Query query = getEntityManager().createNamedQuery(Skill.DELETE_BY_SKILLS);
         query.setParameter("skills", skills);
         return query.executeUpdate();
+    }
+
+    @Override
+    public List<Skill> findByMultipleCriteria(List<String> skillNames, List<String> descriptions, List<Employee> employees) {
+        return findByMultipleCriteria(skillNames, descriptions, employees, null, null);
+    }
+
+    @Override
+    public List<Skill> findByMultipleCriteria(List<String> skillNames, List<String> descriptions, List<Employee> employees, Integer start, Integer limit) {
+        return findByMultipleCriteria(false, skillNames, false, descriptions, employees, false, start, limit);
+    }
+
+    @Override
+    public List<Skill> findByMultipleCriteria(List<String> keywords, List<Employee> employees) {
+        return findByMultipleCriteria(keywords, employees, null, null);
+    }
+
+    @Override
+    public List<Skill> findByMultipleCriteria(List<String> keywords, List<Employee> employees, Integer start, Integer limit) {
+        return findByMultipleCriteria(true, keywords, true, keywords, employees, false, start, limit);
+    }
+
+    @Override
+    public List<Skill> findByMultipleCriteriaEagerly(List<String> skillNames, List<String> descriptions, List<Employee> employees) {
+        return findByMultipleCriteriaEagerly(skillNames, descriptions, employees, null, null);
+    }
+
+    @Override
+    public List<Skill> findByMultipleCriteriaEagerly(List<String> skillNames, List<String> descriptions, List<Employee> employees, Integer start, Integer limit) {
+        return findByMultipleCriteria(false, skillNames, false, descriptions, employees, true, start, limit);
+    }
+
+    @Override
+    public List<Skill> findByMultipleCriteriaEagerly(List<String> keywords, List<Employee> employees) {
+        return findByMultipleCriteriaEagerly(keywords, employees, null, null);
+    }
+
+    @Override
+    public List<Skill> findByMultipleCriteriaEagerly(List<String> keywords, List<Employee> employees, Integer start, Integer limit) {
+        return findByMultipleCriteria(true, keywords, true, keywords, employees, true, start, limit);
+    }
+
+
+    private List<Skill> findByMultipleCriteria(Boolean orWithSkillNames, List<String> skillNames,
+                                               Boolean orWithDescriptions, List<String> descriptions,
+                                               List<Employee> employees, Boolean eagerly, Integer start, Integer limit) {
+
+        CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
+        CriteriaQuery<Skill> criteriaQuery = criteriaBuilder.createQuery(Skill.class);
+        // FROM
+        Root<Skill> skill = criteriaQuery.from(Skill.class);
+        // SELECT
+        criteriaQuery.select(skill).distinct(true);
+
+        // INNER JOIN-s
+        Join<Skill, Employee> employee = null;
+
+        // WHERE PREDICATES
+        List<Predicate> predicates = new ArrayList<>();
+        List<Predicate> orPredicates = new ArrayList<>();
+
+        if(skillNames != null && skillNames.size() > 0) {
+
+            List<Predicate> orSkillNamePredicates = new ArrayList<>();
+
+            for(String skillName : skillNames) {
+                orSkillNamePredicates.add( criteriaBuilder.like(skill.get(Skill_.skillName), "%" + skillName + "%") );
+            }
+
+            if(orWithSkillNames) {
+                orPredicates.add( criteriaBuilder.or(orSkillNamePredicates.toArray(new Predicate[] {})) );
+            } else {
+                predicates.add( criteriaBuilder.or(orSkillNamePredicates.toArray(new Predicate[] {})) );
+            }
+        }
+
+        if(descriptions != null && descriptions.size() > 0) {
+
+            List<Predicate> orDescriptionPredicates = new ArrayList<>();
+
+            for(String description : descriptions) {
+                orDescriptionPredicates.add( criteriaBuilder.like(skill.get(Skill_.description), "%" + description + "%") );
+            }
+
+            if(orWithDescriptions) {
+                orPredicates.add( criteriaBuilder.or(orDescriptionPredicates.toArray(new Predicate[] {})) );
+            } else {
+                predicates.add( criteriaBuilder.or(orDescriptionPredicates.toArray(new Predicate[] {})) );
+            }
+        }
+
+        if(orPredicates.size() > 0)
+            predicates.add( criteriaBuilder.or(orPredicates.toArray(new Predicate[]{})) );
+
+        if(employees != null && employees.size() > 0) {
+
+            if(employee == null) employee = skill.join(Skill_.skilledEmployees);
+
+            predicates.add( employee.in(employees) );
+
+            if(eagerly) {
+                // then fetch associated collection of entities
+                skill.fetch("skilledEmployees", JoinType.INNER);
+            }
+        } else if(eagerly) {
+            // then left fetch associated collection of entities
+            skill.fetch("skilledEmployees", JoinType.LEFT);
+        }
+
+        // WHERE predicate1 AND predicate2 AND ... AND predicateN
+        criteriaQuery.where(predicates.toArray(new Predicate[]{}));
+
+        TypedQuery<Skill> query = getEntityManager().createQuery(criteriaQuery);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
     }
 }

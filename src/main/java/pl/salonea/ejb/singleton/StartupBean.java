@@ -83,6 +83,10 @@ public class StartupBean {
     private TagFacade tagFacade;
     @Inject
     private VirtualTourFacade virtualTourFacade;
+    @Inject
+    private SkillFacade skillFacade;
+    @Inject
+    private EducationFacade educationFacade;
 
     public StartupBean() { }
 
@@ -104,6 +108,7 @@ public class StartupBean {
         populatePaymentMethods();
         populateEmployeeWorkOnWorkStation();
         populateServicePointAssets();
+        populateSkillsAndEducation();
     }
 
     private void populateUserAccounts() {
@@ -441,6 +446,25 @@ public class StartupBean {
         roomTag.getTaggedVirtualTours().add(tour2);
         receptionTag.getTaggedPhotos().add(photo1);
         receptionTag.getTaggedVirtualTours().add(tour1);
+    }
+
+    private void populateSkillsAndEducation() {
+
+        Employee employee = employeeFacade.find(11L);
+
+        Skill hairCutting = new Skill("Hair Cutting");
+        hairCutting.setDescription("Hair Cutting is the ability to cut women or man hairs");
+        Skill hairStyling = new Skill("Hair Styling");
+        hairStyling.setDescription("Hair Styling is the ability to style women or man hairs");
+
+        skillFacade.create(hairCutting);
+        skillFacade.create(hairStyling);
+
+        employee.getSkills().add(hairCutting);
+        employee.getSkills().add(hairStyling);
+
+        hairCutting.getSkilledEmployees().add(employee);
+        hairStyling.getSkilledEmployees().add(employee);
     }
 
 }
