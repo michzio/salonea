@@ -223,6 +223,42 @@ public class SkillResource {
     }
 
     /**
+     * Method that takes updated Skill as XML or JSON and its ID as path param.
+     * It updates Skill in database for provided ID.
+     */
+    @PUT
+    @Path("/{skillId : \\d+}") // catch only numeric identifiers
+    @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response updateSkill( @PathParam("skillId") Integer skillId,
+                                 Skill skill,
+                                 @BeanParam GenericBeanParam params ) throws ForbiddenException, UnprocessableEntityException, InternalServerErrorException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "updating existing Skill by executing SkillResource.updateSkill(skillId, skill) method of REST API");
+
+        // set resource ID passed in path param on updated resource object
+        skill.setSkillId(skillId);
+
+        Skill updatedSkill = null;
+        try {
+            // reflect updated resource object in database
+            updatedSkill = skillFacade.update(skill, true);
+            // populate created resource with hypermedia links
+            SkillResource.populateWithHATEOASLinks(updatedSkill, params.getUriInfo());
+
+        } catch (EJBTransactionRolledbackException ex) {
+            ExceptionHandler.handleEJBTransactionRolledbackException(ex);
+        } catch (EJBException ex) {
+            ExceptionHandler.handleEJBException(ex);
+        } catch (Exception ex) {
+            throw new InternalServerErrorException(ExceptionHandler.ENTITY_UPDATE_ERROR_MESSAGE);
+        }
+
+        return Response.status(Status.OK).entity(updatedSkill).build();
+    }
+
+    /**
      * related subresources (through relationships)
      */
 
