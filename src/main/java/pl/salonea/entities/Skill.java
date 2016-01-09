@@ -22,24 +22,34 @@ import java.util.Set;
 @Table(name = "skill")
 @Access(AccessType.PROPERTY)
 @NamedQueries({
+        @NamedQuery(name = Skill.FIND_ALL_EAGERLY, query = "SELECT DISTINCT s FROM Skill s LEFT JOIN FETCH s.skilledEmployees"),
+        @NamedQuery(name = Skill.FIND_BY_ID_EAGERLY, query = "SELECT s FROM Skill s LEFT JOIN FETCH s.skilledEmployees WHERE s.skillId = :skillId"),
         @NamedQuery(name = Skill.FIND_BY_NAME, query = "SELECT s FROM Skill s WHERE s.skillName LIKE :skill_name"),
         @NamedQuery(name = Skill.FIND_BY_DESCRIPTION, query = "SELECT s FROM Skill s WHERE s.description LIKE :description"),
         @NamedQuery(name = Skill.FIND_BY_KEYWORD, query = "SELECT s FROM Skill s WHERE s.skillName LIKE :keyword OR s.description LIKE :keyword"),
         @NamedQuery(name = Skill.FIND_BY_EMPLOYEE, query = "SELECT s FROM Skill s WHERE :employee MEMBER OF s.skilledEmployees"),
+        @NamedQuery(name = Skill.FIND_BY_EMPLOYEE_EAGERLY, query = "SELECT DISTINCT s FROM Skill s LEFT JOIN FETCH s.skilledEmployees WHERE :employee MEMBER OF s.skilledEmployees"),
         @NamedQuery(name = Skill.FIND_BY_EMPLOYEE_AND_KEYWORD, query = "SELECT s FROM Skill s WHERE :employee MEMBER OF s.skilledEmployees " +
                                                                         "AND (s.skillName LIKE :keyword OR s.description LIKE :keyword)"),
+        @NamedQuery(name = Skill.COUNT_BY_EMPLOYEE, query = "SELECT COUNT(s) FROM Skill s WHERE :employee MEMBER OF s.skilledEmployees"),
         @NamedQuery(name = Skill.DELETE_BY_NAME, query = "DELETE FROM Skill s WHERE s.skillName = :skill_name"),
         @NamedQuery(name = Skill.DELETE_BY_SKILLS, query = "DELETE FROM Skill s WHERE s IN :skills"),
+        @NamedQuery(name = Skill.DELETE_BY_EMPLOYEE, query = "DELETE FROM Skill s WHERE :employee MEMBER OF s.skilledEmployees"),
 })
 public class Skill implements Serializable {
 
+    public static final String FIND_ALL_EAGERLY = "Skill.findAllEagerly";
+    public static final String FIND_BY_ID_EAGERLY = "Skill.findByIdEagerly";
     public static final String FIND_BY_NAME = "Skill.findByName";
     public static final String FIND_BY_DESCRIPTION = "Skill.findByDescription";
     public static final String FIND_BY_KEYWORD = "Skill.findByKeyword";
     public static final String FIND_BY_EMPLOYEE = "Skill.findByEmployee";
+    public static final String FIND_BY_EMPLOYEE_EAGERLY = "Skill.findByEmployeeEagerly";
     public static final String FIND_BY_EMPLOYEE_AND_KEYWORD = "Skill.findByEmployeeAndKeyword";
+    public static final String COUNT_BY_EMPLOYEE = "Skill.countByEmployee";
     public static final String DELETE_BY_NAME = "Skill.deleteByName";
     public static final String DELETE_BY_SKILLS = "Skill.deleteBySkills";
+    public static final String DELETE_BY_EMPLOYEE = "Skill.deleteByEmployee";
 
     private Integer skillId; // PK
     private String skillName; // business key

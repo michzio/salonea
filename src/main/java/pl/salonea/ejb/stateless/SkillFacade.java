@@ -8,9 +8,7 @@ import pl.salonea.entities.Skill_;
 import javax.ejb.LocalBean;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
-import javax.persistence.EntityManager;
-import javax.persistence.Query;
-import javax.persistence.TypedQuery;
+import javax.persistence.*;
 import javax.persistence.criteria.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -34,6 +32,46 @@ public class SkillFacade extends AbstractFacade<Skill> implements SkillFacadeInt
         super(Skill.class);
     }
 
+    @Override
+    public Skill update(Skill skill, Boolean retainTransientFields) {
+
+        if(retainTransientFields) {
+            // keep current collection attributes of resource (and other marked @XmlTransient)
+            Skill currentSkill = findByIdEagerly(skill.getSkillId());
+            if(currentSkill != null) {
+                skill.setSkilledEmployees(currentSkill.getSkilledEmployees());
+            }
+        }
+        return update(skill);
+    }
+
+    @Override
+    public List<Skill> findAllEagerly() {
+        return findAllEagerly(null, null);
+    }
+
+    @Override
+    public List<Skill> findAllEagerly(Integer start, Integer limit) {
+
+        TypedQuery<Skill> query = getEntityManager().createNamedQuery(Skill.FIND_ALL_EAGERLY, Skill.class);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
+    public Skill findByIdEagerly(Integer skillId) {
+
+        TypedQuery<Skill> query = getEntityManager().createNamedQuery(Skill.FIND_BY_ID_EAGERLY, Skill.class);
+        query.setParameter("skillId", skillId);
+        try {
+            return query.getSingleResult();
+        } catch (NoResultException | NonUniqueResultException ex) {
+            return null;
+        }
+    }
 
     @Override
     public List<Skill> findByName(String skillName) {
@@ -104,6 +142,23 @@ public class SkillFacade extends AbstractFacade<Skill> implements SkillFacadeInt
     }
 
     @Override
+    public List<Skill> findByEmployeeEagerly(Employee employee) {
+        return findByEmployeeEagerly(employee, null, null);
+    }
+
+    @Override
+    public List<Skill> findByEmployeeEagerly(Employee employee, Integer start, Integer limit) {
+
+        TypedQuery<Skill> query = getEntityManager().createNamedQuery(Skill.FIND_BY_EMPLOYEE_EAGERLY, Skill.class);
+        query.setParameter("employee", employee);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
     public List<Skill> findByEmployeeAndKeyword(Employee employee, String keyword) {
         return findByEmployeeAndKeyword(employee, keyword, null, null);
     }
@@ -119,6 +174,14 @@ public class SkillFacade extends AbstractFacade<Skill> implements SkillFacadeInt
             query.setMaxResults(limit);
         }
         return query.getResultList();
+    }
+
+    @Override
+    public Integer countByEmployee(Employee employee) {
+
+        TypedQuery<Integer> query = getEntityManager().createNamedQuery(Skill.COUNT_BY_EMPLOYEE, Integer.class);
+        query.setParameter("employee", employee);
+        return query.getSingleResult();
     }
 
     @Override

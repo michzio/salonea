@@ -11,19 +11,31 @@ import java.util.List;
 public interface SkillFacadeInterface extends AbstractFacadeInterface<Skill> {
 
     // concrete interface
+    Skill update(Skill skill, Boolean retainTransientFields);
+
+    List<Skill> findAllEagerly();
+    List<Skill> findAllEagerly(Integer start, Integer limit);
+    Skill findByIdEagerly(Integer skillId);
+
     List<Skill> findByName(String skillName);
     List<Skill> findByName(String skillName, Integer start, Integer limit);
     List<Skill> findByDescription(String description);
     List<Skill> findByDescription(String description, Integer start, Integer limit);
     List<Skill> findByKeyword(String keyword);
     List<Skill> findByKeyword(String keyword, Integer start, Integer limit);
+
     List<Skill> findByEmployee(Employee employee);
     List<Skill> findByEmployee(Employee employee, Integer start, Integer limit);
+    List<Skill> findByEmployeeEagerly(Employee employee);
+    List<Skill> findByEmployeeEagerly(Employee employee, Integer start, Integer limit);
     List<Skill> findByEmployeeAndKeyword(Employee employee, String keyword);
     List<Skill> findByEmployeeAndKeyword(Employee employee, String keyword, Integer start, Integer limit);
+
+    Integer countByEmployee(Employee employee);
+
     Integer deleteByName(String skillName);
-    Integer deleteByEmployee(Employee employee);
     Integer deleteBySkills(List<Skill> skills);
+    Integer deleteByEmployee(Employee employee);
 
     List<Skill> findByMultipleCriteria(List<String> skillNames, List<String> descriptions, List<Employee> employees);
     List<Skill> findByMultipleCriteria(List<String> skillNames, List<String> descriptions, List<Employee> employees, Integer start, Integer limit);

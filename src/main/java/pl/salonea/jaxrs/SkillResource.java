@@ -7,8 +7,6 @@ import pl.salonea.entities.Skill;
 import pl.salonea.jaxrs.bean_params.EmployeeBeanParam;
 import pl.salonea.jaxrs.bean_params.GenericBeanParam;
 import pl.salonea.jaxrs.bean_params.SkillBeanParam;
-import pl.salonea.jaxrs.exceptions.ForbiddenException;
-import pl.salonea.jaxrs.exceptions.NotFoundException;
 import pl.salonea.jaxrs.utils.RESTToolkit;
 import pl.salonea.jaxrs.utils.ResourceList;
 import pl.salonea.jaxrs.utils.hateoas.Link;
@@ -23,6 +21,9 @@ import javax.ws.rs.core.UriInfo;
 import java.lang.reflect.Method;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import pl.salonea.jaxrs.exceptions.ForbiddenException;
+import pl.salonea.jaxrs.exceptions.NotFoundException;
+import pl.salonea.jaxrs.exceptions.BadRequestException;
 
 /**
  * Created by michzio on 07/01/2016.
@@ -84,6 +85,56 @@ public class SkillResource {
 
         return Response.status(Status.OK).entity(skills).build();
     }
+
+    @GET
+    @Path("/eagerly")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getSkillsEagerly( @BeanParam SkillBeanParam params ) throws ForbiddenException, BadRequestException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning all Skills eagerly by executing SkillResource.getSkillsEagerly() method of REST API");
+
+        Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+        ResourceList<SkillWrapper> skills = null;
+
+        if(noOfParams > 0) {
+            logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+            // get all skills eagerly filtered by query params
+
+            if( RESTToolkit.isSet(params.getKeywords()) ) {
+                if( RESTToolkit.isSet(params.getSkillNames()) || RESTToolkit.isSet(params.getDescriptions()) )
+                    throw new BadRequestException("Query params cannot include keywords and skillNames or descriptions at the same time.");
+
+                // find only by keywords
+                skills = new ResourceList<>(
+                        SkillWrapper.wrap(
+                                skillFacade.findByMultipleCriteriaEagerly(params.getKeywords(), params.getEmployees(), params.getOffset(), params.getLimit())
+                        )
+                );
+            } else {
+                // find by skillNames, descriptions
+                skills = new ResourceList<>(
+                        SkillWrapper.wrap(
+                                skillFacade.findByMultipleCriteriaEagerly(params.getSkillNames(), params.getDescriptions(), params.getEmployees(), params.getOffset(), params.getLimit())
+                        )
+                );
+            }
+        } else {
+            logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+            // get all skills eagerly without filtering (eventually paginated)
+            skills = new ResourceList<>( SkillWrapper.wrap(skillFacade.findAllEagerly(params.getOffset(), params.getLimit())) );
+        }
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        SkillResource.populateWithHATEOASLinks(skills, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(skills).build();
+    }
+
+
 
     /**
      * related subresources (through relationships)
