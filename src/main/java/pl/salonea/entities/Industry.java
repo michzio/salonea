@@ -96,7 +96,7 @@ public class Industry implements Serializable {
 
     /* many-to-many relationship */
     @XmlTransient
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "provider_industry",
         joinColumns = @JoinColumn(name = "industry_id"),
         inverseJoinColumns = @JoinColumn(name = "provider_id")

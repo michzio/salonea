@@ -6,6 +6,7 @@ import pl.salonea.entities.Employee;
 import pl.salonea.entities.Skill;
 import pl.salonea.jaxrs.bean_params.EmployeeBeanParam;
 import pl.salonea.jaxrs.bean_params.GenericBeanParam;
+import pl.salonea.jaxrs.bean_params.PaginationBeanParam;
 import pl.salonea.jaxrs.bean_params.SkillBeanParam;
 import pl.salonea.jaxrs.exceptions.*;
 import pl.salonea.jaxrs.exceptions.BadRequestException;
@@ -13,6 +14,7 @@ import pl.salonea.jaxrs.exceptions.ForbiddenException;
 import pl.salonea.jaxrs.exceptions.NotFoundException;
 import pl.salonea.jaxrs.utils.RESTToolkit;
 import pl.salonea.jaxrs.utils.ResourceList;
+import pl.salonea.jaxrs.utils.ResponseWrapper;
 import pl.salonea.jaxrs.utils.hateoas.Link;
 import pl.salonea.jaxrs.wrappers.SkillWrapper;
 
@@ -259,6 +261,118 @@ public class SkillResource {
     }
 
     /**
+     * Method that removes Skill entity from database for given ID.
+     * The ID is passed through path param.
+     */
+    @DELETE
+    @Path("/{skillId : \\d+}") // catch only numeric identifiers
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response removeSkill( @PathParam("skillId") Integer skillId,
+                                 @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "removing given Skill by executing SkillResource.removeSkill(skillId) method of REST API");
+
+        // find Skill entity that should be deleted
+        Skill toDeleteSkill = skillFacade.find(skillId);
+        // throw exception if entity hasn't been found
+        if(toDeleteSkill == null)
+            throw new NotFoundException("Could not find skill to delete for given id: " + skillId + ".");
+
+        // remove entity from database
+        skillFacade.remove(toDeleteSkill);
+
+        return Response.status(Status.NO_CONTENT).build();
+    }
+
+    /**
+     * Additional methods returning a subset of resources based on given criteria.
+     * You can also achieve similar results by applying @QueryParams to generic method
+     * returning all resources in order to filter and limit them.
+     */
+
+    /**
+     * Method returns number of Skill entities in database
+     */
+    @GET
+    @Path("/count")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response countSkills( @BeanParam GenericBeanParam params ) throws ForbiddenException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning number of skills by executing SkillResource.countSkills() method of REST API");
+
+        ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(skillFacade.count()), 200, "number of skills");
+        return Response.status(Status.OK).entity(responseEntity).build();
+    }
+
+    /**
+     * Method returns subset of Skill entities for given skill name.
+     * The skill name is passed through path param.
+     */
+    @GET
+    @Path("/named/{skillName : \\S+}")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getSkillsByName( @PathParam("skillName") String skillName,
+                                     @BeanParam PaginationBeanParam params ) throws ForbiddenException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning skills for given skill name using SkillResource.getSkillsByName(skillName) method of REST API");
+
+        // find skills by given criteria
+        ResourceList<Skill> skills = new ResourceList<>( skillFacade.findByName(skillName, params.getOffset(), params.getLimit()) );
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        SkillResource.populateWithHATEOASLinks(skills, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(skills).build();
+    }
+
+    /**
+     * Method returns subset of Skill entities for given description.
+     * The description is passed through path param.
+     */
+    @GET
+    @Path("/described/{description : \\S+}")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getSkillsByDescription( @PathParam("description") String description,
+                                            @BeanParam PaginationBeanParam params ) throws ForbiddenException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning skills for given description using SkillResource.getSkillsByDescription(description) method of REST API");
+
+        // find skills by given criteria
+        ResourceList<Skill> skills = new ResourceList<>( skillFacade.findByDescription(description, params.getOffset(), params.getLimit()) );
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        SkillResource.populateWithHATEOASLinks(skills, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(skills).build();
+    }
+
+    /**
+     * Method returns subset of Skill entities for given keyword.
+     * The keyword is passed through path param.
+     */
+    @GET
+    @Path("/containing-keyword/{keyword : \\S+}")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getSkillsByKeyword( @PathParam("keyword") String keyword,
+                                        @BeanParam PaginationBeanParam params ) throws ForbiddenException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning skills for given keyword using SkillResource.getSkillsByKeyword(keyword) method of REST API");
+
+        // find skills by given criteria
+        ResourceList<Skill> skills = new ResourceList<>( skillFacade.findByKeyword(keyword, params.getOffset(), params.getLimit()) );
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        SkillResource.populateWithHATEOASLinks(skills, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(skills).build();
+    }
+
+    /**
      * related subresources (through relationships)
      */
 
@@ -291,7 +405,27 @@ public class SkillResource {
                     .build()).rel("skills-eagerly").build() );
 
             // get subset of resources hypermedia links
-            // TODO
+
+            // named
+            skills.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(SkillResource.class)
+                    .path("named")
+                    .build())
+                    .rel("named").build() );
+
+            // described
+            skills.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(SkillResource.class)
+                    .path("described")
+                    .build())
+                    .rel("described").build() );
+
+            // containing-keyword
+            skills.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(SkillResource.class)
+                    .path("containing-keyword")
+                    .build())
+                    .rel("containing-keyword").build() );
 
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
