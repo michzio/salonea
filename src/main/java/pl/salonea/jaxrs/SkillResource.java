@@ -16,11 +16,14 @@ import pl.salonea.jaxrs.utils.RESTToolkit;
 import pl.salonea.jaxrs.utils.ResourceList;
 import pl.salonea.jaxrs.utils.ResponseWrapper;
 import pl.salonea.jaxrs.utils.hateoas.Link;
+import pl.salonea.jaxrs.wrappers.EmployeeWrapper;
 import pl.salonea.jaxrs.wrappers.SkillWrapper;
 
 import javax.ejb.EJBException;
 import javax.ejb.EJBTransactionRolledbackException;
 import javax.inject.Inject;
+import javax.transaction.*;
+import javax.transaction.NotSupportedException;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -28,6 +31,8 @@ import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 import java.lang.reflect.Method;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -38,6 +43,9 @@ import java.util.logging.Logger;
 public class SkillResource {
 
     private static final Logger logger = Logger.getLogger(SkillResource.class.getName());
+
+    @Inject
+    private UserTransaction utx;
 
     @Inject
     private SkillFacade skillFacade;
@@ -486,7 +494,24 @@ public class SkillResource {
              * Employees associated with current Skill resource
              */
 
-            // TODO
+            // employees link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}
+            Method employeesMethod = SkillResource.class.getMethod("getEmployeeResource");
+            skill.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(SkillResource.class)
+                    .path(employeesMethod)
+                    .resolveTemplate("skillId", skill.getSkillId().toString())
+                    .build())
+                    .rel("employees").build() );
+
+            // employees eagerly link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/eagerly
+            Method employeesEagerlyMethod = SkillResource.EmployeeResource.class.getMethod("getSkilledEmployeesEagerly", Integer.class, EmployeeBeanParam.class);
+            skill.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(SkillResource.class)
+                    .path(employeesMethod)
+                    .path(employeesEagerlyMethod)
+                    .resolveTemplate("skillId", skill.getSkillId().toString())
+                    .build())
+                    .rel("employees-eagerly").build());
 
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
@@ -497,13 +522,113 @@ public class SkillResource {
 
         public EmployeeResource() { }
 
+        /**
+         * Method returns subset of Employee entities for given Skill entity.
+         * The skill id is passed through path param.
+         */
         @GET
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
         public Response getSkilledEmployees( @PathParam("skillId") Integer skillId,
-                                             @BeanParam EmployeeBeanParam params ) throws ForbiddenException, NotFoundException {
+                                             @BeanParam EmployeeBeanParam params ) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
 
-            // TODO
-            return null;
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning employees for given skill using SkillResource.EmployeeResource.getSkilledEmployees(skillId) method of REST API");
+
+            // find skill entity for which to get associated employees
+            Skill skill = skillFacade.find(skillId);
+            if(skill == null)
+                throw new NotFoundException("Could not find skill for id " + skillId + ".");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<Employee> employees = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Skill> skills = new ArrayList<>();
+                skills.add(skill);
+
+                utx.begin();
+
+                // get employees for given skill filtered by given params
+                employees = new ResourceList<>(
+                        employeeFacade.findByMultipleCriteria(params.getDescription(), params.getJobPositions(), skills,
+                                params.getEducations(), params.getServices(), params.getProviderServices(), params.getServicePoints(),
+                                params.getWorkStations(), params.getPeriod(), params.getStrictTerm(), params.getRated(),
+                                params.getMinAvgRating(), params.getMaxAvgRating(), params.getRatingClients(), params.getOffset(), params.getLimit())
+                );
+
+                utx.commit();
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get employees for given skill without filtering (eventually paginated)
+                employees = new ResourceList<>( employeeFacade.findBySkill(skill, params.getOffset(), params.getLimit()) );
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.EmployeeResource.populateWithHATEOASLinks(employees, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(employees).build();
+        }
+
+        /**
+         * Method returns subset of Employee entities for given Skill fetching them eagerly.
+         * The skill id is passed through path param.
+         */
+        @GET
+        @Path("/eagerly")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getSkilledEmployeesEagerly( @PathParam("skillId") Integer skillId,
+                                                    @BeanParam EmployeeBeanParam params ) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning employees eagerly for given skill using " +
+                    "SkillResource.EmployeeResource.getSkilledEmployeesEagerly(skillId) method of REST API");
+
+            // find skill entity for which to get associated employees
+            Skill skill = skillFacade.find(skillId);
+            if(skill == null)
+                throw new NotFoundException("Could not find skill for id " + skillId + ".");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<EmployeeWrapper> employees = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Skill> skills = new ArrayList<>();
+                skills.add(skill);
+
+                utx.begin();
+
+                // get employees eagerly for given skill filtered by given params
+                employees = new ResourceList<>(
+                        EmployeeWrapper.wrap(
+                                employeeFacade.findByMultipleCriteriaEagerly(params.getDescription(), params.getJobPositions(), skills,
+                                        params.getEducations(), params.getServices(), params.getProviderServices(), params.getServicePoints(),
+                                        params.getWorkStations(), params.getPeriod(), params.getStrictTerm(), params.getRated(),
+                                        params.getMinAvgRating(), params.getMaxAvgRating(), params.getRatingClients(), params.getOffset(), params.getLimit())
+                        )
+                );
+
+                utx.commit();
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get employees eagerly for given skill without filtering (eventually paginated)
+                employees = new ResourceList<>( EmployeeWrapper.wrap(employeeFacade.findBySkillEagerly(skill, params.getOffset(), params.getLimit())) );
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.EmployeeResource.populateWithHATEOASLinks(employees, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(employees).build();
         }
     }
 

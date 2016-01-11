@@ -1,9 +1,6 @@
 package pl.salonea.jaxrs;
 
-import pl.salonea.ejb.stateless.ClientFacade;
-import pl.salonea.ejb.stateless.EmployeeFacade;
-import pl.salonea.ejb.stateless.EmployeeRatingFacade;
-import pl.salonea.ejb.stateless.ServicePointFacade;
+import pl.salonea.ejb.stateless.*;
 import pl.salonea.embeddables.Address;
 import pl.salonea.entities.*;
 import pl.salonea.jaxrs.bean_params.*;
@@ -53,6 +50,8 @@ public class EmployeeResource {
 
     @Inject
     private EmployeeFacade employeeFacade;
+    @Inject
+    private SkillFacade skillFacade;
     @Inject
     private ClientFacade clientFacade;
     @Inject
@@ -363,12 +362,11 @@ public class EmployeeResource {
     }
 
     /**
-     *
-     */
-
-    /**
      * related subresources (through relationships)
      */
+
+    @Path("/{userId: \\d+}/skills")
+    public SkillResource getSkillResource() { return new SkillResource(); }
 
     @Path("/{userId: \\d+}/rating-clients")
     public ClientResource getClientResource() { return new ClientResource(); }
@@ -445,8 +443,8 @@ public class EmployeeResource {
        // for(Education education : employeeWrapper.getEducations())
        //     pl.salonea.jaxrs.EducationResource.
 
-       // for(Skill skill : employeeWrapper.getSkills())
-       //     pl.salonea.jaxrs.SkillResource.
+       for(Skill skill : employeeWrapper.getSkills())
+           pl.salonea.jaxrs.SkillResource.populateWithHATEOASLinks(skill, uriInfo);
 
        for(ProviderService providerService : employeeWrapper.getSuppliedServices())
            pl.salonea.jaxrs.ProviderServiceResource.populateWithHATEOASLinks(providerService, uriInfo);
@@ -454,8 +452,8 @@ public class EmployeeResource {
        // for(TermEmployeeWorkOn term : employeeWrapper.getTermsOnWorkStation())
        //    pl.salonea.jaxrs.TermEmployeeWorkOnResource.
 
-       // for(EmployeeRating employeeRating : employeeWrapper.getReceivedRatings())
-       //    pl.salonea.jaxrs.EmployeeRatingResource.
+       for(EmployeeRating employeeRating : employeeWrapper.getReceivedRatings())
+           pl.salonea.jaxrs.EmployeeRatingResource.populateWithHATEOASLinks(employeeRating, uriInfo);
 
     }
 
@@ -488,6 +486,18 @@ public class EmployeeResource {
                         .rel("employee-eagerly").build() );
 
             // associated collections links with pattern: http://localhost:port/app/rest/{resources}/{id}/{relationship}
+
+            /**
+             * Skills associated with current Employee resource
+             */
+
+            // skills link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}
+
+            // skills eagerly link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/eagerly
+
+            // skills count link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/count
+
+            // skills containing-keyword link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/containing-keyword
 
             /**
              * Employee Ratings associated with current Employee resource
@@ -640,7 +650,70 @@ public class EmployeeResource {
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
         }
-        // TODO more links
+    }
+
+    public class SkillResource {
+
+        public SkillResource() { }
+
+        /**
+         * Method returns subset of Skill entities for given Employee entity.
+         * The employee id is passed through path param.
+         * They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getEmployeeSkills( @PathParam("userId") Long employeeId,
+                                           @BeanParam SkillBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning skills for given employee using EmployeeResource.SkillResource.getEmployeeSkills(employeeId) method of REST API");
+
+            // find employee entity for which to get associated skills
+            Employee employee = employeeFacade.find(employeeId);
+            if(employee == null)
+                throw new NotFoundException("Could not find employee for id " + employeeId + ".");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<Skill> skills = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Employee> employees = new ArrayList<>();
+                employees.add(employee);
+
+                // get skills for given employee filtered by given query params
+
+                if( RESTToolkit.isSet(params.getKeywords()) ) {
+                    if( RESTToolkit.isSet(params.getSkillNames()) || RESTToolkit.isSet(params.getDescriptions()) )
+                        throw new BadRequestException("Query params cannot include keywords and skillNames or descriptions at the same time.");
+
+                    // find only by keywords
+                    skills = new ResourceList<>(
+                            skillFacade.findByMultipleCriteria(params.getKeywords(), employees, params.getOffset(), params.getLimit())
+                    );
+
+                } else {
+                    // find by skillNames, descriptions
+                    skills = new ResourceList<>(
+                            skillFacade.findByMultipleCriteria(params.getSkillNames(), params.getDescriptions(), employees, params.getOffset(), params.getLimit())
+                    );
+                }
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get skills for given employee without filtering (eventually paginated)
+                skills = new ResourceList<>( skillFacade.findByEmployee(employee, params.getOffset(), params.getLimit()) );
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.SkillResource.populateWithHATEOASLinks(skills, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(skills).build();
+        }
+
     }
 
     public class ClientResource {

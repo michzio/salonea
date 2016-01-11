@@ -253,7 +253,7 @@ public class EmployeeRatingResource {
     /**
      * This method enables to populate each individual resource with hypermedia links
      */
-    private static void populateWithHATEOASLinks(EmployeeRating employeeRating, UriInfo uriInfo) {
+    public static void populateWithHATEOASLinks(EmployeeRating employeeRating, UriInfo uriInfo) {
 
         try {
             // self link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/{sub-id}

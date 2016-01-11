@@ -27,10 +27,10 @@ import java.util.*;
         @NamedQuery(name = Employee.FIND_BY_DESCRIPTION, query = "SELECT e FROM Employee e WHERE e.description LIKE :description"),
         @NamedQuery(name = Employee.FIND_BY_JOB_POSITION, query = "SELECT e FROM Employee e WHERE e.jobPosition = :job_position"),
         @NamedQuery(name = Employee.FIND_BY_SKILL, query = "SELECT e FROM Employee e WHERE :skill MEMBER OF e.skills"),
-        @NamedQuery(name = Employee.FIND_BY_SKILL_EAGERLY, query = "SELECT e FROM Employee e LEFT JOIN FETCH e.termsOnWorkStation LEFT JOIN FETCH e.educations " +
+        @NamedQuery(name = Employee.FIND_BY_SKILL_EAGERLY, query = "SELECT DISTINCT e FROM Employee e LEFT JOIN FETCH e.termsOnWorkStation LEFT JOIN FETCH e.educations " +
                 "LEFT JOIN FETCH e.skills LEFT JOIN FETCH e.suppliedServices LEFT JOIN FETCH e.receivedRatings WHERE :skill MEMBER OF e.skills"),
         @NamedQuery(name = Employee.FIND_BY_EDUCATION, query = "SELECT e FROM Employee e WHERE :education MEMBER OF e.educations"),
-        @NamedQuery(name = Employee.FIND_BY_EDUCATION_EAGERLY, query = "SELECT e FROM Employee e LEFT JOIN FETCH e.termsOnWorkStation LEFT JOIN FETCH e.educations " +
+        @NamedQuery(name = Employee.FIND_BY_EDUCATION_EAGERLY, query = "SELECT DISTINCT e FROM Employee e LEFT JOIN FETCH e.termsOnWorkStation LEFT JOIN FETCH e.educations " +
                 "LEFT JOIN FETCH e.skills LEFT JOIN FETCH e.suppliedServices LEFT JOIN FETCH e.receivedRatings WHERE :education MEMBER OF e.educations"),
         @NamedQuery(name = Employee.FIND_BY_EDUCATION_AND_SKILLS, query = "SELECT DISTINCT e FROM Employee e INNER JOIN e.skills s WHERE :education MEMBER OF e.educations AND s IN :skills"),
         @NamedQuery(name = Employee.FIND_BY_SERVICE, query = "SELECT DISTINCT e FROM Employee e INNER JOIN e.suppliedServices ps WHERE ps.service = :service"),
