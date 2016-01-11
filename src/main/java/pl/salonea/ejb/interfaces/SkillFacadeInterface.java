@@ -31,7 +31,7 @@ public interface SkillFacadeInterface extends AbstractFacadeInterface<Skill> {
     List<Skill> findByEmployeeAndKeyword(Employee employee, String keyword);
     List<Skill> findByEmployeeAndKeyword(Employee employee, String keyword, Integer start, Integer limit);
 
-    Integer countByEmployee(Employee employee);
+    Long countByEmployee(Employee employee);
 
     Integer deleteByName(String skillName);
     Integer deleteBySkills(List<Skill> skills);

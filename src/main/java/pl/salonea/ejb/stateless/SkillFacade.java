@@ -177,9 +177,9 @@ public class SkillFacade extends AbstractFacade<Skill> implements SkillFacadeInt
     }
 
     @Override
-    public Integer countByEmployee(Employee employee) {
+    public Long countByEmployee(Employee employee) {
 
-        TypedQuery<Integer> query = getEntityManager().createNamedQuery(Skill.COUNT_BY_EMPLOYEE, Integer.class);
+        TypedQuery<Long> query = getEntityManager().createNamedQuery(Skill.COUNT_BY_EMPLOYEE, Long.class);
         query.setParameter("employee", employee);
         return query.getSingleResult();
     }
