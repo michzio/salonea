@@ -18,7 +18,7 @@ import java.util.logging.Logger;
 /**
  * Created by michzio on 12/01/2016.
  */
-@Path("/employees-has-skills/{employeeId : \\d+}has{skillId : \\d+}")
+@Path("/employees-have-skills/{employeeId : \\d+}has{skillId : \\d+}")
 public class EmployeeSkillRelationship {
 
     private static final Logger logger = Logger.getLogger(EmployeeSkillRelationship.class.getName());
