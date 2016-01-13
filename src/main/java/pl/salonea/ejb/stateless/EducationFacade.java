@@ -304,41 +304,49 @@ public class EducationFacade extends AbstractFacade<Education> implements Educat
 
     @Override
     public List<Education> findByMultipleCriteria(List<String> degrees, List<String> faculties, List<String> schools, List<Employee> employees) {
-        return null;
+        return findByMultipleCriteria(degrees, faculties, schools, employees, null, null);
     }
 
     @Override
     public List<Education> findByMultipleCriteria(List<String> degrees, List<String> faculties, List<String> schools, List<Employee> employees, Integer start, Integer limit) {
-        return null;
+        return findByMultipleCriteria(false, degrees, false, faculties, false, schools, employees, false, start, limit);
     }
 
     @Override
     public List<Education> findByMultipleCriteria(List<String> keywords, List<Employee> employees) {
-        return null;
+        return findByMultipleCriteria(keywords, employees, null, null);
     }
 
     @Override
     public List<Education> findByMultipleCriteria(List<String> keywords, List<Employee> employees, Integer start, Integer limit) {
-        return null;
+        return findByMultipleCriteria(true, keywords, true, keywords, true, keywords, employees, false, start, limit);
     }
 
     @Override
     public List<Education> findByMultipleCriteriaEagerly(List<String> degrees, List<String> faculties, List<String> schools, List<Employee> employees) {
-        return null;
+        return findByMultipleCriteriaEagerly(degrees, faculties, schools, employees, null, null);
     }
 
     @Override
     public List<Education> findByMultipleCriteriaEagerly(List<String> degrees, List<String> faculties, List<String> schools, List<Employee> employees, Integer start, Integer limit) {
-        return null;
+        return findByMultipleCriteria(false, degrees, false, faculties, false, schools, employees, true, start, limit);
     }
 
     @Override
     public List<Education> findByMultipleCriteriaEagerly(List<String> keywords, List<Employee> employees) {
-        return null;
+        return findByMultipleCriteriaEagerly(keywords, employees, null, null);
     }
 
     @Override
     public List<Education> findByMultipleCriteriaEagerly(List<String> keywords, List<Employee> employees, Integer start, Integer limit) {
+        return findByMultipleCriteria(true, keywords, true, keywords, true, keywords, employees, true, start, limit);
+    }
+
+    private List<Education> findByMultipleCriteria(Boolean orWithDegrees, List<String> degrees,
+                                                   Boolean orWithFaculties, List<String> faculties,
+                                                   Boolean orWithSchools, List<String> schools,
+                                                   List<Employee> employees, Boolean eagerly, Integer start, Integer limit ) {
+
         return null;
     }
 }
