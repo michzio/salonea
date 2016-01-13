@@ -7,9 +7,7 @@ import pl.salonea.entities.Employee;
 import javax.ejb.LocalBean;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
-import javax.persistence.EntityManager;
-import javax.persistence.Query;
-import javax.persistence.TypedQuery;
+import javax.persistence.*;
 import java.util.List;
 
 /**
@@ -31,6 +29,47 @@ public class EducationFacade extends AbstractFacade<Education> implements Educat
         super(Education.class);
     }
 
+
+    @Override
+    public Education update(Education education, Boolean retainTransientFields) {
+
+        if(retainTransientFields) {
+            // keep current collection attributes of resource (and other marked @XmlTransient)
+            Education currentEducation = findByIdEagerly(education.getEducationId());
+            if(currentEducation != null) {
+                education.setEducatedEmployees(currentEducation.getEducatedEmployees());
+            }
+        }
+        return update(education);
+    }
+
+    @Override
+    public List<Education> findAllEagerly() {
+        return findAllEagerly(null, null);
+    }
+
+    @Override
+    public List<Education> findAllEagerly(Integer start, Integer limit) {
+
+        TypedQuery<Education> query = getEntityManager().createNamedQuery(Education.FIND_ALL_EAGERLY, Education.class);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
+    public Education findByIdEagerly(Long educationId) {
+
+        TypedQuery<Education> query = getEntityManager().createNamedQuery(Education.FIND_BY_ID_EAGERLY, Education.class);
+        query.setParameter("educationId", educationId);
+        try {
+            return query.getSingleResult();
+        } catch (NoResultException | NonUniqueResultException ex) {
+            return null;
+        }
+    }
 
     @Override
     public List<Education> findByDegree(String degree) {
@@ -154,6 +193,23 @@ public class EducationFacade extends AbstractFacade<Education> implements Educat
     }
 
     @Override
+    public List<Education> findByEmployeeEagerly(Employee employee) {
+        return findByEmployeeEagerly(employee, null, null);
+    }
+
+    @Override
+    public List<Education> findByEmployeeEagerly(Employee employee, Integer start, Integer limit) {
+
+        TypedQuery<Education> query = getEntityManager().createNamedQuery(Education.FIND_BY_EMPLOYEE_EAGERLY, Education.class);
+        query.setParameter("employee", employee);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
     public List<Education> findByEmployeeAndKeyword(Employee employee, String keyword) {
         return findByEmployeeAndKeyword(employee, keyword, null, null);
     }
@@ -169,6 +225,14 @@ public class EducationFacade extends AbstractFacade<Education> implements Educat
             query.setMaxResults(limit);
         }
         return query.getResultList();
+    }
+
+    @Override
+    public Long countByEmployee(Employee employee) {
+
+        TypedQuery<Long> query = getEntityManager().createNamedQuery(Education.COUNT_BY_EMPLOYEE, Long.class);
+        query.setParameter("employee", employee);
+        return query.getSingleResult();
     }
 
     @Override
@@ -236,5 +300,45 @@ public class EducationFacade extends AbstractFacade<Education> implements Educat
             query.setParameter("educations", educations);
             return query.executeUpdate();
          */
+    }
+
+    @Override
+    public List<Education> findByMultipleCriteria(List<String> degrees, List<String> faculties, List<String> schools, List<Employee> employees) {
+        return null;
+    }
+
+    @Override
+    public List<Education> findByMultipleCriteria(List<String> degrees, List<String> faculties, List<String> schools, List<Employee> employees, Integer start, Integer limit) {
+        return null;
+    }
+
+    @Override
+    public List<Education> findByMultipleCriteria(List<String> keywords, List<Employee> employees) {
+        return null;
+    }
+
+    @Override
+    public List<Education> findByMultipleCriteria(List<String> keywords, List<Employee> employees, Integer start, Integer limit) {
+        return null;
+    }
+
+    @Override
+    public List<Education> findByMultipleCriteriaEagerly(List<String> degrees, List<String> faculties, List<String> schools, List<Employee> employees) {
+        return null;
+    }
+
+    @Override
+    public List<Education> findByMultipleCriteriaEagerly(List<String> degrees, List<String> faculties, List<String> schools, List<Employee> employees, Integer start, Integer limit) {
+        return null;
+    }
+
+    @Override
+    public List<Education> findByMultipleCriteriaEagerly(List<String> keywords, List<Employee> employees) {
+        return null;
+    }
+
+    @Override
+    public List<Education> findByMultipleCriteriaEagerly(List<String> keywords, List<Employee> employees, Integer start, Integer limit) {
+        return null;
     }
 }

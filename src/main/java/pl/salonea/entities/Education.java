@@ -22,9 +22,11 @@ import java.util.Set;
 @XmlType(propOrder = {"educationId", "degree", "faculty", "school"})
 
 @Entity
-@Table(name = "education", uniqueConstraints = @UniqueConstraint(columnNames = {"degree", "school"}))
+@Table(name = "education", uniqueConstraints = @UniqueConstraint(columnNames = {"degree", "faculty", "school"}))
 @Access(AccessType.PROPERTY)
 @NamedQueries({
+        @NamedQuery(name = Education.FIND_ALL_EAGERLY, query = "SELECT DISTINCT e FROM Education e LEFT JOIN FETCH e.educatedEmployees"),
+        @NamedQuery(name = Education.FIND_BY_ID_EAGERLY, query = "SELECT e FROM Education e LEFT JOIN FETCH e.educatedEmployees WHERE e.educationId = :educationId"),
         @NamedQuery(name = Education.FIND_BY_DEGREE, query = "SELECT e FROM Education e WHERE e.degree LIKE :degree"),
         @NamedQuery(name = Education.FIND_BY_FACULTY, query = "SELECT e FROM Education e WHERE e.faculty LIKE :faculty"),
         @NamedQuery(name = Education.FIND_BY_SCHOOL, query = "SELECT e FROM Education e WHERE e.school LIKE :school"),
@@ -32,17 +34,22 @@ import java.util.Set;
         @NamedQuery(name = Education.FIND_BY_FACULTY_AND_SCHOOL,query = "SELECT e FROM Education e WHERE e.faculty LIKE :faculty AND e.school LIKE :school"),
         @NamedQuery(name = Education.FIND_BY_KEYWORD, query = "SELECT e FROM Education e WHERE e.degree LIKE :keyword OR e.faculty LIKE :keyword OR e.school LIKE :keyword"),
         @NamedQuery(name = Education.FIND_BY_EMPLOYEE, query = "SELECT e FROM Education e WHERE :employee MEMBER OF e.educatedEmployees"),
+        @NamedQuery(name = Education.FIND_BY_EMPLOYEE_EAGERLY, query = "SELECT DISTINCT e FROM Education e LEFT JOIN FETCH e.educatedEmployees WHERE :employee MEMBER OF e.educatedEmployees"),
         @NamedQuery(name = Education.FIND_BY_EMPLOYEE_AND_KEYWORD, query = "SELECT e FROM Education e WHERE :employee MEMBER OF e.educatedEmployees " +
                                                                             "AND (e.degree LIKE :keyword OR e.faculty LIKE :keyword OR e.school LIKE :keyword)"),
+        @NamedQuery(name = Education.COUNT_BY_EMPLOYEE, query = "SELECT COUNT(e) FROM Education e WHERE :employee MEMBER OF e.educatedEmployees"),
         @NamedQuery(name = Education.DELETE_BY_DEGREE, query = "DELETE FROM Education e WHERE e.degree = :degree"),
         @NamedQuery(name = Education.DELETE_BY_FACULTY, query = "DELETE FROM Education e WHERE e.faculty = :faculty"),
         @NamedQuery(name = Education.DELETE_BY_SCHOOL, query = "DELETE FROM Education e WHERE e.school = :school"),
         @NamedQuery(name = Education.DELETE_BY_DEGREE_AND_SCHOOL, query = "DELETE FROM Education e WHERE e.degree = :degree AND e.school = :school"),
         @NamedQuery(name = Education.DELETE_BY_FACULTY_AND_SCHOOL, query = "DELETE FROM Education e WHERE e.faculty = :faculty AND e.school = :school"),
+        @NamedQuery(name = Education.DELETE_BY_EMPLOYEE, query = "DELETE FROM Education e WHERE :employee MEMBER OF e.educatedEmployees"),
         // @NamedQuery(name = Education.DELETE_BY_EDUCATIONS, query = "DELETE FROM Education e WHERE e IN :educations"), deprecated -- don't work in EclipseLink
 })
 public class Education implements Serializable {
 
+    public static final String FIND_ALL_EAGERLY = "Education.findAllEagerly";
+    public static final String FIND_BY_ID_EAGERLY = "Education.findByIdEagerly";
     public static final String FIND_BY_DEGREE = "Education.findByDegree";
     public static final String FIND_BY_FACULTY = "Education.findByFaculty";
     public static final String FIND_BY_SCHOOL = "Education.findBySchool";
@@ -50,12 +57,15 @@ public class Education implements Serializable {
     public static final String FIND_BY_FACULTY_AND_SCHOOL = "Education.findByFacultyAndSchool";
     public static final String FIND_BY_KEYWORD = "Education.findByKeyword";
     public static final String FIND_BY_EMPLOYEE = "Education.findByEmployee";
+    public static final String FIND_BY_EMPLOYEE_EAGERLY = "Education.findByEmployeeEagerly";
     public static final String FIND_BY_EMPLOYEE_AND_KEYWORD = "Education.findByEmployeeAndKeyword";
+    public static final String COUNT_BY_EMPLOYEE = "Education.countByEmployee";
     public static final String DELETE_BY_DEGREE = "Education.deleteByDegree";
     public static final String DELETE_BY_FACULTY = "Education.deleteByFaculty";
     public static final String DELETE_BY_SCHOOL = "Education.deleteBySchool";
     public static final String DELETE_BY_DEGREE_AND_SCHOOL = "Education.deleteByDegreeAndSchool";
     public static final String DELETE_BY_FACULTY_AND_SCHOOL = "Education.deleteByFacultyAndSchool";
+    public static final String DELETE_BY_EMPLOYEE = "Education.deleteByEmployee";
     //public static final String DELETE_BY_EDUCATIONS = "Education.deleteByEducations"; deprecated -- don't work in EclipseLink
 
     private Long educationId;
@@ -103,7 +113,6 @@ public class Education implements Serializable {
         this.degree = degree;
     }
 
-    @NotNull
     @Size(min = 2, max = 255)
     @Faculty
     @Column(name = "faculty", nullable = true, length = 255)

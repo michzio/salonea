@@ -204,9 +204,17 @@ public class SkillFacade extends AbstractFacade<Skill> implements SkillFacadeInt
     @Override
     public Integer deleteBySkills(List<Skill> skills) {
 
-        Query query = getEntityManager().createNamedQuery(Skill.DELETE_BY_SKILLS);
+        Integer deletedCount = 0;
+        for(Skill skill : skills) {
+            getEntityManager().remove(skill);
+            deletedCount++;
+        }
+        return deletedCount;
+
+       /* Query query = getEntityManager().createNamedQuery(Skill.DELETE_BY_SKILLS);
         query.setParameter("skills", skills);
         return query.executeUpdate();
+        */
     }
 
     @Override

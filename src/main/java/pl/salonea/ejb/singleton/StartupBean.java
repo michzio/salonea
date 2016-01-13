@@ -450,21 +450,44 @@ public class StartupBean {
 
     private void populateSkillsAndEducation() {
 
-        Employee employee = employeeFacade.find(11L);
+        Employee hairdresser = employeeFacade.find(11L);
+        // add some new employees
+        Date dateOfBirth = new GregorianCalendar(1995, Calendar.FEBRUARY, 23).getTime();
+        Employee dentist = new Employee("dentist@dentomed.pl", "dentist", "pAs12#", "Angelika", "Pstryczek", dateOfBirth, Gender.female, "specialist");
+        employeeFacade.create(dentist);
 
+        // skills
         Skill hairCutting = new Skill("Hair Cutting");
         hairCutting.setDescription("Hair Cutting is the ability to cut women or man hairs");
         Skill hairStyling = new Skill("Hair Styling");
         hairStyling.setDescription("Hair Styling is the ability to style women or man hairs");
 
+        Skill dentalFilling = new Skill("Dental filling");
+        dentalFilling.setDescription("Dental filling of teeth cavities");
+
         skillFacade.create(hairCutting);
         skillFacade.create(hairStyling);
+        skillFacade.create(dentalFilling);
 
-        employee.getSkills().add(hairCutting);
-        employee.getSkills().add(hairStyling);
+        hairdresser.getSkills().add(hairCutting);
+        hairdresser.getSkills().add(hairStyling);
+        dentist.getSkills().add(dentalFilling);
 
-        hairCutting.getSkilledEmployees().add(employee);
-        hairStyling.getSkilledEmployees().add(employee);
+        hairCutting.getSkilledEmployees().add(hairdresser);
+        hairStyling.getSkilledEmployees().add(hairdresser);
+        dentalFilling.getSkilledEmployees().add(dentist);
+
+        // education
+        Education hairdressingCollege = new Education("Hairdressing College", "Hair Dresser Certification");
+        Education dentistDegree = new Education("Collegium medicum of Jagielonian University", "Master of Dental Science");
+        dentistDegree.setFaculty("Faculty of Dental Medicine");
+
+        educationFacade.create(hairdressingCollege);
+        educationFacade.create(dentistDegree);
+
+        hairdresser.getEducations().add(hairdressingCollege);
+        dentist.getEducations().add(dentistDegree);
+
     }
 
 }
