@@ -2,12 +2,15 @@ package pl.salonea.ejb.stateless;
 
 import pl.salonea.ejb.interfaces.EducationFacadeInterface;
 import pl.salonea.entities.Education;
+import pl.salonea.entities.Education_;
 import pl.salonea.entities.Employee;
 
 import javax.ejb.LocalBean;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
 import javax.persistence.*;
+import javax.persistence.criteria.*;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -347,6 +350,92 @@ public class EducationFacade extends AbstractFacade<Education> implements Educat
                                                    Boolean orWithSchools, List<String> schools,
                                                    List<Employee> employees, Boolean eagerly, Integer start, Integer limit ) {
 
-        return null;
+        CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
+        CriteriaQuery<Education> criteriaQuery = criteriaBuilder.createQuery(Education.class);
+        // FROM
+        Root<Education> education = criteriaQuery.from(Education.class);
+        // SELECT
+        criteriaQuery.select(education).distinct(true);
+
+        // INNER JOIN-s
+        Join<Education, Employee> employee = null;
+
+        // WHERE PREDICATES
+        List<Predicate> predicates = new ArrayList<>();
+        List<Predicate> orPredicates = new ArrayList<>();
+
+        if(degrees != null && degrees.size() > 0) {
+
+            List<Predicate> orDegreePredicates = new ArrayList<>();
+
+            for(String degree : degrees) {
+                orDegreePredicates.add( criteriaBuilder.like(education.get(Education_.degree), "%" + degree + "%") );
+            }
+
+            if(orWithDegrees) {
+                orPredicates.add( criteriaBuilder.or(orDegreePredicates.toArray(new Predicate[] {})) );
+            } else {
+                predicates.add( criteriaBuilder.or(orDegreePredicates.toArray(new Predicate[] {})) );
+            }
+        }
+
+        if(faculties != null && faculties.size() > 0) {
+
+            List<Predicate> orFacultyPredicates = new ArrayList<>();
+
+            for(String faculty : faculties) {
+                orFacultyPredicates.add( criteriaBuilder.like(education.get(Education_.faculty), "%" + faculty + "%") );
+            }
+
+            if(orWithFaculties) {
+                orPredicates.add( criteriaBuilder.or(orFacultyPredicates.toArray(new Predicate[] {})) );
+            } else {
+                predicates.add( criteriaBuilder.or(orFacultyPredicates.toArray(new Predicate[] {})) );
+            }
+        }
+
+        if(schools != null && schools.size() > 0) {
+
+            List<Predicate> orSchoolPredicates = new ArrayList<>();
+
+            for(String school : schools) {
+                orSchoolPredicates.add( criteriaBuilder.like(education.get(Education_.school), "%" + school + "%") );
+            }
+
+            if(orWithSchools) {
+                orPredicates.add( criteriaBuilder.or(orSchoolPredicates.toArray(new Predicate[] {})) );
+            } else {
+                predicates.add( criteriaBuilder.or(orSchoolPredicates.toArray(new Predicate[] {})) );
+            }
+        }
+
+        if(orPredicates.size() > 0)
+            predicates.add( criteriaBuilder.or(orPredicates.toArray(new Predicate[] {})) );
+
+        if(employees != null && employees.size() > 0) {
+
+            if(employee == null) employee = education.join(Education_.educatedEmployees);
+
+            predicates.add( employee.in(employees) );
+
+            if(eagerly) {
+                // then fetch associated collection of entities
+                education.fetch("educatedEmployees", JoinType.INNER);
+            }
+        } else if(eagerly) {
+            // then left fetch associated collection of entities
+            education.fetch("educatedEmployees", JoinType.LEFT);
+        }
+
+        // WHERE predicate1 AND predicate2 AND ... AND predicateN
+        criteriaQuery.where(predicates.toArray(new Predicate[]{}));
+
+        TypedQuery<Education> query = getEntityManager().createQuery(criteriaQuery);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+
+        return query.getResultList();
     }
 }
