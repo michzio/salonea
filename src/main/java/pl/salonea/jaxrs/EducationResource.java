@@ -5,25 +5,32 @@ import pl.salonea.ejb.stateless.EmployeeFacade;
 import pl.salonea.entities.Education;
 import pl.salonea.entities.Employee;
 import pl.salonea.jaxrs.bean_params.EducationBeanParam;
+import pl.salonea.jaxrs.bean_params.EmployeeBeanParam;
 import pl.salonea.jaxrs.bean_params.GenericBeanParam;
+import pl.salonea.jaxrs.bean_params.PaginationBeanParam;
 import pl.salonea.jaxrs.exceptions.*;
 import pl.salonea.jaxrs.exceptions.BadRequestException;
 import pl.salonea.jaxrs.exceptions.ForbiddenException;
 import pl.salonea.jaxrs.exceptions.NotFoundException;
 import pl.salonea.jaxrs.utils.RESTToolkit;
 import pl.salonea.jaxrs.utils.ResourceList;
+import pl.salonea.jaxrs.utils.ResponseWrapper;
 import pl.salonea.jaxrs.utils.hateoas.Link;
 import pl.salonea.jaxrs.wrappers.EducationWrapper;
+import pl.salonea.jaxrs.wrappers.EmployeeWrapper;
 
 import javax.ejb.EJBException;
 import javax.ejb.EJBTransactionRolledbackException;
 import javax.inject.Inject;
-import javax.transaction.UserTransaction;
+import javax.transaction.*;
+import javax.transaction.NotSupportedException;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.lang.reflect.Method;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.ws.rs.core.Response.Status;
@@ -261,6 +268,149 @@ public class EducationResource {
     }
 
     /**
+     * Method that removes Education entity from database for given ID
+     * The ID is passed through path param.
+     */
+    @DELETE
+    @Path("/{educationId : \\d+}")  // catch only numeric identifiers
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response removeEducation( @PathParam("educationId") Long educationId,
+                                     @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "removing given Education by executing EducationResource.removeEducation(educationId) method of REST API");
+
+        // find Education entity that should be deleted
+        Education toDeleteEducation = educationFacade.find(educationId);
+        // throw exception if entity hasn't been found
+        if(toDeleteEducation == null)
+            throw new NotFoundException("Could not find education to delete for given id: " + educationId + ".");
+
+        // remove entity from database
+        educationFacade.remove(toDeleteEducation);
+
+        return Response.status(Status.NO_CONTENT).build();
+    }
+
+    /**
+     * Additional methods returning a subset of resources based on given criteria.
+     * You can also achieve similar results by applying @QueryParams to generic method
+     * returning all resources in order to filter and limit them.
+     */
+
+    /**
+     * Method returns number of Education entities in database
+     */
+    @GET
+    @Path("/count")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response countEducations( @BeanParam GenericBeanParam params ) throws ForbiddenException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning number of educations by executing EducationResource.countEducations() method of REST API");
+
+        ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(educationFacade.count()), 200, "number of educations");
+        return Response.status(Status.OK).entity(responseEntity).build();
+    }
+
+    /**
+     * Method returns subset of Education entities for given degree.
+     * The degree is passed through path param.
+     */
+    @GET
+    @Path("/with-degree/{degree : \\S+}")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getEducationsByDegree( @PathParam("degree") String degree,
+                                           @BeanParam PaginationBeanParam params ) throws ForbiddenException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning educations for given degree using EducationResource.getEducationsByDegree(degree) method of REST API");
+
+        // find educations by given criteria
+        ResourceList<Education> educations = new ResourceList<>( educationFacade.findByDegree(degree, params.getOffset(), params.getLimit()) );
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        EducationResource.populateWithHATEOASLinks(educations, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(educations).build();
+    }
+
+    /**
+     * Method returns subset of Education entities for given faculty.
+     * The faculty is passed through path param.
+     */
+    @GET
+    @Path("/at-faculty/{faculty : \\S+}")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getEducationsByFaculty( @PathParam("faculty") String faculty,
+                                            @BeanParam PaginationBeanParam params ) throws ForbiddenException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning educations for given faculty using EducationResource.getEducationsByFaculty(faculty) method of REST API");
+
+        // find educations by given criteria
+        ResourceList<Education> educations = new ResourceList<>( educationFacade.findByFaculty(faculty, params.getOffset(), params.getLimit()) );
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        EducationResource.populateWithHATEOASLinks(educations, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(educations).build();
+    }
+
+    /**
+     * Method returns subset of Education entities for given school.
+     * The school is passed through path param.
+     */
+    @GET
+    @Path("/at-school/{school : \\S+}")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getEducationsBySchool( @PathParam("school") String school,
+                                           @BeanParam PaginationBeanParam params ) throws ForbiddenException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning educations for given school using EducationResource.getEducationsBySchool(school) method of REST API");
+
+        // find educations by given criteria
+        ResourceList<Education> educations = new ResourceList<>( educationFacade.findBySchool(school, params.getOffset(), params.getLimit()) );
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        EducationResource.populateWithHATEOASLinks(educations, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(educations).build();
+    }
+
+    /**
+     * Method returns subset of Education entities for given keyword.
+     * The keyword is passed through path param.
+     */
+    @GET
+    @Path("/containing-keyword/{keyword : \\S+}")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getEducationsByKeyword( @PathParam("keyword") String keyword,
+                                            @BeanParam PaginationBeanParam params ) throws ForbiddenException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning educations for given keyword using EducationResource.getEducationsByKeyword(keyword) method of REST API");
+
+        // find educations by given criteria
+        ResourceList<Education> educations = new ResourceList<>( educationFacade.findByKeyword(keyword, params.getOffset(), params.getLimit()) );
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        EducationResource.populateWithHATEOASLinks(educations, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(educations).build();
+    }
+
+    /**
+     * related subresources (through relationships)
+     */
+
+    @Path("/{educationId : \\d+}/employees")
+    public EmployeeResource getEmployeeResource() {
+        return new EmployeeResource();
+    }
+
+    /**
      * This method enables to populate list of resources and each individual resource on list with hypermedia links
      */
     public static void populateWithHATEOASLinks(ResourceList educations, UriInfo uriInfo, Integer offset, Integer limit) {
@@ -285,6 +435,33 @@ public class EducationResource {
 
             // get subset of resources hypermedia links
 
+            // with-degree
+            educations.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(EducationResource.class)
+                    .path("with-degree")
+                    .build())
+                    .rel("with-degree").build() );
+
+            // at-faculty
+            educations.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(EducationResource.class)
+                    .path("at-faculty")
+                    .build())
+                    .rel("at-faculty").build() );
+
+            // at-school
+            educations.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(EducationResource.class)
+                    .path("at-school")
+                    .build())
+                    .rel("at-school").build() );
+
+            // containing-keyword
+            educations.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(EducationResource.class)
+                    .path("containing-keyword")
+                    .build())
+                    .rel("containing-keyword").build() );
 
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
@@ -345,12 +522,143 @@ public class EducationResource {
              */
 
             // employees link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}
+            Method employeesMethod = EducationResource.class.getMethod("getEmployeeResource");
+            education.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(EducationResource.class)
+                    .path(employeesMethod)
+                    .resolveTemplate("educationId", education.getEducationId().toString())
+                    .build())
+                    .rel("employees").build() );
 
             // employees eagerly link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/eagerly
+            Method employeesEagerlyMethod = EducationResource.EmployeeResource.class.getMethod("getEducatedEmployeesEagerly", Long.class, EmployeeBeanParam.class);
+            education.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(EducationResource.class)
+                    .path(employeesMethod)
+                    .path(employeesEagerlyMethod)
+                    .resolveTemplate("educationId", education.getEducationId().toString())
+                    .build())
+                    .rel("employees-eagerly").build());
 
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
         }
+    }
+
+    public class EmployeeResource {
+
+        public EmployeeResource() { }
+
+        /**
+         * Method returns subset of Employee entities for given Education entity.
+         * The education id is passed through path param.
+         */
+        @GET
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getEducatedEmployees( @PathParam("educationId") Long educationId,
+                                              @BeanParam EmployeeBeanParam params ) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning employees for given education using EducationResource.EmployeeResource.getEducatedEmployees(educationId) method of REST API");
+
+            // find education entity for which to get associated employees
+            Education education = educationFacade.find(educationId);
+            if(education == null)
+                throw new NotFoundException("Could not find education for id " + educationId + ".");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<Employee> employees = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Education> educations = new ArrayList<>();
+                educations.add(education);
+
+                utx.begin();
+
+                // get employees for given education filtered by given params
+                employees = new ResourceList<>(
+                        employeeFacade.findByMultipleCriteria(params.getDescription(), params.getJobPositions(), params.getSkills(),
+                                educations, params.getServices(), params.getProviderServices(), params.getServicePoints(),
+                                params.getWorkStations(), params.getPeriod(), params.getStrictTerm(), params.getRated(),
+                                params.getMinAvgRating(), params.getMaxAvgRating(), params.getRatingClients(), params.getOffset(), params.getLimit())
+                );
+
+                utx.commit();
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get employees for given education without filtering (eventually paginated)
+                employees = new ResourceList<>( employeeFacade.findByEducation(education, params.getOffset(), params.getLimit()) );
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.EmployeeResource.populateWithHATEOASLinks(employees, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(employees).build();
+        }
+
+        /**
+         * Method returns subset of Employee entities for given Education fetching them eagerly.
+         * The education id is passed through path param.
+         */
+        @GET
+        @Path("/eagerly")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getEducatedEmployeesEagerly( @PathParam("educationId") Long educationId,
+                                                     @BeanParam EmployeeBeanParam params ) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning employees eagerly for given education using " +
+                    "EducationResource.EmployeeResource.getEducatedEmployeesEagerly(educationId) method of REST API" );
+
+            // find education entity for which to get associated employees
+            Education education = educationFacade.find(educationId);
+            if(education == null)
+                throw new NotFoundException("Could not find education for id " + educationId + ".");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<EmployeeWrapper> employees = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Education> educations = new ArrayList<>();
+                educations.add(education);
+
+                utx.begin();
+
+                // get employees eagerly for given education filtered by given params
+                employees = new ResourceList<>(
+                        EmployeeWrapper.wrap(
+                                employeeFacade.findByMultipleCriteriaEagerly(params.getDescription(), params.getJobPositions(), params.getSkills(),
+                                        educations, params.getServices(), params.getProviderServices(), params.getServicePoints(),
+                                        params.getWorkStations(), params.getPeriod(), params.getStrictTerm(), params.getRated(),
+                                        params.getMinAvgRating(), params.getMaxAvgRating(), params.getRatingClients(), params.getOffset(), params.getLimit())
+                        )
+                );
+
+                utx.commit();
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get employees eagerly for given education without filtering (eventually paginated)
+                employees = new ResourceList<>( EmployeeWrapper.wrap(employeeFacade.findByEducationEagerly(education, params.getOffset(), params.getLimit())) );
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.EmployeeResource.populateWithHATEOASLinks(employees, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(employees).build();
+        }
+
     }
 
 }
