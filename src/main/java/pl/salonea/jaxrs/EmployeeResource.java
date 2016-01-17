@@ -52,6 +52,8 @@ public class EmployeeResource {
     @Inject
     private EmployeeFacade employeeFacade;
     @Inject
+    private EducationFacade educationFacade;
+    @Inject
     private SkillFacade skillFacade;
     @Inject
     private ClientFacade clientFacade;
@@ -366,6 +368,9 @@ public class EmployeeResource {
      * related subresources (through relationships)
      */
 
+    @Path("/{userId: \\d+}/educations")
+    public EducationResource getEducationResource() { return new EducationResource(); }
+
     @Path("/{userId: \\d+}/skills")
     public SkillResource getSkillResource() { return new SkillResource(); }
 
@@ -487,6 +492,25 @@ public class EmployeeResource {
                         .rel("employee-eagerly").build() );
 
             // associated collections links with pattern: http://localhost:port/app/rest/{resources}/{id}/{relationship}
+
+            /**
+             * Educations associated with current Employee resource
+             */
+
+            // educations link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}
+            Method educationsMethod = EmployeeResource.class.getMethod("getEducationResource");
+            employee.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(EmployeeResource.class)
+                    .path(educationsMethod)
+                    .resolveTemplate("userId", employee.getUserId().toString())
+                    .build())
+                    .rel("educations").build());
+
+            // educations eagerly link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/eagerly
+
+            // educations count link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/count
+
+            // educations containing-keyword link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/containing-keyword
 
             /**
              * Skills associated with current Employee resource
@@ -680,6 +704,68 @@ public class EmployeeResource {
 
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
+        }
+    }
+
+    public class EducationResource {
+
+        public EducationResource() { }
+
+        /**
+         * Method returns subset of Education entities for given Employee entity.
+         * The employee id is passed through path param.
+         * They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getEmployeeEducations( @PathParam("userId") Long employeeId,
+                                               @BeanParam EducationBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning educations for given employee using EmployeeResource.EducationResource.getEmployeeEducations(employeeId) method of REST API");
+
+            // find employee entity for which to get associated educations
+            Employee employee = employeeFacade.find(employeeId);
+            if(employee == null)
+                throw new NotFoundException("Could not find employee for id " + employeeId + ".");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<Education> educations = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Employee> employees = new ArrayList<>();
+                employees.add(employee);
+
+                // get educations for given employee filtered by given query params
+
+                if( RESTToolkit.isSet(params.getKeywords()) ) {
+                    if( RESTToolkit.isSet(params.getDegrees()) || RESTToolkit.isSet(params.getFaculties()) || RESTToolkit.isSet(params.getSchools()) )
+                        throw new BadRequestException("Query params cannot include keywords and degrees, faculties or schools at the same time.");
+
+                    // find only by keywords
+                    educations = new ResourceList<>(
+                            educationFacade.findByMultipleCriteria(params.getKeywords(), employees, params.getOffset(), params.getLimit())
+                    );
+                } else {
+                    // find by degrees, faculties, schools
+                    educations = new ResourceList<>(
+                            educationFacade.findByMultipleCriteria(params.getDegrees(), params.getFaculties(), params.getSchools(), employees, params.getOffset(), params.getLimit())
+                    );
+                }
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get educations for given employee without filtering (eventually paginated)
+                educations = new ResourceList<>( educationFacade.findByEmployee(employee, params.getOffset(), params.getLimit()) );
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.EducationResource.populateWithHATEOASLinks(educations, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(educations).build();
         }
     }
 
