@@ -24,6 +24,7 @@ import pl.salonea.jaxrs.wrappers.ProviderWrapper;
 import javax.ejb.EJBException;
 import javax.ejb.EJBTransactionRolledbackException;
 import javax.inject.Inject;
+import javax.transaction.*;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -44,6 +45,9 @@ import java.util.logging.Logger;
 public class ClientResource {
 
     private static final Logger logger = Logger.getLogger(ClientResource.class.getName());
+
+    @Inject
+    private UserTransaction utx;
 
     @Inject
     private ClientFacade clientFacade;
@@ -1524,7 +1528,8 @@ public class ClientResource {
         @GET
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
         public Response getClientRatedEmployees( @PathParam("clientId") Long clientId,
-                                                 @BeanParam EmployeeBeanParam params ) throws ForbiddenException, NotFoundException {
+                                                 @BeanParam EmployeeBeanParam params ) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, javax.transaction.NotSupportedException {
 
             RESTToolkit.authorizeAccessToWebService(params);
             logger.log(Level.INFO, "returning employees rated by given client using ClientResource.EmployeeResource.getClientRatedEmployees(clientId) method of REST API");
@@ -1544,6 +1549,8 @@ public class ClientResource {
                 List<Client> clients = new ArrayList<>();
                 clients.add(client);
 
+                utx.begin();
+
                 // get employees for given client filtered by given params
                 employees = new ResourceList<>(
                         employeeFacade.findByMultipleCriteria(params.getDescription(), params.getJobPositions(), params.getSkills(), params.getEducations(),
@@ -1551,6 +1558,8 @@ public class ClientResource {
                                 params.getStrictTerm(), params.getRated(), params.getMinAvgRating(), params.getMaxAvgRating(), clients,
                                 params.getOffset(), params.getLimit())
                 );
+
+                utx.commit();
 
             } else {
                 logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
@@ -1569,7 +1578,8 @@ public class ClientResource {
         @Path("/eagerly")
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
         public Response getClientRatedEmployeesEagerly( @PathParam("clientId") Long clientId,
-                                                        @BeanParam EmployeeBeanParam params ) throws ForbiddenException, NotFoundException {
+                                                        @BeanParam EmployeeBeanParam params ) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, javax.transaction.NotSupportedException {
 
             RESTToolkit.authorizeAccessToWebService(params);
             logger.log(Level.INFO, "returning employees eagerly rated by given client using ClientResource.EmployeeResource.getClientRatedEmployeesEagerly(clientId) method of REST API");
@@ -1589,6 +1599,8 @@ public class ClientResource {
                 List<Client> clients = new ArrayList<>();
                 clients.add(client);
 
+                utx.begin();
+
                 // get employees eagerly for given client filtered by given params
                 employees = new ResourceList<>(
                         EmployeeWrapper.wrap(
@@ -1598,6 +1610,8 @@ public class ClientResource {
                                         params.getMaxAvgRating(), clients, params.getOffset(), params.getLimit())
                         )
                 );
+
+                utx.commit();
 
             } else {
                 logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");

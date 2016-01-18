@@ -514,8 +514,23 @@ public class EmployeeResource {
                     .rel("educations-eagerly").build());
 
             // educations count link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/count
+            Method countEmployeeEducationsMethod = EmployeeResource.EducationResource.class.getMethod("countEmployeeEducations", Long.class, GenericBeanParam.class);
+            employee.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(EmployeeResource.class)
+                    .path(educationsMethod)
+                    .path(countEmployeeEducationsMethod)
+                    .resolveTemplate("userId", employee.getUserId().toString())
+                    .build())
+                    .rel("educations-count").build());
 
             // educations containing-keyword link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/containing-keyword
+            employee.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(EmployeeResource.class)
+                    .path(educationsMethod)
+                    .path("containing-keyword")
+                    .resolveTemplate("userId", employee.getUserId().toString())
+                    .build())
+                    .rel("educations-containing-keyword").build());
 
             /**
              * Skills associated with current Employee resource
@@ -836,6 +851,61 @@ public class EmployeeResource {
 
             return Response.status(Status.OK).entity(educations).build();
         }
+
+        /**
+         * Method that counts Education entities for given Employee resource.
+         * The employee id is passed through path param.
+         */
+        @GET
+        @Path("/count")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response countEmployeeEducations( @PathParam("userId") Long employeeId,
+                                                 @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning number of educations for given employee by executing " +
+                    "EmployeeResource.EducationResource.countEmployeeEducations(employeeId) method of REST API");
+
+            // find employee entity for which to count educations
+            Employee employee = employeeFacade.find(employeeId);
+            if(employee == null)
+                throw new NotFoundException("Could not find employee for id " + employeeId + ".");
+
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(educationFacade.countByEmployee(employee)), 200,
+                    "number of educations for employee with id " + employee.getUserId());
+            return Response.status(Status.OK).entity(responseEntity).build();
+        }
+
+        /**
+         * Method returns subset of Education entities for given Employee and keyword.
+         * The employee id and keyword are passed through path params.
+         */
+        @GET
+        @Path("/containing-keyword/{keyword : \\S+}")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getEmployeeEducationsByKeyword( @PathParam("userId") Long employeeId,
+                                                        @PathParam("keyword") String keyword,
+                                                        @BeanParam PaginationBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning educations for given employee and keyword using " +
+                    "EmployeeResource.EducationResource.getEmployeeEducationsByKeyword(employeeId, keyword) method of REST API");
+
+            // find employee entity for which to get associated educations
+            Employee employee = employeeFacade.find(employeeId);
+            if(employee == null)
+                throw new NotFoundException("Could not find employee for id " + employeeId + ".");
+
+            // find educations by given criteria (employee and keyword)
+            ResourceList<Education> educations = new ResourceList<>(
+                    educationFacade.findByEmployeeAndKeyword(employee, keyword, params.getOffset(), params.getLimit())
+            );
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.EducationResource.populateWithHATEOASLinks(educations, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(educations).build();
+        }
     }
 
     public class SkillResource {
@@ -991,7 +1061,7 @@ public class EmployeeResource {
 
         /**
          * Method returns subset of Skill entities for given Employee and keyword.
-         * The employee id and keyword is passed through path param.
+         * The employee id and keyword are passed through path params.
          */
         @GET
         @Path("/containing-keyword/{keyword : \\S+}")
