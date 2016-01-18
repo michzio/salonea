@@ -24,10 +24,7 @@ import pl.salonea.jaxrs.utils.RESTToolkit;
 import pl.salonea.jaxrs.utils.ResourceList;
 import pl.salonea.jaxrs.utils.ResponseWrapper;
 import pl.salonea.jaxrs.utils.hateoas.Link;
-import pl.salonea.jaxrs.wrappers.ClientWrapper;
-import pl.salonea.jaxrs.wrappers.EmployeeWrapper;
-import pl.salonea.jaxrs.wrappers.ServicePointWrapper;
-import pl.salonea.jaxrs.wrappers.SkillWrapper;
+import pl.salonea.jaxrs.wrappers.*;
 
 import java.lang.reflect.Method;
 import java.net.URI;
@@ -507,6 +504,14 @@ public class EmployeeResource {
                     .rel("educations").build());
 
             // educations eagerly link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/eagerly
+            Method educationsEagerlyMethod = EmployeeResource.EducationResource.class.getMethod("getEmployeeEducationsEagerly", Long.class, EducationBeanParam.class);
+            employee.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(EmployeeResource.class)
+                    .path(educationsMethod)
+                    .path(educationsEagerlyMethod)
+                    .resolveTemplate("userId", employee.getUserId().toString())
+                    .build())
+                    .rel("educations-eagerly").build());
 
             // educations count link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/count
 
@@ -760,6 +765,70 @@ public class EmployeeResource {
 
                 // get educations for given employee without filtering (eventually paginated)
                 educations = new ResourceList<>( educationFacade.findByEmployee(employee, params.getOffset(), params.getLimit()) );
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.EducationResource.populateWithHATEOASLinks(educations, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(educations).build();
+        }
+
+        /**
+         * Method returns subset of Education entities for given Employee fetching them eagerly.
+         * The employee id is passed through path param.
+         * They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Path("/eagerly")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getEmployeeEducationsEagerly( @PathParam("userId") Long employeeId,
+                                                      @BeanParam EducationBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning educations eagerly for given employee using " +
+                    "EmployeeResource.EducationResource.getEmployeeEducationsEagerly(employeeId) method of REST API");
+
+            // find employee entity for which to get associated educations
+            Employee employee = employeeFacade.find(employeeId);
+            if(employee == null)
+                throw new NotFoundException("Could not find employee for id " + employeeId + ".");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<EducationWrapper> educations = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Employee> employees = new ArrayList<>();
+                employees.add(employee);
+
+                // get educations eagerly for given employee filtered by given params
+
+                if( RESTToolkit.isSet(params.getKeywords()) ) {
+                    if( RESTToolkit.isSet(params.getDegrees()) || RESTToolkit.isSet(params.getFaculties()) || RESTToolkit.isSet(params.getSchools()) )
+                        throw new BadRequestException("Query params cannot include keywords and degrees, faculties or schools at the same time.");
+
+                    // find only by keywords
+                    educations = new ResourceList<>(
+                            EducationWrapper.wrap(
+                                    educationFacade.findByMultipleCriteriaEagerly(params.getKeywords(), employees, params.getOffset(), params.getLimit())
+                            )
+                    );
+                } else {
+                    // find by degrees, faculties, schools
+                    educations = new ResourceList<>(
+                            EducationWrapper.wrap(
+                                    educationFacade.findByMultipleCriteriaEagerly(params.getDegrees(), params.getFaculties(), params.getSchools(), employees, params.getOffset(), params.getLimit())
+                            )
+                    );
+                }
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get educations eagerly for given employee without filtering (eventually paginated)
+                educations = new ResourceList<>( EducationWrapper.wrap(educationFacade.findByEmployeeEagerly(employee, params.getOffset(), params.getLimit())) );
+
             }
 
             // result resources need to be populated with hypermedia links to enable resource discovery
