@@ -52,6 +52,7 @@ import java.util.*;
         @NamedQuery(name = Employee.FIND_RATED_BY_CLIENT, query = "SELECT e FROM Employee e INNER JOIN e.receivedRatings er WHERE er.client = :client"),
         @NamedQuery(name = Employee.FIND_RATED_BY_CLIENT_EAGERLY, query = "SELECT e FROM Employee e LEFT JOIN FETCH e.termsOnWorkStation LEFT JOIN FETCH e.educations " +
                                                     "LEFT JOIN FETCH e.skills LEFT JOIN FETCH e.suppliedServices INNER JOIN FETCH e.receivedRatings er WHERE er.client = :client"),
+        @NamedQuery(name = Employee.COUNT_BY_SERVICE_POINT, query = "SELECT COUNT(DISTINCT e) FROM Employee e INNER JOIN e.termsOnWorkStation empl_term INNER JOIN empl_term.workStation ws WHERE ws.servicePoint = :service_point"),
 })
 public class Employee extends NaturalPerson {
 
@@ -78,6 +79,7 @@ public class Employee extends NaturalPerson {
     public static final String FIND_BY_WORK_STATION_AND_TERM_STRICT = "Employee.findByWorkStationAndTermStrict";
     public static final String FIND_RATED_BY_CLIENT = "Employee.findRatedByClient";
     public static final String FIND_RATED_BY_CLIENT_EAGERLY = "Employee.findRatedByClientEagerly";
+    public static final String COUNT_BY_SERVICE_POINT = "Employee.countByServicePoint";
 
     private String jobPosition;
     private String description;

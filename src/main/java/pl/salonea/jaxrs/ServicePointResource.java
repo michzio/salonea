@@ -15,6 +15,7 @@ import pl.salonea.jaxrs.utils.RESTToolkit;
 import pl.salonea.jaxrs.utils.ResourceList;
 import pl.salonea.jaxrs.utils.ResponseWrapper;
 import pl.salonea.jaxrs.utils.hateoas.Link;
+import pl.salonea.jaxrs.wrappers.EmployeeWrapper;
 import pl.salonea.jaxrs.wrappers.ServicePointPhotoWrapper;
 import pl.salonea.jaxrs.wrappers.ServicePointWrapper;
 
@@ -554,10 +555,47 @@ public class ServicePointResource {
              */
 
             // employees
+            Method employeesMethod = ServicePointResource.class.getMethod("getEmployeeResource");
+            servicePoint.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ServicePointResource.class)
+                    .path(employeesMethod)
+                    .resolveTemplate("providerId", servicePoint.getProvider().getUserId().toString())
+                    .resolveTemplate("servicePointNumber", servicePoint.getServicePointNumber().toString())
+                    .build())
+                    .rel("employees").build());
 
             // employees eagerly
+            Method employeesEagerlyMethod = ServicePointResource.EmployeeResource.class.getMethod("getServicePointEmployeesEagerly", Long.class, Integer.class, EmployeeBeanParam.class);
+            servicePoint.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ServicePointResource.class)
+                    .path(employeesMethod)
+                    .path(employeesEagerlyMethod)
+                    .resolveTemplate("providerId", servicePoint.getProvider().getUserId().toString())
+                    .resolveTemplate("servicePointNumber", servicePoint.getServicePointNumber().toString())
+                    .build())
+                    .rel("employees-eagerly").build());
+
+            // employees count
+            Method countEmployeesByServicePointMethod = ServicePointResource.EmployeeResource.class.getMethod("countEmployeesByServicePoint", Long.class, Integer.class, GenericBeanParam.class);
+            servicePoint.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ServicePointResource.class)
+                    .path(employeesMethod)
+                    .path(countEmployeesByServicePointMethod)
+                    .resolveTemplate("providerId", servicePoint.getProvider().getUserId().toString())
+                    .resolveTemplate("servicePointNumber", servicePoint.getServicePointNumber().toString())
+                    .build())
+                    .rel("employees-count").build());
 
             // employees by-term
+            Method employeesByTermMethod = ServicePointResource.EmployeeResource.class.getMethod("getServicePointEmployeesByTerm", Long.class, Integer.class, DateBetweenBeanParam.class);
+            servicePoint.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ServicePointResource.class)
+                    .path(employeesMethod)
+                    .path(employeesByTermMethod)
+                    .resolveTemplate("providerId", servicePoint.getProvider().getUserId().toString())
+                    .resolveTemplate("servicePointNumber", servicePoint.getServicePointNumber().toString())
+                    .build())
+                    .rel("employees-by-term").build());
 
             // employees by-term-strict
 
@@ -1071,6 +1109,134 @@ public class ServicePointResource {
             return Response.status(Status.OK).entity(employees).build();
         }
 
+
+        /**
+         * Method returns subset of Employee entities for given Service Point fetching them eagerly.
+         * The provider id and service point number are passed through path params.
+         */
+        @GET
+        @Path("/eagerly")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getServicePointEmployeesEagerly( @PathParam("providerId") Long providerId,
+                                                         @PathParam("servicePointNumber") Integer servicePointNumber,
+                                                         @BeanParam EmployeeBeanParam params ) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning employees eagerly for given service point using " +
+                    "ServicePointResource.EmployeeResource.getServicePointEmployeesEagerly(providerId, servicePointNumber) method of REST API");
+
+            utx.begin();
+
+            // find service point entity for which to get associated employees
+            ServicePoint servicePoint = servicePointFacade.find(new ServicePointId(providerId, servicePointNumber));
+            if(servicePoint == null)
+                throw new NotFoundException("Could not find service point for id (" + providerId + "," + servicePointNumber + ").");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<EmployeeWrapper> employees = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<ServicePoint> servicePoints = new ArrayList<>();
+                servicePoints.add(servicePoint);
+
+                // get employees eagerly for given service point filtered by given params
+                employees = new ResourceList<>(
+                        EmployeeWrapper.wrap(
+                                employeeFacade.findByMultipleCriteriaEagerly(params.getDescription(), params.getJobPositions(), params.getSkills(),
+                                        params.getEducations(), params.getServices(), params.getProviderServices(), servicePoints,
+                                        params.getWorkStations(), params.getPeriod(), params.getStrictTerm(), params.getRated(),
+                                        params.getMinAvgRating(), params.getMaxAvgRating(), params.getRatingClients(), params.getOffset(), params.getLimit())
+                        )
+                );
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get employees eagerly for given service point without filtering (eventually paginated)
+                employees = new ResourceList<>( EmployeeWrapper.wrap(employeeFacade.findByServicePointEagerly(servicePoint, params.getOffset(), params.getLimit())) );
+            }
+
+            utx.commit();
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.EmployeeResource.populateWithHATEOASLinks(employees, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(employees).build();
+        }
+
+        /**
+         * Method counts Employee entities for given Service Point entity.
+         * The provider id and service point number are passed through path params.
+         */
+        @GET
+        @Path("/count")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response countEmployeesByServicePoint( @PathParam("providerId") Long providerId,
+                                                      @PathParam("servicePointNumber") Integer servicePointNumber,
+                                                      @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning number of employees for given service point by executing " +
+                    "ServicePointResource.EmployeeResource.countEmployeesByServicePoint(providerId, servicePointNumber) method of REST API");
+
+            utx.begin();
+
+            // find service point entity for which to count employees
+            ServicePoint servicePoint = servicePointFacade.find( new ServicePointId(providerId, servicePointNumber) );
+            if(servicePoint == null)
+                throw new NotFoundException("Could not find service point for id (" + providerId + "," + servicePointNumber + ").");
+
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(employeeFacade.countByServicePoint(servicePoint)), 200,
+                    "number of employees for service point with id (" + providerId + "," + servicePointNumber + ").");
+
+            utx.commit();
+
+            return Response.status(Status.OK).entity(responseEntity).build();
+        }
+
+        /**
+         * Method returns subset of Employee entities for given Service Point entity and
+         * Term they work in it. The provider id and service point number are passed through
+         * path params. Term start and end dates are passed through query params.
+         */
+        @GET
+        @Path("/by-term")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getServicePointEmployeesByTerm( @PathParam("providerId") Long providerId,
+                                                        @PathParam("servicePointNumber") Integer servicePointNumber,
+                                                        @BeanParam DateBetweenBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException,
+          /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning employees for given service point and term (startDate, endDate) using " +
+                    "ServicePointResource.EmployeeResource.getServicePointEmployeesByTerm(providerId, servicePointNumber, term) method of REST API");
+
+            RESTToolkit.validateDateRange(params); // i.e. startDate and endDate
+
+            utx.begin();
+
+            // find service point entity for which to get associated employees
+            ServicePoint servicePoint = servicePointFacade.find(new ServicePointId(providerId, servicePointNumber));
+            if(servicePoint == null)
+                throw new NotFoundException("Could not find service point for id (" + providerId + "," + servicePointNumber + ").");
+
+            // find employees by given criteria (service point, term)
+            ResourceList<Employee> employees = new ResourceList<>(
+                    employeeFacade.findByServicePointAndTerm(servicePoint, params.getStartDate(), params.getEndDate(),
+                            params.getOffset(), params.getLimit())
+            );
+
+            utx.commit();
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.EmployeeResource.populateWithHATEOASLinks(employees, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(employees).build();
+        }
 
     }
 

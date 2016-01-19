@@ -448,6 +448,14 @@ public class EmployeeFacade extends AbstractFacade<Employee> implements Employee
     }
 
     @Override
+    public Long countByServicePoint(ServicePoint servicePoint) {
+
+        TypedQuery<Long> query = getEntityManager().createNamedQuery(Employee.COUNT_BY_SERVICE_POINT, Long.class);
+        query.setParameter("service_point", servicePoint);
+        return query.getSingleResult();
+    }
+
+    @Override
     public List<Employee> findByMultipleCriteria(String description, List<String> jobPositions, List<Skill> skills, List<Education> educations, List<Service> services, List<ProviderService> providerServices, List<ServicePoint> servicePoints, List<WorkStation> workStations, Period period, Boolean strictTerm, Boolean rated, Double minAvgRating, Double maxAvgRating, List<Client> ratingClients) {
         return findByMultipleCriteria(description, jobPositions, skills, educations, services, providerServices, servicePoints, workStations, period, strictTerm, rated, minAvgRating, maxAvgRating, ratingClients, null, null);
     }
