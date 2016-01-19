@@ -448,10 +448,34 @@ public class EmployeeFacade extends AbstractFacade<Employee> implements Employee
     }
 
     @Override
+    public Long countByService(Service service) {
+
+        TypedQuery<Long> query = getEntityManager().createNamedQuery(Employee.COUNT_BY_SERVICE, Long.class);
+        query.setParameter("service", service);
+        return query.getSingleResult();
+    }
+
+    @Override
+    public Long countByProviderService(ProviderService providerService) {
+
+        TypedQuery<Long> query = getEntityManager().createNamedQuery(Employee.COUNT_BY_PROVIDER_SERVICE, Long.class);
+        query.setParameter("provider_service", providerService);
+        return query.getSingleResult();
+    }
+
+    @Override
     public Long countByServicePoint(ServicePoint servicePoint) {
 
         TypedQuery<Long> query = getEntityManager().createNamedQuery(Employee.COUNT_BY_SERVICE_POINT, Long.class);
         query.setParameter("service_point", servicePoint);
+        return query.getSingleResult();
+    }
+
+    @Override
+    public Long countByWorkStation(WorkStation workStation) {
+
+        TypedQuery<Long> query = getEntityManager().createNamedQuery(Employee.COUNT_BY_WORK_STATION, Long.class);
+        query.setParameter("work_station", workStation);
         return query.getSingleResult();
     }
 

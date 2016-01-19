@@ -598,6 +598,15 @@ public class ServicePointResource {
                     .rel("employees-by-term").build());
 
             // employees by-term-strict
+            Method employeesByTermStrictMethod = ServicePointResource.EmployeeResource.class.getMethod("getServicePointEmployeesByTermStrict", Long.class, Integer.class, DateBetweenBeanParam.class);
+            servicePoint.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ServicePointResource.class)
+                    .path(employeesMethod)
+                    .path(employeesByTermStrictMethod)
+                    .resolveTemplate("providerId", servicePoint.getProvider().getUserId().toString())
+                    .resolveTemplate("servicePointNumber", servicePoint.getServicePointNumber().toString())
+                    .build())
+                    .rel("employees-by-term-strict").build());
 
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
@@ -1227,6 +1236,46 @@ public class ServicePointResource {
             // find employees by given criteria (service point, term)
             ResourceList<Employee> employees = new ResourceList<>(
                     employeeFacade.findByServicePointAndTerm(servicePoint, params.getStartDate(), params.getEndDate(),
+                            params.getOffset(), params.getLimit())
+            );
+
+            utx.commit();
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.EmployeeResource.populateWithHATEOASLinks(employees, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(employees).build();
+        }
+
+        /**
+         * Method returns subset of Employee entities for given Service Point entity and
+         * Term (strict) they work in it. The provider id and service point number are passed through
+         * path params. Term (strict) start and end dates are passed through query params.
+         */
+        @GET
+        @Path("/by-term-strict")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getServicePointEmployeesByTermStrict( @PathParam("providerId") Long providerId,
+                                                              @PathParam("servicePointNumber") Integer servicePointNumber,
+                                                              @BeanParam DateBetweenBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning employees for given service point and term strict (startDate, endDate) using " +
+                    "ServicePointResource.EmployeeResource.getServicePointEmployeesByTermStrict(providerId, servicePointNumber, termStrict) method of REST API");
+
+            RESTToolkit.validateDateRange(params); // i.e. startDate and endDate
+
+            utx.begin();
+
+            // find service point entity for which to get associated employees
+            ServicePoint servicePoint = servicePointFacade.find(new ServicePointId(providerId, servicePointNumber));
+            if(servicePoint == null)
+                throw new NotFoundException("Could not find service point for id (" + providerId + "," + servicePointNumber + ").");
+
+            // find employees by given criteria (service point, term strict)
+            ResourceList<Employee> employees = new ResourceList<>(
+                    employeeFacade.findByServicePointAndTermStrict(servicePoint, params.getStartDate(), params.getEndDate(),
                             params.getOffset(), params.getLimit())
             );
 

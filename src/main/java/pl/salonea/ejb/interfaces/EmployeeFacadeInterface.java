@@ -63,7 +63,10 @@ public interface EmployeeFacadeInterface extends AbstractFacadeInterface<Employe
     List<Employee> findRatedByClientEagerly(Client client);
     List<Employee> findRatedByClientEagerly(Client client, Integer start, Integer limit);
 
+    Long countByService(Service service);
+    Long countByProviderService(ProviderService providerService);
     Long countByServicePoint(ServicePoint servicePoint);
+    Long countByWorkStation(WorkStation workStation);
 
     List<Employee> findByMultipleCriteria(String description, List<String> jobPositions, List<Skill> skills, List<Education> educations, List<Service> services, List<ProviderService> providerServices, List<ServicePoint> servicePoints, List<WorkStation> workStations, Period period, Boolean strictTerm, Boolean rated, Double minAvgRating, Double maxAvgRating, List<Client> ratingClients);
     List<Employee> findByMultipleCriteria(String description, List<String> jobPositions, List<Skill> skills, List<Education> educations, List<Service> services, List<ProviderService> providerServices, List<ServicePoint> servicePoints, List<WorkStation> workStations, Period period, Boolean strictTerm, Boolean rated, Double minAvgRating, Double maxAvgRating, List<Client> ratingClients, Integer start, Integer limit);
