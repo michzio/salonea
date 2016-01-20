@@ -6,9 +6,7 @@ import pl.salonea.entities.*;
 import javax.ejb.LocalBean;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
-import javax.persistence.EntityManager;
-import javax.persistence.Query;
-import javax.persistence.TypedQuery;
+import javax.persistence.*;
 import javax.persistence.criteria.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,6 +28,47 @@ public class ServiceFacade extends AbstractFacade<Service> implements ServiceFac
 
     public ServiceFacade() {
         super(Service.class);
+    }
+
+    @Override
+    public Service update(Service service, Boolean retainTransientFields) {
+
+        if(retainTransientFields) {
+            // keep current collection attributes of resource (and other marked @XmlTransient)
+            Service currentService = findByIdEagerly(service.getServiceId());
+            if(currentService != null) {
+                service.setProvidedServiceOffers(currentService.getProvidedServiceOffers());
+            }
+        }
+        return update(service);
+    }
+
+    @Override
+    public List<Service> findAllEagerly() {
+        return findAllEagerly(null, null);
+    }
+
+    @Override
+    public List<Service> findAllEagerly(Integer start, Integer limit) {
+
+        TypedQuery<Service> query = getEntityManager().createNamedQuery(Service.FIND_ALL_EAGERLY, Service.class);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
+    public Service findByIdEagerly(Integer serviceId) {
+
+        TypedQuery<Service> query = getEntityManager().createNamedQuery(Service.FIND_BY_ID_EAGERLY, Service.class);
+        query.setParameter("serviceId", serviceId);
+        try {
+            return query.getSingleResult();
+        } catch (NoResultException | NonUniqueResultException ex) {
+            return null;
+        }
     }
 
     @Override
@@ -101,6 +140,23 @@ public class ServiceFacade extends AbstractFacade<Service> implements ServiceFac
     }
 
     @Override
+    public List<Service> findByCategoryEagerly(ServiceCategory serviceCategory) {
+        return findByCategoryEagerly(serviceCategory, null, null);
+    }
+
+    @Override
+    public List<Service> findByCategoryEagerly(ServiceCategory serviceCategory, Integer start, Integer limit) {
+
+        TypedQuery<Service> query = getEntityManager().createNamedQuery(Service.FIND_BY_CATEGORY_EAGERLY, Service.class);
+        query.setParameter("service_category", serviceCategory);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
     public List<Service> findByCategoryAndKeyword(ServiceCategory serviceCategory, String keyword) {
         return findByCategoryAndKeyword(serviceCategory, keyword, null, null);
     }
@@ -136,6 +192,23 @@ public class ServiceFacade extends AbstractFacade<Service> implements ServiceFac
     }
 
     @Override
+    public List<Service> findByProviderEagerly(Provider provider) {
+        return findByProviderEagerly(provider, null, null);
+    }
+
+    @Override
+    public List<Service> findByProviderEagerly(Provider provider, Integer start, Integer limit) {
+
+        TypedQuery<Service> query = getEntityManager().createNamedQuery(Service.FIND_BY_PROVIDER_EAGERLY, Service.class);
+        query.setParameter("provider", provider);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
     public List<Service> findByEmployee(Employee employee) {
         return findByEmployee(employee, null, null);
     }
@@ -144,6 +217,23 @@ public class ServiceFacade extends AbstractFacade<Service> implements ServiceFac
     public List<Service> findByEmployee(Employee employee, Integer start, Integer limit) {
 
         TypedQuery<Service> query = getEntityManager().createNamedQuery(Service.FIND_BY_EMPLOYEE, Service.class);
+        query.setParameter("employee", employee);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
+    public List<Service> findByEmployeeEagerly(Employee employee) {
+        return findByEmployeeEagerly(employee, null, null);
+    }
+
+    @Override
+    public List<Service> findByEmployeeEagerly(Employee employee, Integer start, Integer limit) {
+
+        TypedQuery<Service> query = getEntityManager().createNamedQuery(Service.FIND_BY_EMPLOYEE_EAGERLY, Service.class);
         query.setParameter("employee", employee);
         if(start != null && limit != null) {
             query.setFirstResult(start);
@@ -170,6 +260,23 @@ public class ServiceFacade extends AbstractFacade<Service> implements ServiceFac
     }
 
     @Override
+    public List<Service> findByWorkStationEagerly(WorkStation workStation) {
+        return findByWorkStationEagerly(workStation, null, null);
+    }
+
+    @Override
+    public List<Service> findByWorkStationEagerly(WorkStation workStation, Integer start, Integer limit) {
+
+        TypedQuery<Service> query = getEntityManager().createNamedQuery(Service.FIND_BY_WORK_STATION_EAGERLY, Service.class);
+        query.setParameter("work_station", workStation);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
     public List<Service> findByServicePoint(ServicePoint servicePoint) {
         return findByServicePoint(servicePoint, null, null);
     }
@@ -184,6 +291,63 @@ public class ServiceFacade extends AbstractFacade<Service> implements ServiceFac
             query.setMaxResults(limit);
         }
         return query.getResultList();
+    }
+
+    @Override
+    public List<Service> findByServicePointEagerly(ServicePoint servicePoint) {
+        return findByServicePointEagerly(servicePoint, null, null);
+    }
+
+    @Override
+    public List<Service> findByServicePointEagerly(ServicePoint servicePoint, Integer start, Integer limit) {
+
+        TypedQuery<Service> query = getEntityManager().createNamedQuery(Service.FIND_BY_SERVICE_POINT_EAGERLY, Service.class);
+        query.setParameter("service_point", servicePoint);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
+    public Long countByCategory(ServiceCategory serviceCategory) {
+
+        TypedQuery<Long> query = getEntityManager().createNamedQuery(Service.COUNT_BY_CATEGORY, Long.class);
+        query.setParameter("service_category", serviceCategory);
+        return query.getSingleResult();
+    }
+
+    @Override
+    public Long countByProvider(Provider provider) {
+
+        TypedQuery<Long> query = getEntityManager().createNamedQuery(Service.COUNT_BY_PROVIDER, Long.class);
+        query.setParameter("provider", provider);
+        return query.getSingleResult();
+    }
+
+    @Override
+    public Long countByEmployee(Employee employee) {
+
+        TypedQuery<Long> query = getEntityManager().createNamedQuery(Service.COUNT_BY_EMPLOYEE, Long.class);
+        query.setParameter("employee", employee);
+        return query.getSingleResult();
+    }
+
+    @Override
+    public Long countByServicePoint(ServicePoint servicePoint) {
+
+        TypedQuery<Long> query = getEntityManager().createNamedQuery(Service.COUNT_BY_SERVICE_POINT, Long.class);
+        query.setParameter("service_point", servicePoint);
+        return query.getSingleResult();
+    }
+
+    @Override
+    public Long countByWorkStation(WorkStation workStation) {
+
+        TypedQuery<Long> query = getEntityManager().createNamedQuery(Service.COUNT_BY_WORK_STATION, Long.class);
+        query.setParameter("work_station", workStation);
+        return query.getSingleResult();
     }
 
     @Override
@@ -203,8 +367,49 @@ public class ServiceFacade extends AbstractFacade<Service> implements ServiceFac
     }
 
     @Override
-    public List<Service> findByMultipleCriteria(String name, String description, String keyword, List<ServiceCategory> serviceCategories,
-                         List<Provider> providers, List<Employee> employees, List<WorkStation> workStations, List<ServicePoint> servicePoints) {
+    public List<Service> findByMultipleCriteria(List<String> names, List<String> descriptions, List<ServiceCategory> serviceCategories, List<Provider> providers, List<Employee> employees, List<WorkStation> workStations, List<ServicePoint> servicePoints) {
+        return null;
+    }
+
+    @Override
+    public List<Service> findByMultipleCriteria(List<String> names, List<String> descriptions, List<ServiceCategory> serviceCategories, List<Provider> providers, List<Employee> employees, List<WorkStation> workStations, List<ServicePoint> servicePoints, Integer start, Integer limit) {
+        return null;
+    }
+
+    @Override
+    public List<Service> findByMultipleCriteria(List<String> keywords, List<ServiceCategory> serviceCategories, List<Provider> providers, List<Employee> employees, List<WorkStation> workStations, List<ServicePoint> servicePoints) {
+        return null;
+    }
+
+    @Override
+    public List<Service> findByMultipleCriteria(List<String> keywords, List<ServiceCategory> serviceCategories, List<Provider> providers, List<Employee> employees, List<WorkStation> workStations, List<ServicePoint> servicePoints, Integer start, Integer limit) {
+        return null;
+    }
+
+    @Override
+    public List<Service> findByMultipleCriteriaEagerly(List<String> names, List<String> descriptions, List<ServiceCategory> serviceCategories, List<Provider> providers, List<Employee> employees, List<WorkStation> workStations, List<ServicePoint> servicePoints) {
+        return null;
+    }
+
+    @Override
+    public List<Service> findByMultipleCriteriaEagerly(List<String> names, List<String> descriptions, List<ServiceCategory> serviceCategories, List<Provider> providers, List<Employee> employees, List<WorkStation> workStations, List<ServicePoint> servicePoints, Integer start, Integer limit) {
+        return null;
+    }
+
+    @Override
+    public List<Service> findByMultipleCriteriaEagerly(List<String> keywords, List<ServiceCategory> serviceCategories, List<Provider> providers, List<Employee> employees, List<WorkStation> workStations, List<ServicePoint> servicePoints) {
+        return null;
+    }
+
+    @Override
+    public List<Service> findByMultipleCriteriaEagerly(List<String> keywords, List<ServiceCategory> serviceCategories, List<Provider> providers, List<Employee> employees, List<WorkStation> workStations, List<ServicePoint> servicePoints, Integer start, Integer limit) {
+        return null;
+    }
+
+
+    private List<Service> findByMultipleCriteria(Boolean orWithNames, List<String> names, Boolean orWithDescriptions, List<String> descriptions,
+                                                 List<ServiceCategory> serviceCategories, List<Provider> providers, List<Employee> employees,
+                                                 List<WorkStation> workStations, List<ServicePoint> servicePoints, Boolean eagerly, Integer start, Integer limit ) {
 
         CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
         CriteriaQuery<Service> criteriaQuery = criteriaBuilder.createQuery(Service.class);
@@ -231,14 +436,6 @@ public class ServiceFacade extends AbstractFacade<Service> implements ServiceFac
             // TODO maybe split description param into several keywords by blank spaces
             //      and make following predicate: %key1% AND %key2% AND ... AND %keyN%
             predicates.add(criteriaBuilder.like(service.get(Service_.description), "%" + description + "%"));
-        }
-
-        // keyword is searched either in name or description
-        if(keyword != null) {
-            Predicate namePredicate = criteriaBuilder.like(service.get(Service_.serviceName), "%" + keyword + "%");
-            Predicate descriptionPredicate = criteriaBuilder.like(service.get(Service_.description), "%" + keyword + "%");
-
-            predicates.add(criteriaBuilder.or(namePredicate, descriptionPredicate));
         }
 
         if(serviceCategories != null && serviceCategories.size() > 0) {
