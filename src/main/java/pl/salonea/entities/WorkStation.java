@@ -4,17 +4,20 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import pl.salonea.entities.idclass.WorkStationId;
 import pl.salonea.enums.WorkStationType;
+import pl.salonea.jaxrs.utils.hateoas.Link;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.xml.bind.annotation.*;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @XmlRootElement(name = "work-station")
 @XmlAccessorType(XmlAccessType.PROPERTY)
-@XmlType(propOrder = {"workStationNumber", "servicePoint", "workStationType"})
+@XmlType(propOrder = {"workStationNumber", "servicePoint", "workStationType", "links"})
 
 @Entity
 @Table(name = "work_station")
@@ -104,6 +107,9 @@ public class WorkStation implements Serializable{
 
     /* many-to-many relationship */
     private Set<ProviderService> providedServices = new HashSet<>();
+
+    // HATEOAS support for RESTFul web service in JAX-RS
+    private List<Link> links = new ArrayList<>();
 
     /* constructors */
 
@@ -206,5 +212,16 @@ public class WorkStation implements Serializable{
                 .append(getServicePoint(), rhs.getServicePoint())
                 .append(getWorkStationNumber(), rhs.getWorkStationNumber())
                 .isEquals();
+    }
+
+    @Transient
+    @XmlElementWrapper(name = "links")
+    @XmlElement(name = "link")
+    public List<Link> getLinks() {
+        return links;
+    }
+
+    public void setLinks(List<Link> links) {
+        this.links = links;
     }
 }

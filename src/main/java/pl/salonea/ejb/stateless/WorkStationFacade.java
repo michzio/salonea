@@ -2,6 +2,7 @@ package pl.salonea.ejb.stateless;
 
 import pl.salonea.ejb.interfaces.WorkStationFacadeInterface;
 import pl.salonea.entities.*;
+import pl.salonea.entities.idclass.ServicePointId;
 import pl.salonea.entities.idclass.WorkStationId;
 import pl.salonea.enums.WorkStationType;
 import pl.salonea.utils.Period;
@@ -9,9 +10,7 @@ import pl.salonea.utils.Period;
 import javax.ejb.LocalBean;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
-import javax.persistence.EntityManager;
-import javax.persistence.Query;
-import javax.persistence.TypedQuery;
+import javax.persistence.*;
 import javax.persistence.criteria.*;
 import java.util.ArrayList;
 import java.util.Date;
@@ -80,20 +79,66 @@ public class WorkStationFacade extends AbstractFacade<WorkStation> implements Wo
     }
 
     @Override
-    public List<WorkStation> findByServicePoint(ServicePoint servicePoint) {
-        return findByServicePoint(servicePoint, null, null);
+    public WorkStation createForServicePoint(ServicePointId servicePointId, WorkStation workStation) {
+
+        ServicePoint foundServicePoint = getEntityManager().find(ServicePoint.class, servicePointId);
+        workStation.setServicePoint(foundServicePoint);
+
+        return create(workStation);
     }
 
     @Override
-    public List<WorkStation> findByServicePoint(ServicePoint servicePoint, Integer start, Integer limit) {
+    public WorkStation update(WorkStationId workStationId, WorkStation workStation) {
 
-        TypedQuery<WorkStation> query = getEntityManager().createNamedQuery(WorkStation.FIND_BY_SERVICE_POINT, WorkStation.class);
-        query.setParameter("service_point", servicePoint);
+        return update(workStationId, workStation, true);
+    }
+
+    @Override
+    public WorkStation update(WorkStationId workStationId, WorkStation workStation, Boolean retainTransientFields) {
+
+        ServicePoint foundServicePoint = getEntityManager().find(ServicePoint.class, workStationId.getServicePoint());
+        workStation.setServicePoint(foundServicePoint);
+        workStation.setWorkStationNumber(workStationId.getWorkStationNumber());
+
+        if(retainTransientFields) {
+            // keep current collection attributes of resource (and other marked @XmlTransient)
+            WorkStation currentWorkStation = findByIdEagerly(workStationId);
+            if(currentWorkStation != null) {
+                workStation.setProvidedServices(currentWorkStation.getProvidedServices());
+                workStation.setTermsEmployeesWorkOn(currentWorkStation.getTermsEmployeesWorkOn());
+            }
+        }
+        return update(workStation);
+    }
+
+    @Override
+    public List<WorkStation> findAllEagerly() {
+        return findAllEagerly(null, null);
+    }
+
+    @Override
+    public List<WorkStation> findAllEagerly(Integer start, Integer limit) {
+
+        TypedQuery<WorkStation> query = getEntityManager().createNamedQuery(WorkStation.FIND_ALL_EAGERLY, WorkStation.class);
         if(start != null && limit != null) {
             query.setFirstResult(start);
             query.setMaxResults(limit);
         }
         return query.getResultList();
+    }
+
+    @Override
+    public WorkStation findByIdEagerly(WorkStationId workStationId) {
+
+        TypedQuery<WorkStation> query = getEntityManager().createNamedQuery(WorkStation.FIND_BY_ID_EAGERLY, WorkStation.class);
+        query.setParameter("userId", workStationId.getServicePoint().getProvider());
+        query.setParameter("servicePointNumber", workStationId.getServicePoint().getServicePointNumber());
+        query.setParameter("workStationNumber", workStationId.getWorkStationNumber());
+        try {
+            return query.getSingleResult();
+        } catch (NoResultException | NonUniqueResultException ex) {
+            return null;
+        }
     }
 
     @Override
@@ -106,6 +151,23 @@ public class WorkStationFacade extends AbstractFacade<WorkStation> implements Wo
 
         TypedQuery<WorkStation> query = getEntityManager().createNamedQuery(WorkStation.FIND_BY_TYPE, WorkStation.class);
         query.setParameter("work_station_type", type);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
+    public List<WorkStation> findByServicePoint(ServicePoint servicePoint) {
+        return findByServicePoint(servicePoint, null, null);
+    }
+
+    @Override
+    public List<WorkStation> findByServicePoint(ServicePoint servicePoint, Integer start, Integer limit) {
+
+        TypedQuery<WorkStation> query = getEntityManager().createNamedQuery(WorkStation.FIND_BY_SERVICE_POINT, WorkStation.class);
+        query.setParameter("service_point", servicePoint);
         if(start != null && limit != null) {
             query.setFirstResult(start);
             query.setMaxResults(limit);
