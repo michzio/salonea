@@ -35,7 +35,9 @@ import java.util.Set;
         @NamedQuery(name = ProviderService.FIND_BY_PROVIDER, query = "SELECT ps FROM ProviderService ps WHERE ps.provider = :provider"),
         @NamedQuery(name = ProviderService.FIND_BY_PROVIDER_EAGERLY, query = "SELECT DISTINCT ps FROM ProviderService ps LEFT JOIN FETCH ps.supplyingEmployees e LEFT JOIN FETCH ps.workStations ws WHERE ps.provider = :provider"),
         @NamedQuery(name = ProviderService.FIND_BY_SERVICE, query = "SELECT ps FROM ProviderService ps WHERE ps.service = :service"),
+        @NamedQuery(name = ProviderService.FIND_BY_SERVICE_EAGERLY, query =  "SELECT DISTINCT ps FROM ProviderService ps LEFT JOIN FETCH ps.supplyingEmployees e LEFT JOIN FETCH ps.workStations ws WHERE ps.service = :service"),
         @NamedQuery(name = ProviderService.FIND_BY_SERVICE_CATEGORY, query = "SELECT ps FROM ProviderService ps INNER JOIN ps.service s WHERE s.serviceCategory = :service_category"),
+        @NamedQuery(name = ProviderService.FIND_BY_SERVICE_CATEGORY_EAGERLY, query = "SELECT DISTINCT ps FROM ProviderService ps LEFT JOIN FETCH ps.supplyingEmployees e LEFT JOIN FETCH ps.workStations ws INNER JOIN ps.service s WHERE s.serviceCategory = :service_category"),
         @NamedQuery(name = ProviderService.FIND_BY_PROVIDER_AND_SERVICE_CATEGORY, query = "SELECT ps FROM ProviderService ps INNER JOIN ps.service s WHERE ps.provider = :provider AND s.serviceCategory = :service_category"),
         @NamedQuery(name = ProviderService.FIND_BY_DESCRIPTION, query = "SELECT ps FROM ProviderService ps WHERE ps.description LIKE :description"),
         @NamedQuery(name = ProviderService.FIND_BY_PROVIDER_AND_DESCRIPTION, query = "SELECT ps FROM ProviderService ps WHERE ps.provider = :provider AND ps.description LIKE :description"),
@@ -45,7 +47,9 @@ import java.util.Set;
         @NamedQuery(name = ProviderService.FIND_BY_SERVICE_AND_DISCOUNT, query = "SELECT ps FROM ProviderService ps WHERE ps.service = :service AND ps.discount >= :min_discount AND ps.discount <= :max_discount"),
         @NamedQuery(name = ProviderService.FIND_BY_PROVIDER_AND_DISCOUNT, query = "SELECT ps FROM ProviderService ps WHERE ps.provider = :provider AND ps.discount >= :min_discount AND ps.discount <= :max_discount"),
         @NamedQuery(name = ProviderService.FIND_BY_WORK_STATION, query = "SELECT ps FROM ProviderService ps WHERE :work_station MEMBER OF ps.workStations"),
+        @NamedQuery(name = ProviderService.FIND_BY_WORK_STATION_EAGERLY, query = "SELECT DISTINCT ps FROM ProviderService ps LEFT JOIN FETCH ps.supplyingEmployees e INNER JOIN FETCH ps.workStations ws WHERE ws = :work_station"),
         @NamedQuery(name = ProviderService.FIND_BY_EMPLOYEE, query = "SELECT ps FROM ProviderService ps WHERE :employee MEMBER OF ps.supplyingEmployees"),
+        @NamedQuery(name = ProviderService.FIND_BY_EMPLOYEE_EAGERLY, query = "SELECT DISTINCT ps FROM ProviderService ps INNER JOIN FETCH ps.supplyingEmployees e LEFT JOIN FETCH ps.workStations ws WHERE e = :employee"),
         @NamedQuery(name = ProviderService.FIND_BY_PROVIDER_AND_EMPLOYEE, query = "SELECT ps FROM ProviderService ps WHERE ps.provider = :provider AND :employee MEMBER OF ps.supplyingEmployees"),
         @NamedQuery(name = ProviderService.UPDATE_DISCOUNT_FOR_PROVIDER, query = "UPDATE ProviderService ps SET ps.discount = :new_discount WHERE ps.provider = :provider"),
         @NamedQuery(name = ProviderService.UPDATE_DISCOUNT_FOR_PROVIDER_AND_SERVICE_CATEGORY, query = "UPDATE ProviderService ps SET ps.discount = :new_discount WHERE ps.provider = :provider AND ps.service IN (SELECT s FROM Service s WHERE s.serviceCategory = :service_category)"),
@@ -60,7 +64,11 @@ import java.util.Set;
                 " ps.service IN (SELECT s FROM Service s WHERE s.serviceCategory = :service_category) AND :employee MEMBER OF ps.supplyingEmployees AND SIZE(ps.supplyingEmployees)= 1"),
         @NamedQuery(name = ProviderService.DELETE_FOR_PROVIDER, query = "DELETE FROM ProviderService ps WHERE ps.provider = :provider"),
         @NamedQuery(name = ProviderService.DELETE_FOR_SERVICE, query = "DELETE FROM ProviderService ps WHERE ps.service = :service"),
-        @NamedQuery(name = ProviderService.COUNT_BY_PROVIDER, query = "SELECT COUNT(ps) FROM ProviderService ps WHERE ps.provider = :provider")
+        @NamedQuery(name = ProviderService.COUNT_BY_PROVIDER, query = "SELECT COUNT(ps) FROM ProviderService ps WHERE ps.provider = :provider"),
+        @NamedQuery(name = ProviderService.COUNT_BY_SERVICE, query = "SELECT COUNT(ps) FROM ProviderService ps WHERE ps.service = :service"),
+        @NamedQuery(name = ProviderService.COUNT_BY_SERVICE_CATEGORY, query = "SELECT COUNT(ps) FROM ProviderService ps INNER JOIN ps.service s WHERE s.serviceCategory = :service_category"),
+        @NamedQuery(name = ProviderService.COUNT_BY_WORK_STATION, query = "SELECT COUNT(ps) FROM ProviderService ps WHERE :work_station MEMBER OF ps.workStations"),
+        @NamedQuery(name = ProviderService.COUNT_BY_EMPLOYEE, query = "SELECT COUNT(ps) FROM ProviderService ps WHERE :employee MEMBER OF ps.supplyingEmployees"),
 })
 @MutualProvider
 @PriceNeedType
@@ -69,21 +77,25 @@ public class ProviderService {
 
     public static final String FIND_ALL_EAGERLY = "ProviderService.findAllEagerly";
     public static final String FIND_BY_ID_EAGERLY = "ProviderService.findByIdEagerly";
+    public static final String FIND_BY_DESCRIPTION = "ProviderService.findByDescription";
     public static final String FIND_BY_PROVIDER = "ProviderService.findByProvider";
     public static final String FIND_BY_PROVIDER_EAGERLY = "ProviderService.findByProviderEagerly";
-    public static final String FIND_BY_SERVICE = "ProviderService.findByService";
-    public static final String FIND_BY_SERVICE_CATEGORY = "ProviderService.findByServiceCategory";
-    public static final String FIND_BY_PROVIDER_AND_SERVICE_CATEGORY = "ProviderService.findByProviderAndServiceCategory";
-    public static final String FIND_BY_DESCRIPTION = "ProviderService.findByDescription";
     public static final String FIND_BY_PROVIDER_AND_DESCRIPTION = "ProviderService.findByProviderAndDescription";
+    public static final String FIND_BY_PROVIDER_AND_DISCOUNT = "ProviderService.findByProviderAndDiscount";
+    public static final String FIND_BY_PROVIDER_AND_EMPLOYEE = "ProviderService.findByProviderAndEmployee";
+    public static final String FIND_BY_PROVIDER_AND_SERVICE_CATEGORY = "ProviderService.findByProviderAndServiceCategory";
+    public static final String FIND_BY_SERVICE = "ProviderService.findByService";
+    public static final String FIND_BY_SERVICE_EAGERLY = "ProviderService.findByServiceEagerly";
     public static final String FIND_BY_SERVICE_AND_DESCRIPTION = "ProviderService.findByServiceAndDescription";
     public static final String FIND_BY_SERVICE_AND_PRICE = "ProviderService.findByServiceAndPrice";
     public static final String FIND_BY_SERVICE_AND_DISCOUNTED_PRICE = "ProviderService.findByServiceAndDiscountedPrice";
     public static final String FIND_BY_SERVICE_AND_DISCOUNT = "ProviderService.findByServiceAndDiscount";
-    public static final String FIND_BY_PROVIDER_AND_DISCOUNT = "ProviderService.findByProviderAndDiscount";
+    public static final String FIND_BY_SERVICE_CATEGORY = "ProviderService.findByServiceCategory";
+    public static final String FIND_BY_SERVICE_CATEGORY_EAGERLY = "ProviderService.findByServiceCategory";
     public static final String FIND_BY_WORK_STATION = "ProviderService.findByWorkStation";
+    public static final String FIND_BY_WORK_STATION_EAGERLY = "ProviderService.findByWorkStationEagerly";
     public static final String FIND_BY_EMPLOYEE = "ProviderService.findByEmployee";
-    public static final String FIND_BY_PROVIDER_AND_EMPLOYEE = "ProviderService.findByProviderAndEmployee";
+    public static final String FIND_BY_EMPLOYEE_EAGERLY = "ProviderService.findByEmployeeEagerly";
     public static final String UPDATE_DISCOUNT_FOR_PROVIDER = "ProviderService.updateDiscountForProvider";
     public static final String UPDATE_DISCOUNT_FOR_PROVIDER_AND_SERVICE_CATEGORY = "ProviderService.updateDiscountForProviderAndServiceCategory";
     public static final String UPDATE_DISCOUNT_FOR_PROVIDER_AND_EMPLOYEE = "ProviderService.updateDiscountForProviderAndEmployee";
@@ -96,6 +108,10 @@ public class ProviderService {
     public static final String DELETE_FOR_PROVIDER = "ProviderService.deleteForProvider";
     public static final String DELETE_FOR_SERVICE = "ProviderService.deleteForService";
     public static final String COUNT_BY_PROVIDER = "ProviderService.countByProvider";
+    public static final String COUNT_BY_SERVICE = "ProviderService.countByService";
+    public static final String COUNT_BY_SERVICE_CATEGORY = "ProviderService.countByServiceCategory";
+    public static final String COUNT_BY_WORK_STATION = "ProviderService.countByWorkStation";
+    public static final String COUNT_BY_EMPLOYEE = "ProviderService.countByEmployee";
 
     private Provider provider; // PK, FK
     private Service service; // PK, FK
