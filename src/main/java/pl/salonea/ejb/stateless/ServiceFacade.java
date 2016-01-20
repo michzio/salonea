@@ -335,18 +335,18 @@ public class ServiceFacade extends AbstractFacade<Service> implements ServiceFac
     }
 
     @Override
-    public Long countByServicePoint(ServicePoint servicePoint) {
-
-        TypedQuery<Long> query = getEntityManager().createNamedQuery(Service.COUNT_BY_SERVICE_POINT, Long.class);
-        query.setParameter("service_point", servicePoint);
-        return query.getSingleResult();
-    }
-
-    @Override
     public Long countByWorkStation(WorkStation workStation) {
 
         TypedQuery<Long> query = getEntityManager().createNamedQuery(Service.COUNT_BY_WORK_STATION, Long.class);
         query.setParameter("work_station", workStation);
+        return query.getSingleResult();
+    }
+
+    @Override
+    public Long countByServicePoint(ServicePoint servicePoint) {
+
+        TypedQuery<Long> query = getEntityManager().createNamedQuery(Service.COUNT_BY_SERVICE_POINT, Long.class);
+        query.setParameter("service_point", servicePoint);
         return query.getSingleResult();
     }
 
@@ -368,55 +368,56 @@ public class ServiceFacade extends AbstractFacade<Service> implements ServiceFac
 
     @Override
     public List<Service> findByMultipleCriteria(List<String> names, List<String> descriptions, List<ServiceCategory> serviceCategories, List<Provider> providers, List<Employee> employees, List<WorkStation> workStations, List<ServicePoint> servicePoints) {
-        return null;
+        return findByMultipleCriteria(names, descriptions, serviceCategories, providers, employees, workStations, servicePoints, null, null);
     }
 
     @Override
     public List<Service> findByMultipleCriteria(List<String> names, List<String> descriptions, List<ServiceCategory> serviceCategories, List<Provider> providers, List<Employee> employees, List<WorkStation> workStations, List<ServicePoint> servicePoints, Integer start, Integer limit) {
-        return null;
+        return findByMultipleCriteria(false, names, false, descriptions, serviceCategories, providers, employees, workStations, servicePoints, false, start, limit);
     }
 
     @Override
     public List<Service> findByMultipleCriteria(List<String> keywords, List<ServiceCategory> serviceCategories, List<Provider> providers, List<Employee> employees, List<WorkStation> workStations, List<ServicePoint> servicePoints) {
-        return null;
+        return findByMultipleCriteria(keywords, serviceCategories, providers, employees, workStations, servicePoints, null, null);
     }
 
     @Override
     public List<Service> findByMultipleCriteria(List<String> keywords, List<ServiceCategory> serviceCategories, List<Provider> providers, List<Employee> employees, List<WorkStation> workStations, List<ServicePoint> servicePoints, Integer start, Integer limit) {
-        return null;
+        return findByMultipleCriteria(true, keywords, true, keywords, serviceCategories, providers, employees, workStations, servicePoints, false, start, limit);
     }
 
     @Override
     public List<Service> findByMultipleCriteriaEagerly(List<String> names, List<String> descriptions, List<ServiceCategory> serviceCategories, List<Provider> providers, List<Employee> employees, List<WorkStation> workStations, List<ServicePoint> servicePoints) {
-        return null;
+        return findByMultipleCriteriaEagerly(names, descriptions, serviceCategories, providers, employees, workStations, servicePoints, null, null);
     }
 
     @Override
     public List<Service> findByMultipleCriteriaEagerly(List<String> names, List<String> descriptions, List<ServiceCategory> serviceCategories, List<Provider> providers, List<Employee> employees, List<WorkStation> workStations, List<ServicePoint> servicePoints, Integer start, Integer limit) {
-        return null;
+        return findByMultipleCriteria(false, names, false, descriptions, serviceCategories, providers, employees, workStations, servicePoints, true, start, limit);
     }
 
     @Override
     public List<Service> findByMultipleCriteriaEagerly(List<String> keywords, List<ServiceCategory> serviceCategories, List<Provider> providers, List<Employee> employees, List<WorkStation> workStations, List<ServicePoint> servicePoints) {
-        return null;
+        return findByMultipleCriteriaEagerly(keywords, serviceCategories, providers, employees, workStations, servicePoints, null, null);
     }
 
     @Override
     public List<Service> findByMultipleCriteriaEagerly(List<String> keywords, List<ServiceCategory> serviceCategories, List<Provider> providers, List<Employee> employees, List<WorkStation> workStations, List<ServicePoint> servicePoints, Integer start, Integer limit) {
-        return null;
+        return findByMultipleCriteria(true, keywords, true, keywords, serviceCategories, providers, employees, workStations, servicePoints, true, start, limit);
     }
 
-
-    private List<Service> findByMultipleCriteria(Boolean orWithNames, List<String> names, Boolean orWithDescriptions, List<String> descriptions,
-                                                 List<ServiceCategory> serviceCategories, List<Provider> providers, List<Employee> employees,
-                                                 List<WorkStation> workStations, List<ServicePoint> servicePoints, Boolean eagerly, Integer start, Integer limit ) {
+    private List<Service> findByMultipleCriteria(Boolean orWithNames, List<String> names,
+                                                 Boolean orWithDescriptions, List<String> descriptions,
+                                                 List<ServiceCategory> serviceCategories, List<Provider> providers,
+                                                 List<Employee> employees, List<WorkStation> workStations,
+                                                 List<ServicePoint> servicePoints, Boolean eagerly, Integer start, Integer limit) {
 
         CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
         CriteriaQuery<Service> criteriaQuery = criteriaBuilder.createQuery(Service.class);
         // FROM
         Root<Service> service = criteriaQuery.from(Service.class);
         // SELECT
-        criteriaQuery.select(service);
+        criteriaQuery.select(service).distinct(true);
 
         // INNER JOIN-s
         Join<Service, ProviderService> providerService = null;
@@ -426,21 +427,45 @@ public class ServiceFacade extends AbstractFacade<Service> implements ServiceFac
 
         // WHERE PREDICATES
         List<Predicate> predicates = new ArrayList<>();
+        List<Predicate> orPredicates = new ArrayList<>();
 
-        if(name != null) {
-            predicates.add(criteriaBuilder.like(service.get(Service_.serviceName), "%" + name + "%"));
+        if(names != null && names.size() > 0) {
+
+            List<Predicate> orNamePredicates = new ArrayList<>();
+
+            for(String name : names) {
+                orNamePredicates.add( criteriaBuilder.like(service.get(Service_.serviceName), "%" + name + "%") );
+            }
+
+            if(orWithNames) {
+                orPredicates.add( criteriaBuilder.or(orNamePredicates.toArray(new Predicate[] {})) );
+            } else {
+                predicates.add( criteriaBuilder.or(orNamePredicates.toArray(new Predicate[] {})) );
+            }
         }
 
-        if(description != null) {
+        if(descriptions != null && descriptions.size() > 0) {
 
-            // TODO maybe split description param into several keywords by blank spaces
-            //      and make following predicate: %key1% AND %key2% AND ... AND %keyN%
-            predicates.add(criteriaBuilder.like(service.get(Service_.description), "%" + description + "%"));
+            List<Predicate> orDescriptionPredicates = new ArrayList<>();
+
+            for(String description : descriptions) {
+                orDescriptionPredicates.add( criteriaBuilder.like(service.get(Service_.description), "%" + description + "%") );
+            }
+
+            if(orWithDescriptions) {
+                orPredicates.add( criteriaBuilder.or(orDescriptionPredicates.toArray(new Predicate[] {})) );
+            } else {
+                predicates.add( criteriaBuilder.or(orDescriptionPredicates.toArray(new Predicate[] {})) );
+            }
         }
+
+        if(orPredicates.size() > 0)
+            predicates.add( criteriaBuilder.or(orPredicates.toArray(new Predicate[]{})) );
+
 
         if(serviceCategories != null && serviceCategories.size() > 0) {
 
-            predicates.add(service.get(Service_.serviceCategory).in(serviceCategories));
+            predicates.add( service.get(Service_.serviceCategory).in(serviceCategories) );
         }
 
         if(providers != null && providers.size() > 0) {
@@ -454,13 +479,13 @@ public class ServiceFacade extends AbstractFacade<Service> implements ServiceFac
 
             if(providerService == null) providerService = service.join(Service_.providedServiceOffers);
 
-            List<Predicate> orPredicates = new ArrayList<>();
+            List<Predicate> orEmployeePredicates = new ArrayList<>();
 
             for(Employee employee : employees) {
-                orPredicates.add( criteriaBuilder.isMember(employee, providerService.get(ProviderService_.supplyingEmployees)) );
+                orEmployeePredicates.add( criteriaBuilder.isMember(employee, providerService.get(ProviderService_.supplyingEmployees)) );
             }
 
-            predicates.add( criteriaBuilder.or(orPredicates.toArray(new Predicate[] {})) );
+            predicates.add( criteriaBuilder.or(orEmployeePredicates.toArray(new Predicate[]{})) );
 
         }
 
@@ -468,13 +493,13 @@ public class ServiceFacade extends AbstractFacade<Service> implements ServiceFac
 
             if(providerService == null) providerService = service.join(Service_.providedServiceOffers);
 
-            List<Predicate> orPredicates = new ArrayList<>();
+            List<Predicate> orWorkStationPredicates = new ArrayList<>();
 
             for(WorkStation workStation : workStations) {
-                orPredicates.add( criteriaBuilder.isMember(workStation, providerService.get(ProviderService_.workStations)) );
+                orWorkStationPredicates.add( criteriaBuilder.isMember(workStation, providerService.get(ProviderService_.workStations)) );
             }
 
-            predicates.add( criteriaBuilder.or(orPredicates.toArray(new Predicate[] {})) );
+            predicates.add( criteriaBuilder.or(orWorkStationPredicates.toArray(new Predicate[] {})) );
         }
 
         if(servicePoints != null && servicePoints.size() > 0) {
@@ -484,13 +509,26 @@ public class ServiceFacade extends AbstractFacade<Service> implements ServiceFac
             if(servicePoint == null) servicePoint = workStationJoin.join(WorkStation_.servicePoint);
 
             predicates.add(servicePoint.in(servicePoints));
+        }
 
+        if(eagerly) {
+            if(providerService != null) {
+                // then fetch associated collection of entities
+                service.fetch("providedServiceOffers", JoinType.INNER);
+            } else {
+                // then left fetch associated collection of entities
+                service.fetch("providedServiceOffers", JoinType.LEFT);
+            }
         }
 
         // WHERE predicate1 AND predicate2 AND ... AND predicateN
-        criteriaQuery.where(predicates.toArray(new Predicate[] { }));
+        criteriaQuery.where(predicates.toArray(new Predicate[] {}));
 
         TypedQuery<Service> query = getEntityManager().createQuery(criteriaQuery);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
         return query.getResultList();
     }
 }
