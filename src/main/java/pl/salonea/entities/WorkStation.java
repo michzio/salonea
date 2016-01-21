@@ -24,10 +24,15 @@ import java.util.Set;
 @Access(AccessType.PROPERTY)
 @IdClass(WorkStationId.class)
 @NamedQueries({
-        @NamedQuery(name = WorkStation.FIND_BY_SERVICE_POINT, query = "SELECT ws FROM WorkStation ws WHERE ws.servicePoint = :service_point"),
+        @NamedQuery(name = WorkStation.FIND_ALL_EAGERLY, query = "SELECT DISTINCT ws FROM WorkStation ws LEFT JOIN FETCH ws.providedServices LEFT JOIN FETCH ws.termsEmployeesWorkOn"),
+        @NamedQuery(name = WorkStation.FIND_BY_ID_EAGERLY, query = "SELECT ws FROM WorkStation ws LEFT JOIN FETCH ws.providedServices LEFT JOIN FETCH ws.termsEmployeesWorkOn " +
+                "WHERE ws.servicePoint.provider.userId = :userId AND ws.servicePoint.servicePointNumber = :servicePointNumber AND ws.workStationNumber = :workStationNumber"),
         @NamedQuery(name = WorkStation.FIND_BY_TYPE, query = "SELECT ws FROM WorkStation ws WHERE ws.workStationType = :work_station_type"),
+        @NamedQuery(name = WorkStation.FIND_BY_SERVICE_POINT, query = "SELECT ws FROM WorkStation ws WHERE ws.servicePoint = :service_point"),
+        @NamedQuery(name = WorkStation.FIND_BY_SERVICE_POINT_EAGERLY, query = "SELECT DISTINCT ws FROM WorkStation ws LEFT JOIN FETCH ws.providedServices LEFT JOIN FETCH ws.termsEmployeesWorkOn WHERE ws.servicePoint = :service_point"),
         @NamedQuery(name = WorkStation.FIND_BY_SERVICE_POINT_AND_TYPE, query = "SELECT ws FROM WorkStation ws WHERE ws.servicePoint = :service_point AND ws.workStationType = :work_station_type"),
         @NamedQuery(name = WorkStation.FIND_BY_SERVICE, query = "SELECT ws FROM WorkStation ws INNER JOIN ws.providedServices ps WHERE ps.service = :service"),
+        @NamedQuery(name = WorkStation.FIND_BY_SERVICE_EAGERLY, query = "SELECT DISTINCT ws FROM WorkStation ws INNER JOIN FETCH ws.providedServices ps LEFT JOIN FETCH ws.termsEmployeesWorkOn WHERE ps.service = :service"),
         @NamedQuery(name = WorkStation.FIND_BY_SERVICE_AND_TERM, query = "SELECT DISTINCT ws FROM WorkStation ws INNER JOIN ws.providedServices ps INNER JOIN ws.termsEmployeesWorkOn empl_term INNER JOIN empl_term.employee e " +
                 "INNER JOIN e.suppliedServices empl_ps INNER JOIN empl_term.term term WHERE ps.service = :service AND ps = empl_ps AND term.openingTime < :end_time AND term.closingTime > :start_time"), // constraint: openingTime < closingTime
         @NamedQuery(name = WorkStation.FIND_BY_SERVICE_AND_TERM_STRICT, query = "SELECT DISTINCT ws FROM WorkStation ws INNER JOIN ws.providedServices ps INNER JOIN ws.termsEmployeesWorkOn empl_term INNER JOIN empl_term.employee e " +
@@ -38,6 +43,7 @@ import java.util.Set;
         @NamedQuery(name = WorkStation.FIND_BY_SERVICE_AND_SERVICE_POINT_AND_TERM_STRICT, query = "SELECT DISTINCT ws FROM WorkStation ws INNER JOIN ws.providedServices ps INNER JOIN ws.termsEmployeesWorkOn empl_term INNER JOIN empl_term.employee e " +
                 "INNER JOIN e.suppliedServices empl_ps INNER JOIN empl_term.term term WHERE ws.servicePoint = :service_point AND ps.service = :service AND ps = empl_ps AND term.openingTime <= :start_time AND term.closingTime >= :end_time"),
         @NamedQuery(name = WorkStation.FIND_BY_PROVIDER_SERVICE, query = "SELECT ws FROM WorkStation ws WHERE :provider_service MEMBER OF ws.providedServices"),
+        @NamedQuery(name = WorkStation.FIND_BY_PROVIDER_SERVICE_EAGERLY, query = "SELECT DISTINCT ws FROM WorkStation ws INNER JOIN FETCH ws.providedServices ps LEFT JOIN FETCH ws.termsEmployeesWorkOn WHERE ps = :provider_service"),
         @NamedQuery(name = WorkStation.FIND_BY_PROVIDER_SERVICE_AND_TERM, query = "SELECT DISTINCT ws FROM WorkStation ws INNER JOIN ws.providedServices ps INNER JOIN ws.termsEmployeesWorkOn empl_term INNER JOIN empl_term.employee e " +
                 "INNER JOIN e.suppliedServices empl_ps INNER JOIN empl_term.term term WHERE ps = empl_ps AND ps = :provider_service AND term.openingTime < :end_time AND term.closingTime > :start_time"), // constraint: openingTime < closingTime
         @NamedQuery(name = WorkStation.FIND_BY_PROVIDER_SERVICE_AND_TERM_STRICT, query = "SELECT DISTINCT ws FROM WorkStation ws INNER JOIN ws.providedServices ps INNER JOIN ws.termsEmployeesWorkOn empl_term INNER JOIN empl_term.employee e " +
@@ -48,6 +54,7 @@ import java.util.Set;
         @NamedQuery(name = WorkStation.FIND_BY_PROVIDER_SERVICE_AND_SERVICE_POINT_AND_TERM_STRICT, query = "SELECT DISTINCT ws FROM WorkStation ws INNER JOIN ws.providedServices ps INNER JOIN ws.termsEmployeesWorkOn empl_term INNER JOIN empl_term.employee e " +
                 "INNER JOIN e.suppliedServices empl_ps INNER JOIN empl_term.term term WHERE ps = empl_ps AND ps = :provider_service AND ws.servicePoint = :service_point AND term.openingTime <= :start_time AND term.closingTime >= :end_time"),
         @NamedQuery(name = WorkStation.FIND_BY_EMPLOYEE, query = "SELECT DISTINCT ws FROM WorkStation ws INNER JOIN ws.termsEmployeesWorkOn empl_term WHERE empl_term.employee = :employee"),
+        @NamedQuery(name = WorkStation.FIND_BY_EMPLOYEE_EAGERLY, query = "SELECT DISTINCT ws FROM WorkStation ws LEFT JOIN FETCH ws.providedServices INNER JOIN FETCH ws.termsEmployeesWorkOn empl_term WHERE empl_term.employee = :employee"),
         @NamedQuery(name = WorkStation.FIND_BY_EMPLOYEE_AND_TERM, query = "SELECT DISTINCT ws FROM WorkStation ws INNER JOIN ws.termsEmployeesWorkOn empl_term INNER JOIN empl_term.term term WHERE empl_term.employee = :employee AND term.openingTime < :end_time AND term.closingTime > :start_time"), // constraint: openingTime < closingTime
         @NamedQuery(name = WorkStation.FIND_BY_EMPLOYEE_AND_TERM_STRICT, query = "SELECT DISTINCT ws FROM WorkStation ws INNER JOIN ws.termsEmployeesWorkOn empl_term INNER JOIN empl_term.term term WHERE empl_term.employee = :employee AND term.openingTime <= :start_time AND term.closingTime >= :end_time"),
         @NamedQuery(name = WorkStation.FIND_BY_EMPLOYEE_AND_SERVICE_POINT, query = "SELECT DISTINCT ws FROM WorkStation ws INNER JOIN ws.termsEmployeesWorkOn empl_term WHERE empl_term.employee = :employee AND ws.servicePoint = :service_point"),
@@ -64,25 +71,35 @@ import java.util.Set;
         @NamedQuery(name = WorkStation.FIND_BY_TERM_AND_SERVICE_POINT, query = "SELECT DISTINCT ws FROM WorkStation ws INNER JOIN ws.termsEmployeesWorkOn empl_term INNER JOIN empl_term.term term WHERE ws.servicePoint = :service_point AND term.openingTime < :end_time AND term.closingTime > :start_time"), // constraint: openingTime < closingTime
         @NamedQuery(name = WorkStation.FIND_BY_TERM_STRICT_AND_SERVICE_POINT, query = "SELECT DISTINCT ws FROM WorkStation ws INNER JOIN ws.termsEmployeesWorkOn empl_term INNER JOIN empl_term.term term WHERE ws.servicePoint = :service_point AND term.openingTime <= :start_time AND term.closingTime >= :end_time"),
         @NamedQuery(name = WorkStation.DELETE_BY_SERVICE_POINT, query = "DELETE FROM WorkStation ws WHERE ws.servicePoint = :service_point"),
+        @NamedQuery(name = WorkStation.COUNT_BY_SERVICE_POINT, query = "SELECT COUNT(ws) FROM WorkStation ws WHERE ws.servicePoint = :service_point"),
+        @NamedQuery(name = WorkStation.COUNT_BY_SERVICE, query = "SELECT COUNT(ws) FROM WorkStation ws INNER JOIN ws.providedServices ps WHERE ps.service = :service"),
+        @NamedQuery(name = WorkStation.COUNT_BY_PROVIDER_SERVICE, query = "SELECT COUNT(ws) FROM WorkStation ws WHERE :provider_service MEMBER OF ws.providedServices"),
+        @NamedQuery(name = WorkStation.COUNT_BY_EMPLOYEE, query = "SELECT COUNT(DISTINCT ws) FROM WorkStation ws INNER JOIN ws.termsEmployeesWorkOn empl_term WHERE empl_term.employee = :employee"),
 })
 public class WorkStation implements Serializable{
 
-    public static final String FIND_BY_SERVICE_POINT = "WorkStation.findByServicePoint";
+    public static final String FIND_ALL_EAGERLY = "WorkStation.findAllEagerly";
+    public static final String FIND_BY_ID_EAGERLY = "WorkStation.findByIdEagerly";
     public static final String FIND_BY_TYPE = "WorkStation.findByType";
+    public static final String FIND_BY_SERVICE_POINT = "WorkStation.findByServicePoint";
+    public static final String FIND_BY_SERVICE_POINT_EAGERLY = "WorkStation.findByServicePointEagerly";
     public static final String FIND_BY_SERVICE_POINT_AND_TYPE = "WorkStation.findByServicePointAndType";
     public static final String FIND_BY_SERVICE = "WorkStation.findByService";
+    public static final String FIND_BY_SERVICE_EAGERLY = "WorkStation.findByServiceEagerly";
     public static final String FIND_BY_SERVICE_AND_TERM = "WorkStation.findByServiceAndTerm";
     public static final String FIND_BY_SERVICE_AND_TERM_STRICT = "WorkStation.findByServiceAndTermStrict";
     public static final String FIND_BY_SERVICE_AND_SERVICE_POINT = "WorkStation.findByServiceAndServicePoint";
     public static final String FIND_BY_SERVICE_AND_SERVICE_POINT_AND_TERM = "WorkStation.findByServiceAndServicePointAndTerm";
     public static final String FIND_BY_SERVICE_AND_SERVICE_POINT_AND_TERM_STRICT = "WorkStation.findByServiceAndServicePointAndTermStrict";
     public static final String FIND_BY_PROVIDER_SERVICE = "WorkStation.findByProviderService";
+    public static final String FIND_BY_PROVIDER_SERVICE_EAGERLY = "WorkStation.findByProviderServiceEagerly";
     public static final String FIND_BY_PROVIDER_SERVICE_AND_TERM = "WorkStation.findByProviderServiceAndTerm";
     public static final String FIND_BY_PROVIDER_SERVICE_AND_TERM_STRICT = "WorkStation.findByProviderServiceAndTermStrict";
     public static final String FIND_BY_PROVIDER_SERVICE_AND_SERVICE_POINT = "WorkStation.findByProviderServiceAndServicePoint";
     public static final String FIND_BY_PROVIDER_SERVICE_AND_SERVICE_POINT_AND_TERM = "WorkStation.findByProviderServiceAndServicePointAndTerm";
     public static final String FIND_BY_PROVIDER_SERVICE_AND_SERVICE_POINT_AND_TERM_STRICT = "WorkStation.findByProviderServiceAndServicePointAndTermStrict";
     public static final String FIND_BY_EMPLOYEE = "WorkStation.findByEmployee";
+    public static final String FIND_BY_EMPLOYEE_EAGERLY = "WorkStation.findByEmployeeEagerly";
     public static final String FIND_BY_EMPLOYEE_AND_TERM = "WorkStation.findByEmployeeAndTerm";
     public static final String FIND_BY_EMPLOYEE_AND_TERM_STRICT = "WorkStation.findByEmployeeAndTermStrict";
     public static final String FIND_BY_EMPLOYEE_AND_SERVICE_POINT = "WorkStation.findByEmployeeAndServicePoint";
@@ -96,6 +113,10 @@ public class WorkStation implements Serializable{
     public static final String FIND_BY_TERM_AND_SERVICE_POINT = "WorkStation.findByTermAndServicePoint";
     public static final String FIND_BY_TERM_STRICT_AND_SERVICE_POINT = "WorkStation.findByTermStrictAndServicePoint";
     public static final String DELETE_BY_SERVICE_POINT = "WorkStation.deleteByServicePoint";
+    public static final String COUNT_BY_SERVICE_POINT = "WorkStation.countByServicePoint";
+    public static final String COUNT_BY_SERVICE = "WorkStation.countByService";
+    public static final String COUNT_BY_PROVIDER_SERVICE = "WorkStation.countByProviderService";
+    public static final String COUNT_BY_EMPLOYEE = "WorkStation.countByEmployee";
 
     private Integer workStationNumber; // PK
     private ServicePoint servicePoint; // composite PK, composite FK

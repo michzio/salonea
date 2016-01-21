@@ -788,7 +788,7 @@ public class WorkStationFacade extends AbstractFacade<WorkStation> implements Wo
 
     @Override
     public List<WorkStation> findByMultipleCriteriaEagerly(List<ServicePoint> servicePoints, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, WorkStationType type, Period period, Boolean strictTerm, Integer start, Integer limit) {
-        return findByMultipleCriteria(servicePoints, services, providerServices, employees, type, period, strictTerm, true, start, limit);;
+        return findByMultipleCriteria(servicePoints, services, providerServices, employees, type, period, strictTerm, true, start, limit);
     }
 
 
