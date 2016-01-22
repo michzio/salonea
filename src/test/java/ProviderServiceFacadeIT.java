@@ -359,12 +359,15 @@ public class ProviderServiceFacadeIT {
         hairServices.add(haircut);
         hairServices.add(hairDyeing);
 
-        List<ProviderService> cheapHairOffers = providerServiceFacade.findByMultipleCriteria(null, hairServices, null, "hair", 40.0, 70.0, false, null, null, null, null );
+        List<String> descriptions = new ArrayList<>();
+        descriptions.add("hair");
+
+        List<ProviderService> cheapHairOffers = providerServiceFacade.findByMultipleCriteria(null, hairServices, null, descriptions, 40.0, 70.0, false, null, null, null, null );
         assertTrue(cheapHairOffers.size() == 1);
         assertTrue(cheapHairOffers.contains(provider3Haircut));
         assertFalse(cheapHairOffers.contains(provider3Dyeing));
 
-        List<ProviderService> cheapDiscountedHairOffers = providerServiceFacade.findByMultipleCriteria(null, hairServices, null, "hair", 40.0, 70.0, true, null, null, null, null);
+        List<ProviderService> cheapDiscountedHairOffers = providerServiceFacade.findByMultipleCriteria(null, hairServices, null, descriptions, 40.0, 70.0, true, null, null, null, null);
         assertTrue(cheapDiscountedHairOffers.size() == 2);
         assertTrue(cheapDiscountedHairOffers.contains(provider3Haircut));
         assertTrue(cheapDiscountedHairOffers.contains(provider3Dyeing));

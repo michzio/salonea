@@ -1589,7 +1589,7 @@ public class ProviderResource {
                 // get provider services for given provider filtered by given params
                 providerServices = new ResourceList<>(
                         providerServiceFacade.findByMultipleCriteria(providers, params.getServices(), params.getServiceCategories(),
-                                params.getDescription(), params.getMinPrice(), params.getMaxPrice(), params.getIncludeDiscounts(),
+                                params.getDescriptions(), params.getMinPrice(), params.getMaxPrice(), params.getIncludeDiscounts(),
                                 params.getMinDiscount(), params.getMaxDiscount(), params.getWorkStations(), params.getEmployees(),
                                 params.getOffset(), params.getLimit())
                 );
@@ -1638,7 +1638,7 @@ public class ProviderResource {
                 providerServices = new ResourceList<>(
                         ProviderServiceWrapper.wrap(
                                 providerServiceFacade.findByMultipleCriteriaEagerly(providers, params.getServices(), params.getServiceCategories(),
-                                        params.getDescription(), params.getMinPrice(), params.getMaxPrice(), params.getIncludeDiscounts(),
+                                        params.getDescriptions(), params.getMinPrice(), params.getMaxPrice(), params.getIncludeDiscounts(),
                                         params.getMinDiscount(), params.getMaxDiscount(), params.getWorkStations(), params.getEmployees(),
                                         params.getOffset(), params.getLimit())
                         )

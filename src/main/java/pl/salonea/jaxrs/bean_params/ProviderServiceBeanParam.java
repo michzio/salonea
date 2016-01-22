@@ -18,7 +18,7 @@ public class ProviderServiceBeanParam extends PaginationBeanParam {
     private @QueryParam("providerId") List<Long> providerIds;
     private @QueryParam("serviceId") List<Integer> serviceIds;
     private @QueryParam("serviceCategoryId") List<Integer> serviceCategoryIds;
-    private @QueryParam("description") String description;
+    private @QueryParam("description") List<String> descriptions;
     private @QueryParam("minPrice") Double minPrice;
     private @QueryParam("maxPrice") Double maxPrice;
     private @QueryParam("includeDiscounts") Boolean includeDiscounts;
@@ -93,12 +93,12 @@ public class ProviderServiceBeanParam extends PaginationBeanParam {
         return null;
     }
 
-    public String getDescription() {
-        return description;
+    public List<String> getDescriptions() {
+        return descriptions;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
+    public void setDescriptions(List<String> descriptions) {
+        this.descriptions = descriptions;
     }
 
     public Double getMinPrice() {

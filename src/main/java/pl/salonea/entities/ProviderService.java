@@ -91,7 +91,7 @@ public class ProviderService {
     public static final String FIND_BY_SERVICE_AND_DISCOUNTED_PRICE = "ProviderService.findByServiceAndDiscountedPrice";
     public static final String FIND_BY_SERVICE_AND_DISCOUNT = "ProviderService.findByServiceAndDiscount";
     public static final String FIND_BY_SERVICE_CATEGORY = "ProviderService.findByServiceCategory";
-    public static final String FIND_BY_SERVICE_CATEGORY_EAGERLY = "ProviderService.findByServiceCategory";
+    public static final String FIND_BY_SERVICE_CATEGORY_EAGERLY = "ProviderService.findByServiceCategoryEagerly";
     public static final String FIND_BY_WORK_STATION = "ProviderService.findByWorkStation";
     public static final String FIND_BY_WORK_STATION_EAGERLY = "ProviderService.findByWorkStationEagerly";
     public static final String FIND_BY_EMPLOYEE = "ProviderService.findByEmployee";
