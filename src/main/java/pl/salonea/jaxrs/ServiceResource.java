@@ -245,7 +245,7 @@ public class ServiceResource {
             service.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
                     .path(ServiceResource.class)
                     .path(employeesMethod)
-                    .resolveTemplate("serviceId", service.getServiceId())
+                    .resolveTemplate("serviceId", service.getServiceId().toString())
                     .build())
                     .rel("employees").build());
 
@@ -255,7 +255,7 @@ public class ServiceResource {
                     .path(ServiceResource.class)
                     .path(employeesMethod)
                     .path(employeesEagerlyMethod)
-                    .resolveTemplate("serviceId", service.getServiceId())
+                    .resolveTemplate("serviceId", service.getServiceId().toString())
                     .build())
                     .rel("employees-eagerly").build());
 
@@ -265,7 +265,7 @@ public class ServiceResource {
                     .path(ServiceResource.class)
                     .path(employeesMethod)
                     .path(countEmployeesByServiceMethod)
-                    .resolveTemplate("serviceId", service.getServiceId())
+                    .resolveTemplate("serviceId", service.getServiceId().toString())
                     .build())
                     .rel("employees-count").build());
 

@@ -138,7 +138,7 @@ public class ServicePointBeanParam extends PaginationBeanParam {
         this.industryIds = industryIds;
     }
 
-    public List<Industry> getIndustries() {
+    public List<Industry> getIndustries() throws NotFoundException {
         if(getIndustryIds() != null && getIndustryIds().size() > 0) {
             final List<Industry> industries = industryFacade.find( new ArrayList<>(getIndustryIds()) );
             if(industries.size() != getIndustryIds().size()) throw new NotFoundException("Could not find industries for all provided ids.");
@@ -155,7 +155,7 @@ public class ServicePointBeanParam extends PaginationBeanParam {
         this.serviceCategoryIds = serviceCategoryIds;
     }
 
-    public List<ServiceCategory> getServiceCategories() {
+    public List<ServiceCategory> getServiceCategories() throws NotFoundException {
         if(getServiceCategoryIds() != null && getServiceCategoryIds().size() > 0) {
             final List<ServiceCategory> serviceCategories = serviceCategoryFacade.find( new ArrayList<>(getServiceCategoryIds()) );
             if(serviceCategories.size() != getServiceCategoryIds().size()) throw new NotFoundException("Could not find service categories for all provided ids.");

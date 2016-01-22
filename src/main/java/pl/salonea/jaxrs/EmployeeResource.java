@@ -58,6 +58,8 @@ public class EmployeeResource {
     private EmployeeRatingFacade employeeRatingFacade;
     @Inject
     private ServicePointFacade servicePointFacade;
+    @Inject
+    private ServiceFacade serviceFacade;
 
     /**
      * Method returns all Employee resources
@@ -382,6 +384,11 @@ public class EmployeeResource {
     @Path("/{userId: \\d+}/service-points")
     public ServicePointResource getServicePointResource() {
         return new ServicePointResource();
+    }
+
+    @Path("/{userId: \\d+}/services")
+    public ServiceResource getServiceResource() {
+        return new ServiceResource();
     }
 
     // private helper methods e.g. to populate resources/resource lists with HATEOAS links
@@ -721,6 +728,38 @@ public class EmployeeResource {
                     .build())
                     .rel("service-points-coordinates-circle").build());
 
+            /**
+             * Services being executed by current Employee resource
+             */
+
+            // services link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}
+            Method servicesMethod = EmployeeResource.class.getMethod("getServiceResource");
+            employee.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(EmployeeResource.class)
+                    .path(servicesMethod)
+                    .resolveTemplate("employeeId", employee.getUserId().toString())
+                    .build())
+                    .rel("services").build());
+
+            // services eagerly
+            Method servicesEagerlyMethod = null;
+            employee.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(EmployeeResource.class)
+                    .path(servicesMethod)
+                    .path(servicesEagerlyMethod)
+                    .resolveTemplate("employeeId", employee.getUserId().toString())
+                    .build())
+                    .rel("services-eagerly").build());
+
+            // services count
+            Method countServicesByEmployeeMethod = null;
+            employee.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(EmployeeResource.class)
+                    .path(servicesMethod)
+                    .path(countServicesByEmployeeMethod)
+                    .resolveTemplate("employeeId", employee.getUserId().toString())
+                    .build())
+                    .rel("services-count").build());
 
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
@@ -1726,5 +1765,78 @@ public class EmployeeResource {
 
             return Response.status(Status.OK).entity(servicePoints).build();
         }
+    }
+
+    public class ServiceResource {
+
+        public ServiceResource() { }
+
+        /**
+         * Method returns subset of Service entities for given Employee entity.
+         * The employee id is passed through path param.
+         * They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getEmployeeServices( @PathParam("userId") Long employeeId,
+                                             @BeanParam ServiceBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException,
+         /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning services for given employee using " +
+                    "EmployeeResource.ServiceResource.getEmployeeServices(employeeId) method of REST API");
+
+            // find employee entity for which to get associated services
+            Employee employee = employeeFacade.find(employeeId);
+            if(employee == null)
+                throw new NotFoundException("Could not find employee for id " + employeeId + ".");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<Service> services = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Employee> employees = new ArrayList<>();
+                employees.add(employee);
+
+                // get services for given employee filtered by given query params
+
+                utx.begin();
+
+                if( RESTToolkit.isSet(params.getKeywords()) ) {
+                    if( RESTToolkit.isSet(params.getNames()) || RESTToolkit.isSet(params.getDescriptions()) )
+                        throw new BadRequestException("Query params cannot include keywords and names or descriptions at the same time.");
+
+                    // find only by keywords
+                    services = new ResourceList<>(
+                            serviceFacade.findByMultipleCriteria(params.getKeywords(), params.getServiceCategories(), params.getProviders(),
+                                    employees, params.getWorkStations(), params.getServicePoints(), params.getOffset(), params.getLimit())
+                    );
+                } else {
+                    // find by names, descriptions
+                    services = new ResourceList<>(
+                            serviceFacade.findByMultipleCriteria(params.getNames(), params.getDescriptions(), params.getServiceCategories(),
+                                    params.getProviders(), employees, params.getWorkStations(), params.getServicePoints(),
+                                    params.getOffset(), params.getLimit())
+                    );
+                }
+
+                utx.commit();
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get services for given employee without filtering (eventually paginated)
+                services = new ResourceList<>( serviceFacade.findByEmployee(employee, params.getOffset(), params.getLimit()) );
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.ServiceResource.populateWithHATEOASLinks(services, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(services).build();
+        }
+
     }
 }
