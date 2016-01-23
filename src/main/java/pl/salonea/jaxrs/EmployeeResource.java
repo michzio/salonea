@@ -2033,5 +2033,89 @@ public class EmployeeResource {
             return Response.status(Status.OK).entity(providerServices).build();
         }
 
+        /**
+         * Method returns subset of Provider Service entities for given Employee fetching them eagerly
+         * The employee id is passed through path param.
+         * They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Path("/eagerly")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getEmployeeProviderServicesEagerly( @PathParam("userId") Long employeeId,
+                                                            @BeanParam ProviderServiceBeanParam params ) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning provider services eagerly for given employee using " +
+                    "EmployeeResource.ProviderServiceResource.getEmployeeProviderServicesEagerly(employeeId) method of REST API");
+
+            // find employee entity for which to get associated provider services
+            Employee employee = employeeFacade.find(employeeId);
+            if(employee == null)
+                throw new NotFoundException("Could not find employee for id " + employeeId + ".");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<ProviderServiceWrapper> providerServices = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Employee> employees = new ArrayList<>();
+                employees.add(employee);
+
+                // get provider services eagerly for given employee filtered by given params
+
+                utx.begin();
+
+                providerServices = new ResourceList<>(
+                        ProviderServiceWrapper.wrap(
+                                providerServiceFacade.findByMultipleCriteriaEagerly(params.getProviders(), params.getServices(),
+                                        params.getServiceCategories(), params.getDescriptions(), params.getMinPrice(), params.getMaxPrice(),
+                                        params.getIncludeDiscounts(), params.getMinDiscount(), params.getMaxDiscount(), params.getWorkStations(),
+                                        employees, params.getOffset(), params.getLimit())
+                        )
+                );
+
+                utx.commit();
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get provider services eagerly for given employee without filtering (eventually paginated)
+                providerServices = new ResourceList<>( ProviderServiceWrapper.wrap(
+                        providerServiceFacade.findByEmployeeEagerly(employee, params.getOffset(), params.getLimit())
+                ) );
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.ProviderServiceResource.populateWithHATEOASLinks(providerServices, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(providerServices).build();
+        }
+
+        /**
+         * Method that counts Provider Service entities for given Employee resource.
+         * The employee id is passed through path param.
+         */
+        @GET
+        @Path("/count")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response countProviderServicesByEmployee( @PathParam("userId") Long employeeId,
+                                                         @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning number of provider services for given employee by executing " +
+                    "EmployeeResource.ProviderServiceResource.countProviderServicesByEmployee(employeeId) method of REST API");
+
+            // find employee entity for which to count provider services
+            Employee employee = employeeFacade.find(employeeId);
+            if(employee == null)
+                throw new NotFoundException("Could not find employee for id " + employeeId + ".");
+
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(providerServiceFacade.countByEmployee(employee)), 200,
+                    "number of provider services for employee with id " + employee.getUserId());
+            return Response.status(Status.OK).entity(responseEntity).build();
+        }
     }
 }
