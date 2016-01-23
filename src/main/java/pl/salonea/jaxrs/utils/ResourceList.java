@@ -67,6 +67,8 @@ public class ResourceList<T> {
             @XmlElement(name = "skill", type = SkillWrapper.class),
             @XmlElement(name = "education", type = Education.class),
             @XmlElement(name = "education", type = EducationWrapper.class),
+            @XmlElement(name = "service", type = Service.class),
+            @XmlElement(name = "service", type = ServiceWrapper.class),
     })
     public List<T> getResources() {
         return resources;

@@ -60,6 +60,8 @@ public class EmployeeResource {
     private ServicePointFacade servicePointFacade;
     @Inject
     private ServiceFacade serviceFacade;
+    @Inject
+    private ProviderServiceFacade providerServiceFacade;
 
     /**
      * Method returns all Employee resources
@@ -389,6 +391,11 @@ public class EmployeeResource {
     @Path("/{userId: \\d+}/services")
     public ServiceResource getServiceResource() {
         return new ServiceResource();
+    }
+
+    @Path("/{userId: \\d+}/provider-services")
+    public ProviderServiceResource getProviderServiceResource() {
+        return new ProviderServiceResource();
     }
 
     // private helper methods e.g. to populate resources/resource lists with HATEOAS links
@@ -737,29 +744,62 @@ public class EmployeeResource {
             employee.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
                     .path(EmployeeResource.class)
                     .path(servicesMethod)
-                    .resolveTemplate("employeeId", employee.getUserId().toString())
+                    .resolveTemplate("userId", employee.getUserId().toString())
                     .build())
                     .rel("services").build());
 
-            // services eagerly
-            Method servicesEagerlyMethod = null;
+            // services eagerly link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/eagerly
+            Method servicesEagerlyMethod = EmployeeResource.ServiceResource.class.getMethod("getEmployeeServicesEagerly", Long.class, ServiceBeanParam.class);
             employee.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
                     .path(EmployeeResource.class)
                     .path(servicesMethod)
                     .path(servicesEagerlyMethod)
-                    .resolveTemplate("employeeId", employee.getUserId().toString())
+                    .resolveTemplate("userId", employee.getUserId().toString())
                     .build())
                     .rel("services-eagerly").build());
 
-            // services count
-            Method countServicesByEmployeeMethod = null;
+            // services count link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/count
+            Method countServicesByEmployeeMethod = EmployeeResource.ServiceResource.class.getMethod("countServicesByEmployee", Long.class, GenericBeanParam.class);
             employee.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
                     .path(EmployeeResource.class)
                     .path(servicesMethod)
                     .path(countServicesByEmployeeMethod)
-                    .resolveTemplate("employeeId", employee.getUserId().toString())
+                    .resolveTemplate("userId", employee.getUserId().toString())
                     .build())
                     .rel("services-count").build());
+
+            /**
+             * Provider Services being executed by current Employee resource
+             */
+
+            // provider-services link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}
+            Method providerServicesMethod = EmployeeResource.class.getMethod("getProviderServiceResource");
+            employee.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(EmployeeResource.class)
+                    .path(providerServicesMethod)
+                    .resolveTemplate("userId", employee.getUserId().toString())
+                    .build())
+                    .rel("provider-services").build());
+
+            // provider-services eagerly link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/eagerly
+            Method providerServicesEagerlyMethod = EmployeeResource.ProviderServiceResource.class.getMethod("getEmployeeProviderServicesEagerly", Long.class, ProviderServiceBeanParam.class);
+            employee.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(EmployeeResource.class)
+                    .path(providerServicesMethod)
+                    .path(providerServicesEagerlyMethod)
+                    .resolveTemplate("userId", employee.getUserId().toString())
+                    .build())
+                    .rel("provider-services-eagerly").build());
+
+            // provider-services count link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/count
+            Method countProviderServicesByEmployeeMethod = EmployeeResource.ProviderServiceResource.class.getMethod("countProviderServicesByEmployee", Long.class, GenericBeanParam.class);
+            employee.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(EmployeeResource.class)
+                    .path(providerServicesMethod)
+                    .path(countProviderServicesByEmployeeMethod)
+                    .resolveTemplate("userId", employee.getUserId().toString())
+                    .build())
+                    .rel("provider-services-count").build());
 
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
@@ -1837,6 +1877,106 @@ public class EmployeeResource {
 
             return Response.status(Status.OK).entity(services).build();
         }
+
+        /**
+         * Method returns subset of Service entities for given Employee fetching them eagerly.
+         * The employee id is passed through path param.
+         * They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Path("/eagerly")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response  getEmployeeServicesEagerly( @PathParam("userId") Long employeeId,
+                                                     @BeanParam ServiceBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning services eagerly for given employee using " +
+                    "EmployeeResource.ServiceResource.getEmployeeServicesEagerly(employeeId) method of REST API");
+
+            // find employee entity for which to get associated services
+            Employee employee = employeeFacade.find(employeeId);
+            if(employee == null)
+                throw new NotFoundException("Could not find employee for id " + employeeId + ".");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<ServiceWrapper> services = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Employee> employees = new ArrayList<>();
+                employees.add(employee);
+
+                // get services eagerly for given employee filtered by given params
+
+                utx.begin();
+
+                if( RESTToolkit.isSet(params.getKeywords()) ) {
+                    if( RESTToolkit.isSet(params.getNames()) || RESTToolkit.isSet(params.getDescriptions()) )
+                        throw new BadRequestException("Query params cannot include keywords and names or descriptions at the same time.");
+
+                    // find only by keywords
+                    services = new ResourceList<>(
+                            ServiceWrapper.wrap(
+                                    serviceFacade.findByMultipleCriteriaEagerly(params.getKeywords(), params.getServiceCategories(), params.getProviders(),
+                                            employees, params.getWorkStations(), params.getServicePoints(), params.getOffset(), params.getLimit())
+                            )
+                    );
+                } else {
+                    // find by names, descriptions
+                    services = new ResourceList<>(
+                            ServiceWrapper.wrap(
+                                    serviceFacade.findByMultipleCriteriaEagerly(params.getNames(), params.getDescriptions(), params.getServiceCategories(),
+                                            params.getProviders(), employees, params.getWorkStations(), params.getServicePoints(), params.getOffset(), params.getLimit())
+                            )
+                    );
+                }
+
+                utx.commit();
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get services eagerly for given employee without filtering (eventually paginated)
+                services = new ResourceList<>( ServiceWrapper.wrap(serviceFacade.findByEmployeeEagerly(employee, params.getOffset(), params.getLimit())) );
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.ServiceResource.populateWithHATEOASLinks(services, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(services).build();
+        }
+
+        /**
+         * Method that counts Service entities for given Employee resource.
+         * The employee id is passed through path param.
+         */
+        @GET
+        @Path("/count")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response countServicesByEmployee( @PathParam("userId") Long employeeId,
+                                                 @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning number of services for given employee by executing " +
+                    "EmployeeResource.ServiceResource.countServicesByEmployee(employeeId) method of REST API");
+
+            // find employee entity for which to count services
+            Employee employee = employeeFacade.find(employeeId);
+            if(employee == null)
+                throw new NotFoundException("Could not find employee for id " + employeeId + ".");
+
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(serviceFacade.countByEmployee(employee)), 200,
+                    "number of services for employee with id " + employee.getUserId());
+            return Response.status(Status.OK).entity(responseEntity).build();
+        }
+    }
+
+    public class ProviderServiceResource {
+
+        public ProviderServiceResource() { }
 
     }
 }
