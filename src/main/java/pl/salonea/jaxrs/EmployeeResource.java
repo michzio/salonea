@@ -1978,5 +1978,60 @@ public class EmployeeResource {
 
         public ProviderServiceResource() { }
 
+        /**
+         * Method returns subset of Provider Service entities for given Employee entity.
+         * The employee id is passed through path param.
+         * They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getEmployeeProviderServices( @PathParam("userId") Long employeeId,
+                                                     @BeanParam ProviderServiceBeanParam params ) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning provider services for given employee using " +
+                    "EmployeeResource.ProviderServiceResource.getEmployeeProviderServices(employeeId) method of REST API");
+
+            // find employee entity for which to get associated provider services
+            Employee employee = employeeFacade.find(employeeId);
+            if(employee == null)
+                throw new NotFoundException("Could not find employee for id " + employeeId + ".");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<ProviderService> providerServices = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Employee> employees = new ArrayList<>();
+                employees.add(employee);
+
+                // get provider services for given employee filtered by given query params
+
+                utx.begin();
+
+                providerServices = new ResourceList<>(
+                        providerServiceFacade.findByMultipleCriteria(params.getProviders(), params.getServices(), params.getServiceCategories(),
+                                params.getDescriptions(), params.getMinPrice(), params.getMaxPrice(), params.getIncludeDiscounts(), params.getMinDiscount(),
+                                params.getMaxDiscount(), params.getWorkStations(), employees, params.getOffset(), params.getLimit())
+                );
+
+                utx.commit();
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get provider services for given employee without filtering (eventually paginated)
+                providerServices = new ResourceList<>( providerServiceFacade.findByEmployee(employee, params.getOffset(), params.getLimit()) );
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.ProviderServiceResource.populateWithHATEOASLinks(providerServices, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(providerServices).build();
+        }
+
     }
 }
