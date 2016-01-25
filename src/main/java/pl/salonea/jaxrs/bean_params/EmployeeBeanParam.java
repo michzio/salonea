@@ -18,7 +18,7 @@ import java.util.List;
  */
 public class EmployeeBeanParam extends DateBetweenBeanParam { // incl. PaginationBeanParam
 
-    private @QueryParam("description") String description;
+    private @QueryParam("description") List<String> descriptions;
     private @QueryParam("jobPosition") List<String> jobPositions;
     private @QueryParam("skillId") List<Integer> skillIds;
     private @QueryParam("educationId") List<Long> educationIds;
@@ -47,12 +47,12 @@ public class EmployeeBeanParam extends DateBetweenBeanParam { // incl. Paginatio
     @Inject
     private ClientFacade clientFacade;
 
-    public String getDescription() {
-        return description;
+    public List<String> getDescriptions() {
+        return descriptions;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
+    public void setDescriptions(List<String> descriptions) {
+        this.descriptions = descriptions;
     }
 
     public List<String> getJobPositions() {

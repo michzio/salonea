@@ -714,7 +714,7 @@ public class ServiceResource {
 
                 // get employees for given service filtered by given params
                 employees = new ResourceList<>(
-                        employeeFacade.findByMultipleCriteria(params.getDescription(), params.getJobPositions(), params.getSkills(),
+                        employeeFacade.findByMultipleCriteria(params.getDescriptions(), params.getJobPositions(), params.getSkills(),
                                 params.getEducations(), services, params.getProviderServices(), params.getServicePoints(),
                                 params.getWorkStations(), params.getPeriod(), params.getStrictTerm(), params.getRated(),
                                 params.getMinAvgRating(), params.getMaxAvgRating(), params.getRatingClients(), params.getOffset(), params.getLimit())
@@ -769,7 +769,7 @@ public class ServiceResource {
                 // get employees eagerly for given service filtered by given params
                 employees = new ResourceList<>(
                         EmployeeWrapper.wrap(
-                                employeeFacade.findByMultipleCriteriaEagerly(params.getDescription(), params.getJobPositions(), params.getSkills(),
+                                employeeFacade.findByMultipleCriteriaEagerly(params.getDescriptions(), params.getJobPositions(), params.getSkills(),
                                         params.getEducations(), services, params.getProviderServices(), params.getServicePoints(),
                                         params.getWorkStations(), params.getPeriod(), params.getStrictTerm(), params.getRated(),
                                         params.getMinAvgRating(), params.getMaxAvgRating(), params.getRatingClients(), params.getOffset(), params.getLimit())

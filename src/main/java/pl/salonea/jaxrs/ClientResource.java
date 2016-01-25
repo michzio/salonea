@@ -1553,7 +1553,7 @@ public class ClientResource {
 
                 // get employees for given client filtered by given params
                 employees = new ResourceList<>(
-                        employeeFacade.findByMultipleCriteria(params.getDescription(), params.getJobPositions(), params.getSkills(), params.getEducations(),
+                        employeeFacade.findByMultipleCriteria(params.getDescriptions(), params.getJobPositions(), params.getSkills(), params.getEducations(),
                                 params.getServices(), params.getProviderServices(), params.getServicePoints(), params.getWorkStations(), params.getPeriod(),
                                 params.getStrictTerm(), params.getRated(), params.getMinAvgRating(), params.getMaxAvgRating(), clients,
                                 params.getOffset(), params.getLimit())
@@ -1604,7 +1604,7 @@ public class ClientResource {
                 // get employees eagerly for given client filtered by given params
                 employees = new ResourceList<>(
                         EmployeeWrapper.wrap(
-                                employeeFacade.findByMultipleCriteriaEagerly(params.getDescription(), params.getJobPositions(), params.getSkills(),
+                                employeeFacade.findByMultipleCriteriaEagerly(params.getDescriptions(), params.getJobPositions(), params.getSkills(),
                                         params.getEducations(), params.getServices(), params.getProviderServices(), params.getServicePoints(),
                                         params.getWorkStations(), params.getPeriod(), params.getStrictTerm(), params.getRated(), params.getMinAvgRating(),
                                         params.getMaxAvgRating(), clients, params.getOffset(), params.getLimit())

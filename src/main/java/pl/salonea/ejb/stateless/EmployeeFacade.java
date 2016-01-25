@@ -480,26 +480,26 @@ public class EmployeeFacade extends AbstractFacade<Employee> implements Employee
     }
 
     @Override
-    public List<Employee> findByMultipleCriteria(String description, List<String> jobPositions, List<Skill> skills, List<Education> educations, List<Service> services, List<ProviderService> providerServices, List<ServicePoint> servicePoints, List<WorkStation> workStations, Period period, Boolean strictTerm, Boolean rated, Double minAvgRating, Double maxAvgRating, List<Client> ratingClients) {
-        return findByMultipleCriteria(description, jobPositions, skills, educations, services, providerServices, servicePoints, workStations, period, strictTerm, rated, minAvgRating, maxAvgRating, ratingClients, null, null);
+    public List<Employee> findByMultipleCriteria(List<String> descriptions, List<String> jobPositions, List<Skill> skills, List<Education> educations, List<Service> services, List<ProviderService> providerServices, List<ServicePoint> servicePoints, List<WorkStation> workStations, Period period, Boolean strictTerm, Boolean rated, Double minAvgRating, Double maxAvgRating, List<Client> ratingClients) {
+        return findByMultipleCriteria(descriptions, jobPositions, skills, educations, services, providerServices, servicePoints, workStations, period, strictTerm, rated, minAvgRating, maxAvgRating, ratingClients, null, null);
     }
 
     @Override
-    public List<Employee> findByMultipleCriteria(String description, List<String> jobPositions, List<Skill> skills, List<Education> educations, List<Service> services, List<ProviderService> providerServices, List<ServicePoint> servicePoints, List<WorkStation> workStations, Period period, Boolean strictTerm, Boolean rated, Double minAvgRating, Double maxAvgRating, List<Client> ratingClients, Integer start, Integer limit) {
-        return findByMultipleCriteria(description, jobPositions, skills, educations, services, providerServices, servicePoints, workStations, period, strictTerm, rated, minAvgRating, maxAvgRating, ratingClients, false, start, limit);
+    public List<Employee> findByMultipleCriteria(List<String> descriptions, List<String> jobPositions, List<Skill> skills, List<Education> educations, List<Service> services, List<ProviderService> providerServices, List<ServicePoint> servicePoints, List<WorkStation> workStations, Period period, Boolean strictTerm, Boolean rated, Double minAvgRating, Double maxAvgRating, List<Client> ratingClients, Integer start, Integer limit) {
+        return findByMultipleCriteria(descriptions, jobPositions, skills, educations, services, providerServices, servicePoints, workStations, period, strictTerm, rated, minAvgRating, maxAvgRating, ratingClients, false, start, limit);
     }
 
     @Override
-    public List<Employee> findByMultipleCriteriaEagerly(String description, List<String> jobPositions, List<Skill> skills, List<Education> educations, List<Service> services, List<ProviderService> providerServices, List<ServicePoint> servicePoints, List<WorkStation> workStations, Period period, Boolean strictTerm, Boolean rated, Double minAvgRating, Double maxAvgRating, List<Client> ratingClients) {
-        return findByMultipleCriteriaEagerly(description, jobPositions, skills, educations, services, providerServices, servicePoints, workStations, period, strictTerm, rated, minAvgRating, maxAvgRating, ratingClients, null, null);
+    public List<Employee> findByMultipleCriteriaEagerly(List<String> descriptions, List<String> jobPositions, List<Skill> skills, List<Education> educations, List<Service> services, List<ProviderService> providerServices, List<ServicePoint> servicePoints, List<WorkStation> workStations, Period period, Boolean strictTerm, Boolean rated, Double minAvgRating, Double maxAvgRating, List<Client> ratingClients) {
+        return findByMultipleCriteriaEagerly(descriptions, jobPositions, skills, educations, services, providerServices, servicePoints, workStations, period, strictTerm, rated, minAvgRating, maxAvgRating, ratingClients, null, null);
     }
 
     @Override
-    public List<Employee> findByMultipleCriteriaEagerly(String description, List<String> jobPositions, List<Skill> skills, List<Education> educations, List<Service> services, List<ProviderService> providerServices, List<ServicePoint> servicePoints, List<WorkStation> workStations, Period period, Boolean strictTerm, Boolean rated, Double minAvgRating, Double maxAvgRating, List<Client> ratingClients, Integer start, Integer limit) {
-        return findByMultipleCriteria(description, jobPositions, skills, educations, services, providerServices, servicePoints, workStations, period, strictTerm, rated, minAvgRating, maxAvgRating, ratingClients, true, start, limit);
+    public List<Employee> findByMultipleCriteriaEagerly(List<String> descriptions, List<String> jobPositions, List<Skill> skills, List<Education> educations, List<Service> services, List<ProviderService> providerServices, List<ServicePoint> servicePoints, List<WorkStation> workStations, Period period, Boolean strictTerm, Boolean rated, Double minAvgRating, Double maxAvgRating, List<Client> ratingClients, Integer start, Integer limit) {
+        return findByMultipleCriteria(descriptions, jobPositions, skills, educations, services, providerServices, servicePoints, workStations, period, strictTerm, rated, minAvgRating, maxAvgRating, ratingClients, true, start, limit);
     }
 
-    private List<Employee> findByMultipleCriteria(String description, List<String> jobPositions, List<Skill> skills, List<Education> educations, List<Service> services, List<ProviderService> providerServices, List<ServicePoint> servicePoints, List<WorkStation> workStations, Period period, Boolean strictTerm,
+    private List<Employee> findByMultipleCriteria(List<String> descriptions, List<String> jobPositions, List<Skill> skills, List<Education> educations, List<Service> services, List<ProviderService> providerServices, List<ServicePoint> servicePoints, List<WorkStation> workStations, Period period, Boolean strictTerm,
                                                   Boolean rated, Double minAvgRating, Double maxAvgRating, List<Client> ratingClients, Boolean eagerly, Integer start, Integer limit) {
 
         CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
@@ -526,9 +526,16 @@ public class EmployeeFacade extends AbstractFacade<Employee> implements Employee
         // HAVING PREDICATES
         List<Predicate> havingPredicates = new ArrayList<>();
 
-        if(description != null) {
-            SingularAttribute<Employee, String> descriptionAttr = Employee_.description;
-            predicates.add(criteriaBuilder.like(employee.get(descriptionAttr), "%" + description + "%"));
+        if(descriptions != null && descriptions.size() > 0) {
+
+            List<Predicate> orDescriptionPredicates = new ArrayList<>();
+
+            for(String description : descriptions) {
+                SingularAttribute<Employee, String> descriptionAttr = Employee_.description;
+                orDescriptionPredicates.add( criteriaBuilder.like(employee.get(descriptionAttr), "%" + description + "%") );
+            }
+
+            predicates.add( criteriaBuilder.or(orDescriptionPredicates.toArray(new Predicate[] {})) );
         }
 
         if(jobPositions != null && jobPositions.size() > 0) {
@@ -537,13 +544,13 @@ public class EmployeeFacade extends AbstractFacade<Employee> implements Employee
 
         if(skills != null && skills.size() > 0) {
 
-            List<Predicate> orPredicates = new ArrayList<>();
+            List<Predicate> orSkillPredicates = new ArrayList<>();
 
             for(Skill skill : skills) {
-                orPredicates.add( criteriaBuilder.isMember(skill, employee.get(Employee_.skills)) );
+                orSkillPredicates.add( criteriaBuilder.isMember(skill, employee.get(Employee_.skills)) );
             }
 
-            predicates.add( criteriaBuilder.or(orPredicates.toArray(new Predicate[] { })) );
+            predicates.add( criteriaBuilder.or(orSkillPredicates.toArray(new Predicate[] { })) );
 
             if(eagerly) {
                 // then fetch associated collection of entities
@@ -556,13 +563,13 @@ public class EmployeeFacade extends AbstractFacade<Employee> implements Employee
 
         if(educations != null && educations.size() > 0) {
 
-            List<Predicate> orPredicates = new ArrayList<>();
+            List<Predicate> orEducationPredicates = new ArrayList<>();
 
             for(Education education : educations) {
-                orPredicates.add( criteriaBuilder.isMember(education, employee.get(Employee_.educations)) );
+                orEducationPredicates.add( criteriaBuilder.isMember(education, employee.get(Employee_.educations)) );
             }
 
-            predicates.add( criteriaBuilder.or(orPredicates.toArray(new Predicate[]{})) );
+            predicates.add( criteriaBuilder.or(orEducationPredicates.toArray(new Predicate[]{})) );
 
             if(eagerly) {
                 // then fetch associated collection of entities

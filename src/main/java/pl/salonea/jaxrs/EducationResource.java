@@ -581,7 +581,7 @@ public class EducationResource {
 
                 // get employees for given education filtered by given params
                 employees = new ResourceList<>(
-                        employeeFacade.findByMultipleCriteria(params.getDescription(), params.getJobPositions(), params.getSkills(),
+                        employeeFacade.findByMultipleCriteria(params.getDescriptions(), params.getJobPositions(), params.getSkills(),
                                 educations, params.getServices(), params.getProviderServices(), params.getServicePoints(),
                                 params.getWorkStations(), params.getPeriod(), params.getStrictTerm(), params.getRated(),
                                 params.getMinAvgRating(), params.getMaxAvgRating(), params.getRatingClients(), params.getOffset(), params.getLimit())
@@ -637,7 +637,7 @@ public class EducationResource {
                 // get employees eagerly for given education filtered by given params
                 employees = new ResourceList<>(
                         EmployeeWrapper.wrap(
-                                employeeFacade.findByMultipleCriteriaEagerly(params.getDescription(), params.getJobPositions(), params.getSkills(),
+                                employeeFacade.findByMultipleCriteriaEagerly(params.getDescriptions(), params.getJobPositions(), params.getSkills(),
                                         educations, params.getServices(), params.getProviderServices(), params.getServicePoints(),
                                         params.getWorkStations(), params.getPeriod(), params.getStrictTerm(), params.getRated(),
                                         params.getMinAvgRating(), params.getMaxAvgRating(), params.getRatingClients(), params.getOffset(), params.getLimit())
