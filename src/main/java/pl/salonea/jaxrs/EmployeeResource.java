@@ -1901,6 +1901,64 @@ public class EmployeeResource {
 
             return Response.status(Status.OK).entity(workStations).build();
         }
+
+        /**
+         * Method returns subset of Work Station entities for given Employee
+         * fetching them eagerly. The employee id is passed through path param.
+         * They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Path("/eagerly")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getEmployeeWorkStationsEagerly( @PathParam("userId") Long userId,
+                                                        @BeanParam WorkStationBeanParam params ) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning subset of Work Station entities eagerly for given Employee using " +
+                    "EmployeeResource.WorkStationResource.getEmployeeWorkStationsEagerly(employeeId) method of REST API");
+
+            // find employee entity for which to get associated work stations
+            Employee employee = employeeFacade.find(userId);
+            if(employee == null)
+                throw new NotFoundException("Could not find employee for id " + userId + ".");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<WorkStationWrapper> workStations = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Employee> employees = new ArrayList<>();
+                employees.add(employee);
+
+                utx.begin();
+
+                workStations = new ResourceList<>(
+                        WorkStationWrapper.wrap(
+                                workStationFacade.findByMultipleCriteriaEagerly(params.getServicePoints(), params.getServices(),
+                                        params.getProviderServices(), employees, params.getWorkStationTypes(), params.getPeriod(),
+                                        params.getStrictTerm(), params.getOffset(), params.getLimit())
+                        )
+                );
+
+                utx.commit();
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                workStations = new ResourceList<>( WorkStationWrapper.wrap(workStationFacade.findByEmployeeEagerly(employee, params.getOffset(), params.getLimit())) );
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.WorkStationResource.populateWithHATEOASLinks(workStations, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(workStations).build();
+        }
+
+
+
     }
 
     public class ServiceResource {
