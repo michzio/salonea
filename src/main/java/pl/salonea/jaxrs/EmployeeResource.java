@@ -756,12 +756,44 @@ public class EmployeeResource {
                     .rel("work-stations").build());
 
             // work-stations eagerly
+            Method workStationsEagerlyMethod = EmployeeResource.WorkStationResource.class.getMethod("getEmployeeWorkStationsEagerly", Long.class, WorkStationBeanParam.class);
+            employee.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(EmployeeResource.class)
+                    .path(workStationsMethod)
+                    .path(workStationsEagerlyMethod)
+                    .resolveTemplate("userId", employee.getUserId().toString())
+                    .build())
+                    .rel("work-stations-eagerly").build());
 
             // work-stations count
+            Method countWorkStationsByEmployeeMethod = EmployeeResource.WorkStationResource.class.getMethod("countWorkStationsByEmployee", Long.class, GenericBeanParam.class);
+            employee.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(EmployeeResource.class)
+                    .path(workStationsMethod)
+                    .path(countWorkStationsByEmployeeMethod)
+                    .resolveTemplate("userId", employee.getUserId().toString())
+                    .build())
+                    .rel("work-stations-count").build());
 
             // work-stations by-term
+            Method workStationsByTermMethod = EmployeeResource.WorkStationResource.class.getMethod("getEmployeeWorkStationsByTerm", Long.class, DateBetweenBeanParam.class);
+            employee.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(EmployeeResource.class)
+                    .path(workStationsMethod)
+                    .path(workStationsByTermMethod)
+                    .resolveTemplate("userId", employee.getUserId().toString())
+                    .build())
+                    .rel("work-stations-by-term").build());
 
             // work-stations by-term-strict
+            Method workStationsByTermStrictMethod = EmployeeResource.WorkStationResource.class.getMethod("getEmployeeWorkStationsByTermStrict", Long.class, DateBetweenBeanParam.class);
+            employee.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(EmployeeResource.class)
+                    .path(workStationsMethod)
+                    .path(workStationsByTermStrictMethod)
+                    .resolveTemplate("userId", employee.getUserId().toString())
+                    .build())
+                    .rel("work-stations-by-term-strict").build());
 
             /**
              * Services being executed by current Employee resource
@@ -1957,8 +1989,97 @@ public class EmployeeResource {
             return Response.status(Status.OK).entity(workStations).build();
         }
 
+        /**
+         * Method that counts Work Station entities for given Employee resource.
+         * The employee id is passed through path param.
+         */
+        @GET
+        @Path("/count")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response countWorkStationsByEmployee( @PathParam("userId") Long userId,
+                                                     @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
 
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning number of work stations for given employee by executing " +
+                    "EmployeeResource.WorkStationResource.countWorkStationsByEmployee(employeeId) method of REST API");
 
+            // find employee entity for which to count work stations
+            Employee employee = employeeFacade.find(userId);
+            if(employee == null)
+                throw new NotFoundException("Could not find employee for id " + userId + ".");
+
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(workStationFacade.countByEmployee(employee)), 200,
+                    "number of work stations for employee with id " + employee.getUserId());
+            return Response.status(Status.OK).entity(responseEntity).build();
+        }
+
+        /**
+         * Method returns subset of Work Station entities for given Employee entity and
+         * Term he works on them. The employee id is passed through path param.
+         * Term start and end dates are passed through query params.
+         */
+        @GET
+        @Path("/by-term")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getEmployeeWorkStationsByTerm( @PathParam("userId") Long userId,
+                                                       @BeanParam DateBetweenBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning work stations for given employee and term (startDate, endDate) using " +
+                    "EmployeeResource.WorkStationResource.getEmployeeWorkStationsByTerm(employeeId, term) method of REST API");
+
+            RESTToolkit.validateDateRange(params); // i.e. startDate and endDate
+
+            // find employee entity for which to get associated work stations
+            Employee employee = employeeFacade.find(userId);
+            if(employee == null)
+                throw new NotFoundException("Could not find employee for id " + userId + ".");
+
+            // find work stations by given criteria (employee, term)
+            ResourceList<WorkStation> workStations = new ResourceList<>(
+                    workStationFacade.findByEmployeeAndTerm(employee, params.getStartDate(), params.getEndDate(),
+                            params.getOffset(), params.getLimit())
+            );
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.WorkStationResource.populateWithHATEOASLinks(workStations, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(workStations).build();
+        }
+
+        /**
+         * Method returns subset of Work Station entities for given Employee entity and
+         * Term (strict) he works on them. The employee id is passed through path param.
+         * Term (strict) start and end dates are passed through query params.
+         */
+        @GET
+        @Path("/by-term-strict")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getEmployeeWorkStationsByTermStrict( @PathParam("userId") Long userId,
+                                                             @BeanParam DateBetweenBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning work stations for given employee and term strict (startDate, endDate) using " +
+                    "EmployeeResource.WorkStationResource.getEmployeeWorkStationsByTermStrict(employeeId, termStrict) method of REST API");
+
+            RESTToolkit.validateDateRange(params); // i.e. startDate and endDate
+
+            // find employee entity for which to get associated work stations
+            Employee employee = employeeFacade.find(userId);
+            if(employee == null)
+                throw new NotFoundException("Could not find employee for id " + userId + ".");
+
+            // find work stations by given criteria (employee, term strict)
+            ResourceList<WorkStation> workStations = new ResourceList<>(
+                    workStationFacade.findByEmployeeAndTermStrict(employee, params.getStartDate(), params.getEndDate(),
+                            params.getOffset(), params.getLimit())
+            );
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.WorkStationResource.populateWithHATEOASLinks(workStations, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(workStations).build();
+        }
     }
 
     public class ServiceResource {
