@@ -475,5 +475,4 @@ public class WorkStationResource {
             return Response.status(Status.OK).entity(employees).build();
         }
     }
-
 }

@@ -59,6 +59,8 @@ public class EmployeeResource {
     @Inject
     private ServicePointFacade servicePointFacade;
     @Inject
+    private WorkStationFacade workStationFacade;
+    @Inject
     private ServiceFacade serviceFacade;
     @Inject
     private ProviderServiceFacade providerServiceFacade;
@@ -388,6 +390,11 @@ public class EmployeeResource {
         return new ServicePointResource();
     }
 
+    @Path("/{userId: \\d+}/work-stations")
+    public WorkStationResource getWorkStationResource() {
+        return new WorkStationResource();
+    }
+
     @Path("/{userId: \\d+}/services")
     public ServiceResource getServiceResource() {
         return new ServiceResource();
@@ -457,8 +464,8 @@ public class EmployeeResource {
 
         EmployeeResource.populateWithHATEOASLinks(employeeWrapper.getEmployee(), uriInfo);
 
-       // for(Education education : employeeWrapper.getEducations())
-       //     pl.salonea.jaxrs.EducationResource.
+       for(Education education : employeeWrapper.getEducations())
+            pl.salonea.jaxrs.EducationResource.populateWithHATEOASLinks(education, uriInfo);
 
        for(Skill skill : employeeWrapper.getSkills())
            pl.salonea.jaxrs.SkillResource.populateWithHATEOASLinks(skill, uriInfo);
@@ -466,8 +473,8 @@ public class EmployeeResource {
        for(ProviderService providerService : employeeWrapper.getSuppliedServices())
            pl.salonea.jaxrs.ProviderServiceResource.populateWithHATEOASLinks(providerService, uriInfo);
 
-       // for(TermEmployeeWorkOn term : employeeWrapper.getTermsOnWorkStation())
-       //    pl.salonea.jaxrs.TermEmployeeWorkOnResource.
+       for(TermEmployeeWorkOn employeeTerm : employeeWrapper.getTermsOnWorkStation())
+           pl.salonea.jaxrs.EmployeeTermResource.populateWithHATEOASLinks(employeeTerm, uriInfo);
 
        for(EmployeeRating employeeRating : employeeWrapper.getReceivedRatings())
            pl.salonea.jaxrs.EmployeeRatingResource.populateWithHATEOASLinks(employeeRating, uriInfo);
@@ -734,6 +741,27 @@ public class EmployeeResource {
                     .resolveTemplate("userId", employee.getUserId().toString())
                     .build())
                     .rel("service-points-coordinates-circle").build());
+
+            /**
+             * Work Stations associated with current Employee resource
+             */
+
+            // work-stations
+            Method workStationsMethod = EmployeeResource.class.getMethod("getWorkStationResource");
+            employee.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(EmployeeResource.class)
+                    .path(workStationsMethod)
+                    .resolveTemplate("userId", employee.getUserId().toString())
+                    .build())
+                    .rel("work-stations").build());
+
+            // work-stations eagerly
+
+            // work-stations count
+
+            // work-stations by-term
+
+            // work-stations by-term-strict
 
             /**
              * Services being executed by current Employee resource
@@ -1521,7 +1549,8 @@ public class EmployeeResource {
         @GET
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
         public Response getEmployeeServicePoints( @PathParam("userId") Long userId,
-                                                  @BeanParam ServicePointBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException {
+                                                  @BeanParam ServicePointBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
 
             RESTToolkit.authorizeAccessToWebService(params);
             logger.log(Level.INFO, "returning subset of Service Point entities for given Employee using " +
@@ -1541,6 +1570,8 @@ public class EmployeeResource {
 
                 List<Employee> employees = new ArrayList<>();
                 employees.add(employee);
+
+                utx.begin();
 
                 if(params.getAddress() != null) {
                     if(params.getCoordinatesSquare() != null || params.getCoordinatesCircle() != null)
@@ -1579,6 +1610,9 @@ public class EmployeeResource {
                                     params.getCorporations(), params.getIndustries(), params.getServiceCategories(), params.getOffset(), params.getLimit())
                     );
                 }
+
+                utx.commit();
+
             } else {
                 logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
 
@@ -1595,7 +1629,8 @@ public class EmployeeResource {
         @Path("/eagerly")
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
         public Response getEmployeeServicePointsEagerly( @PathParam("userId") Long userId,
-                                                         @BeanParam ServicePointBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException {
+                                                         @BeanParam ServicePointBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
 
             RESTToolkit.authorizeAccessToWebService(params);
             logger.log(Level.INFO, "returning subset of Service Point entities for given Employee eagerly using " +
@@ -1615,6 +1650,8 @@ public class EmployeeResource {
 
                 List<Employee> employees = new ArrayList<>();
                 employees.add(employee);
+
+                utx.begin();
 
                 if(params.getAddress() != null) {
                     if(params.getCoordinatesSquare() != null || params.getCoordinatesCircle() != null)
@@ -1658,6 +1695,9 @@ public class EmployeeResource {
                             )
                     );
                 }
+
+                utx.commit();
+
             } else {
                 logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
 
@@ -1804,6 +1844,62 @@ public class EmployeeResource {
             pl.salonea.jaxrs.ServicePointResource.populateWithHATEOASLinks(servicePoints, params.getUriInfo(), params.getOffset(), params.getLimit());
 
             return Response.status(Status.OK).entity(servicePoints).build();
+        }
+    }
+
+    public class WorkStationResource {
+
+        public WorkStationResource() { }
+
+        /**
+         * Method returns subset of Work Station entities for given Employee.
+         * The employee id is passed through path param.
+         * They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getEmployeeWorkStations( @PathParam("userId") Long userId,
+                                                 @BeanParam WorkStationBeanParam params ) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning subset of Work Station entities for given Employee using " +
+                    "EmployeeResource.WorkStationResource.getEmployeeWorkStations(employeeId) method of REST API");
+
+            // find employee entity for which to get associated work stations
+            Employee employee = employeeFacade.find(userId);
+            if(employee == null)
+                throw new NotFoundException("Could not find employee for id " + userId + ".");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<WorkStation> workStations = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Employee> employees = new ArrayList<>();
+                employees.add(employee);
+
+                utx.begin();
+
+                workStations = new ResourceList<>(
+                        workStationFacade.findByMultipleCriteria(params.getServicePoints(), params.getServices(), params.getProviderServices(),
+                                employees, params.getWorkStationTypes(), params.getPeriod(), params.getStrictTerm(), params.getOffset(), params.getLimit() )
+                );
+
+                utx.commit();
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                workStations = new ResourceList<>( workStationFacade.findByEmployee(employee, params.getOffset(), params.getLimit()) );
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.WorkStationResource.populateWithHATEOASLinks(workStations, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(workStations).build();
         }
     }
 

@@ -772,27 +772,27 @@ public class WorkStationFacade extends AbstractFacade<WorkStation> implements Wo
     }
 
     @Override
-    public List<WorkStation> findByMultipleCriteria(List<ServicePoint> servicePoints, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, WorkStationType type, Period period, Boolean strictTerm) {
-        return findByMultipleCriteria(servicePoints, services, providerServices, employees, type, period, strictTerm, null, null);
+    public List<WorkStation> findByMultipleCriteria(List<ServicePoint> servicePoints, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<WorkStationType> types, Period period, Boolean strictTerm) {
+        return findByMultipleCriteria(servicePoints, services, providerServices, employees, types, period, strictTerm, null, null);
     }
 
     @Override
-    public List<WorkStation> findByMultipleCriteria(List<ServicePoint> servicePoints, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, WorkStationType type, Period period, Boolean strictTerm, Integer start, Integer limit) {
-        return findByMultipleCriteria(servicePoints, services, providerServices, employees, type, period, strictTerm, false, start, limit);
+    public List<WorkStation> findByMultipleCriteria(List<ServicePoint> servicePoints, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<WorkStationType> types, Period period, Boolean strictTerm, Integer start, Integer limit) {
+        return findByMultipleCriteria(servicePoints, services, providerServices, employees, types, period, strictTerm, false, start, limit);
     }
 
     @Override
-    public List<WorkStation> findByMultipleCriteriaEagerly(List<ServicePoint> servicePoints, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, WorkStationType type, Period period, Boolean strictTerm) {
-        return findByMultipleCriteriaEagerly(servicePoints, services, providerServices, employees, type, period, strictTerm, null, null);
+    public List<WorkStation> findByMultipleCriteriaEagerly(List<ServicePoint> servicePoints, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<WorkStationType> types, Period period, Boolean strictTerm) {
+        return findByMultipleCriteriaEagerly(servicePoints, services, providerServices, employees, types, period, strictTerm, null, null);
     }
 
     @Override
-    public List<WorkStation> findByMultipleCriteriaEagerly(List<ServicePoint> servicePoints, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, WorkStationType type, Period period, Boolean strictTerm, Integer start, Integer limit) {
-        return findByMultipleCriteria(servicePoints, services, providerServices, employees, type, period, strictTerm, true, start, limit);
+    public List<WorkStation> findByMultipleCriteriaEagerly(List<ServicePoint> servicePoints, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<WorkStationType> types, Period period, Boolean strictTerm, Integer start, Integer limit) {
+        return findByMultipleCriteria(servicePoints, services, providerServices, employees, types, period, strictTerm, true, start, limit);
     }
 
 
-    private List<WorkStation> findByMultipleCriteria(List<ServicePoint> servicePoints, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, WorkStationType type, Period period, Boolean strictTerm, Boolean eagerly, Integer start, Integer limit) {
+    private List<WorkStation> findByMultipleCriteria(List<ServicePoint> servicePoints, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<WorkStationType> types, Period period, Boolean strictTerm, Boolean eagerly, Integer start, Integer limit) {
 
         CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
         CriteriaQuery<WorkStation> criteriaQuery = criteriaBuilder.createQuery(WorkStation.class);
@@ -843,8 +843,8 @@ public class WorkStationFacade extends AbstractFacade<WorkStation> implements Wo
             predicates.add( employee.in(employees) );
         }
 
-        if(type != null) {
-            predicates.add( criteriaBuilder.equal(workStation.get(WorkStation_.workStationType), type) );
+        if(types != null && types.size() > 0) {
+            predicates.add( workStation.get(WorkStation_.workStationType).in(types) );
         }
 
         if(period != null) {
