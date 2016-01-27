@@ -52,6 +52,122 @@ public class ServiceResource {
     @Inject
     private EmployeeFacade employeeFacade;
 
+    /**
+     * Method returns all Service resources
+     * They can be additionally filtered or paginated by @QueryParams.
+     */
+    @GET
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getServices( @BeanParam ServiceBeanParam params ) throws ForbiddenException, BadRequestException,
+    /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning all Services by executing ServiceResource.getServices() method of REST API");
+
+        Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+        ResourceList<Service> services = null;
+
+        if(noOfParams > 0) {
+            logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+            utx.begin();
+
+            // get all services filtered by given query params
+
+            if( RESTToolkit.isSet(params.getKeywords()) ) {
+                if( RESTToolkit.isSet(params.getNames()) || RESTToolkit.isSet(params.getDescriptions()) )
+                    throw new BadRequestException("Query params cannot include keywords and service names or descriptions at the same time.");
+
+                // find only by keywords
+                services = new ResourceList<>(
+                        serviceFacade.findByMultipleCriteria(params.getKeywords(), params.getServiceCategories(), params.getProviders(),
+                                params.getEmployees(), params.getWorkStations(), params.getServicePoints(), params.getOffset(), params.getLimit())
+                );
+            } else {
+                // find by service names and descriptions
+                services = new ResourceList<>(
+                        serviceFacade.findByMultipleCriteria(params.getNames(), params.getDescriptions(), params.getServiceCategories(),
+                                params.getProviders(), params.getEmployees(), params.getWorkStations(), params.getServicePoints(),
+                                params.getOffset(), params.getLimit())
+                );
+            }
+
+            utx.commit();
+
+        } else {
+            logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+            // get all services without filtering (eventually paginated)
+            services = new ResourceList<>( serviceFacade.findAll(params.getOffset(), params.getLimit()) );
+        }
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        ServiceResource.populateWithHATEOASLinks(services, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(services).build();
+    }
+
+    @GET
+    @Path("/eagerly")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getServicesEagerly( @BeanParam ServiceBeanParam params ) throws ForbiddenException, BadRequestException,
+    /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning all Services eagerly by executing ServiceResource.getServicesEagerly() method of REST API");
+
+        Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+        ResourceList<ServiceWrapper> services = null;
+
+        if(noOfParams > 0) {
+            logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+            utx.begin();
+
+            // get all services eagerly filtered by given query params
+
+            if( RESTToolkit.isSet(params.getKeywords()) ) {
+                if (RESTToolkit.isSet(params.getNames()) || RESTToolkit.isSet(params.getDescriptions()))
+                    throw new BadRequestException("Query params cannot include keywords and service names or descriptions at the same time.");
+
+                // find only by keywords
+                services = new ResourceList<>(
+                        ServiceWrapper.wrap(
+                            serviceFacade.findByMultipleCriteriaEagerly(params.getKeywords(), params.getServiceCategories(), params.getProviders(),
+                                    params.getEmployees(), params.getWorkStations(), params.getServicePoints(), params.getOffset(), params.getLimit())
+                        )
+                );
+            } else {
+                // find by service names and descriptions
+                services = new ResourceList<>(
+                        ServiceWrapper.wrap(
+                            serviceFacade.findByMultipleCriteriaEagerly(params.getNames(), params.getDescriptions(), params.getServiceCategories(),
+                                    params.getProviders(), params.getEmployees(), params.getWorkStations(), params.getServicePoints(),
+                                    params.getOffset(), params.getLimit())
+                        )
+                );
+            }
+
+            utx.commit();
+
+        } else {
+            logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+            // get all services eagerly without filtering (eventually paginated)
+            services = new ResourceList<>( ServiceWrapper.wrap(serviceFacade.findAllEagerly(params.getOffset(), params.getLimit())) );
+        }
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        ServiceResource.populateWithHATEOASLinks(services, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(services).build();
+    }
+
+
+    /**
+     */
     @GET
     @Path("/count")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
