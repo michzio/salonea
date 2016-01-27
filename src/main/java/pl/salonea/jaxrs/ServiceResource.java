@@ -6,6 +6,10 @@ import pl.salonea.ejb.stateless.ServiceFacade;
 import pl.salonea.ejb.stateless.ServicePointFacade;
 import pl.salonea.entities.*;
 import pl.salonea.jaxrs.bean_params.*;
+import pl.salonea.jaxrs.exceptions.*;
+import pl.salonea.jaxrs.exceptions.BadRequestException;
+import pl.salonea.jaxrs.exceptions.ForbiddenException;
+import pl.salonea.jaxrs.exceptions.NotFoundException;
 import pl.salonea.jaxrs.utils.RESTToolkit;
 import pl.salonea.jaxrs.utils.ResourceList;
 import pl.salonea.jaxrs.utils.ResponseWrapper;
@@ -15,6 +19,8 @@ import pl.salonea.jaxrs.wrappers.ProviderWrapper;
 import pl.salonea.jaxrs.wrappers.ServicePointWrapper;
 import pl.salonea.jaxrs.wrappers.ServiceWrapper;
 
+import javax.ejb.EJBException;
+import javax.ejb.EJBTransactionRolledbackException;
 import javax.inject.Inject;
 import javax.transaction.*;
 import javax.transaction.NotSupportedException;
@@ -24,13 +30,11 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 import java.lang.reflect.Method;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import pl.salonea.jaxrs.exceptions.BadRequestException;
-import pl.salonea.jaxrs.exceptions.ForbiddenException;
-import pl.salonea.jaxrs.exceptions.NotFoundException;
 
 /**
  * Created by michzio on 19/10/2015.
@@ -135,17 +139,17 @@ public class ServiceResource {
                 // find only by keywords
                 services = new ResourceList<>(
                         ServiceWrapper.wrap(
-                            serviceFacade.findByMultipleCriteriaEagerly(params.getKeywords(), params.getServiceCategories(), params.getProviders(),
-                                    params.getEmployees(), params.getWorkStations(), params.getServicePoints(), params.getOffset(), params.getLimit())
+                                serviceFacade.findByMultipleCriteriaEagerly(params.getKeywords(), params.getServiceCategories(), params.getProviders(),
+                                        params.getEmployees(), params.getWorkStations(), params.getServicePoints(), params.getOffset(), params.getLimit())
                         )
                 );
             } else {
                 // find by service names and descriptions
                 services = new ResourceList<>(
                         ServiceWrapper.wrap(
-                            serviceFacade.findByMultipleCriteriaEagerly(params.getNames(), params.getDescriptions(), params.getServiceCategories(),
-                                    params.getProviders(), params.getEmployees(), params.getWorkStations(), params.getServicePoints(),
-                                    params.getOffset(), params.getLimit())
+                                serviceFacade.findByMultipleCriteriaEagerly(params.getNames(), params.getDescriptions(), params.getServiceCategories(),
+                                        params.getProviders(), params.getEmployees(), params.getWorkStations(), params.getServicePoints(),
+                                        params.getOffset(), params.getLimit())
                         )
                 );
             }
@@ -165,6 +169,150 @@ public class ServiceResource {
         return Response.status(Status.OK).entity(services).build();
     }
 
+    /**
+     * Method matches specific Service resource by identifier and returns its instance.
+     */
+    @GET
+    @Path("/{serviceId : \\d+}") // catch only numeric identifiers
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getService( @PathParam("serviceId") Integer serviceId,
+                                @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning given Service by executing ServiceResource.getService(serviceId) method of REST API");
+
+        Service foundService = serviceFacade.find(serviceId);
+        if(foundService == null)
+            throw new NotFoundException("Could not find service for id " + serviceId + ".");
+
+        // adding hypermedia links to service resource
+        ServiceResource.populateWithHATEOASLinks(foundService, params.getUriInfo());
+
+        return Response.status(Status.OK).entity(foundService).build();
+    }
+
+    /**
+     * Method matches specific Service resource by identifier and returns its instance fetching it eagerly
+     */
+    @GET
+    @Path("/{serviceId : \\d+}/eagerly") // catch only numeric identifiers
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getServiceEagerly( @PathParam("serviceId") Integer serviceId,
+                                       @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning given Service eagerly by executing ServiceResource.getServiceEagerly(serviceId) method of REST API");
+
+        Service foundService = serviceFacade.findByIdEagerly(serviceId);
+        if(foundService == null)
+            throw new NotFoundException("Could not find service for id " + serviceId + ".");
+
+        // wrapping Service into ServiceWrapper in order to marshall eagerly fetched associated collections of entities
+        ServiceWrapper wrappedService = new ServiceWrapper(foundService);
+
+        // adding hypermedia links to wrapped service resource
+        ServiceResource.populateWithHATEOASLinks(wrappedService, params.getUriInfo());
+
+        return Response.status(Status.OK).entity(wrappedService).build();
+    }
+
+    /**
+     * Method that takes Service as XML or JSON and creates its new instance in database
+     */
+    @POST
+    @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response createService( Service service,
+                                   @BeanParam GenericBeanParam params ) throws ForbiddenException, UnprocessableEntityException, InternalServerErrorException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "creating new Service by executing ServiceResource.createService(service) method of REST API");
+
+        Service createdService = null;
+        URI locationURI = null;
+
+        try {
+            // persist new resource in database
+            createdService = serviceFacade.create(service);
+
+            // populate created resource with hypermedia links
+            ServiceResource.populateWithHATEOASLinks(createdService, params.getUriInfo());
+
+            // construct link to newly created resource to return in HTTP Header
+            String createdServiceId = String.valueOf(createdService.getServiceId());
+            locationURI = params.getUriInfo().getBaseUriBuilder().path(ServiceResource.class).path(createdServiceId).build();
+
+        } catch (EJBTransactionRolledbackException ex) {
+            ExceptionHandler.handleEJBTransactionRolledbackException(ex);
+        } catch (EJBException ex) {
+            ExceptionHandler.handleEJBException(ex);
+        } catch (Exception ex) {
+            throw new InternalServerErrorException(ExceptionHandler.ENTITY_CREATION_ERROR_MESSAGE);
+        }
+
+        return Response.created(locationURI).entity(createdService).build();
+    }
+
+    /**
+     * Method that takes updated Service as XML or JSON and its ID as path param.
+     * It updates Service in database for provided ID.
+     */
+    @PUT
+    @Path("/{serviceId : \\d+}") // catch only numeric identifiers
+    @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response updateService( @PathParam("serviceId") Integer serviceId,
+                                   Service service,
+                                   @BeanParam GenericBeanParam params ) throws ForbiddenException, UnprocessableEntityException, InternalServerErrorException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "updating existing Service by executing ServiceResource.updateService(serviceId, service) method of REST API");
+
+        // set resource ID passed in path param on updated resource object
+        service.setServiceId(serviceId);
+
+        Service updatedService = null;
+        try {
+            // reflect updated resource object in database
+            updatedService = serviceFacade.update(service, true);
+            // populate created resource with hypermedia links
+            ServiceResource.populateWithHATEOASLinks(updatedService, params.getUriInfo());
+
+        } catch (EJBTransactionRolledbackException ex) {
+            ExceptionHandler.handleEJBTransactionRolledbackException(ex);
+        } catch (EJBException ex) {
+            ExceptionHandler.handleEJBException(ex);
+        } catch (Exception ex) {
+            throw new InternalServerErrorException(ExceptionHandler.ENTITY_UPDATE_ERROR_MESSAGE);
+        }
+
+        return Response.status(Status.OK).entity(updatedService).build();
+    }
+
+    /**
+     * Method that removes Service entity from database for given ID.
+     * The ID is passed through path param.
+     */
+    @DELETE
+    @Path("/{serviceId : \\d+}") // catch only numeric identifiers
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response removeService( @PathParam("serviceId") Integer serviceId,
+                                   @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "removing given Service by executing ServiceResource.removeService(serviceId) method of REST API");
+
+        // find Service entity that should be deleted
+        Service toDeleteService = serviceFacade.find(serviceId);
+        // throw exception if entity hasn't been found
+        if(toDeleteService == null)
+            throw new NotFoundException("Could not find service to delete for given id: " + serviceId + ".");
+
+        // remove entity from database
+        serviceFacade.remove(toDeleteService);
+
+        return Response.status(Status.NO_CONTENT).build();
+    }
 
     /**
      */
