@@ -1,9 +1,6 @@
 package pl.salonea.jaxrs;
 
-import pl.salonea.ejb.stateless.EmployeeFacade;
-import pl.salonea.ejb.stateless.ProviderFacade;
-import pl.salonea.ejb.stateless.ServiceFacade;
-import pl.salonea.ejb.stateless.ServicePointFacade;
+import pl.salonea.ejb.stateless.*;
 import pl.salonea.entities.*;
 import pl.salonea.jaxrs.bean_params.*;
 import pl.salonea.jaxrs.exceptions.*;
@@ -55,6 +52,8 @@ public class ServiceResource {
     private ServicePointFacade servicePointFacade;
     @Inject
     private EmployeeFacade employeeFacade;
+    @Inject
+    private WorkStationFacade workStationFacade;
 
     /**
      * Method returns all Service resources
@@ -543,6 +542,16 @@ public class ServiceResource {
                     .build())
                     .rel("providers-eagerly").build());
 
+            // providers count
+            Method countProvidersByServiceMethod = ServiceResource.ProviderResource.class.getMethod("countProvidersByService", Integer.class, GenericBeanParam.class);
+            service.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ServiceResource.class)
+                    .path(providersMethod)
+                    .path(countProvidersByServiceMethod)
+                    .resolveTemplate("serviceId", service.getServiceId().toString())
+                    .build())
+                    .rel("providers-count").build());
+
             /**
              * Service Points where current Service resource is provided
              */
@@ -741,6 +750,30 @@ public class ServiceResource {
 
         }
 
+        /**
+         * Method counts Provider entities for given Service entity.
+         * The service id is passed through path param.
+         */
+        @GET
+        @Path("/count")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response countProvidersByService( @PathParam("serviceId") Integer serviceId,
+                                                 @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning number of providers for given service by executing " +
+                    "ServiceResource.ProviderResource.countProvidersByService(serviceId) method of REST API");
+
+            // find service entity for which to count providers
+            Service service = serviceFacade.find(serviceId);
+            if(service == null)
+                throw new NotFoundException("Could not find service for id " + serviceId + ".");
+
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(providerFacade.countByService(service)), 200,
+                    "number of providers for service with id " + serviceId + ".");
+            return Response.status(Status.OK).entity(responseEntity).build();
+        }
+
     }
 
     public class ServicePointResource {
@@ -755,7 +788,8 @@ public class ServiceResource {
         @GET
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
         public Response getServiceServicePoints( @PathParam("serviceId") Integer serviceId,
-                                                 @BeanParam ServicePointBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException  {
+                                                 @BeanParam ServicePointBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
 
             RESTToolkit.authorizeAccessToWebService(params);
             logger.log(Level.INFO, "returning subset of Service Point entities for given Service using " +
@@ -775,6 +809,8 @@ public class ServiceResource {
 
                 List<Service> services = new ArrayList<>();
                 services.add(service);
+
+                utx.begin();
 
                 if(params.getAddress() != null) {
                     if(params.getCoordinatesSquare() != null || params.getCoordinatesCircle() != null)
@@ -814,6 +850,8 @@ public class ServiceResource {
                     );
                 }
 
+                utx.commit();
+
             } else {
                 logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
 
@@ -830,7 +868,8 @@ public class ServiceResource {
         @Path("/eagerly")
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
         public Response getServiceServicePointsEagerly( @PathParam("serviceId") Integer serviceId,
-                                                        @BeanParam ServicePointBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException {
+                                                        @BeanParam ServicePointBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
 
             RESTToolkit.authorizeAccessToWebService(params);
             logger.log(Level.INFO, "returning subset of Service Point entities for given Service eagerly using " +
@@ -850,6 +889,8 @@ public class ServiceResource {
 
                 List<Service> services = new ArrayList<>();
                 services.add(service);
+
+                utx.begin();
 
                 if(params.getAddress() != null) {
                     if(params.getCoordinatesSquare() != null || params.getCoordinatesCircle() != null)
@@ -895,6 +936,8 @@ public class ServiceResource {
                             )
                     );
                 }
+
+                utx.commit();
 
             } else {
                 logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
@@ -1183,5 +1226,63 @@ public class ServiceResource {
                     "number of employees for service with id " + serviceId + ".");
             return Response.status(Status.OK).entity(responseEntity).build();
         }
+    }
+
+    public class WorkStationResource {
+
+        public WorkStationResource() { }
+
+        /**
+         * Method returns subset of WorkStation entities for given Service.
+         * The service id is passed through path param.
+         * They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getServiceWorkStations( @PathParam("serviceId") Integer serviceId,
+                                                @BeanParam WorkStationBeanParam params ) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning subset of Work Station entities for given Service using " +
+                    "ServiceResource.WorkStationResource.getServiceWorkStations(serviceId) method of REST API");
+
+            // find service entity for which to get associated work stations
+            Service service = serviceFacade.find(serviceId);
+            if(service == null)
+                throw new NotFoundException("Could not find service for id " + serviceId + ".");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<WorkStation> workStations = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Service> services = new ArrayList<>();
+                services.add(service);
+
+                utx.begin();
+
+                workStations = new ResourceList<>(
+                        workStationFacade.findByMultipleCriteria(params.getServicePoints(), services, params.getProviderServices(),
+                                params.getEmployees(), params.getWorkStationTypes(), params.getPeriod(), params.getStrictTerm(),
+                                params.getOffset(), params.getLimit())
+                );
+
+                utx.commit();
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                workStations = new ResourceList<>( workStationFacade.findByService(service, params.getOffset(), params.getLimit()) );
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.WorkStationResource.populateWithHATEOASLinks(workStations, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(workStations).build();
+        }
+
     }
 }

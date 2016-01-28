@@ -48,6 +48,7 @@ public interface ProviderFacadeInterface extends AbstractFacadeInterface<Provide
     List<Provider> findRatedByClientEagerly(Client client, Integer start, Integer limit);
 
     Long countByCorporation(Corporation corporation);
+    Long countByService(Service service);
 
     List<Provider> findByMultipleCriteria(List<Corporation> corporations, List<ProviderType> types, List<Industry> industries, List<PaymentMethod> paymentMethods,
                                           List<Service> services, Boolean rated, Double minAvgRating, Double maxAvgRating, List<Client> clients, String providerName, String description);
