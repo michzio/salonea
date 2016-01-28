@@ -315,16 +315,90 @@ public class ServiceResource {
     }
 
     /**
+     * Additional methods returning a subset of resources based on given criteria.
+     * You can also achieve similar results by applying @QueryParams to generic method
+     * returning all resources in order to filter and limit them.
+     */
+
+    /**
+     * Method returns number of Service entities in database
      */
     @GET
     @Path("/count")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response countServices( @HeaderParam("authToken") String authToken ) throws ForbiddenException {
+    public Response countServices( @BeanParam GenericBeanParam params ) throws ForbiddenException {
 
-        if(authToken == null) throw new ForbiddenException("Unauthorized access to web service.");
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning number of services by executing ServiceResource.countServices() method of REST API");
 
-        // TODO
-        return null;
+        ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(serviceFacade.count()), 200, "number of services");
+        return Response.status(Status.OK).entity(responseEntity).build();
+    }
+
+    /**
+     * Method returns subset of Service entities for given service name.
+     * The service name is passed through path param.
+     */
+    @GET
+    @Path("/named/{serviceName : \\S+}")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getServicesByName( @PathParam("serviceName") String serviceName,
+                                       @BeanParam PaginationBeanParam params ) throws ForbiddenException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning services for given service name using ServiceResource.getServicesByName(serviceName) method of REST API");
+
+        // find services by given criteria
+        ResourceList<Service> services = new ResourceList<>( serviceFacade.findByName(serviceName, params.getOffset(), params.getLimit()) );
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        ServiceResource.populateWithHATEOASLinks(services, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(services).build();
+    }
+
+    /**
+     * Method returns subset of Service entities for given description.
+     * The description is passed through path param.
+     */
+    @GET
+    @Path("/described/{description : \\S+}")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getServicesByDescription( @PathParam("description") String description,
+                                              @BeanParam PaginationBeanParam params ) throws ForbiddenException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning services for given description using ServiceResource.getServicesByDescription(description) method of REST API");
+
+        // find services by given criteria
+        ResourceList<Service> services = new ResourceList<>( serviceFacade.findByDescription(description, params.getOffset(), params.getLimit()) );
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        ServiceResource.populateWithHATEOASLinks(services, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(services).build();
+    }
+
+    /**
+     * Method returns subset of Service entities for given keyword.
+     * The keyword is passed through path param.
+     */
+    @GET
+    @Path("/containing-keyword/{keyword : \\S+}")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getServicesByKeyword( @PathParam("keyword") String keyword,
+                                          @BeanParam PaginationBeanParam params ) throws ForbiddenException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning services for given keyword using ServiceResource.getServicesByKeyword(keyword) method of REST API");
+
+        // find services by given criteria
+        ResourceList<Service> services = new ResourceList<>( serviceFacade.searchByKeyword(keyword, params.getOffset(), params.getLimit()) );
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        ServiceResource.populateWithHATEOASLinks(services, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(services).build();
     }
 
     /**
@@ -358,13 +432,38 @@ public class ServiceResource {
 
         try {
             // count resources hypermedia link
-            Method countMethod = ServiceResource.class.getMethod("countServices", String.class);
-            services.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder().path(ServiceResource.class).path(countMethod).build()).rel("count").build());
+            Method countMethod = ServiceResource.class.getMethod("countServices", GenericBeanParam.class);
+            services.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(ServiceResource.class).path(countMethod).build()).rel("count").build() );
 
             // get all resources hypermedia link
-            services.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder().path(ServiceResource.class).build()).rel("services").build());
+            services.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(ServiceResource.class).build()).rel("services").build() );
 
-            // TODO
+            // get all resources eagerly hypermedia link
+            Method servicesEagerlyMethod = ServiceResource.class.getMethod("getServicesEagerly", ServiceBeanParam.class);
+            services.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(ServiceResource.class).path(servicesEagerlyMethod).build()).rel("services-eagerly").build() );
+
+            // get subset of resources hypermedia links
+
+            // named
+            services.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ServiceResource.class)
+                    .path("named")
+                    .build())
+                    .rel("named").build() );
+
+            // described
+            services.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ServiceResource.class)
+                    .path("described")
+                    .build())
+                    .rel("described").build() );
+
+            // containing-keyword
+            services.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ServiceResource.class)
+                    .path("containing-keyword")
+                    .build())
+                    .rel("containing-keyword").build() );
 
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
@@ -410,7 +509,13 @@ public class ServiceResource {
 
         try {
             // self eagerly link with pattern: http://localhost:port/app/rest/{resources}/{id}/eagerly
-            // TODO
+            Method serviceEagerlyMethod = ServiceResource.class.getMethod("getServiceEagerly", Integer.class, GenericBeanParam.class);
+            service.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                                                        .path(ServiceResource.class)
+                                                        .path(serviceEagerlyMethod)
+                                                        .resolveTemplate("serviceId", service.getServiceId().toString())
+                                                        .build())
+                                        .rel("service-eagerly").build() );
 
             // associated collections links with pattern: http://localhost:port/app/rest/{resources}/{id}/{relationship}
             // TODO
