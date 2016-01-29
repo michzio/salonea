@@ -411,6 +411,11 @@ public class ServiceResource {
         return new ServicePointResource();
     }
 
+    @Path("/{serviceId : \\d+}/work-stations")
+    public WorkStationResource getWorkStationResource() {
+        return new WorkStationResource();
+    }
+
     @Path("/{serviceId : \\d+}/employees")
     public EmployeeResource getEmployeeResource() {
         return new EmployeeResource();
