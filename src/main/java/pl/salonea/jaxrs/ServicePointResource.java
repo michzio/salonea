@@ -1,13 +1,7 @@
 package pl.salonea.jaxrs;
 
-import pl.salonea.ejb.stateless.EmployeeFacade;
-import pl.salonea.ejb.stateless.ServicePointFacade;
-import pl.salonea.ejb.stateless.ServicePointPhotoFacade;
-import pl.salonea.ejb.stateless.VirtualTourFacade;
-import pl.salonea.entities.Employee;
-import pl.salonea.entities.ServicePoint;
-import pl.salonea.entities.ServicePointPhoto;
-import pl.salonea.entities.VirtualTour;
+import pl.salonea.ejb.stateless.*;
+import pl.salonea.entities.*;
 import pl.salonea.entities.idclass.ServicePointId;
 import pl.salonea.jaxrs.bean_params.*;
 import pl.salonea.jaxrs.exceptions.UnprocessableEntityException;
@@ -15,9 +9,7 @@ import pl.salonea.jaxrs.utils.RESTToolkit;
 import pl.salonea.jaxrs.utils.ResourceList;
 import pl.salonea.jaxrs.utils.ResponseWrapper;
 import pl.salonea.jaxrs.utils.hateoas.Link;
-import pl.salonea.jaxrs.wrappers.EmployeeWrapper;
-import pl.salonea.jaxrs.wrappers.ServicePointPhotoWrapper;
-import pl.salonea.jaxrs.wrappers.ServicePointWrapper;
+import pl.salonea.jaxrs.wrappers.*;
 
 import javax.inject.Inject;
 import javax.transaction.*;
@@ -34,7 +26,6 @@ import java.util.logging.Logger;
 import pl.salonea.jaxrs.exceptions.ForbiddenException;
 import pl.salonea.jaxrs.exceptions.NotFoundException;
 import pl.salonea.jaxrs.exceptions.BadRequestException;
-import pl.salonea.jaxrs.wrappers.VirtualTourWrapper;
 
 import javax.ws.rs.core.Response.Status;
 
@@ -58,6 +49,8 @@ public class ServicePointResource {
     private VirtualTourFacade virtualTourFacade;
     @Inject
     private EmployeeFacade employeeFacade;
+    @Inject
+    private ServiceFacade serviceFacade;
 
     @Inject
     private ProviderResource providerResource;
@@ -374,6 +367,9 @@ public class ServicePointResource {
     @Path("/{providerId: \\d+}+{servicePointNumber: \\d+}/employees")
     public EmployeeResource getEmployeeResource() { return new EmployeeResource(); }
 
+    @Path("/{providerId: \\d+}+{servicePointNumber: \\d+}/services")
+    public ServiceResource getServiceResource() { return  new ServiceResource(); }
+
     /**
      * This method enables to populate list of resources and each individual resource on list with hypermedia links
      */
@@ -607,6 +603,42 @@ public class ServicePointResource {
                     .resolveTemplate("servicePointNumber", servicePoint.getServicePointNumber().toString())
                     .build())
                     .rel("employees-by-term-strict").build());
+
+            /**
+             * Services provided by current Service Point resource
+             */
+
+            // services
+            Method servicesMethod = ServicePointResource.class.getMethod("getServiceResource");
+            servicePoint.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ServicePointResource.class)
+                    .path(servicesMethod)
+                    .resolveTemplate("providerId", servicePoint.getProvider().getUserId().toString())
+                    .resolveTemplate("servicePointNumber", servicePoint.getServicePointNumber().toString())
+                    .build())
+                    .rel("services").build());
+
+            // services eagerly
+            Method servicesEagerlyMethod = ServicePointResource.ServiceResource.class.getMethod("getServicePointServicesEagerly", Long.class, Integer.class, ServiceBeanParam.class);
+            servicePoint.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ServicePointResource.class)
+                    .path(servicesMethod)
+                    .path(servicesEagerlyMethod)
+                    .resolveTemplate("providerId", servicePoint.getProvider().getUserId().toString())
+                    .resolveTemplate("servicePointNumber", servicePoint.getServicePointNumber().toString())
+                    .build())
+                    .rel("services-eagerly").build());
+
+            // services count
+            Method countServicesByServicePointMethod = ServicePointResource.ServiceResource.class.getMethod("countServicesByServicePoint", Long.class, Integer.class, GenericBeanParam.class);
+            servicePoint.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ServicePointResource.class)
+                    .path(servicesMethod)
+                    .path(countServicesByServicePointMethod)
+                    .resolveTemplate("providerId", servicePoint.getProvider().getUserId().toString())
+                    .resolveTemplate("servicePointNumber", servicePoint.getServicePointNumber().toString())
+                    .build())
+                    .rel("services-count").build());
 
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
@@ -1286,7 +1318,118 @@ public class ServicePointResource {
 
             return Response.status(Status.OK).entity(employees).build();
         }
+    }
 
+    public class ServiceResource {
+
+        public ServiceResource() { }
+
+        /**
+         * Method returns subset of Service entities for given Service Point entity.
+         * The provider id and service point number are passed through path params.
+         * They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getServicePointServices( @PathParam("providerId") Long providerId,
+                                                 @PathParam("servicePointNumber") Integer servicePointNumber,
+                                                 @BeanParam ServiceBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning services for given service point using " +
+                    "ServicePointResource.ServiceResource.getServicePointServices(providerId, servicePointNumber) method of REST API");
+
+            utx.begin();
+
+            // find service point entity for which to get associated services
+            ServicePoint servicePoint = servicePointFacade.find(new ServicePointId(providerId, servicePointNumber));
+            if(servicePoint == null)
+                throw new NotFoundException("Could not find service point for id (" + providerId + "," + servicePointNumber + ").");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<Service> services = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<ServicePoint> servicePoints = new ArrayList<>();
+                servicePoints.add(servicePoint);
+
+                // get services for given service point filtered by given query params
+
+                if( RESTToolkit.isSet(params.getKeywords()) ) {
+                    if( RESTToolkit.isSet(params.getNames()) || RESTToolkit.isSet(params.getDescriptions()) )
+                        throw new BadRequestException("Query params cannot include keywords and names or descriptions at the same time.");
+
+                    // find only by keywords
+                    services = new ResourceList<>(
+                            serviceFacade.findByMultipleCriteria(params.getKeywords(), params.getServiceCategories(), params.getProviders(),
+                                    params.getEmployees(), params.getWorkStations(), servicePoints, params.getOffset(), params.getLimit())
+                    );
+                } else {
+                    // find by names, descriptions
+                    services = new ResourceList<>(
+                            serviceFacade.findByMultipleCriteria(params.getNames(), params.getDescriptions(), params.getServiceCategories(),
+                                    params.getProviders(), params.getEmployees(), params.getWorkStations(), servicePoints,
+                                    params.getOffset(), params.getLimit())
+                    );
+                }
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get services for given service point without filtering (eventually paginated)
+                services = new ResourceList<>( serviceFacade.findByServicePoint(servicePoint, params.getOffset(), params.getLimit()) );
+            }
+
+            utx.commit();
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.ServiceResource.populateWithHATEOASLinks(services, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(services).build();
+        }
+
+        /**
+         * Method returns subset of Service entities for given Service Point fetching them eagerly.
+         * The provider id and service point number are passed through path params.
+         * They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Path("/eagerly")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getServicePointServicesEagerly( @PathParam("providerId") Long providerId,
+                                                        @PathParam("servicePointNumber") Integer servicePointNumber,
+                                                        @BeanParam ServiceBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning services eagerly for given service point using " +
+                    "ServicePointResource.ServiceResource.getServicePointServicesEagerly(providerId, servicePointNumber) method of REST API");
+
+            utx.begin();
+
+            // find service point entity for which to get associated services
+            ServicePoint servicePoint = servicePointFacade.find(new ServicePointId(providerId, servicePointNumber));
+            if(servicePoint == null)
+                throw new NotFoundException("Could not find service point for id (" + providerId + "," + servicePointNumber + ").");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<ServiceWrapper> services = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+            }
+
+            utx.commit();
+
+            return null;
+        }
     }
 
 }
