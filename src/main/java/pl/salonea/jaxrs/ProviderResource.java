@@ -22,6 +22,8 @@ import pl.salonea.jaxrs.wrappers.*;
 import javax.ejb.EJBException;
 import javax.ejb.EJBTransactionRolledbackException;
 import javax.inject.Inject;
+import javax.transaction.*;
+import javax.transaction.NotSupportedException;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -43,6 +45,9 @@ import java.util.logging.Logger;
 public class ProviderResource {
 
     private static final Logger logger = Logger.getLogger(ProviderResource.class.getName());
+
+    @Inject
+    private UserTransaction utx;
 
     @Inject
     private ProviderFacade providerFacade;
@@ -471,6 +476,9 @@ public class ProviderResource {
     @Path("/{userId: \\d+}/virtual-tours")
     public VirtualTourResource getVirtualTourResource() { return new VirtualTourResource(); }
 
+    @Path("/{userId: \\d+}/services")
+    public ServiceResource getServiceResource() { return new ServiceResource(); }
+
     // helper methods e.g. to populate resources/resource lists with HATEOAS links
 
     /**
@@ -578,6 +586,10 @@ public class ProviderResource {
 
             // associated collections links with pattern: http://localhost:port/app/rest/{resources}/{id}/{relationship}
 
+            /**
+             * Industries associated with current Provider resource
+             */
+
             // industries relationship
             Method industriesMethod = ProviderResource.class.getMethod("getIndustryResource");
             provider.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
@@ -597,6 +609,10 @@ public class ProviderResource {
                     .build())
                     .rel("industries-eagerly").build());
 
+            /**
+             * Payment Methods associated with current Provider resource
+             */
+
             // payment-methods relationship
             Method paymentMethodsMethod = ProviderResource.class.getMethod("getPaymentMethodResource");
             provider.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
@@ -615,6 +631,10 @@ public class ProviderResource {
                     .resolveTemplate("userId", provider.getUserId().toString())
                     .build())
                     .rel("payment-methods-eagerly").build());
+
+            /**
+             * Service Points associated with current Provider resource
+             */
 
             // service-points link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}
             Method servicePointsMethod = ProviderResource.class.getMethod("getServicePointResource");
@@ -675,6 +695,10 @@ public class ProviderResource {
                     .resolveTemplate("userId", provider.getUserId().toString())
                     .build())
                     .rel("service-points-coordinates-circle").build());
+
+            /**
+             * Provider Services associated with current Provider resource
+             */
 
             // provider-services link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}
             Method providerServicesMethod = ProviderResource.class.getMethod("getProviderServiceResource");
@@ -741,6 +765,10 @@ public class ProviderResource {
                     .build())
                     .rel("provider-services-supplied-by-employee").build());
 
+            /**
+             * Provider Ratings associated with current Provider resource
+             */
+
             // provider-ratings
             Method providerRatingsMethod = ProviderResource.class.getMethod("getProviderRatingResource");
             provider.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
@@ -760,6 +788,7 @@ public class ProviderResource {
                     .build())
                     .rel("provider-ratings-count").build());
 
+            // provider-ratings average-rating
             Method providerAverageRatingMethod = ProviderResource.ProviderRatingResource.class.getMethod("getAverageProviderRating", Long.class, GenericBeanParam.class);
             provider.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
                     .path(ProviderResource.class)
@@ -769,6 +798,7 @@ public class ProviderResource {
                     .build())
                     .rel("provider-ratings-average-rating").build());
 
+            // provider-ratings rated
             provider.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
                     .path(ProviderResource.class)
                     .path(providerRatingsMethod)
@@ -777,6 +807,7 @@ public class ProviderResource {
                     .build())
                     .rel("provider-ratings-rated").build());
 
+            // provider-ratings rated-above
             provider.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
                     .path(ProviderResource.class)
                     .path(providerRatingsMethod)
@@ -785,6 +816,7 @@ public class ProviderResource {
                     .build())
                     .rel("provider-ratings-rated-above").build());
 
+            // provider-ratings rated-below
             provider.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
                     .path(ProviderResource.class)
                     .path(providerRatingsMethod)
@@ -792,6 +824,10 @@ public class ProviderResource {
                     .resolveTemplate("userId", provider.getUserId().toString())
                     .build())
                     .rel("provider-ratings-rated-below").build());
+
+            /**
+             * Clients rating current Provider resource
+             */
 
             // rating-clients
             Method ratingClientsMethod = ProviderResource.class.getMethod("getClientResource");
@@ -811,6 +847,10 @@ public class ProviderResource {
                     .resolveTemplate("userId", provider.getUserId().toString())
                     .build())
                     .rel("rating-clients-eagerly").build());
+
+            /**
+             * Service Point Photos related with current Provider resource
+             */
 
             // service-point-photos
             Method servicePointPhotosMethod = ProviderResource.class.getMethod("getServicePointPhotoResource");
@@ -841,6 +881,10 @@ public class ProviderResource {
                     .build())
                     .rel("service-point-photos-count").build());
 
+            /**
+             * Virtual Tours related with current Provider resource
+             */
+
             // virtual-tours
             Method virtualToursMethod = ProviderResource.class.getMethod("getVirtualTourResource");
             provider.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
@@ -869,6 +913,16 @@ public class ProviderResource {
                     .resolveTemplate("userId", provider.getUserId().toString())
                     .build())
                     .rel("virtual-tours-count").build());
+
+            /**
+             * Services provided by current Provider resource
+             */
+
+            // services
+
+            // services eagerly
+
+            // services count
 
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
@@ -2810,5 +2864,82 @@ public class ProviderResource {
                     "number of virtual tours for provider with id " + provider.getUserId());
             return Response.status(Status.OK).entity(responseEntity).build();
         }
+    }
+
+    public class ServiceResource {
+
+        public ServiceResource() { }
+
+        /**
+         * Method returns subset of Service entities for given Provider entity.
+         * The provider id is passed through path param.
+         * They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getProviderServices( @PathParam("userId") Long providerId,
+                                             @BeanParam ServiceBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning services for given provider using " +
+                    "ProviderResource.ServiceResource.getProviderServices(providerId) method of REST API");
+
+            // find provider entity for which to get associated services
+            Provider provider = providerFacade.find(providerId);
+            if(provider == null)
+                throw new NotFoundException("Could not find provider for id " + providerId + ".");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<Service> services = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Provider> providers = new ArrayList<>();
+                providers.add(provider);
+
+                // get services for given provider filtered by given query params
+
+                utx.begin();
+
+                if( RESTToolkit.isSet(params.getKeywords()) ) {
+                    if( RESTToolkit.isSet(params.getNames()) || RESTToolkit.isSet(params.getDescriptions()) )
+                        throw new BadRequestException("Query params cannot include keywords and names or descriptions at the same time.");
+
+                    // find only by keywords
+                    services = new ResourceList<>(
+                           serviceFacade.findByMultipleCriteria(params.getKeywords(), params.getServiceCategories(), providers,
+                                   params.getEmployees(), params.getWorkStations(), params.getServicePoints(),
+                                   params.getOffset(), params.getLimit())
+                    );
+
+                } else {
+                    // find by names, descriptions
+                    services = new ResourceList<>(
+                            serviceFacade.findByMultipleCriteria(params.getNames(), params.getDescriptions(), params.getServiceCategories(),
+                                    providers, params.getEmployees(), params.getWorkStations(), params.getServicePoints(),
+                                    params.getOffset(), params.getLimit())
+                    );
+                }
+
+                utx.commit();
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get services for given provider without filtering (eventually paginated)
+                services = new ResourceList<>( serviceFacade.findByProvider(provider, params.getOffset(), params.getLimit()) );
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.ServiceResource.populateWithHATEOASLinks(services, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(services).build();
+        }
+
+
+
     }
 }

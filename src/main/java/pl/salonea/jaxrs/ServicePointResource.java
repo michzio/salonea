@@ -1422,13 +1422,77 @@ public class ServicePointResource {
             if(noOfParams > 0) {
                 logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
 
+                List<ServicePoint> servicePoints = new ArrayList<>();
+                servicePoints.add(servicePoint);
+
+                // get services eagerly for given service point filtered by given query params
+
+                if( RESTToolkit.isSet(params.getKeywords()) ) {
+                    if( RESTToolkit.isSet(params.getNames()) || RESTToolkit.isSet(params.getDescriptions()) )
+                        throw new BadRequestException("Query params cannot include keywords and names or descriptions at the same time.");
+
+                    // find only by keywords
+                    services = new ResourceList<>(
+                            ServiceWrapper.wrap(
+                                    serviceFacade.findByMultipleCriteriaEagerly(params.getKeywords(), params.getServiceCategories(),
+                                            params.getProviders(), params.getEmployees(), params.getWorkStations(), servicePoints,
+                                            params.getOffset(), params.getLimit())
+                            )
+                    );
+                } else {
+                    // find by names, descriptions
+                    services = new ResourceList<>(
+                            ServiceWrapper.wrap(
+                                    serviceFacade.findByMultipleCriteriaEagerly(params.getNames(), params.getDescriptions(),
+                                            params.getServiceCategories(), params.getProviders(), params.getEmployees(),
+                                            params.getWorkStations(), servicePoints, params.getOffset(), params.getLimit())
+                            )
+                    );
+                }
             } else {
                 logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get services eagerly for given service point without filtering (eventually paginated)
+                services = new ResourceList<>( ServiceWrapper.wrap(serviceFacade.findByServicePointEagerly(servicePoint, params.getOffset(), params.getLimit())) );
             }
 
             utx.commit();
 
-            return null;
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.ServiceResource.populateWithHATEOASLinks(services, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(services).build();
+        }
+
+        /**
+         * Method that counts Service entities for given Service Point resource.
+         * The provider id and service point number are passed through path params.
+         */
+        @GET
+        @Path("/count")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response countServicesByServicePoint( @PathParam("providerId") Long providerId,
+                                                     @PathParam("servicePointNumber") Integer servicePointNumber,
+                                                     @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning number of services for given service point by executing " +
+                    "ServicePointResource.ServiceResource.countServicesByServicePoint(providerId, servicePointNumber) method of REST API");
+
+            utx.begin();
+
+            // find service point entity for which to count services
+            ServicePoint servicePoint = servicePointFacade.find(new ServicePointId(providerId, servicePointNumber));
+            if(servicePoint == null)
+                throw new NotFoundException("Could not find service point for id (" + providerId + "," + servicePointNumber + ").");
+
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(serviceFacade.countByServicePoint(servicePoint)), 200,
+                    "number of services for service point with id (" + providerId + "," + servicePointNumber + ").");
+
+            utx.commit();
+
+            return Response.status(Status.OK).entity(responseEntity).build();
         }
     }
 
