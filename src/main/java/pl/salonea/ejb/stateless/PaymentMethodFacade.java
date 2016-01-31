@@ -206,6 +206,14 @@ public class PaymentMethodFacade extends AbstractFacade<PaymentMethod> implement
     }
 
     @Override
+    public Long countByProvider(Provider provider) {
+
+        TypedQuery<Long> query = getEntityManager().createNamedQuery(PaymentMethod.COUNT_BY_PROVIDER, Long.class);
+        query.setParameter("provider", provider);
+        return query.getSingleResult();
+    }
+
+    @Override
     public List<PaymentMethod> findByMultipleCriteria(List<Provider> providers, String name, String description, Boolean inAdvance) {
         return findByMultipleCriteria(providers, name, description, inAdvance, null, null);
     }

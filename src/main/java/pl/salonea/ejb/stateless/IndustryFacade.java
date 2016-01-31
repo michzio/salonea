@@ -172,6 +172,14 @@ public class IndustryFacade extends AbstractFacade<Industry> implements Industry
     }
 
     @Override
+    public Long countByProvider(Provider provider) {
+
+        TypedQuery<Long> query = getEntityManager().createNamedQuery(Industry.COUNT_BY_PROVIDER, Long.class);
+        query.setParameter("provider", provider);
+        return query.getSingleResult();
+    }
+
+    @Override
     public List<Industry> findByMultipleCriteria(List<Provider> providers, String name, String description) {
         return findByMultipleCriteria(providers, name, description, null, null);
     }

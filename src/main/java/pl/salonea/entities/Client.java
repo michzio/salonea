@@ -45,6 +45,7 @@ import java.util.Set;
         @NamedQuery(name = Client.FIND_ONLY_FIRMS, query = "SELECT c FROM Client c LEFT JOIN c.firm f LEFT JOIN c.naturalPerson np WHERE f IS NOT NULL AND np IS NULL"),
         @NamedQuery(name = Client.FIND_ONLY_NATURAL_PERSONS, query = "SELECT c FROM Client c LEFT JOIN c.firm f LEFT JOIN c.naturalPerson np WHERE f IS NULL AND np IS NOT NULL"),
         @NamedQuery(name = Client.FIND_NOT_ASSIGNED, query = "SELECT c FROM Client c LEFT JOIN c.firm f LEFT JOIN c.naturalPerson np WHERE f IS NULL AND np IS NULL"),
+        @NamedQuery(name = Client.COUNT_BY_RATED_PROVIDER, query = "SELECT COUNT(c) FROM Client c INNER JOIN c.providerRatings pr WHERE pr.provider = :provider"),
 })
 @NaturalPersonOrFirm
 public class Client extends UUIDEntity implements Serializable{
@@ -70,6 +71,7 @@ public class Client extends UUIDEntity implements Serializable{
     public static final String FIND_ONLY_FIRMS = "Client.findOnlyFirms";
     public static final String FIND_ONLY_NATURAL_PERSONS = "Client.findOnlyNaturalPersons";
     public static final String FIND_NOT_ASSIGNED = "Client.findNotAssigned";
+    public static final String COUNT_BY_RATED_PROVIDER = "Client.countByRatedProvider";
 
     private Long clientId;
     private String description;

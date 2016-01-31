@@ -30,6 +30,9 @@ public interface PaymentMethodFacadeInterface extends AbstractFacadeInterface<Pa
     List<PaymentMethod> findByProvider(Provider provider, Integer start, Integer limit);
     List<PaymentMethod> findByProviderEagerly(Provider provider);
     List<PaymentMethod> findByProviderEagerly(Provider provider, Integer start, Integer limit);
+
+    Long countByProvider(Provider provider);
+
     List<PaymentMethod> findByMultipleCriteria(List<Provider> providers, String name, String description, Boolean inAdvance);
     List<PaymentMethod> findByMultipleCriteria(List<Provider> providers, String name, String description, Boolean inAdvance, Integer start, Integer limit);
     List<PaymentMethod> findByMultipleCriteriaEagerly(List<Provider> providers, String name, String description, Boolean inAdvance);

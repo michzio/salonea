@@ -457,6 +457,14 @@ public class ClientFacade extends AbstractFacade<Client> implements ClientFacade
     }
 
     @Override
+    public Long countByRatedProvider(Provider provider) {
+
+        TypedQuery<Long> query = getEntityManager().createNamedQuery(Client.COUNT_BY_RATED_PROVIDER, Long.class);
+        query.setParameter("provider", provider);
+        return query.getSingleResult();
+    }
+
+    @Override
     public List<Client> findByMultipleCriteria(String firstName, String lastName, String firmName, String name, String description, Set<ClientType> clientTypes, Date oldestBirthDate, Date youngestBirthDate, Integer youngestAge, Integer oldestAge, Address location, Address delivery, Gender gender, List<Provider> ratedProviders, List<Employee> ratedEmployees) {
         return findByMultipleCriteria(firstName, lastName, firmName, name, description, clientTypes, oldestBirthDate, youngestBirthDate, youngestAge, oldestAge, location, delivery, gender, ratedProviders, ratedEmployees, null, null);
     }

@@ -29,7 +29,8 @@ import java.util.Set;
         @NamedQuery(name = Industry.FIND_BY_DESCRIPTION, query = "SELECT i FROM Industry i WHERE i.description LIKE :description"),
         @NamedQuery(name = Industry.FIND_BY_KEYWORD, query = "SELECT i FROM Industry i WHERE i.name LIKE :keyword OR i.description LIKE :keyword"),
         @NamedQuery(name = Industry.FIND_BY_PROVIDER, query = "SELECT i FROM Industry i WHERE :provider MEMBER OF i.providers"),
-        @NamedQuery(name = Industry.FIND_BY_PROVIDER_EAGERLY, query = "SELECT i FROM Industry i INNER JOIN FETCH i.providers p  WHERE p = :provider")
+        @NamedQuery(name = Industry.FIND_BY_PROVIDER_EAGERLY, query = "SELECT i FROM Industry i INNER JOIN FETCH i.providers p  WHERE p = :provider"),
+        @NamedQuery(name = Industry.COUNT_BY_PROVIDER, query = "SELECT COUNT(i) FROM Industry i WHERE :provider MEMBER OF i.providers")
 })
 public class Industry implements Serializable {
 
@@ -41,6 +42,7 @@ public class Industry implements Serializable {
     public static final String FIND_BY_KEYWORD = "Industry.findByKeyword";
     public static final String FIND_BY_PROVIDER = "Industry.findByProvider";
     public static final String FIND_BY_PROVIDER_EAGERLY = "Industry.findByProviderEagerly";
+    public static final String COUNT_BY_PROVIDER = "Industry.countByProvider";
 
     private Long industryId;
     private String name;

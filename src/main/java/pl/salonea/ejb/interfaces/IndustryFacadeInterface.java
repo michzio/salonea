@@ -26,6 +26,9 @@ public interface IndustryFacadeInterface extends AbstractFacadeInterface<Industr
     List<Industry> findByProvider(Provider provider, Integer start, Integer limit);
     List<Industry> findByProviderEagerly(Provider provider);
     List<Industry> findByProviderEagerly(Provider provider, Integer start, Integer limit);
+
+    Long countByProvider(Provider provider);
+
     List<Industry> findByMultipleCriteria(List<Provider> providers, String name, String description);
     List<Industry> findByMultipleCriteria(List<Provider> providers, String name, String description, Integer start, Integer limit);
     List<Industry> findByMultipleCriteriaEagerly(List<Provider> providers, String name, String description);

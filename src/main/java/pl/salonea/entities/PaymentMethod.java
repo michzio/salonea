@@ -30,7 +30,8 @@ import java.util.Set;
         @NamedQuery(name = PaymentMethod.FIND_IN_ADVANCE, query = "SELECT pm FROM PaymentMethod pm WHERE pm.inAdvance = :in_advance"),
         @NamedQuery(name = PaymentMethod.FIND_BY_NAME_AND_IN_ADVANCE, query = "SELECT pm FROM PaymentMethod pm WHERE pm.name LIKE :name AND pm.inAdvance = :in_advance"),
         @NamedQuery(name = PaymentMethod.FIND_BY_PROVIDER, query = "SELECT pm FROM PaymentMethod pm WHERE :provider MEMBER OF pm.acceptingProviders"),
-        @NamedQuery(name = PaymentMethod.FIND_BY_PROVIDER_EAGERLY, query = "SELECT DISTINCT pm FROM PaymentMethod pm INNER JOIN FETCH pm.acceptingProviders p WHERE p = :provider")
+        @NamedQuery(name = PaymentMethod.FIND_BY_PROVIDER_EAGERLY, query = "SELECT DISTINCT pm FROM PaymentMethod pm INNER JOIN FETCH pm.acceptingProviders p WHERE p = :provider"),
+        @NamedQuery(name = PaymentMethod.COUNT_BY_PROVIDER, query = "SELECT COUNT(pm) FROM PaymentMethod pm WHERE :provider MEMBER OF pm.acceptingProviders")
 })
 public class PaymentMethod implements Serializable {
 
@@ -44,6 +45,7 @@ public class PaymentMethod implements Serializable {
     public static final String FIND_BY_NAME_AND_IN_ADVANCE = "PaymentMethod.findByNameAndInAdvance";
     public static final String FIND_BY_PROVIDER = "PaymentMethod.findByProvider";
     public static final String FIND_BY_PROVIDER_EAGERLY = "PaymentMethod.findByProviderEagerly";
+    public static final String COUNT_BY_PROVIDER = "PaymentMethod.countByProvider";
 
     private Integer id;
     private String name;

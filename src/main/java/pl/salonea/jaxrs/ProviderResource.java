@@ -609,6 +609,16 @@ public class ProviderResource {
                     .build())
                     .rel("industries-eagerly").build());
 
+            // industries count
+            Method countIndustriesByProviderMethod = ProviderResource.IndustryResource.class.getMethod("countIndustriesByProvider", Long.class, GenericBeanParam.class);
+            provider.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ProviderResource.class)
+                    .path(industriesMethod)
+                    .path(countIndustriesByProviderMethod)
+                    .resolveTemplate("userId", provider.getUserId().toString())
+                    .build())
+                    .rel("industries-count").build());
+
             /**
              * Payment Methods associated with current Provider resource
              */
@@ -631,6 +641,16 @@ public class ProviderResource {
                     .resolveTemplate("userId", provider.getUserId().toString())
                     .build())
                     .rel("payment-methods-eagerly").build());
+
+            // payment-methods count
+            Method countPaymentMethodsByProviderMethod = ProviderResource.PaymentMethodResource.class.getMethod("countPaymentMethodsByProvider", Long.class, GenericBeanParam.class);
+            provider.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ProviderResource.class)
+                    .path(paymentMethodsMethod)
+                    .path(countPaymentMethodsByProviderMethod)
+                    .resolveTemplate("userId", provider.getUserId().toString())
+                    .build())
+                    .rel("payment-methods-count").build());
 
             /**
              * Service Points associated with current Provider resource
@@ -848,6 +868,16 @@ public class ProviderResource {
                     .build())
                     .rel("rating-clients-eagerly").build());
 
+            // rating-clients count
+            Method countClientsRatingProviderMethod = ProviderResource.ClientResource.class.getMethod("countClientsRatingProvider", Long.class, GenericBeanParam.class);
+            provider.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ProviderResource.class)
+                    .path(ratingClientsMethod)
+                    .path(countClientsRatingProviderMethod)
+                    .resolveTemplate("userId", provider.getUserId().toString())
+                    .build())
+                    .rel("rating-clients-count").build());
+
             /**
              * Service Point Photos related with current Provider resource
              */
@@ -919,10 +949,33 @@ public class ProviderResource {
              */
 
             // services
+            Method servicesMethod = ProviderResource.class.getMethod("getServiceResource");
+            provider.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ProviderResource.class)
+                    .path(servicesMethod)
+                    .resolveTemplate("userId", provider.getUserId().toString())
+                    .build())
+                    .rel("services").build());
 
             // services eagerly
+            Method servicesEagerlyMethod = ProviderResource.ServiceResource.class.getMethod("getProviderServicesEagerly", Long.class, ServiceBeanParam.class);
+            provider.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ProviderResource.class)
+                    .path(servicesMethod)
+                    .path(servicesEagerlyMethod)
+                    .resolveTemplate("userId", provider.getUserId().toString())
+                    .build())
+                    .rel("services-eagerly").build());
 
             // services count
+            Method countServicesByProviderMethod = ProviderResource.ServiceResource.class.getMethod("countServicesByProvider", Long.class, GenericBeanParam.class);
+            provider.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ProviderResource.class)
+                    .path(servicesMethod)
+                    .path(countServicesByProviderMethod)
+                    .resolveTemplate("userId", provider.getUserId().toString())
+                    .build())
+                    .rel("services-count").build());
 
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
@@ -1027,6 +1080,30 @@ public class ProviderResource {
 
             return Response.status(Status.OK).entity(industries).build();
         }
+
+        /**
+         * Method that counts Industry entities for given Provider.
+         * The provider id is passed through path param.
+         */
+        @GET
+        @Path("/count")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response countIndustriesByProvider( @PathParam("userId") Long providerId,
+                                                   @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning number of industries for given provider by executing " +
+                    "ProviderResource.IndustryResource.countIndustriesByProvider(providerId) method of REST API");
+
+            // find provider entity for which to count industries
+            Provider provider = providerFacade.find(providerId);
+            if(provider == null)
+                throw new NotFoundException("Could not find provider for id " + providerId + ".");
+
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(industryFacade.countByProvider(provider)),
+                    200, "number of industries for provider with id " + provider.getUserId());
+            return Response.status(Status.OK).entity(responseEntity).build();
+        }
     }
 
     public class PaymentMethodResource {
@@ -1127,6 +1204,30 @@ public class ProviderResource {
             pl.salonea.jaxrs.PaymentMethodResource.populateWithHATEOASLinks(paymentMethods, params.getUriInfo(), params.getOffset(), params.getLimit());
 
             return Response.status(Status.OK).entity(paymentMethods).build();
+        }
+
+        /**
+         * Methods that counts Payment Method entities for given Provider.
+         * The provider id is passed through path param.
+         */
+        @GET
+        @Path("/count")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response countPaymentMethodsByProvider( @PathParam("userId") Long providerId,
+                                                       @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning number of payment methods for given provider by executing " +
+                    "ProviderResource.PaymentMethodResource.countPaymentMethodsByProvider(providerId) method of REST API");
+
+            // find provider entity for which to count payment methods
+            Provider provider = providerFacade.find(providerId);
+            if(provider == null)
+                throw new NotFoundException("Could not find provider for id " + providerId + ".");
+
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(paymentMethodFacade.countByProvider(provider)),
+                    200, "number of payment methods for provider with id " + providerId);
+            return Response.status(Status.OK).entity(responseEntity).build();
         }
 
     }
@@ -2515,7 +2616,7 @@ public class ProviderResource {
 
                 // get clients eagerly for given rated provider without filtering
                 clients = new ResourceList<>(
-                        ClientWrapper.wrap( clientFacade.findRatingProviderEagerly(provider, params.getOffset(), params.getLimit()) )
+                        ClientWrapper.wrap(clientFacade.findRatingProviderEagerly(provider, params.getOffset(), params.getLimit()))
                 );
 
             }
@@ -2524,6 +2625,30 @@ public class ProviderResource {
             pl.salonea.jaxrs.ClientResource.populateWithHATEOASLinks(clients, params.getUriInfo(), params.getOffset(), params.getLimit());
 
             return Response.status(Status.OK).entity(clients).build();
+        }
+
+        /**
+         * Method that counts Client entities rating given Provider.
+         * The provider id is passed through path param.
+         */
+        @GET
+        @Path("/count")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response countClientsRatingProvider( @PathParam("userId") Long providerId,
+                                                    @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning number of clients for given rated by them provider using " +
+                    "ProviderResource.ClientResource.countClientsRatingProvider(providerId) method of REST API");
+
+            // find provider entity for which to count rating it clients
+            Provider provider = providerFacade.find(providerId);
+            if(provider == null)
+                throw new NotFoundException("Could not find provider for id " + providerId + ".");
+
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(clientFacade.countByRatedProvider(provider)),
+                    200, "number of clients rating provider with id " + provider.getUserId());
+            return Response.status(Status.OK).entity(responseEntity).build();
         }
     }
 
@@ -2940,6 +3065,102 @@ public class ProviderResource {
         }
 
 
+        /**
+         * Method returns subset of Service entities for given Provider fetching them eagerly.
+         * The provider id is passed through path param.
+         * They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Path("/eagerly")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getProviderServicesEagerly( @PathParam("userId") Long providerId,
+                                                    @BeanParam ServiceBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
 
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning services eagerly for given provider using " +
+                    "ProviderResource.ServiceResource.getProviderServicesEagerly(providerId) method of REST API");
+
+            // find provider entity for which to get associated services
+            Provider provider = providerFacade.find(providerId);
+            if(provider == null)
+                throw new NotFoundException("Could not find provider for id " + providerId + ".");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<ServiceWrapper> services = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Provider> providers = new ArrayList<>();
+                providers.add(provider);
+
+                // get services eagerly for given provider filtered by given query params
+
+                utx.begin();
+
+                if( RESTToolkit.isSet(params.getKeywords()) ) {
+                    if( RESTToolkit.isSet(params.getNames()) || RESTToolkit.isSet(params.getDescriptions()) )
+                        throw new BadRequestException("Query params cannot include keywords and names or descriptions at the same time.");
+
+                    // find only by keywords
+                    services = new ResourceList<>(
+                            ServiceWrapper.wrap(
+                                    serviceFacade.findByMultipleCriteriaEagerly(params.getKeywords(), params.getServiceCategories(), providers,
+                                            params.getEmployees(), params.getWorkStations(), params.getServicePoints(),
+                                            params.getOffset(), params.getLimit())
+                            )
+                    );
+
+                } else {
+                    // find by names, descriptions
+                    services = new ResourceList<>(
+                            ServiceWrapper.wrap(
+                                    serviceFacade.findByMultipleCriteriaEagerly(params.getNames(), params.getDescriptions(), params.getServiceCategories(),
+                                            providers, params.getEmployees(), params.getWorkStations(), params.getServicePoints(),
+                                            params.getOffset(), params.getLimit())
+                            )
+                    );
+                }
+
+                utx.commit();
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get services eagerly for given provider without filtering (eventually paginated)
+                services = new ResourceList<>( ServiceWrapper.wrap(serviceFacade.findByProviderEagerly(provider, params.getOffset(), params.getLimit())) );
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.ServiceResource.populateWithHATEOASLinks(services, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(services).build();
+        }
+
+        /**
+         * Method that counts Service entities for given Provider resource.
+         * The provider id is passed through path param.
+         */
+        @GET
+        @Path("/count")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response countServicesByProvider( @PathParam("userId") Long providerId,
+                                                 @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning number of services for given provider by executing " +
+                    "ProviderResource.ServiceResource.countServicesByProvider(providerId) method of REST API");
+
+            // find provider entity for which to count services
+            Provider provider = providerFacade.find(providerId);
+            if(provider == null)
+                throw new NotFoundException("Could not find provider for id " + providerId + ".");
+
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(serviceFacade.countByProvider(provider)), 200,
+                    "number of services for provider with id " + provider.getUserId());
+            return Response.status(Status.OK).entity(responseEntity).build();
+        }
     }
 }
