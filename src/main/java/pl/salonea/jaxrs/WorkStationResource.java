@@ -15,6 +15,7 @@ import pl.salonea.jaxrs.utils.ResourceList;
 import pl.salonea.jaxrs.utils.ResponseWrapper;
 import pl.salonea.jaxrs.utils.hateoas.Link;
 import pl.salonea.jaxrs.wrappers.EmployeeWrapper;
+import pl.salonea.jaxrs.wrappers.ServiceWrapper;
 import pl.salonea.jaxrs.wrappers.WorkStationWrapper;
 
 import javax.inject.Inject;
@@ -587,6 +588,111 @@ public class WorkStationResource {
             return Response.status(Status.OK).entity(services).build();
         }
 
+        /**
+         * Method returns subset of Service entities for given Work Station fetching them eagerly.
+         * The provider id, service point number and work station number are passed through path params.
+         * They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Path("/eagerly")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getWorkStationServicesEagerly( @PathParam("providerId") Long providerId,
+                                                       @PathParam("servicePointNumber") Integer servicePointNumber,
+                                                       @PathParam("workStationNumber") Integer workStationNumber,
+                                                       @BeanParam ServiceBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
 
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning services eagerly for given work station using " +
+                    "WorkStationResource.ServiceResource.getWorkStationServicesEagerly(providerId, servicePointNumber, workStationNumber) method of REST API");
+
+            utx.begin();
+
+            // find work station entity for which to get associated services
+            WorkStation workStation = workStationFacade.find(new WorkStationId(providerId, servicePointNumber, workStationNumber));
+            if(workStation == null)
+                throw new NotFoundException("Could not find work station for id (" + providerId + "," + servicePointNumber + "," + workStationNumber + ").");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<ServiceWrapper> services = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<WorkStation> workStations = new ArrayList<>();
+                workStations.add(workStation);
+
+                // get services eagerly for given work station filtered by given query params
+
+                if( RESTToolkit.isSet(params.getKeywords()) ) {
+                    if( RESTToolkit.isSet(params.getNames()) || RESTToolkit.isSet(params.getDescriptions()) )
+                        throw new BadRequestException("Query params cannot include keywords and names or descriptions at the same time.");
+
+                    // find only by keywords
+                    services = new ResourceList<>(
+                            ServiceWrapper.wrap(
+                                    serviceFacade.findByMultipleCriteriaEagerly(params.getKeywords(), params.getServiceCategories(),
+                                            params.getProviders(), params.getEmployees(), workStations, params.getServicePoints(),
+                                            params.getOffset(), params.getLimit())
+                            )
+                    );
+                } else {
+                    // find by names, descriptions
+                    services = new ResourceList<>(
+                            ServiceWrapper.wrap(
+                                    serviceFacade.findByMultipleCriteriaEagerly(params.getNames(), params.getDescriptions(),
+                                            params.getServiceCategories(), params.getProviders(), params.getEmployees(),
+                                            workStations, params.getServicePoints(), params.getOffset(), params.getLimit())
+                            )
+                    );
+                }
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get services eagerly for given work station without filtering (eventually paginated)
+                services = new ResourceList<>( ServiceWrapper.wrap(serviceFacade.findByWorkStationEagerly(workStation, params.getOffset(), params.getLimit())) );
+            }
+
+            utx.commit();
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.ServiceResource.populateWithHATEOASLinks(services, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(services).build();
+        }
+
+        /**
+         * Method that counts Service entities for given Work Station.
+         * The provider id, service point number and work station number
+         * are passed through path params.
+         */
+        @GET
+        @Path("/count")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response countServicesByWorkStation( @PathParam("providerId") Long providerId,
+                                                    @PathParam("servicePointNumber") Integer servicePointNumber,
+                                                    @PathParam("workStationNumber") Integer workStationNumber,
+                                                    @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning number of services for given work station by executing " +
+                    "WorkStationResource.ServiceResource.countServicesByWorkStation(providerId, servicePointNumber, workStationNumber) method REST API");
+
+            utx.begin();
+
+            // find work station entity for which to count services
+            WorkStation workStation = workStationFacade.find( new WorkStationId(providerId, servicePointNumber, workStationNumber) );
+            if(workStation == null)
+                throw new NotFoundException("Could not find work station for id (" + providerId + "," + servicePointNumber + "," + workStationNumber + ").");
+
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(serviceFacade.countByWorkStation(workStation)), 200,
+                    "number of services for work station with id (" + providerId + "," + servicePointNumber + "," + workStationNumber + ").");
+
+            utx.commit();
+
+            return Response.status(Status.OK).entity(responseEntity).build();
+        }
     }
 }
