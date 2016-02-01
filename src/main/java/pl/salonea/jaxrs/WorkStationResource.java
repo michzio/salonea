@@ -1,16 +1,12 @@
 package pl.salonea.jaxrs;
 
 import pl.salonea.ejb.stateless.EmployeeFacade;
+import pl.salonea.ejb.stateless.ServiceFacade;
 import pl.salonea.ejb.stateless.WorkStationFacade;
-import pl.salonea.entities.Employee;
-import pl.salonea.entities.ProviderService;
+import pl.salonea.entities.*;
 
-import pl.salonea.entities.WorkStation;
 import pl.salonea.entities.idclass.WorkStationId;
-import pl.salonea.jaxrs.bean_params.DateBetweenBeanParam;
-import pl.salonea.jaxrs.bean_params.EmployeeBeanParam;
-import pl.salonea.jaxrs.bean_params.GenericBeanParam;
-import pl.salonea.jaxrs.bean_params.WorkStationBeanParam;
+import pl.salonea.jaxrs.bean_params.*;
 import pl.salonea.jaxrs.exceptions.BadRequestException;
 import pl.salonea.jaxrs.exceptions.ForbiddenException;
 import pl.salonea.jaxrs.exceptions.NotFoundException;
@@ -50,6 +46,8 @@ public class WorkStationResource {
     private WorkStationFacade workStationFacade;
     @Inject
     private EmployeeFacade employeeFacade;
+    @Inject
+    private ServiceFacade serviceFacade;
 
     /**
      * Alternative methods to access Work Station resource
@@ -94,6 +92,9 @@ public class WorkStationResource {
     @Path("/{providerId: \\d+}+{servicePointNumber: \\d+}+{workStationNumber: \\d+}/employees")
     public EmployeeResource getEmployeeResource() { return new EmployeeResource(); }
 
+    @Path("/{providerId: \\d+}+{servicePointNumber: \\d+}+{workStationNumber: \\d+}/services")
+    public ServiceResource getServiceResource() { return new ServiceResource(); }
+
     /**
      * This method enables to populate list of resources and each individual resource on list with hypermedia links
      */
@@ -137,9 +138,8 @@ public class WorkStationResource {
 
         WorkStationResource.populateWithHATEOASLinks(workStationWrapper.getWorkStation(), uriInfo);
 
-      // TODO
-      //  for(TermEmployeeWorkOn employeeTerm : workStationWrapper.getTermsEmployeesWorkOn())
-      //      pl.salonea.jaxrs.EmployeeTermResource.populateWithHATEOASLinks(employeeTerm, uriInfo);
+      for(TermEmployeeWorkOn employeeTerm : workStationWrapper.getTermsEmployeesWorkOn())
+          pl.salonea.jaxrs.EmployeeTermResource.populateWithHATEOASLinks(employeeTerm, uriInfo);
 
         for(ProviderService providerService : workStationWrapper.getProvidedServices())
             pl.salonea.jaxrs.ProviderServiceResource.populateWithHATEOASLinks(providerService, uriInfo);
@@ -234,6 +234,45 @@ public class WorkStationResource {
                     .resolveTemplate("workStationNumber", workStation.getWorkStationNumber().toString())
                     .build())
                     .rel("employees-by-term-strict").build());
+
+            /**
+             * Services executed on current Work Station resource
+             */
+
+            // services
+            Method servicesMethod = WorkStationResource.class.getMethod("getServiceResource");
+            workStation.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(WorkStationResource.class)
+                    .path(servicesMethod)
+                    .resolveTemplate("providerId", workStation.getServicePoint().getProvider().getUserId().toString())
+                    .resolveTemplate("servicePointNumber", workStation.getServicePoint().getServicePointNumber().toString())
+                    .resolveTemplate("workStationNumber", workStation.getWorkStationNumber().toString())
+                    .build())
+                    .rel("services").build());
+
+            // services eagerly
+            Method servicesEagerlyMethod = WorkStationResource.ServiceResource.class.getMethod("getWorkStationServicesEagerly", Long.class, Integer.class, Integer.class, ServiceBeanParam.class);
+            workStation.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(WorkStationResource.class)
+                    .path(servicesMethod)
+                    .path(servicesEagerlyMethod)
+                    .resolveTemplate("providerId", workStation.getServicePoint().getProvider().getUserId().toString())
+                    .resolveTemplate("servicePointNumber", workStation.getServicePoint().getServicePointNumber().toString())
+                    .resolveTemplate("workStationNumber", workStation.getWorkStationNumber().toString())
+                    .build())
+                    .rel("services-eagerly").build());
+
+            // services count
+            Method countServicesByWorkStationMethod = WorkStationResource.ServiceResource.class.getMethod("countServicesByWorkStation", Long.class, Integer.class, Integer.class, GenericBeanParam.class);
+            workStation.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(WorkStationResource.class)
+                    .path(servicesMethod)
+                    .path(countServicesByWorkStationMethod)
+                    .resolveTemplate("providerId", workStation.getServicePoint().getProvider().getUserId().toString())
+                    .resolveTemplate("servicePointNumber", workStation.getServicePoint().getServicePointNumber().toString())
+                    .resolveTemplate("workStationNumber", workStation.getWorkStationNumber().toString())
+                    .build())
+                    .rel("services-count").build());
 
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
@@ -474,5 +513,80 @@ public class WorkStationResource {
 
             return Response.status(Status.OK).entity(employees).build();
         }
+    }
+
+    public class ServiceResource {
+
+        public ServiceResource() { }
+
+        /**
+         * Method returns subset of Service entities for given Work Station entity.
+         * The provider id, service point number and work station number are passed
+         * through path params. They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getWorkStationServices( @PathParam("providerId") Long providerId,
+                                                @PathParam("servicePointNumber") Integer servicePointNumber,
+                                                @PathParam("workStationNumber") Integer workStationNumber,
+                                                @BeanParam ServiceBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning services for given work station using " +
+                    "WorkStationResource.ServiceResource.getWorkStationServices(providerId, servicePointNumber, workStationNumber) method of REST API");
+
+            utx.begin();
+
+            // find work station entity for which to get associated services
+            WorkStation workStation = workStationFacade.find(new WorkStationId(providerId, servicePointNumber, workStationNumber));
+            if(workStation == null)
+                throw new NotFoundException("Could not find work station for id (" + providerId + "," + servicePointNumber + "," + workStationNumber + ").");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<Service> services = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<WorkStation> workStations = new ArrayList<>();
+                workStations.add(workStation);
+
+                // get services for given work station filtered by given query params
+
+                if( RESTToolkit.isSet(params.getKeywords()) ) {
+                    if( RESTToolkit.isSet(params.getNames()) || RESTToolkit.isSet(params.getDescriptions()) )
+                        throw new BadRequestException("Query params cannot include keywords and names or descriptions at the same time.");
+
+                    // find only by keywords
+                    services = new ResourceList<>(
+                            serviceFacade.findByMultipleCriteria(params.getKeywords(), params.getServiceCategories(), params.getProviders(),
+                                    params.getEmployees(), workStations, params.getServicePoints(), params.getOffset(), params.getLimit())
+                    );
+                } else {
+                    // find by names, descriptions
+                    services = new ResourceList<>(
+                            serviceFacade.findByMultipleCriteria(params.getNames(), params.getDescriptions(), params.getServiceCategories(),
+                                    params.getProviders(), params.getEmployees(), workStations, params.getServicePoints(),
+                                    params.getOffset(), params.getLimit())
+                    );
+                }
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get services for given work station without filtering (eventually paginated)
+                services = new ResourceList<>( serviceFacade.findByWorkStation(workStation, params.getOffset(), params.getLimit()) );
+            }
+
+            utx.commit();
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.ServiceResource.populateWithHATEOASLinks(services, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(services).build();
+        }
+
+
     }
 }
