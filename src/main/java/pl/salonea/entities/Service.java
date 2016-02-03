@@ -26,9 +26,11 @@ import java.util.Set;
         @NamedQuery(name = Service.FIND_BY_ID_EAGERLY, query = "SELECT s FROM Service s LEFT JOIN FETCH s.providedServiceOffers WHERE s.serviceId = :serviceId"),
         @NamedQuery(name = Service.FIND_BY_NAME, query = "SELECT s FROM Service s WHERE s.serviceName LIKE :name"),
         @NamedQuery(name = Service.FIND_BY_DESCRIPTION, query = "SELECT s FROM Service s WHERE s.description LIKE :description"),
-        @NamedQuery(name = Service.SEARCH_BY_KEYWORD, query = "SELECT s FROM Service s WHERE s.serviceName LIKE :keyword OR s.description LIKE :keyword"),
+        @NamedQuery(name = Service.FIND_BY_KEYWORD, query = "SELECT s FROM Service s WHERE s.serviceName LIKE :keyword OR s.description LIKE :keyword"),
         @NamedQuery(name = Service.FIND_BY_CATEGORY, query = "SELECT s FROM Service s WHERE s.serviceCategory = :service_category"),
         @NamedQuery(name = Service.FIND_BY_CATEGORY_EAGERLY, query = "SELECT DISTINCT s FROM Service s LEFT JOIN FETCH s.providedServiceOffers WHERE s.serviceCategory = :service_category"),
+        @NamedQuery(name = Service.FIND_BY_CATEGORY_AND_NAME, query = "SELECT s FROM Service s WHERE s.serviceCategory = :service_category AND s.serviceName LIKE :name"),
+        @NamedQuery(name = Service.FIND_BY_CATEGORY_AND_DESCRIPTION, query = "SELECT s FROM Service s WHERE s.serviceCategory = :service_category AND s.description LIKE :description"),
         @NamedQuery(name = Service.FIND_BY_CATEGORY_AND_KEYWORD, query = "SELECT s FROM Service s WHERE s.serviceCategory = :service_category AND (s.serviceName LIKE :keyword OR s.description LIKE :keyword)"),
         @NamedQuery(name = Service.FIND_BY_PROVIDER, query = "SELECT s FROM Service s INNER JOIN s.providedServiceOffers ps WHERE ps.provider = :provider"),
         @NamedQuery(name = Service.FIND_BY_PROVIDER_EAGERLY, query = "SELECT DISTINCT s FROM Service s INNER JOIN FETCH s.providedServiceOffers ps WHERE ps.provider = :provider"),
@@ -53,9 +55,11 @@ public class Service {
     public static final String FIND_BY_ID_EAGERLY = "Service.findByIdEagerly";
     public static final String FIND_BY_NAME = "Service.findByName";
     public static final String FIND_BY_DESCRIPTION = "Service.findByDescription";
-    public static final String SEARCH_BY_KEYWORD = "Service.searchByKeyword";
+    public static final String FIND_BY_KEYWORD = "Service.findByKeyword";
     public static final String FIND_BY_CATEGORY = "Service.findByCategory";
     public static final String FIND_BY_CATEGORY_EAGERLY = "Service.findByCategoryEagerly";
+    public static final String FIND_BY_CATEGORY_AND_NAME = "Service.findByCategoryAndName";
+    public static final String FIND_BY_CATEGORY_AND_DESCRIPTION = "Service.findByCategoryAndDescription";
     public static final String FIND_BY_CATEGORY_AND_KEYWORD = "Service.findByCategoryAndKeyword";
     public static final String FIND_BY_PROVIDER = "Service.findByProvider";
     public static final String FIND_BY_PROVIDER_EAGERLY = "Service.findByProviderEagerly";

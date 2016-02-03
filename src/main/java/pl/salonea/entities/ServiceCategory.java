@@ -3,38 +3,57 @@ package pl.salonea.entities;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import pl.salonea.constraints.CategoryPhrase;
+import pl.salonea.jaxrs.utils.hateoas.Link;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
-import javax.xml.bind.annotation.XmlTransient;
+import javax.xml.bind.annotation.*;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+
+@XmlRootElement(name = "service-category")
+@XmlAccessorType(XmlAccessType.PROPERTY)
+@XmlType(propOrder = {"categoryId", "categoryName", "description", "superCategory", "links"})
 
 @Entity
 @Table(name = "service_category")
 @Access(AccessType.PROPERTY)
 @NamedQueries({
+        @NamedQuery(name = ServiceCategory.FIND_ALL_EAGERLY, query = "SELECT DISTINCT sc FROM ServiceCategory sc LEFT JOIN FETCH sc.subCategories LEFT JOIN FETCH sc.services"),
+        @NamedQuery(name = ServiceCategory.FIND_BY_ID_EAGERLY, query = "SELECT sc FROM ServiceCategory sc LEFT JOIN FETCH sc.subCategories LEFT JOIN FETCH sc.services WHERE sc.categoryId = :categoryId"),
         @NamedQuery(name = ServiceCategory.FIND_BY_NAME, query = "SELECT sc FROM ServiceCategory sc WHERE LOWER(sc.categoryName) LIKE LOWER(:name)"),
         @NamedQuery(name = ServiceCategory.FIND_BY_DESCRIPTION, query = "SELECT sc FROM ServiceCategory sc WHERE LOWER(sc.description) LIKE LOWER(:description)"),
         @NamedQuery(name = ServiceCategory.FIND_BY_KEYWORD, query = "SELECT sc FROM ServiceCategory sc WHERE LOWER(sc.categoryName) LIKE LOWER(:keyword) OR LOWER(sc.description) LIKE LOWER(:keyword)"),
         @NamedQuery(name = ServiceCategory.FIND_BY_SUPER_CATEGORY, query = "SELECT sc FROM ServiceCategory sc WHERE sc.superCategory = :super_category"),
-        @NamedQuery(name = ServiceCategory.FIND_BY_KEYWORD_IN_CATEGORY, query = "SELECT sc FROM ServiceCategory sc WHERE (LOWER(sc.categoryName) LIKE LOWER(:keyword) OR LOWER(sc.description) LIKE LOWER(:keyword)) AND sc.superCategory = :super_category"),
+        @NamedQuery(name = ServiceCategory.FIND_BY_SUPER_CATEGORY_EAGERLY, query = "SELECT DISTINCT sc FROM ServiceCategory sc LEFT JOIN FETCH sc.subCategories LEFT JOIN FETCH sc.services WHERE sc.superCategory = :super_category"),
+        @NamedQuery(name = ServiceCategory.FIND_BY_NAME_IN_SUPER_CATEGORY, query = "SELECT sc FROM ServiceCategory sc WHERE sc.categoryName LIKE :name AND sc.superCategory = :super_category"),
+        @NamedQuery(name = ServiceCategory.FIND_BY_DESCRIPTION_IN_SUPER_CATEGORY, query = "SELECT sc FROM ServiceCategory sc WHERE sc.description LIKE :description AND sc.superCategory = :super_category"),
+        @NamedQuery(name = ServiceCategory.FIND_BY_KEYWORD_IN_SUPER_CATEGORY, query = "SELECT sc FROM ServiceCategory sc WHERE (LOWER(sc.categoryName) LIKE LOWER(:keyword) OR LOWER(sc.description) LIKE LOWER(:keyword)) AND sc.superCategory = :super_category"),
+        @NamedQuery(name = ServiceCategory.COUNT_BY_SUPER_CATEGORY, query = "SELECT COUNT(sc) FROM ServiceCategory sc WHERE sc.superCategory = :super_category"),
         @NamedQuery(name = ServiceCategory.DELETE_BY_NAME, query = "DELETE FROM ServiceCategory sc WHERE sc.categoryName = :name"),
         @NamedQuery(name = ServiceCategory.DELETE_BY_SUPER_CATEGORY, query = "DELETE FROM ServiceCategory sc WHERE sc.superCategory = :super_category")
 })
 public class ServiceCategory {
 
+    public static final String FIND_ALL_EAGERLY = "ServiceCategory.findAllEagerly";
+    public static final String FIND_BY_ID_EAGERLY = "ServiceCategory.findByIdEagerly";
     public static final String FIND_BY_NAME = "ServiceCategory.findByName";
     public static final String FIND_BY_DESCRIPTION = "ServiceCategory.findByDescription";
     public static final String FIND_BY_KEYWORD = "ServiceCategory.findByKeyword";
     public static final String FIND_BY_SUPER_CATEGORY = "ServiceCategory.findBySuperCategory";
-    public static final String FIND_BY_KEYWORD_IN_CATEGORY = "ServiceCategory.findByKeywordInCategory";
+    public static final String FIND_BY_SUPER_CATEGORY_EAGERLY = "ServiceCategory.findBySuperCategoryEagerly";
+    public static final String FIND_BY_NAME_IN_SUPER_CATEGORY = "ServiceCategory.findByNameInSuperCategory";
+    public static final String FIND_BY_DESCRIPTION_IN_SUPER_CATEGORY = "ServiceCategory.findByDescriptionInSuperCategory";
+    public static final String FIND_BY_KEYWORD_IN_SUPER_CATEGORY = "ServiceCategory.findByKeywordInSuperCategory";
+    public static final String COUNT_BY_SUPER_CATEGORY = "ServiceCategory.countBySuperCategory";
     public static final String DELETE_BY_NAME = "ServiceCategory.deleteByName";
     public static final String DELETE_BY_SUPER_CATEGORY = "ServiceCategory.deleteBySuperCategory";
 
     private Integer categoryId;
-    private String categoryName;
+    private String categoryName; // business key
     private String description;
 
     /* many-to-one relationship */
@@ -43,6 +62,9 @@ public class ServiceCategory {
     /* one-to-many relationship */
     private Set<ServiceCategory> subCategories = new HashSet<>();
     private Set<Service> services = new HashSet<>();
+
+    // HATEOAS support for RESTful web service in JAX-RS
+    private List<Link> links = new ArrayList<>();
 
     /* constructors */
 
@@ -147,5 +169,16 @@ public class ServiceCategory {
                 // if deriving: .appendSuper(super.equals(obj)).
                 .append(getCategoryName(), rhs.getCategoryName())
                 .isEquals();
+    }
+
+    @XmlElementWrapper(name = "links")
+    @XmlElement(name = "link")
+    @Transient
+    public List<Link> getLinks() {
+        return links;
+    }
+
+    public void setLinks(List<Link> links) {
+        this.links = links;
     }
 }

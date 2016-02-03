@@ -20,13 +20,17 @@ public interface ServiceFacadeInterface extends AbstractFacadeInterface<Service>
     List<Service> findByName(String name, Integer start, Integer limit);
     List<Service> findByDescription(String description);
     List<Service> findByDescription(String description, Integer start, Integer limit);
-    List<Service> searchByKeyword(String keyword);
-    List<Service> searchByKeyword(String keyword, Integer start, Integer limit);
+    List<Service> findByKeyword(String keyword);
+    List<Service> findByKeyword(String keyword, Integer start, Integer limit);
 
     List<Service> findByCategory(ServiceCategory serviceCategory);
     List<Service> findByCategory(ServiceCategory serviceCategory, Integer start, Integer limit);
     List<Service> findByCategoryEagerly(ServiceCategory serviceCategory);
     List<Service> findByCategoryEagerly(ServiceCategory serviceCategory, Integer start, Integer limit);
+    List<Service> findByCategoryAndName(ServiceCategory serviceCategory, String name);
+    List<Service> findByCategoryAndName(ServiceCategory serviceCategory, String name, Integer start, Integer limit);
+    List<Service> findByCategoryAndDescription(ServiceCategory serviceCategory, String description);
+    List<Service> findByCategoryAndDescription(ServiceCategory serviceCategory, String description, Integer start, Integer limit);
     List<Service> findByCategoryAndKeyword(ServiceCategory serviceCategory, String keyword);
     List<Service> findByCategoryAndKeyword(ServiceCategory serviceCategory, String keyword, Integer start, Integer limit);
     List<Service> findByProvider(Provider provider);

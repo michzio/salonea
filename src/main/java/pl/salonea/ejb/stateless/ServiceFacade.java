@@ -106,14 +106,14 @@ public class ServiceFacade extends AbstractFacade<Service> implements ServiceFac
     }
 
     @Override
-    public List<Service> searchByKeyword(String keyword) {
-        return searchByKeyword(keyword, null, null);
+    public List<Service> findByKeyword(String keyword) {
+        return findByKeyword(keyword, null, null);
     }
 
     @Override
-    public List<Service> searchByKeyword(String keyword, Integer start, Integer limit) {
+    public List<Service> findByKeyword(String keyword, Integer start, Integer limit) {
 
-        TypedQuery<Service> query = getEntityManager().createNamedQuery(Service.SEARCH_BY_KEYWORD, Service.class);
+        TypedQuery<Service> query = getEntityManager().createNamedQuery(Service.FIND_BY_KEYWORD, Service.class);
         query.setParameter("keyword", "%" + keyword + "%");
         if(start != null && limit != null) {
             query.setFirstResult(start);
@@ -149,6 +149,42 @@ public class ServiceFacade extends AbstractFacade<Service> implements ServiceFac
 
         TypedQuery<Service> query = getEntityManager().createNamedQuery(Service.FIND_BY_CATEGORY_EAGERLY, Service.class);
         query.setParameter("service_category", serviceCategory);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
+    public List<Service> findByCategoryAndName(ServiceCategory serviceCategory, String name) {
+        return findByCategoryAndName(serviceCategory, name, null, null);
+    }
+
+    @Override
+    public List<Service> findByCategoryAndName(ServiceCategory serviceCategory, String name, Integer start, Integer limit) {
+
+        TypedQuery<Service> query = getEntityManager().createNamedQuery(Service.FIND_BY_CATEGORY_AND_NAME, Service.class);
+        query.setParameter("service_category", serviceCategory);
+        query.setParameter("name", "%" + name + "%");
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
+    public List<Service> findByCategoryAndDescription(ServiceCategory serviceCategory, String description) {
+        return findByCategoryAndDescription(serviceCategory, description, null, null);
+    }
+
+    @Override
+    public List<Service> findByCategoryAndDescription(ServiceCategory serviceCategory, String description, Integer start, Integer limit) {
+
+        TypedQuery<Service> query = getEntityManager().createNamedQuery(Service.FIND_BY_CATEGORY_AND_DESCRIPTION, Service.class);
+        query.setParameter("service_category", serviceCategory);
+        query.setParameter("description", "%" + description + "%");
         if(start != null && limit != null) {
             query.setFirstResult(start);
             query.setMaxResults(limit);
