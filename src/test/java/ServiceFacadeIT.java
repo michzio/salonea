@@ -132,7 +132,7 @@ public class ServiceFacadeIT {
         assertTrue(ofServices.contains(hairDyeing));
         assertTrue(ofServices.contains(dentalFillings));
 
-        List<Service> ovServices = serviceFacade.searchByKeyword("ov");
+        List<Service> ovServices = serviceFacade.findByKeyword("ov");
         assertTrue("There should be two Services which description contains 'ov' keyword", ovServices.size() == 2);
         assertTrue(ovServices.contains(hairWashing));
         assertTrue(ovServices.contains(removals));

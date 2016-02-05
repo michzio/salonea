@@ -389,7 +389,7 @@ public class ServiceResource {
         logger.log(Level.INFO, "returning services for given keyword using ServiceResource.getServicesByKeyword(keyword) method of REST API");
 
         // find services by given criteria
-        ResourceList<Service> services = new ResourceList<>( serviceFacade.searchByKeyword(keyword, params.getOffset(), params.getLimit()) );
+        ResourceList<Service> services = new ResourceList<>( serviceFacade.findByKeyword(keyword, params.getOffset(), params.getLimit()) );
 
         // result resources need to be populated with hypermedia links to enable resource discovery
         ServiceResource.populateWithHATEOASLinks(services, params.getUriInfo(), params.getOffset(), params.getLimit());
