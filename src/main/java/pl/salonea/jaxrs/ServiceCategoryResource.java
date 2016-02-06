@@ -17,11 +17,13 @@ import pl.salonea.jaxrs.utils.ResourceList;
 import pl.salonea.jaxrs.utils.ResponseWrapper;
 import pl.salonea.jaxrs.utils.hateoas.Link;
 import pl.salonea.jaxrs.wrappers.ServiceCategoryWrapper;
+import pl.salonea.jaxrs.wrappers.ServiceWrapper;
 
 import javax.ejb.EJBException;
 import javax.ejb.EJBTransactionRolledbackException;
 import javax.inject.Inject;
-import javax.transaction.UserTransaction;
+import javax.transaction.*;
+import javax.transaction.NotSupportedException;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -730,10 +732,177 @@ public class ServiceCategoryResource {
                     200, "number of subcategories for service category with id " + serviceCategory.getCategoryId() );
             return Response.status(Status.OK).entity(responseEntity).build();
         }
+
+        // TODO named, described, keyworded
     }
 
     public class ServiceResource {
 
         public ServiceResource() { }
+
+        /**
+         * Method returns subset of Service entities for given Service Category entity.
+         * The service category id is passed through path param.
+         * They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getServiceCategoryServices( @PathParam("serviceCategoryId") Integer serviceCategoryId,
+                                                    @BeanParam ServiceBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning services for given service category using " +
+                    "ServiceCategoryResource.ServiceResource.getServiceCategoryServices(serviceCategoryId) method of REST API");
+
+            // find service category entity for which to get associated services
+            ServiceCategory serviceCategory = serviceCategoryFacade.find(serviceCategoryId);
+            if(serviceCategory == null)
+                throw new NotFoundException("Could not find service category for id " + serviceCategoryId + ".");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<Service> services = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<ServiceCategory> serviceCategories = new ArrayList<>();
+                serviceCategories.add(serviceCategory);
+
+                // get services for given service category filtered by given query params
+
+                utx.begin();
+
+                if( RESTToolkit.isSet(params.getKeywords()) ) {
+                    if( RESTToolkit.isSet(params.getNames()) || RESTToolkit.isSet(params.getDescriptions()) )
+                        throw new BadRequestException("Query params cannot include keywords and names or descriptions at the same time.");
+
+                    // find only by keywords
+                    services = new ResourceList<>(
+                            serviceFacade.findByMultipleCriteria(params.getKeywords(), serviceCategories, params.getProviders(),
+                                    params.getEmployees(), params.getWorkStations(), params.getServicePoints(), params.getOffset(), params.getLimit())
+                    );
+                } else {
+                    // find by names, descriptions
+                    services = new ResourceList<>(
+                            serviceFacade.findByMultipleCriteria(params.getNames(), params.getDescriptions(), serviceCategories,
+                                    params.getProviders(), params.getEmployees(), params.getWorkStations(), params.getServicePoints(),
+                                    params.getOffset(), params.getLimit())
+                    );
+                }
+
+                utx.commit();
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get services for given service category without filtering (eventually paginated)
+                services = new ResourceList<>( serviceFacade.findByCategory(serviceCategory, params.getOffset(), params.getLimit()) );
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.ServiceResource.populateWithHATEOASLinks(services, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(services).build();
+        }
+
+        /**
+         * Method returns subset of Service entities for given Service Category fetching them eagerly.
+         * The service category id is passed through path param.
+         * They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Path("/eagerly")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getServiceCategoryServicesEagerly( @PathParam("serviceCategoryId") Integer serviceCategoryId,
+                                                           @BeanParam ServiceBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning services eagerly for given service category using " +
+                    "ServiceCategoryResource.ServiceResource.getServiceCategoryServicesEagerly(serviceCategoryId) method of REST API");
+
+            // find service category entity for which to get associated services
+            ServiceCategory serviceCategory = serviceCategoryFacade.find(serviceCategoryId);
+            if(serviceCategory == null)
+                throw new NotFoundException("Could not find service category for id " + serviceCategoryId + ".");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<ServiceWrapper> services = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<ServiceCategory> serviceCategories = new ArrayList<>();
+                serviceCategories.add(serviceCategory);
+
+                // get services eagerly for given service category filtered by given query params
+
+                utx.begin();
+
+                if( RESTToolkit.isSet(params.getKeywords()) ) {
+                    if( RESTToolkit.isSet(params.getNames()) || RESTToolkit.isSet(params.getDescriptions()) )
+                        throw new BadRequestException("Query params cannot include keywords and names or descriptions at the same time.");
+
+                    // find only by keywords
+                    services = new ResourceList<>(
+                            ServiceWrapper.wrap(
+                                    serviceFacade.findByMultipleCriteriaEagerly(params.getKeywords(), serviceCategories, params.getProviders(),
+                                            params.getEmployees(), params.getWorkStations(), params.getServicePoints(), params.getOffset(), params.getLimit())
+                            )
+                    );
+                } else {
+                    // find by names, descriptions
+                    services = new ResourceList<>(
+                            ServiceWrapper.wrap(
+                                    serviceFacade.findByMultipleCriteriaEagerly(params.getNames(), params.getDescriptions(), serviceCategories,
+                                            params.getProviders(), params.getEmployees(), params.getWorkStations(), params.getServicePoints(),
+                                            params.getOffset(), params.getLimit())
+                            )
+                    );
+                }
+
+                utx.commit();
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get services eagerly for given service category without filtering (eventually paginated)
+                services = new ResourceList<>( ServiceWrapper.wrap(serviceFacade.findByCategoryEagerly(serviceCategory, params.getOffset(), params.getLimit())) );
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.ServiceResource.populateWithHATEOASLinks(services, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(services).build();
+        }
+
+        /**
+         * Method that counts Service entities for given Service Category resource.
+         * The service category id is passed through path param.
+         */
+        @GET
+        @Path("/count")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response countServicesByServiceCategory( @PathParam("serviceCategoryId") Integer serviceCategoryId,
+                                                        @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning number of services for given service category by executing " +
+                    "ServiceCategoryResource.ServiceResource.countServicesByServiceCategory(serviceCategoryId) method of REST API");
+
+            // find service category entity for which to count services
+            ServiceCategory serviceCategory = serviceCategoryFacade.find(serviceCategoryId);
+            if(serviceCategory == null)
+                throw new NotFoundException("Could not find service category for id " + serviceCategoryId + ".");
+
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(serviceFacade.countByCategory(serviceCategory)),
+                    200, "number of services for service category with id " + serviceCategory.getCategoryId());
+            return Response.status(Status.OK).entity(responseEntity).build();
+        }
+
+        // TODO named, described, keyworded
     }
 }
