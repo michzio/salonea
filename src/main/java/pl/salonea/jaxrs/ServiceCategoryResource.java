@@ -6,6 +6,7 @@ import pl.salonea.entities.Service;
 import pl.salonea.entities.ServiceCategory;
 import pl.salonea.jaxrs.bean_params.GenericBeanParam;
 import pl.salonea.jaxrs.bean_params.PaginationBeanParam;
+import pl.salonea.jaxrs.bean_params.ServiceBeanParam;
 import pl.salonea.jaxrs.bean_params.ServiceCategoryBeanParam;
 import pl.salonea.jaxrs.exceptions.*;
 import pl.salonea.jaxrs.exceptions.BadRequestException;
@@ -28,6 +29,8 @@ import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 import java.lang.reflect.Method;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -387,6 +390,20 @@ public class ServiceCategoryResource {
         return Response.status(Status.OK).entity(serviceCategories).build();
     }
 
+    /**
+     * related subresources (through relationships)
+     */
+
+    @Path("/{serviceCategoryId : \\d+}/subcategories")
+    public SubCategoryResource getSubCategoryResource() {
+        return new SubCategoryResource();
+    }
+
+    @Path("/{serviceCategoryId : \\d+}/services")
+    public ServiceResource getServiceResource() {
+        return new ServiceResource();
+    }
+
     // helper methods e.g. to populate resources/resource lists with HATEOAS links
 
     /**
@@ -494,24 +511,229 @@ public class ServiceCategoryResource {
              */
 
             // subcategories relationship
+            Method subcategoriesMethod = ServiceCategoryResource.class.getMethod("getSubCategoryResource");
+            serviceCategory.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                            .path(ServiceCategoryResource.class)
+                            .path(subcategoriesMethod)
+                            .resolveTemplate("serviceCategoryId", serviceCategory.getCategoryId().toString())
+                            .build())
+                            .rel("subcategories").build() );
 
             // subcategories eagerly relationship
+            Method subcategoriesEagerlyMethod = ServiceCategoryResource.SubCategoryResource.class.getMethod("getServiceCategorySubCategoriesEagerly", Integer.class, ServiceCategoryBeanParam.class);
+            serviceCategory.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                            .path(ServiceCategoryResource.class)
+                            .path(subcategoriesMethod)
+                            .path(subcategoriesEagerlyMethod)
+                            .resolveTemplate("serviceCategoryId", serviceCategory.getCategoryId().toString())
+                            .build())
+                            .rel("subcategories-eagerly").build());
 
             // subcategories count
+            Method countSubcategoriesByServiceCategoryMethod = ServiceCategoryResource.SubCategoryResource.class.getMethod("countSubCategoriesByServiceCategory", Integer.class, GenericBeanParam.class);
+            serviceCategory.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                            .path(ServiceCategoryResource.class)
+                            .path(subcategoriesMethod)
+                            .path(countSubcategoriesByServiceCategoryMethod)
+                            .resolveTemplate("serviceCategoryId", serviceCategory.getCategoryId().toString())
+                            .build())
+                            .rel("subcategories-count").build() );
 
             /**
              * Services belonging to current Service Category resource
              */
 
             // services relationship
+            Method servicesMethod = ServiceCategoryResource.class.getMethod("getServiceResource");
+            serviceCategory.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                            .path(ServiceCategoryResource.class)
+                            .path(servicesMethod)
+                            .resolveTemplate("serviceCategoryId", serviceCategory.getCategoryId().toString())
+                            .build())
+                            .rel("services").build() );
 
             // services eagerly relationship
+            Method servicesEagerlyMethod = ServiceCategoryResource.ServiceResource.class.getMethod("getServiceCategoryServicesEagerly", Integer.class, ServiceBeanParam.class);
+            serviceCategory.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                            .path(ServiceCategoryResource.class)
+                            .path(servicesMethod)
+                            .path(servicesEagerlyMethod)
+                            .resolveTemplate("serviceCategoryId", serviceCategory.getCategoryId().toString())
+                            .build())
+                            .rel("services-eagerly").build() );
 
             // services count
+            Method countServicesByServiceCategoryMethod = ServiceCategoryResource.ServiceResource.class.getMethod("countServicesByServiceCategory", Integer.class, GenericBeanParam.class);
+            serviceCategory.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                            .path(ServiceCategoryResource.class)
+                            .path(servicesMethod)
+                            .path(countServicesByServiceCategoryMethod)
+                            .resolveTemplate("serviceCategoryId", serviceCategory.getCategoryId().toString())
+                            .build())
+                            .rel("services-count").build() );
+
 
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
         }
     }
 
+    public class SubCategoryResource {
+
+        public SubCategoryResource() { }
+
+        /**
+         * Method returns subset of SubCategory (ServiceCategory) entities for given Service Category entity.
+         * The service category id is passed through path param.
+         */
+        @GET
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getServiceCategorySubCategories( @PathParam("serviceCategoryId") Integer serviceCategoryId,
+                                                         @BeanParam ServiceCategoryBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning subcategories for given service category using " +
+                    "ServiceCategoryResource.SubCategoryResource.getServiceCategorySubCategories(serviceCategoryId) method of REST API");
+
+            // find service category entity for which to get associated subcategories (service category)
+            ServiceCategory serviceCategory = serviceCategoryFacade.find(serviceCategoryId);
+            if(serviceCategory == null)
+                throw new NotFoundException("Could not find service category for id " + serviceCategoryId + ".");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<ServiceCategory> subCategories = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<ServiceCategory> serviceCategories = new ArrayList<>();
+                serviceCategories.add(serviceCategory);
+
+                // get subcategories for given service category filtered by given query params
+
+                if( RESTToolkit.isSet(params.getKeywords()) ) {
+                    if( RESTToolkit.isSet(params.getNames()) || RESTToolkit.isSet(params.getDescriptions()) )
+                        throw new BadRequestException("Query params cannot include keywords and category names or descriptions at the same time.");
+
+                    // find only by keywords
+                    subCategories = new ResourceList<>(
+                            serviceCategoryFacade.findByMultipleCriteria(params.getKeywords(), serviceCategories,
+                                    params.getOffset(), params.getLimit())
+                    );
+                } else {
+                    // find by category names, descriptions
+                    subCategories = new ResourceList<>(
+                            serviceCategoryFacade.findByMultipleCriteria(params.getNames(), params.getDescriptions(), serviceCategories,
+                                    params.getOffset(), params.getLimit())
+                    );
+                }
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get subcategories for given service category without filtering (eventually paginated)
+                subCategories = new ResourceList<>( serviceCategoryFacade.findBySuperCategory(serviceCategory, params.getOffset(), params.getLimit()) );
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.ServiceCategoryResource.populateWithHATEOASLinks(subCategories, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(subCategories).build();
+        }
+
+        /**
+         * Method returns subset of SubCategory (ServiceCategory) entities for given
+         * Service Category fetching them eagerly.
+         * The service category id is passed through path param.
+         * They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Path("/eagerly")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getServiceCategorySubCategoriesEagerly( @PathParam("serviceCategoryId") Integer serviceCategoryId,
+                                                                @BeanParam ServiceCategoryBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning subcategories eagerly for given service category using " +
+                    "ServiceCategoryResource.SubCategoryResource.getServiceCategorySubCategoriesEagerly(serviceCategoryId) method of REST API");
+
+            // find service category entity for which to get associated subcategories (service category)
+            ServiceCategory serviceCategory = serviceCategoryFacade.find(serviceCategoryId);
+            if(serviceCategory == null)
+                throw new NotFoundException("Could not find service category for id " + serviceCategoryId + ".");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<ServiceCategoryWrapper> subCategories = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<ServiceCategory> serviceCategories = new ArrayList<>();
+                serviceCategories.add(serviceCategory);
+
+                // get subcategories eagerly for given service category filtered by given params
+
+                if( RESTToolkit.isSet(params.getKeywords()) ) {
+                    if( RESTToolkit.isSet(params.getNames()) || RESTToolkit.isSet(params.getDescriptions()) )
+                        throw new BadRequestException("Query params cannot include keywords and category names or descriptions at the same time.");
+
+                    // find only by keywords
+                    subCategories = new ResourceList<>(
+                            ServiceCategoryWrapper.wrap(
+                                    serviceCategoryFacade.findByMultipleCriteriaEagerly(params.getKeywords(), serviceCategories,
+                                            params.getOffset(), params.getLimit())
+                            )
+                    );
+                } else {
+                    // find by category names, descriptions
+                    subCategories = new ResourceList<>(
+                            ServiceCategoryWrapper.wrap(
+                                    serviceCategoryFacade.findByMultipleCriteriaEagerly(params.getNames(), params.getDescriptions(),
+                                            serviceCategories, params.getOffset(), params.getLimit())
+                            )
+                    );
+                }
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get subcategories eagerly for given service category without filtering (eventually paginated)
+                subCategories = new ResourceList<>( ServiceCategoryWrapper.wrap(serviceCategoryFacade.findBySuperCategoryEagerly(serviceCategory, params.getOffset(), params.getLimit())) );
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.ServiceCategoryResource.populateWithHATEOASLinks(subCategories, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(subCategories).build();
+        }
+
+        /**
+         * Method that counts SubCategory (ServiceCategory) entities for given Service Category resource.
+         * The service category id is passed through path param.
+         */
+        @GET
+        @Path("/count")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response countSubCategoriesByServiceCategory( @PathParam("serviceCategoryId") Integer serviceCategoryId,
+                                                             @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning number of subcategories for given service category by executing " +
+                    "ServiceCategoryResource.SubCategoryResource.countSubCategoriesByServiceCategory(serviceCategoryId) method of REST API");
+
+            // find service category entity for which to count subcategories (service category)
+            ServiceCategory serviceCategory = serviceCategoryFacade.find(serviceCategoryId);
+            if(serviceCategory == null)
+                throw new NotFoundException("Could not find service category for id " + serviceCategoryId + ".");
+
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(serviceCategoryFacade.countBySuperCategory(serviceCategory)),
+                    200, "number of subcategories for service category with id " + serviceCategory.getCategoryId() );
+            return Response.status(Status.OK).entity(responseEntity).build();
+        }
+    }
+
+    public class ServiceResource {
+
+        public ServiceResource() { }
+    }
 }

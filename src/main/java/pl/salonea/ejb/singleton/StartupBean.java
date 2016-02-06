@@ -109,6 +109,7 @@ public class StartupBean {
         populateEmployeeWorkOnWorkStation();
         populateServicePointAssets();
         populateSkillsAndEducation();
+        populateServiceCategories();
     }
 
     private void populateUserAccounts() {
@@ -488,6 +489,27 @@ public class StartupBean {
         hairdresser.getEducations().add(hairdressingCollege);
         dentist.getEducations().add(dentistDegree);
 
+    }
+
+    private void populateServiceCategories() {
+
+        // find super category
+        ServiceCategory hairDressingCategory = serviceCategoryFacade.find(2);
+
+        // add for it some subcategories
+        ServiceCategory hairCuttingCategory = new ServiceCategory(hairDressingCategory, "Hair Cutting Services");
+        hairCuttingCategory.setDescription("Some hair cutting services like man short haircutting or woman long haircutting.");
+
+        ServiceCategory hairStylingCategory = new ServiceCategory(hairDressingCategory, "Hair Styling Services");
+        hairStylingCategory.setDescription("Some hair styling services.");
+
+        ServiceCategory manHairCuttingCategory = new ServiceCategory(hairCuttingCategory, "Man Hair Cutting Services");
+        ServiceCategory womanHairCuttingCategory = new ServiceCategory(hairCuttingCategory, "Woman Hair Cutting Services");
+
+        serviceCategoryFacade.create(hairCuttingCategory);
+        serviceCategoryFacade.create(manHairCuttingCategory);
+        serviceCategoryFacade.create(womanHairCuttingCategory);
+        serviceCategoryFacade.create(hairStylingCategory);
     }
 
 }
