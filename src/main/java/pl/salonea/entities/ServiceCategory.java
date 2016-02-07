@@ -29,9 +29,9 @@ import java.util.Set;
         @NamedQuery(name = ServiceCategory.FIND_BY_KEYWORD, query = "SELECT sc FROM ServiceCategory sc WHERE LOWER(sc.categoryName) LIKE LOWER(:keyword) OR LOWER(sc.description) LIKE LOWER(:keyword)"),
         @NamedQuery(name = ServiceCategory.FIND_BY_SUPER_CATEGORY, query = "SELECT sc FROM ServiceCategory sc WHERE sc.superCategory = :super_category"),
         @NamedQuery(name = ServiceCategory.FIND_BY_SUPER_CATEGORY_EAGERLY, query = "SELECT DISTINCT sc FROM ServiceCategory sc LEFT JOIN FETCH sc.subCategories LEFT JOIN FETCH sc.services WHERE sc.superCategory = :super_category"),
-        @NamedQuery(name = ServiceCategory.FIND_BY_NAME_IN_SUPER_CATEGORY, query = "SELECT sc FROM ServiceCategory sc WHERE sc.categoryName LIKE :name AND sc.superCategory = :super_category"),
-        @NamedQuery(name = ServiceCategory.FIND_BY_DESCRIPTION_IN_SUPER_CATEGORY, query = "SELECT sc FROM ServiceCategory sc WHERE sc.description LIKE :description AND sc.superCategory = :super_category"),
-        @NamedQuery(name = ServiceCategory.FIND_BY_KEYWORD_IN_SUPER_CATEGORY, query = "SELECT sc FROM ServiceCategory sc WHERE (LOWER(sc.categoryName) LIKE LOWER(:keyword) OR LOWER(sc.description) LIKE LOWER(:keyword)) AND sc.superCategory = :super_category"),
+        @NamedQuery(name = ServiceCategory.FIND_BY_SUPER_CATEGORY_AND_NAME, query = "SELECT sc FROM ServiceCategory sc WHERE sc.categoryName LIKE :name AND sc.superCategory = :super_category"),
+        @NamedQuery(name = ServiceCategory.FIND_BY_SUPER_CATEGORY_AND_DESCRIPTION, query = "SELECT sc FROM ServiceCategory sc WHERE sc.description LIKE :description AND sc.superCategory = :super_category"),
+        @NamedQuery(name = ServiceCategory.FIND_BY_SUPER_CATEGORY_AND_KEYWORD, query = "SELECT sc FROM ServiceCategory sc WHERE (LOWER(sc.categoryName) LIKE LOWER(:keyword) OR LOWER(sc.description) LIKE LOWER(:keyword)) AND sc.superCategory = :super_category"),
         @NamedQuery(name = ServiceCategory.COUNT_BY_SUPER_CATEGORY, query = "SELECT COUNT(sc) FROM ServiceCategory sc WHERE sc.superCategory = :super_category"),
         @NamedQuery(name = ServiceCategory.DELETE_BY_NAME, query = "DELETE FROM ServiceCategory sc WHERE sc.categoryName = :name"),
         @NamedQuery(name = ServiceCategory.DELETE_BY_SUPER_CATEGORY, query = "DELETE FROM ServiceCategory sc WHERE sc.superCategory = :super_category")
@@ -45,9 +45,9 @@ public class ServiceCategory {
     public static final String FIND_BY_KEYWORD = "ServiceCategory.findByKeyword";
     public static final String FIND_BY_SUPER_CATEGORY = "ServiceCategory.findBySuperCategory";
     public static final String FIND_BY_SUPER_CATEGORY_EAGERLY = "ServiceCategory.findBySuperCategoryEagerly";
-    public static final String FIND_BY_NAME_IN_SUPER_CATEGORY = "ServiceCategory.findByNameInSuperCategory";
-    public static final String FIND_BY_DESCRIPTION_IN_SUPER_CATEGORY = "ServiceCategory.findByDescriptionInSuperCategory";
-    public static final String FIND_BY_KEYWORD_IN_SUPER_CATEGORY = "ServiceCategory.findByKeywordInSuperCategory";
+    public static final String FIND_BY_SUPER_CATEGORY_AND_NAME = "ServiceCategory.findBySuperCategoryAndName";
+    public static final String FIND_BY_SUPER_CATEGORY_AND_DESCRIPTION = "ServiceCategory.findBySuperCategoryAndDescription";
+    public static final String FIND_BY_SUPER_CATEGORY_AND_KEYWORD = "ServiceCategory.findBySuperCategoryAndKeyword";
     public static final String COUNT_BY_SUPER_CATEGORY = "ServiceCategory.countBySuperCategory";
     public static final String DELETE_BY_NAME = "ServiceCategory.deleteByName";
     public static final String DELETE_BY_SUPER_CATEGORY = "ServiceCategory.deleteBySuperCategory";

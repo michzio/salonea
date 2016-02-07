@@ -541,6 +541,36 @@ public class ServiceCategoryResource {
                             .build())
                             .rel("subcategories-count").build() );
 
+            // subcategories named
+            Method subcategoriesByNameMethod = ServiceCategoryResource.SubCategoryResource.class.getMethod("getServiceCategorySubCategoriesByName", Integer.class, String.class, PaginationBeanParam.class);
+            serviceCategory.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ServiceCategoryResource.class)
+                    .path(subcategoriesMethod)
+                    .path(subcategoriesByNameMethod)
+                    .resolveTemplate("serviceCategoryId", serviceCategory.getCategoryId().toString())
+                    .build())
+                    .rel("subcategories-named").build() );
+
+            // subcategories described
+            Method subcategoriesByDescriptionMethod = ServiceCategoryResource.SubCategoryResource.class.getMethod("getServiceCategorySubCategoriesByDescription", Integer.class, String.class, PaginationBeanParam.class);
+            serviceCategory.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ServiceCategoryResource.class)
+                    .path(subcategoriesMethod)
+                    .path(subcategoriesByDescriptionMethod)
+                    .resolveTemplate("serviceCategoryId", serviceCategory.getCategoryId().toString())
+                    .build())
+                    .rel("subcategories-described").build() );
+
+            // subcategories containing-keyword
+            Method subcategoriesByKeywordMethod = ServiceCategoryResource.SubCategoryResource.class.getMethod("getServiceCategorySubCategoriesByKeyword", Integer.class, String.class, PaginationBeanParam.class);
+            serviceCategory.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ServiceCategoryResource.class)
+                    .path(subcategoriesMethod)
+                    .path(subcategoriesByKeywordMethod)
+                    .resolveTemplate("serviceCategoryId", serviceCategory.getCategoryId().toString())
+                    .build())
+                    .rel("subcategories-containing-keyword").build() );
+
             /**
              * Services belonging to current Service Category resource
              */
@@ -574,6 +604,12 @@ public class ServiceCategoryResource {
                             .build())
                             .rel("services-count").build() );
 
+            // services named
+
+
+            // services described
+
+            // services containing-keyword
 
         } catch (NoSuchMethodException e) {
             e.printStackTrace();

@@ -159,16 +159,16 @@ public class ServiceCategoryFacade extends AbstractFacade<ServiceCategory> imple
     }
 
     @Override
-    public List<ServiceCategory> findByNameInSuperCategory(ServiceCategory superCategory, String name) {
-        return findByNameInSuperCategory(superCategory, name, null, null);
+    public List<ServiceCategory> findBySuperCategoryAndName(ServiceCategory superCategory, String name) {
+        return findBySuperCategoryAndName(superCategory, name, null, null);
     }
 
     @Override
-    public List<ServiceCategory> findByNameInSuperCategory(ServiceCategory superCategory, String name, Integer start, Integer limit) {
+    public List<ServiceCategory> findBySuperCategoryAndName(ServiceCategory superCategory, String name, Integer start, Integer limit) {
 
-        TypedQuery<ServiceCategory> query = getEntityManager().createNamedQuery(ServiceCategory.FIND_BY_NAME_IN_SUPER_CATEGORY, ServiceCategory.class);
+        TypedQuery<ServiceCategory> query = getEntityManager().createNamedQuery(ServiceCategory.FIND_BY_SUPER_CATEGORY_AND_NAME, ServiceCategory.class);
+        query.setParameter("super_category", superCategory);
         query.setParameter("name", "%" + name + "%");
-        query.setParameter("super_category", superCategory);
         if(start != null && limit != null) {
             query.setFirstResult(start);
             query.setMaxResults(limit);
@@ -177,16 +177,16 @@ public class ServiceCategoryFacade extends AbstractFacade<ServiceCategory> imple
     }
 
     @Override
-    public List<ServiceCategory> findByDescriptionInSuperCategory(ServiceCategory superCategory, String description) {
-        return findByDescriptionInSuperCategory(superCategory, description, null, null);
+    public List<ServiceCategory> findBySuperCategoryAndDescription(ServiceCategory superCategory, String description) {
+        return findBySuperCategoryAndDescription(superCategory, description, null, null);
     }
 
     @Override
-    public List<ServiceCategory> findByDescriptionInSuperCategory(ServiceCategory superCategory, String description, Integer start, Integer limit) {
+    public List<ServiceCategory> findBySuperCategoryAndDescription(ServiceCategory superCategory, String description, Integer start, Integer limit) {
 
-        TypedQuery<ServiceCategory> query = getEntityManager().createNamedQuery(ServiceCategory.FIND_BY_DESCRIPTION_IN_SUPER_CATEGORY, ServiceCategory.class);
+        TypedQuery<ServiceCategory> query = getEntityManager().createNamedQuery(ServiceCategory.FIND_BY_SUPER_CATEGORY_AND_DESCRIPTION, ServiceCategory.class);
+        query.setParameter("super_category", superCategory);
         query.setParameter("description", "%" + description + "%");
-        query.setParameter("super_category", superCategory);
         if(start != null && limit != null) {
             query.setFirstResult(start);
             query.setMaxResults(limit);
@@ -195,16 +195,16 @@ public class ServiceCategoryFacade extends AbstractFacade<ServiceCategory> imple
     }
 
     @Override
-    public List<ServiceCategory> findByKeywordInSuperCategory(ServiceCategory superCategory, String keyword) {
-        return findByKeywordInSuperCategory(superCategory, keyword, null, null);
+    public List<ServiceCategory> findBySuperCategoryAndKeyword(ServiceCategory superCategory, String keyword) {
+        return findBySuperCategoryAndKeyword(superCategory, keyword, null, null);
     }
 
     @Override
-    public List<ServiceCategory> findByKeywordInSuperCategory(ServiceCategory superCategory, String keyword, Integer start, Integer limit) {
+    public List<ServiceCategory> findBySuperCategoryAndKeyword(ServiceCategory superCategory, String keyword, Integer start, Integer limit) {
 
-        TypedQuery<ServiceCategory> query = getEntityManager().createNamedQuery(ServiceCategory.FIND_BY_KEYWORD_IN_SUPER_CATEGORY, ServiceCategory.class);
-        query.setParameter("keyword", "%" + keyword + "%");
+        TypedQuery<ServiceCategory> query = getEntityManager().createNamedQuery(ServiceCategory.FIND_BY_SUPER_CATEGORY_AND_KEYWORD, ServiceCategory.class);
         query.setParameter("super_category", superCategory);
+        query.setParameter("keyword", "%" + keyword + "%");
         if(start != null && limit != null) {
             query.setFirstResult(start);
             query.setMaxResults(limit);

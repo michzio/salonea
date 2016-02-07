@@ -27,12 +27,12 @@ public interface ServiceCategoryFacadeInterface extends AbstractFacadeInterface<
     List<ServiceCategory> findBySuperCategory(ServiceCategory superCategory, Integer start, Integer limit);
     List<ServiceCategory> findBySuperCategoryEagerly(ServiceCategory superCategory);
     List<ServiceCategory> findBySuperCategoryEagerly(ServiceCategory superCategory, Integer start, Integer limit);
-    List<ServiceCategory> findByNameInSuperCategory(ServiceCategory superCategory, String name);
-    List<ServiceCategory> findByNameInSuperCategory(ServiceCategory superCategory, String name, Integer start, Integer limit);
-    List<ServiceCategory> findByDescriptionInSuperCategory(ServiceCategory superCategory, String description);
-    List<ServiceCategory> findByDescriptionInSuperCategory(ServiceCategory superCategory, String description, Integer start, Integer limit);
-    List<ServiceCategory> findByKeywordInSuperCategory(ServiceCategory superCategory, String keyword);
-    List<ServiceCategory> findByKeywordInSuperCategory(ServiceCategory superCategory, String keyword, Integer start, Integer limit);
+    List<ServiceCategory> findBySuperCategoryAndName(ServiceCategory superCategory, String name);
+    List<ServiceCategory> findBySuperCategoryAndName(ServiceCategory superCategory, String name, Integer start, Integer limit);
+    List<ServiceCategory> findBySuperCategoryAndDescription(ServiceCategory superCategory, String description);
+    List<ServiceCategory> findBySuperCategoryAndDescription(ServiceCategory superCategory, String description, Integer start, Integer limit);
+    List<ServiceCategory> findBySuperCategoryAndKeyword(ServiceCategory superCategory, String keyword);
+    List<ServiceCategory> findBySuperCategoryAndKeyword(ServiceCategory superCategory, String keyword, Integer start, Integer limit);
 
     Long countBySuperCategory(ServiceCategory superCategory);
 
