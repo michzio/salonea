@@ -542,31 +542,28 @@ public class ServiceCategoryResource {
                             .rel("subcategories-count").build() );
 
             // subcategories named
-            Method subcategoriesByNameMethod = ServiceCategoryResource.SubCategoryResource.class.getMethod("getServiceCategorySubCategoriesByName", Integer.class, String.class, PaginationBeanParam.class);
             serviceCategory.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
                     .path(ServiceCategoryResource.class)
                     .path(subcategoriesMethod)
-                    .path(subcategoriesByNameMethod)
+                    .path("named")
                     .resolveTemplate("serviceCategoryId", serviceCategory.getCategoryId().toString())
                     .build())
                     .rel("subcategories-named").build() );
 
             // subcategories described
-            Method subcategoriesByDescriptionMethod = ServiceCategoryResource.SubCategoryResource.class.getMethod("getServiceCategorySubCategoriesByDescription", Integer.class, String.class, PaginationBeanParam.class);
             serviceCategory.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
                     .path(ServiceCategoryResource.class)
                     .path(subcategoriesMethod)
-                    .path(subcategoriesByDescriptionMethod)
+                    .path("described")
                     .resolveTemplate("serviceCategoryId", serviceCategory.getCategoryId().toString())
                     .build())
                     .rel("subcategories-described").build() );
 
             // subcategories containing-keyword
-            Method subcategoriesByKeywordMethod = ServiceCategoryResource.SubCategoryResource.class.getMethod("getServiceCategorySubCategoriesByKeyword", Integer.class, String.class, PaginationBeanParam.class);
             serviceCategory.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
                     .path(ServiceCategoryResource.class)
                     .path(subcategoriesMethod)
-                    .path(subcategoriesByKeywordMethod)
+                    .path("containing-keyword")
                     .resolveTemplate("serviceCategoryId", serviceCategory.getCategoryId().toString())
                     .build())
                     .rel("subcategories-containing-keyword").build() );
@@ -605,11 +602,31 @@ public class ServiceCategoryResource {
                             .rel("services-count").build() );
 
             // services named
-
+            serviceCategory.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ServiceCategoryResource.class)
+                    .path(servicesMethod)
+                    .path("named")
+                    .resolveTemplate("serviceCategoryId", serviceCategory.getCategoryId().toString())
+                    .build())
+                    .rel("services-named").build() );
 
             // services described
+            serviceCategory.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ServiceCategoryResource.class)
+                    .path(servicesMethod)
+                    .path("described")
+                    .resolveTemplate("serviceCategoryId", serviceCategory.getCategoryId().toString())
+                    .build())
+                    .rel("services-described").build() );
 
             // services containing-keyword
+            serviceCategory.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ServiceCategoryResource.class)
+                    .path(servicesMethod)
+                    .path("containing-keyword")
+                    .resolveTemplate("serviceCategoryId", serviceCategory.getCategoryId().toString())
+                    .build())
+                    .rel("services-containing-keyword").build() );
 
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
@@ -769,7 +786,99 @@ public class ServiceCategoryResource {
             return Response.status(Status.OK).entity(responseEntity).build();
         }
 
-        // TODO named, described, keyworded
+        /**
+         * Method returns subset of SubCategory (ServiceCategory) entities for given Service Category and subcategory name.
+         * The service category id and subcategory name are passed through path params.
+         */
+        @GET
+        @Path("/named/{name : \\S+}")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getServiceCategorySubCategoriesByName( @PathParam("serviceCategoryId") Integer serviceCategoryId,
+                                                               @PathParam("name") String name,
+                                                               @BeanParam PaginationBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning subcategories for given service category and name using " +
+                    "ServiceCategoryResource.SubCategoryResource.getServiceCategorySubCategoriesByName(serviceCategoryId, name) method of REST API");
+
+            // find service category entity for which to get associated subcategories (service category)
+            ServiceCategory serviceCategory = serviceCategoryFacade.find(serviceCategoryId);
+            if(serviceCategory == null)
+                throw new NotFoundException("Could not find service category for id " + serviceCategoryId + ".");
+
+            // find subcategories (service category) by given criteria (service category and name)
+            ResourceList<ServiceCategory> subCategories = new ResourceList<>(
+                    serviceCategoryFacade.findBySuperCategoryAndName(serviceCategory, name, params.getOffset(), params.getLimit())
+            );
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.ServiceCategoryResource.populateWithHATEOASLinks(subCategories, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(subCategories).build();
+        }
+
+        /**
+         * Method returns subset of SubCategory (ServiceCategory) entities for given Service Category and subcategory description.
+         * The service category id and subcategory description are passed through path params.
+         */
+        @GET
+        @Path("/described/{description : \\S+}")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getServiceCategorySubCategoriesByDescription( @PathParam("serviceCategoryId") Integer serviceCategoryId,
+                                                                      @PathParam("description") String description,
+                                                                      @BeanParam PaginationBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning subcategories for given service category and description using " +
+                    "ServiceCategoryResource.SubCategoryResource.getServiceCategorySubCategoriesByDescription(serviceCategoryId, description) method of REST API");
+
+            // find service category entity for which to get associated subcategories (service category)
+            ServiceCategory serviceCategory = serviceCategoryFacade.find(serviceCategoryId);
+            if(serviceCategory == null)
+                throw new NotFoundException("Could not find service category for id " + serviceCategoryId + ".");
+
+            // find subcategories (service category) by given criteria (service category and description)
+            ResourceList<ServiceCategory> subCategories = new ResourceList<>(
+                    serviceCategoryFacade.findBySuperCategoryAndDescription(serviceCategory, description, params.getOffset(), params.getLimit())
+            );
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.ServiceCategoryResource.populateWithHATEOASLinks(subCategories, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(subCategories).build();
+        }
+
+        /**
+         * Method returns subset of SubCategory (ServiceCategory) entities for given Service Category and keyword.
+         * The service category id and keyword are passed through path params.
+         */
+        @GET
+        @Path("/containing-keyword/{keyword : \\S+}")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getServiceCategorySubCategoriesByKeyword( @PathParam("serviceCategoryId") Integer serviceCategoryId,
+                                                                  @PathParam("keyword") String keyword,
+                                                                  @BeanParam PaginationBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning subcategories for given service category and keyword using " +
+                    "ServiceCategoryResource.SubCategoryResource.getServiceCategorySubCategoriesByKeyword(serviceCategoryId, keyword) method of REST API");
+
+            // find service category entity for which to get associated subcategories (service category)
+            ServiceCategory serviceCategory = serviceCategoryFacade.find(serviceCategoryId);
+            if(serviceCategory == null)
+                throw new NotFoundException("Could not find service category for id " + serviceCategoryId + ".");
+
+            // find subcategories (service category) by given criteria (service category and keyword)
+            ResourceList<ServiceCategory> subCategories = new ResourceList<>(
+                    serviceCategoryFacade.findBySuperCategoryAndKeyword(serviceCategory, keyword, params.getOffset(), params.getLimit())
+            );
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.ServiceCategoryResource.populateWithHATEOASLinks(subCategories, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+
+            return Response.status(Status.OK).entity(subCategories).build();
+        }
     }
 
     public class ServiceResource {

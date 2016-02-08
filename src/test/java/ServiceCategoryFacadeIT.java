@@ -133,7 +133,7 @@ public class ServiceCategoryFacadeIT {
         assertTrue(medicalCategories.contains(outpatientTestingCategory));
 
         // search by keyword in given super-category
-        List<ServiceCategory> keyInBeautyCategories = categoryFacade.findByKeywordInSuperCategory(beautyCategory, "care");
+        List<ServiceCategory> keyInBeautyCategories = categoryFacade.findBySuperCategoryAndKeyword(beautyCategory, "care");
         assertTrue("There should be only one subcategory in beauty category for given keyword.", keyInBeautyCategories.size() == 1);
         assertTrue(keyInBeautyCategories.contains(hairCareCategory));
 
