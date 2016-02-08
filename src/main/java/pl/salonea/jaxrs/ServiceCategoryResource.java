@@ -1048,6 +1048,97 @@ public class ServiceCategoryResource {
             return Response.status(Status.OK).entity(responseEntity).build();
         }
 
-        // TODO named, described, keyworded
+        /**
+         * Method returns subset of Service entities for given Service Category and service name.
+         * The service category id and service name are passed through path params.
+         */
+        @GET
+        @Path("/named/{name : \\S+}")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getServiceCategoryServicesByName( @PathParam("serviceCategoryId") Integer serviceCategoryId,
+                                                          @PathParam("name") String name,
+                                                          @BeanParam PaginationBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning services for given service category and name using " +
+                    "ServiceCategoryResource.ServiceResource.getServiceCategoryServicesByName(serviceCategoryId, name) method of REST API");
+
+            // find service category entity for which to get associated services
+            ServiceCategory serviceCategory = serviceCategoryFacade.find(serviceCategoryId);
+            if(serviceCategory == null)
+                throw new NotFoundException("Could not find service category for id " + serviceCategoryId + ".");
+
+            // find services by given criteria (service category and name)
+            ResourceList<Service> services = new ResourceList<>(
+                    serviceFacade.findByCategoryAndName(serviceCategory, name, params.getOffset(), params.getLimit())
+            );
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.ServiceResource.populateWithHATEOASLinks(services, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(services).build();
+        }
+
+        /**
+         * Method returns subset of Service entities for given Service Category and service description.
+         * The service category id and service description are passed through path params.
+         */
+        @GET
+        @Path("/described/{description : \\S+}")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getServiceCategoryServicesByDescription( @PathParam("serviceCategoryId") Integer serviceCategoryId,
+                                                                 @PathParam("description") String description,
+                                                                 @BeanParam PaginationBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning services for given service category and description using " +
+                    "ServiceCategoryResource.ServiceResource.getServiceCategoryServicesByDescription(serviceCategoryId, description) method of REST API");
+
+            // find service category entity for which to get associated services
+            ServiceCategory serviceCategory = serviceCategoryFacade.find(serviceCategoryId);
+            if(serviceCategory == null)
+                throw new NotFoundException("Could not find service category for id " + serviceCategoryId + ".");
+
+            // find services by given criteria (service category and description)
+            ResourceList<Service> services = new ResourceList<>(
+                    serviceFacade.findByCategoryAndDescription(serviceCategory, description, params.getOffset(), params.getLimit())
+            );
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.ServiceResource.populateWithHATEOASLinks(services, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(services).build();
+        }
+
+        /**
+         * Method returns subset of Service entities for given Service Category and keyword.
+         * The service category id and keyword are passed through path params.
+         */
+        @GET
+        @Path("/containing-keyword/{keyword : \\S+}")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getServiceCategoryServicesByKeyword( @PathParam("serviceCategoryId") Integer serviceCategoryId,
+                                                             @PathParam("keyword") String keyword,
+                                                             @BeanParam PaginationBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning services for given service category and keyword using " +
+                    "ServiceCategoryResource.ServiceResource.getServiceCategoryServicesByKeyword(serviceCategoryId, keyword) method of REST API");
+
+            // find service category entity for which to get associated services
+            ServiceCategory serviceCategory = serviceCategoryFacade.find(serviceCategoryId);
+            if(serviceCategory == null)
+                throw new NotFoundException("Could not find service category for id " + serviceCategoryId + ".");
+
+            // find services by given criteria (service category and keyword)
+            ResourceList<Service> services = new ResourceList<>(
+                    serviceFacade.findByCategoryAndKeyword(serviceCategory, keyword, params.getOffset(), params.getLimit())
+            );
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.ServiceResource.populateWithHATEOASLinks(services, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(services).build();
+        }
     }
 }
