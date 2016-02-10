@@ -1934,7 +1934,7 @@ public class ProviderResource {
             ProviderService updatedProviderService = null;
             try {
                 // reflect updated resource object in database
-                updatedProviderService = providerServiceFacade.update(providerServiceId, providerService);
+                updatedProviderService = providerServiceFacade.update(providerServiceId, providerService, true);
                 // populate created resource with hypermedia links
                 pl.salonea.jaxrs.ProviderServiceResource.populateWithHATEOASLinks(updatedProviderService, params.getUriInfo());
 
@@ -2111,9 +2111,9 @@ public class ProviderResource {
         }
 
         /**
-         * Additional methods returning subset of resources based on given criteria
+         * Additional methods returning subset of resources based on given criteria.
          * you can also achieve similar results by applying @QueryParams to generic method
-         * returning all resources in order to filter and limit them
+         * returning all resources in order to filter and limit them.
          */
 
         /**

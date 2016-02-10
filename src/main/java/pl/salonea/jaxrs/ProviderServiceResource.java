@@ -10,6 +10,7 @@ import pl.salonea.entities.ServicePoint;
 import pl.salonea.entities.WorkStation;
 import pl.salonea.entities.idclass.ProviderServiceId;
 import pl.salonea.jaxrs.bean_params.*;
+import pl.salonea.jaxrs.exceptions.UnprocessableEntityException;
 import pl.salonea.jaxrs.utils.RESTToolkit;
 import pl.salonea.jaxrs.utils.ResourceList;
 import pl.salonea.jaxrs.utils.ResponseWrapper;
@@ -48,6 +49,8 @@ public class ProviderServiceResource {
     @Inject
     private UserTransaction utx;
 
+
+    /* DAO objects */
     @Inject
     private ProviderServiceFacade providerServiceFacade;
     @Inject
@@ -55,6 +58,82 @@ public class ProviderServiceResource {
     @Inject
     private EmployeeFacade employeeFacade;
 
+    /* Resource objects */
+    @Inject
+    private ProviderResource providerResource;
+
+    /**
+     * Alternative methods to access Provider Service resource
+     */
+    @GET
+    @Path("/{providerId: \\d+}+{serviceId: \\d+}")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getProviderService( @PathParam("providerId") Long providerId,
+                                        @PathParam("serviceId") Integer serviceId,
+                                        @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+        return providerResource.getProviderServiceResource().getProviderService(providerId, serviceId, params);
+    }
+
+    @GET
+    @Path("/{providerId: \\d+}+{serviceId: \\d+}/eagerly")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getProviderServiceEagerly( @PathParam("providerId") Long providerId,
+                                               @PathParam("serviceId") Integer serviceId,
+                                               @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+        return providerResource.getProviderServiceResource().getProviderServiceEagerly(providerId, serviceId, params);
+    }
+
+    @POST
+    @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response createProviderService( ProviderService providerService,
+                                           @BeanParam GenericBeanParam params ) throws ForbiddenException, UnprocessableEntityException, InternalServerErrorException {
+
+        return providerResource.getProviderServiceResource().createProviderService(providerService.getProvider().getUserId(),
+                providerService.getService().getServiceId(), providerService, params);
+    }
+
+    @PUT
+    @Path("/{providerId: \\d+}+{serviceId: \\d+}")
+    @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response updateProviderService( @PathParam("providerId") Long providerId,
+                                           @PathParam("serviceId") Integer serviceId,
+                                           ProviderService providerService,
+                                           @BeanParam GenericBeanParam params ) throws ForbiddenException, UnprocessableEntityException, InternalServerErrorException {
+
+        return providerResource.getProviderServiceResource().updateProviderService(providerId, serviceId, providerService, params);
+    }
+
+    @DELETE
+    @Path("/{providerId: \\d+}+{serviceId: \\d+}")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response removeProviderService( @PathParam("providerId") Long providerId,
+                                           @PathParam("serviceId") Integer serviceId,
+                                           @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException, InternalServerErrorException {
+
+        return providerResource.getProviderServiceResource().removeProviderService(providerId, serviceId, params);
+    }
+
+    /**
+     * Method returns all Provider Service entities.
+     * They can be additionally filtered and paginated by @QueryParam.
+     */
+    // TODO all
+
+    // TODO all eagerly
+
+    /**
+     * Additional methods returning a subset of resources based on given criteria.
+     * You can achieve similar results by applying @QueryParams to generic method
+     * returning all resources in order to filter and limit them.
+     */
+
+    /**
+     * Method returns number of Provider Service entities in database.
+     */
     @GET
     @Path("/count")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
@@ -62,8 +141,12 @@ public class ProviderServiceResource {
 
         RESTToolkit.authorizeAccessToWebService(params);
 
+        // TODO
+
         return null;
     }
+
+    // TODO additional methods
 
     /**
      * related subresources (through relationships)
