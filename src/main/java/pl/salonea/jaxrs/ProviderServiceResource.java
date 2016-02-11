@@ -119,9 +119,16 @@ public class ProviderServiceResource {
 
     /**
      * Method returns all Provider Service entities.
-     * They can be additionally filtered and paginated by @QueryParam.
+     * They can be additionally filtered and paginated by @QueryParams.
      */
-    // TODO all
+    @GET
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getProviderServices( @BeanParam ProviderServiceBeanParam params ) throws ForbiddenException,
+    /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+        return null;
+    }
+
 
     // TODO all eagerly
 
