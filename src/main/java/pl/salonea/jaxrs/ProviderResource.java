@@ -1745,8 +1745,8 @@ public class ProviderResource {
                 providerServices = new ResourceList<>(
                         providerServiceFacade.findByMultipleCriteria(providers, params.getServices(), params.getServiceCategories(),
                                 params.getDescriptions(), params.getMinPrice(), params.getMaxPrice(), params.getIncludeDiscounts(),
-                                params.getMinDiscount(), params.getMaxDiscount(), params.getWorkStations(), params.getEmployees(),
-                                params.getOffset(), params.getLimit())
+                                params.getMinDiscount(), params.getMaxDiscount(), params.getServicePoints(), params.getWorkStations(),
+                                params.getEmployees(), params.getOffset(), params.getLimit())
                 );
 
             } else {
@@ -1794,8 +1794,8 @@ public class ProviderResource {
                         ProviderServiceWrapper.wrap(
                                 providerServiceFacade.findByMultipleCriteriaEagerly(providers, params.getServices(), params.getServiceCategories(),
                                         params.getDescriptions(), params.getMinPrice(), params.getMaxPrice(), params.getIncludeDiscounts(),
-                                        params.getMinDiscount(), params.getMaxDiscount(), params.getWorkStations(), params.getEmployees(),
-                                        params.getOffset(), params.getLimit())
+                                        params.getMinDiscount(), params.getMaxDiscount(), params.getServicePoints(), params.getWorkStations(),
+                                        params.getEmployees(), params.getOffset(), params.getLimit())
                         )
                 );
 

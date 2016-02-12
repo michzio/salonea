@@ -125,12 +125,83 @@ public class ProviderServiceResource {
     public Response getProviderServices( @BeanParam ProviderServiceBeanParam params ) throws ForbiddenException,
     /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
 
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning all Provider Services by executing ProviderServiceResource.getProviderServices() method of REST API");
 
-        return null;
+        Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+        ResourceList<ProviderService> providerServices = null;
+
+        if(noOfParams > 0) {
+            logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+            utx.begin();
+
+            // get provider services filtered by criteria provided in query params
+            providerServices = new ResourceList<>(
+                    providerServiceFacade.findByMultipleCriteria(params.getProviders(), params.getServices(), params.getServiceCategories(),
+                            params.getDescriptions(), params.getMinPrice(), params.getMaxPrice(), params.getIncludeDiscounts(),
+                            params.getMinDiscount(), params.getMaxDiscount(), params.getServicePoints(), params.getWorkStations(),
+                            params.getEmployees(), params.getOffset(), params.getLimit())
+            );
+
+            utx.commit();
+
+        } else {
+            logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+            // get all provider services without filtering (eventually paginated)
+            providerServices = new ResourceList<>( providerServiceFacade.findAll(params.getOffset(), params.getLimit()) );
+        }
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        ProviderServiceResource.populateWithHATEOASLinks(providerServices, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(providerServices).build();
     }
 
+    @GET
+    @Path("/eagerly")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getProviderServicesEagerly( @BeanParam ProviderServiceBeanParam params ) throws ForbiddenException,
+    /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
 
-    // TODO all eagerly
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning all Provider Services eagerly by executing ProviderServiceResource.getProviderServicesEagerly() method of REST API");
+
+        Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+        ResourceList<ProviderServiceWrapper> providerServices = null;
+
+        if(noOfParams > 0) {
+            logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+            utx.begin();
+
+            // get provider services eagerly filtered by criteria provided in query params
+            providerServices = new ResourceList<>(
+                    ProviderServiceWrapper.wrap(
+                        providerServiceFacade.findByMultipleCriteriaEagerly(params.getProviders(), params.getServices(), params.getServiceCategories(),
+                                params.getDescriptions(), params.getMinPrice(), params.getMaxPrice(), params.getIncludeDiscounts(),
+                                params.getMinDiscount(), params.getMaxDiscount(), params.getServicePoints(), params.getWorkStations(),
+                                params.getEmployees(), params.getOffset(), params.getLimit())
+                    )
+            );
+
+            utx.commit();
+
+        } else {
+            logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+            // get all provider services eagerly without filtering (eventually paginated)
+            providerServices = new ResourceList<>( ProviderServiceWrapper.wrap(providerServiceFacade.findAllEagerly(params.getOffset(), params.getLimit())) );
+        }
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        ProviderServiceResource.populateWithHATEOASLinks(providerServices, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(providerServices).build();
+    }
 
     /**
      * Additional methods returning a subset of resources based on given criteria.
@@ -147,13 +218,33 @@ public class ProviderServiceResource {
     public Response countProviderServices(  @BeanParam GenericBeanParam params ) throws ForbiddenException {
 
         RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning number of provider services by executing ProviderServiceResource.countProviderServices() method of REST API");
 
-        // TODO
-
-        return null;
+        ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(providerServiceFacade.count()), 200, "number of provider services");
+        return Response.status(Status.OK).entity(responseEntity).build();
     }
 
-    // TODO additional methods
+    /**
+     * Method returns subset of Provider Service entities for given description.
+     * The description is passed through path param.
+     */
+    @GET
+    @Path("/described/{description: \\S+}")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getProviderServicesByDescription( @PathParam("description") String description,
+                                                      @BeanParam PaginationBeanParam params ) throws ForbiddenException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning provider services for given description using ProviderServiceResource.getProviderServicesByDescription(description) method of REST API");
+
+        // find provider services by given criteria (description)
+        ResourceList<ProviderService> providerServices = new ResourceList<>( providerServiceFacade.findByDescription(description, params.getOffset(), params.getLimit()) );
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        ProviderServiceResource.populateWithHATEOASLinks(providerServices, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(providerServices).build();
+    }
 
     /**
      * related subresources (through relationships)
