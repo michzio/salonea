@@ -49,7 +49,6 @@ public class ProviderServiceResource {
     @Inject
     private UserTransaction utx;
 
-
     /* DAO objects */
     @Inject
     private ProviderServiceFacade providerServiceFacade;
@@ -125,6 +124,7 @@ public class ProviderServiceResource {
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public Response getProviderServices( @BeanParam ProviderServiceBeanParam params ) throws ForbiddenException,
     /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
 
         return null;
     }

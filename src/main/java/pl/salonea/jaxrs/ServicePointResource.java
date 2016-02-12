@@ -55,7 +55,6 @@ public class ServicePointResource {
     @Inject
     private ProviderResource providerResource;
 
-
     /**
      * Alternative methods to access Service Point resource
      */
@@ -116,7 +115,8 @@ public class ServicePointResource {
      */
     @GET
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getServicePoints( @BeanParam ServicePointBeanParam params ) throws ForbiddenException {
+    public Response getServicePoints( @BeanParam ServicePointBeanParam params ) throws ForbiddenException, BadRequestException,
+    /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
 
         RESTToolkit.authorizeAccessToWebService(params);
         logger.log(Level.INFO, "returning all Service Points by executing ServicePointResource.getServicePoints() method of REST API");
@@ -127,6 +127,8 @@ public class ServicePointResource {
 
         if(noOfParams > 0) {
             logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+            utx.begin();
 
             // get service points filtered by criteria provided in query params
             if(params.getAddress() != null) {
@@ -163,6 +165,9 @@ public class ServicePointResource {
                                 params.getCorporations(), params.getIndustries(), params.getServiceCategories(), params.getOffset(), params.getLimit())
                 );
             }
+
+            utx.commit();
+
         } else {
             logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
 
@@ -179,7 +184,8 @@ public class ServicePointResource {
     @GET
     @Path("/eagerly")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getServicePointsEagerly( @BeanParam ServicePointBeanParam params ) throws ForbiddenException, BadRequestException {
+    public Response getServicePointsEagerly( @BeanParam ServicePointBeanParam params ) throws ForbiddenException, BadRequestException,
+    /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
 
         RESTToolkit.authorizeAccessToWebService(params);
         logger.log(Level.INFO, "returning all Service Points eagerly by executing ServicePointResource.getServicePointsEagerly() method of REST API");
@@ -190,6 +196,8 @@ public class ServicePointResource {
 
         if(noOfParams > 0) {
             logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+            utx.begin();
 
             // get service points filtered by criteria provided in query params
             if(params.getAddress() != null) {
@@ -234,6 +242,8 @@ public class ServicePointResource {
                         )
                 );
             }
+
+            utx.commit();
 
         } else {
             logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
