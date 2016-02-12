@@ -2,6 +2,7 @@ package pl.salonea.jaxrs.bean_params;
 
 import pl.salonea.ejb.stateless.*;
 import pl.salonea.entities.*;
+import pl.salonea.entities.idclass.ServicePointId;
 import pl.salonea.entities.idclass.WorkStationId;
 import pl.salonea.jaxrs.exceptions.NotFoundException;
 
@@ -25,20 +26,19 @@ public class ProviderServiceBeanParam extends PaginationBeanParam {
     private @QueryParam("minDiscount") Short minDiscount;
     private @QueryParam("maxDiscount") Short maxDiscount;
     private @QueryParam("workStationId") List<WorkStationId> workStationIds; // {providerId}+{servicePointNumber}+{workStationNumber} composite PK
+    private @QueryParam("servicePointId") List<ServicePointId> servicePointIds; // {providerId}+{servicePointNumber} composite PK
     private @QueryParam("employeeId") List<Long> employeeIds;
 
     @Inject
     private ProviderFacade providerFacade;
-
     @Inject
     private ServiceFacade serviceFacade;
-
     @Inject
     private ServiceCategoryFacade serviceCategoryFacade;
-
     @Inject
     private WorkStationFacade workStationFacade;
-
+    @Inject
+    private ServicePointFacade servicePointFacade;
     @Inject
     private EmployeeFacade employeeFacade;
 
@@ -154,6 +154,23 @@ public class ProviderServiceBeanParam extends PaginationBeanParam {
             final List<WorkStation> workStations = workStationFacade.find( new ArrayList<>(getWorkStationIds()) );
             if(workStations.size() != getWorkStationIds().size()) throw new NotFoundException("Could not find work stations for all provided ids.");
             return workStations;
+        }
+        return null;
+    }
+
+    public List<ServicePointId> getServicePointIds() {
+        return servicePointIds;
+    }
+
+    public void setServicePointIds(List<ServicePointId> servicePointIds) {
+        this.servicePointIds = servicePointIds;
+    }
+
+    public List<ServicePoint> getServicePoints() throws NotFoundException {
+        if(getServicePointIds() != null && getServicePointIds().size() > 0) {
+            final List<ServicePoint> servicePoints = servicePointFacade.find( new ArrayList<>(getServicePointIds()) );
+            if(servicePoints.size() != getServicePointIds().size()) throw new NotFoundException("Could not find service points for all provided ids.");
+            return servicePoints;
         }
         return null;
     }
