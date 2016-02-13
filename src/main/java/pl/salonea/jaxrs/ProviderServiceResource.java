@@ -255,6 +255,9 @@ public class ProviderServiceResource {
         return new ServicePointResource();
     }
 
+    @Path("/{providerId : \\d+}+{serviceId : \\d+}/work-stations")
+    public WorkStationResource getWorkStationResource() { return new WorkStationResource(); }
+
     @Path("/{providerId : \\d+}+{serviceId : \\d+}/employees")
     public EmployeeResource getEmployeeResource() { return new EmployeeResource(); }
 
@@ -269,13 +272,24 @@ public class ProviderServiceResource {
 
         try {
             // count resources hypermedia link
-            Method countMethod = ProviderServiceResource.class.getMethod("countProviderServices", String.class);
+            Method countMethod = ProviderServiceResource.class.getMethod("countProviderServices", GenericBeanParam.class);
             providerServices.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(ProviderServiceResource.class).path(countMethod).build()).rel("count").build() );
 
             // get all resources hypermedia link
             providerServices.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(ProviderServiceResource.class).build()).rel("provider-services").build() );
 
-            // TODO
+            // get all resources eagerly hypermedia link
+            Method providerServicesEagerlyMethod = ProviderServiceResource.class.getMethod("getProviderServicesEagerly", ProviderServiceBeanParam.class);
+            providerServices.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                            .path(ProviderServiceResource.class)
+                            .path(providerServicesEagerlyMethod)
+                            .build())
+                            .rel("provider-services-eagerly").build());
+
+            // get subset of resources hypermedia links
+            // described
+            Method providerServicesByDescriptionMethod = ProviderServiceResource.class.getMethod("getProviderServicesByDescription", String.class, PaginationBeanParam.class);
+            providerServices.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(ProviderServiceResource.class).path(providerServicesByDescriptionMethod).build()).rel("described").build() );
 
         } catch(NoSuchMethodException e) {
             e.printStackTrace();
@@ -340,7 +354,7 @@ public class ProviderServiceResource {
                     .rel("provider-services").build());
 
             /**
-             * Service Points associated with current Provider Service resource
+             * Service Points where is executed current Provider Service resource
              */
 
             // service-points relationship
@@ -409,6 +423,63 @@ public class ProviderServiceResource {
                     .rel("service-points-coordinates-circle").build());
 
             /**
+             * Work Stations on which is executed current Provider Service resource
+             */
+            // work-stations
+            Method workStationsMethod = ProviderServiceResource.class.getMethod("getWorkStationResource");
+            providerService.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                            .path(ProviderServiceResource.class)
+                            .path(workStationsMethod)
+                            .resolveTemplate("providerId", providerService.getProvider().getUserId().toString())
+                            .resolveTemplate("serviceId", providerService.getService().getServiceId().toString())
+                            .build())
+                            .rel("work-stations").build());
+
+            // work-stations eagerly
+            Method workStationsEagerlyMethod = ProviderServiceResource.WorkStationResource.class.getMethod("getProviderServiceWorkStationsEagerly", Long.class, Integer.class, WorkStationBeanParam.class);
+            providerService.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                            .path(ProviderServiceResource.class)
+                            .path(workStationsMethod)
+                            .path(workStationsEagerlyMethod)
+                            .resolveTemplate("providerId", providerService.getProvider().getUserId().toString())
+                            .resolveTemplate("serviceId", providerService.getService().getServiceId().toString())
+                            .build())
+                            .rel("work-stations-eagerly").build());
+
+            // work-stations count
+            Method countWorkStationsByProviderServiceMethod = ProviderServiceResource.WorkStationResource.class.getMethod("countWorkStationsByProviderService", Long.class, Integer.class, GenericBeanParam.class);
+            providerService.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                            .path(ProviderServiceResource.class)
+                            .path(workStationsMethod)
+                            .path(countWorkStationsByProviderServiceMethod)
+                            .resolveTemplate("providerId", providerService.getProvider().getUserId().toString())
+                            .resolveTemplate("serviceId", providerService.getService().getServiceId().toString())
+                            .build())
+                            .rel("work-stations-count").build());
+
+            // work-stations by-term
+            Method workStationsByTermMethod = ProviderServiceResource.WorkStationResource.class.getMethod("getProviderServiceWorkStationsByTerm", Long.class, Integer.class, DateBetweenBeanParam.class);
+            providerService.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                            .path(ProviderServiceResource.class)
+                            .path(workStationsMethod)
+                            .path(workStationsByTermMethod)
+                            .resolveTemplate("providerId", providerService.getProvider().getUserId().toString())
+                            .resolveTemplate("serviceId", providerService.getService().getServiceId().toString())
+                            .build())
+                            .rel("work-stations-by-term").build());
+
+            // work-stations by-term-strict
+            Method workStationsByTermStrictMethod = ProviderServiceResource.WorkStationResource.class.getMethod("getProviderServiceWorkStationsByTermStrict", Long.class, Integer.class, DateBetweenBeanParam.class);
+            providerService.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ProviderServiceResource.class)
+                    .path(workStationsMethod)
+                    .path(workStationsByTermStrictMethod)
+                    .resolveTemplate("providerId", providerService.getProvider().getUserId().toString())
+                    .resolveTemplate("serviceId", providerService.getService().getServiceId().toString())
+                    .build())
+                    .rel("work-stations-by-term-strict").build());
+
+            /**
              * Employees executing current Provider Service resource
              */
             // employees
@@ -446,7 +517,6 @@ public class ProviderServiceResource {
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
         }
-
     }
 
     public class ServicePointResource {
@@ -780,6 +850,101 @@ public class ProviderServiceResource {
 
             return Response.status(Status.OK).entity(servicePoints).build();
         }
+    }
+
+    public class WorkStationResource {
+
+        public WorkStationResource() { }
+
+
+        /**
+         * Method returns subset of Work Station entities for given Provider Service.
+         * The provider id and service id are passed through path params.
+         * They can be additionally filtered and paginated by query params.
+         */
+        @GET
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getProviderServiceWorkStations( @PathParam("providerId") Long providerId,
+                                                        @PathParam("serviceId") Integer serviceId,
+                                                        @BeanParam WorkStationBeanParam params ) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+
+            // TODO
+            return null;
+        }
+
+        /**
+         * Method returns subset of Work Station entities for given Provider Service
+         * fetching them eagerly. The provider id and service id are passed through
+         * path params. They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Path("/eagerly")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getProviderServiceWorkStationsEagerly( @PathParam("providerId") Long providerId,
+                                                               @PathParam("serviceId") Integer serviceId,
+                                                               @BeanParam WorkStationBeanParam params ) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+
+            // TODO
+            return null;
+        }
+
+        /**
+         * Method that counts Work Station entities for given Provider Service resource.
+         * The provider id and service id are passed through path params.
+         */
+        @GET
+        @Path("/count")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response countWorkStationsByProviderService( @PathParam("providerId") Long providerId,
+                                                            @PathParam("serviceId") Integer serviceId,
+                                                            @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            // TODO
+            return null;
+        }
+
+        /**
+         * Method returns subset of Work Station entities for given Provider Service entity
+         * and Term when it is provided on them. The provider id and service id are passed
+         * through path params. Term start and end dates are passed through query params.
+         */
+        @GET
+        @Path("/by-term")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getProviderServiceWorkStationsByTerm( @PathParam("providerId") Long providerId,
+                                                              @PathParam("serviceId") Integer serviceId,
+                                                              @BeanParam DateBetweenBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+
+            // TODO
+            return null;
+        }
+
+        /**
+         * Method returns subset of Work Station entities for given Provider Service entity
+         * and Term (strict) when it is provided on them. The provider id and service id
+         * are passed through path params. Term (strict) start and end dates are passed through query params.
+         */
+        @GET
+        @Path("/by-term-strict")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getProviderServiceWorkStationsByTermStrict( @PathParam("providerId") Long providerId,
+                                                                    @PathParam("serviceId") Integer serviceId,
+                                                                    @BeanParam DateBetweenBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+
+            // TODO
+            return null;
+        }
+
     }
 
     public class EmployeeResource {

@@ -443,10 +443,9 @@ public class ServicePointResource {
         for(VirtualTour tour : servicePointWrapper.getVirtualTours())
             pl.salonea.jaxrs.VirtualTourResource.populateWithHATEOASLinks(tour, uriInfo);
 
-      /*
         for(WorkStation workStation : servicePointWrapper.getWorkStations())
-            pl.salonea.jaxrs.WorkStationResource.populateWithHATEOASLinks(workStation, uriInfo);  TODO
-       */
+            pl.salonea.jaxrs.WorkStationResource.populateWithHATEOASLinks(workStation, uriInfo);
+
     }
 
     /**
