@@ -860,11 +860,10 @@ public class ProviderServiceResource {
 
         public WorkStationResource() { }
 
-
         /**
          * Method returns subset of Work Station entities for given Provider Service.
          * The provider id and service id are passed through path params.
-         * They can be additionally filtered and paginated by query params.
+         * They can be additionally filtered and paginated by @QueryParams.
          */
         @GET
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})

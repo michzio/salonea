@@ -21,6 +21,7 @@ import java.text.Format;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -76,7 +77,7 @@ public class UserAccount implements Serializable {
     private String accountType; // discriminator
 
     // HATEOAS support for RESTFul web service in JAX-RS
-    private List<Link> links = new ArrayList<>();
+    private LinkedHashSet<Link> links = new LinkedHashSet<>();
 
     /* Constructors */
     public UserAccount() {
@@ -236,11 +237,11 @@ public class UserAccount implements Serializable {
     @Transient
     @XmlElementWrapper(name = "links")
     @XmlElement(name = "link")
-    public List<Link> getLinks() {
+    public LinkedHashSet<Link> getLinks() {
         return links;
     }
 
-    public void setLinks(List<Link> links) {
+    public void setLinks(LinkedHashSet<Link> links) {
         this.links = links;
     }
 }

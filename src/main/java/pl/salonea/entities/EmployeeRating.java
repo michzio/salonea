@@ -11,6 +11,7 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import javax.xml.bind.annotation.*;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 @XmlRootElement(name = "employee-rating")
@@ -63,7 +64,7 @@ public class EmployeeRating {
     private String employeeDementi;
 
     // HATEOAS support for RESTFul web service in JAX-RS
-    private List<Link> links = new ArrayList<>();
+    private LinkedHashSet<Link> links = new LinkedHashSet<>();
 
      /* constructors */
 
@@ -142,11 +143,11 @@ public class EmployeeRating {
     @Transient
     @XmlElementWrapper(name = "links")
     @XmlElement(name = "link")
-    public List<Link> getLinks() {
+    public LinkedHashSet<Link> getLinks() {
         return links;
     }
 
-    public void setLinks(List<Link> links) {
+    public void setLinks(LinkedHashSet<Link> links) {
         this.links = links;
     }
 

@@ -15,6 +15,7 @@ import javax.xml.bind.annotation.*;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 @XmlRootElement(name = "credit-card")
@@ -93,7 +94,7 @@ public class CreditCard implements Serializable {
     private CreditCardType cardType;
 
     // HATEOAS support for RESTful web service in JAX-RS
-    private List<Link> links = new ArrayList<>();
+    private LinkedHashSet<Link> links = new LinkedHashSet<>();
 
     /* constructors */
 
@@ -201,11 +202,11 @@ public class CreditCard implements Serializable {
     @Transient
     @XmlElementWrapper(name = "links")
     @XmlElement(name = "link")
-    public List<Link> getLinks() {
+    public LinkedHashSet<Link> getLinks() {
         return links;
     }
 
-    public void setLinks(List<Link> links) {
+    public void setLinks(LinkedHashSet<Link> links) {
         this.links = links;
     }
 }

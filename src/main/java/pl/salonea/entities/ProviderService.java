@@ -16,10 +16,7 @@ import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import javax.xml.bind.annotation.*;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @XmlRootElement(name = "provider-service")
 @XmlAccessorType(XmlAccessType.PROPERTY)
@@ -143,7 +140,7 @@ public class ProviderService {
     private Set<WorkStation> workStations = new HashSet<>();
 
     // HATEOAS support for RESTFul web service in JAX-RS
-    private List<Link> links = new ArrayList<>();
+    private LinkedHashSet<Link> links = new LinkedHashSet<>();
 
     /* constructors */
 
@@ -317,11 +314,11 @@ public class ProviderService {
     @Transient
     @XmlElementWrapper(name = "links")
     @XmlElement(name = "link")
-    public List<Link> getLinks() {
+    public LinkedHashSet<Link> getLinks() {
         return links;
     }
 
-    public void setLinks(List<Link> links) {
+    public void setLinks(LinkedHashSet<Link> links) {
         this.links = links;
     }
 }

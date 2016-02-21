@@ -69,7 +69,7 @@ public class Corporation extends UUIDEntity implements Serializable {
     private Set<Provider> providers = new HashSet<>();
 
     // HATEOAS support for RESTFul web service in JAX-RS
-    private List<Link> links = new ArrayList<>();
+    private LinkedHashSet<Link> links = new LinkedHashSet<>();
 
     /* constructors */
 
@@ -226,11 +226,11 @@ public class Corporation extends UUIDEntity implements Serializable {
     @XmlElementWrapper(name = "links")
     @XmlElement(name = "link")
     @Transient
-    public List<Link> getLinks() {
+    public LinkedHashSet<Link> getLinks() {
         return links;
     }
 
-    public void setLinks(List<Link> links) {
+    public void setLinks(LinkedHashSet<Link> links) {
         this.links = links;
     }
 }

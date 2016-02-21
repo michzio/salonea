@@ -7,10 +7,7 @@ import pl.salonea.mapped_superclasses.UUIDEntity;
 import javax.persistence.*;
 import javax.xml.bind.annotation.*;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @XmlRootElement(name = "client")
 @XmlAccessorType(XmlAccessType.PROPERTY)
@@ -90,7 +87,7 @@ public class Client extends UUIDEntity implements Serializable{
     private Long firmId;
 
     // HATEOAS support for RESTFul web service in JAX-RS
-    private List<Link> links = new ArrayList<>();
+    private LinkedHashSet<Link> links = new LinkedHashSet<>();
 
     /* constructor */
 
@@ -196,11 +193,11 @@ public class Client extends UUIDEntity implements Serializable{
     @Transient
     @XmlElementWrapper(name = "links")
     @XmlElement(name = "link")
-    public List<Link> getLinks() {
+    public LinkedHashSet<Link> getLinks() {
         return links;
     }
 
-    public void setLinks(List<Link> links) {
+    public void setLinks(LinkedHashSet<Link> links) {
         this.links = links;
     }
 

@@ -51,6 +51,8 @@ public class ServiceResource {
     private EmployeeFacade employeeFacade;
     @Inject
     private WorkStationFacade workStationFacade;
+    @Inject
+    private ProviderServiceFacade providerServiceFacade;
 
     /**
      * Method returns all Service resources
@@ -406,6 +408,11 @@ public class ServiceResource {
         return new ProviderResource();
     }
 
+    @Path("/{serviceId : \\d+}/provider-services")
+    public ProviderServiceResource getProviderServiceResource() {
+        return new ProviderServiceResource();
+    }
+
     @Path("/{serviceId : \\d+}/service-points")
     public ServicePointResource getServicePointResource() {
         return new ServicePointResource();
@@ -552,6 +559,78 @@ public class ServiceResource {
                     .resolveTemplate("serviceId", service.getServiceId().toString())
                     .build())
                     .rel("providers-count").build());
+
+            /**
+             * Provider Services offered for current Service resource
+             */
+
+            // provider-services
+            Method providerServicesMethod = ServiceResource.class.getMethod("getProviderServiceResource");
+            service.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ServiceResource.class)
+                    .path(providerServicesMethod)
+                    .resolveTemplate("serviceId", service.getServiceId().toString())
+                    .build())
+                    .rel("provider-services").build());
+
+            // provider-services eagerly
+            Method providerServicesEagerlyMethod = ServiceResource.ProviderServiceResource.class.getMethod("getServiceProviderServicesEagerly", Integer.class, ProviderServiceBeanParam.class);
+            service.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ServiceResource.class)
+                    .path(providerServicesMethod)
+                    .path(providerServicesEagerlyMethod)
+                    .resolveTemplate("serviceId", service.getServiceId().toString())
+                    .build())
+                    .rel("provider-services-eagerly").build());
+
+            // provider-services count
+            Method countProviderServicesByServiceMethod = ServiceResource.ProviderServiceResource.class.getMethod("countProviderServicesByService", Integer.class, GenericBeanParam.class);
+            service.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ServiceResource.class)
+                    .path(providerServicesMethod)
+                    .path(countProviderServicesByServiceMethod)
+                    .resolveTemplate("serviceId", service.getServiceId().toString())
+                    .build())
+                    .rel("provider-services-count").build());
+
+            // provider-services described
+            service.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ServiceResource.class)
+                    .path(providerServicesMethod)
+                    .path("described")
+                    .resolveTemplate("serviceId", service.getServiceId().toString())
+                    .build())
+                    .rel("provider-services-described").build());
+
+            // provider-services priced
+            Method providerServicesByPriceMethod = ServiceResource.ProviderServiceResource.class.getMethod("getServiceProviderServicesByPrice", Integer.class, PriceRangeBeanParam.class);
+            service.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ServiceResource.class)
+                    .path(providerServicesMethod)
+                    .path(providerServicesByPriceMethod)
+                    .resolveTemplate("serviceId", service.getServiceId().toString())
+                    .build())
+                    .rel("provider-services-priced").build());
+
+            // provider-services discounted-priced
+            Method providerServicesByDiscountedPriceMethod = ServiceResource.ProviderServiceResource.class.getMethod("getServiceProviderServicesByDiscountedPrice", Integer.class, PriceRangeBeanParam.class);
+            service.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ServiceResource.class)
+                    .path(providerServicesMethod)
+                    .path(providerServicesByDiscountedPriceMethod)
+                    .resolveTemplate("serviceId", service.getServiceId().toString())
+                    .build())
+                    .rel("provider-services-discounted-priced").build());
+
+            // provider-services discounted
+            Method providerServicesByDiscountMethod = ServiceResource.ProviderServiceResource.class.getMethod("getServiceProviderServicesByDiscount", Integer.class, DiscountRangeBeanParam.class);
+            service.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ServiceResource.class)
+                    .path(providerServicesMethod)
+                    .path(providerServicesByDiscountMethod)
+                    .resolveTemplate("serviceId", service.getServiceId().toString())
+                    .build())
+                    .rel("provider-services-discounted").build());
 
             /**
              * Service Points where current Service resource is provided
@@ -826,6 +905,292 @@ public class ServiceResource {
             ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(providerFacade.countByService(service)), 200,
                     "number of providers for service with id " + serviceId + ".");
             return Response.status(Status.OK).entity(responseEntity).build();
+        }
+
+    }
+
+    public class ProviderServiceResource {
+
+        public ProviderServiceResource() { }
+
+        /**
+         * Method returns subset of ProviderService entities for given Service
+         * The service id is passed through path param.
+         * They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getServiceProviderServices( @PathParam("serviceId") Integer serviceId,
+                                                    @BeanParam ProviderServiceBeanParam params ) throws NotFoundException, ForbiddenException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning subset of Provider Service entities for given Service using " +
+                    "ServiceResource.ProviderServiceResource.getServiceProviderServices(serviceId) method of REST API");
+
+            // find service entity for which to get associated provider services
+            Service service = serviceFacade.find(serviceId);
+            if(service == null)
+                throw new NotFoundException("Could not find service for id " + serviceId + ".");
+
+            // calculate number of filter query params
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<ProviderService> providerServices = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Service> services = new ArrayList<>();
+                services.add(service);
+
+                utx.begin();
+
+                // get provider services for given service filtered by given params
+                providerServices = new ResourceList<>(
+                        providerServiceFacade.findByMultipleCriteria(params.getProviders(), services, params.getServiceCategories(),
+                                params.getDescriptions(), params.getMinPrice(), params.getMaxPrice(), params.getIncludeDiscounts(),
+                                params.getMinDiscount(), params.getMaxDiscount(), params.getServicePoints(), params.getWorkStations(),
+                                params.getEmployees(), params.getOffset(), params.getLimit())
+                );
+
+                utx.commit();
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get provider services for given service without filtering (eventually paginated)
+                providerServices = new ResourceList<>(providerServiceFacade.findByService(service, params.getOffset(), params.getLimit()));
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.ProviderServiceResource.populateWithHATEOASLinks(providerServices, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(providerServices).build();
+        }
+
+        @GET
+        @Path("/eagerly")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getServiceProviderServicesEagerly( @PathParam("serviceId") Integer serviceId,
+                                                           @BeanParam ProviderServiceBeanParam params ) throws NotFoundException, ForbiddenException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning subset of Provider Service entities for given Service eagerly using " +
+                    "ServiceResource.ProviderServiceResource.getServiceProviderServicesEagerly(serviceId) method of REST API");
+
+            // find service entity for which to get associated provider services
+            Service service = serviceFacade.find(serviceId);
+            if(service == null)
+                throw new NotFoundException("Could not find service for id " + serviceId + ".");
+
+            // calculate number of filter query params
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<ProviderServiceWrapper> providerServices = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Service> services = new ArrayList<>();
+                services.add(service);
+
+                utx.begin();
+
+                // get provider services eagerly for given service filtered by given params
+                providerServices = new ResourceList<>(
+                        ProviderServiceWrapper.wrap(
+                                providerServiceFacade.findByMultipleCriteriaEagerly(params.getProviders(), services, params.getServiceCategories(),
+                                        params.getDescriptions(), params.getMinPrice(), params.getMaxPrice(), params.getIncludeDiscounts(),
+                                        params.getMinDiscount(), params.getMaxDiscount(), params.getServicePoints(), params.getWorkStations(),
+                                        params.getEmployees(), params.getOffset(), params.getLimit())
+                        )
+                );
+
+                utx.commit();
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get provider services eagerly for given service without filtering (eventually paginated)
+                providerServices = new ResourceList<>( ProviderServiceWrapper.wrap(providerServiceFacade.findByServiceEagerly(service, params.getOffset(), params.getLimit())) );
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.ProviderServiceResource.populateWithHATEOASLinks(providerServices, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(providerServices).build();
+        }
+
+        /**
+         * Additional methods returning subset of resources based on given criteria.
+         * you can achieve similar results by applying @QueryParams to generic method
+         * returning all resources in order to filter and limit them.
+         */
+
+        /**
+         * Method that counts Provider Service entities for given Service resource
+         * The service id is passed through path param.
+         */
+        @GET
+        @Path("/count")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response countProviderServicesByService( @PathParam("serviceId") Integer serviceId,
+                                                        @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning number of provider services for given service by executing " +
+                    "ServiceResource.ProviderServiceResource.countProviderServicesByService(serviceId) method of REST API");
+
+            // find service entity for which to count provider services
+            Service service = serviceFacade.find(serviceId);
+            if(service == null)
+                throw new NotFoundException("Could not find service for id " + serviceId + ".");
+
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(providerServiceFacade.countByService(service)),
+                    200, "number of provider services for service with id " + service.getServiceId());
+            return Response.status(Status.OK).entity(responseEntity).build();
+        }
+
+        /**
+         * Method returns subset of Provider Service entities for given service
+         * described by given description.
+         * The service id and description are passed through path params.
+         */
+        @GET
+        @Path("/described/{description : \\S+}")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getServiceProviderServicesByDescription( @PathParam("serviceId") Integer serviceId,
+                                                                 @PathParam("description") String description,
+                                                                 @BeanParam PaginationBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning provider services for given service and description using " +
+                    "ServiceResource.ProviderServiceResource.getServiceProviderServicesByDescription(serviceId, description) method of REST API");
+
+            // find service entity for which to get associated provider services
+            Service service = serviceFacade.find(serviceId);
+            if(service == null)
+                throw new NotFoundException("Could not find service for id " + serviceId + ".");
+
+            if(description == null)
+                throw new BadRequestException("Description param cannot be null.");
+
+            // find provider services by given criteria (service and description)
+            ResourceList<ProviderService> providerServices = new ResourceList<>(
+                    providerServiceFacade.findByServiceAndDescription(service, description, params.getOffset(), params.getLimit())
+            );
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.ProviderServiceResource.populateWithHATEOASLinks(providerServices, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(providerServices).build();
+        }
+
+        /**
+         * Method returns subset of Provider Service entities for given service
+         * that have been priced between some min price and max price.
+         * The service id is passed through path param and price limits are
+         * passed through query params.
+         */
+        @GET
+        @Path("/priced")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getServiceProviderServicesByPrice( @PathParam("serviceId") Integer serviceId,
+                                                           @BeanParam PriceRangeBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning provider services for given service and priced between given min and max price limits using " +
+                    "ServiceResource.ProviderServiceResource.getServiceProviderServicesByPrice(serviceId, minPrice, maxPrice) method of REST API");
+
+            // find service entity for which to get associated provider services
+            Service service = serviceFacade.find(serviceId);
+            if(service == null)
+                throw new NotFoundException("Could not find service for id " + serviceId + ".");
+
+            RESTToolkit.validatePriceRange(params);
+
+            // find provider services by given criteria (service and price range)
+            ResourceList<ProviderService> providerServices = new ResourceList<>(
+                    providerServiceFacade.findByServiceAndPrice(service, params.getMinPrice(), params.getMaxPrice(),
+                            params.getOffset(), params.getLimit())
+            );
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.ProviderServiceResource.populateWithHATEOASLinks(providerServices, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(providerServices).build();
+        }
+
+        /**
+         * Method returns subset of Provider Service entities for given service
+         * that have been priced (incl. discounts) between some min discounted price
+         * and max discounted price. The service id is passed through path param and
+         * discounted price limits are passed through query params.
+         */
+        @GET
+        @Path("/discounted-priced")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getServiceProviderServicesByDiscountedPrice( @PathParam("serviceId") Integer serviceId,
+                                                                     @BeanParam PriceRangeBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning provider services for given service and priced (incl. discounts) between given min and max discounted price limits using " +
+                    "ServiceResource.ProviderServiceResource.getServiceProviderServicesByDiscountedPrice(serviceId, minDiscountedPrice, maxDiscountedPrice) method of REST API");
+
+            // find service entity for which to get associated provider services
+            Service service = serviceFacade.find(serviceId);
+            if(service == null)
+                throw new NotFoundException("Could not find service for id " + serviceId + ".");
+
+            RESTToolkit.validatePriceRange(params);
+
+            // find provider services by given criteria (service and discounted price range)
+            ResourceList<ProviderService> providerServices = new ResourceList<>(
+                    providerServiceFacade.findByServiceAndDiscountedPrice(service, params.getMinPrice(), params.getMaxPrice(),
+                            params.getOffset(), params.getLimit())
+            );
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.ProviderServiceResource.populateWithHATEOASLinks(providerServices, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(providerServices).build();
+        }
+
+        /**
+         * Method returns subset of Provider Service entities for given service
+         * that have been discounted between some min discount and max discount.
+         * The service id is passed through path param and discount limits are
+         * passed through query params.
+         */
+        @GET
+        @Path("/discounted")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getServiceProviderServicesByDiscount( @PathParam("serviceId") Integer serviceId,
+                                                              @BeanParam DiscountRangeBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning provider services for given service and discounted between given min and max discount limits using " +
+                    "ServiceResource.ProviderServiceResource.getServiceProviderServicesByDiscount(serviceId, minDiscount, maxDiscount) method of REST API");
+
+            // find service entity for which to get associated provider services
+            Service service = serviceFacade.find(serviceId);
+            if(service == null)
+                throw new NotFoundException("Could not find service for id " + serviceId + ".");
+
+            RESTToolkit.validateDiscountRange(params);
+
+            // find provider services for given criteria (service and discount range)
+            ResourceList<ProviderService> providerServices = new ResourceList<>(
+                    providerServiceFacade.findByServiceAndDiscount(service, params.getMinDiscount(), params.getMaxDiscount(),
+                            params.getOffset(), params.getLimit())
+            );
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.ProviderServiceResource.populateWithHATEOASLinks(providerServices, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(providerServices).build();
         }
 
     }

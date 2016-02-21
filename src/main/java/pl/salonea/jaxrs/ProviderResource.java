@@ -1718,9 +1718,10 @@ public class ProviderResource {
         @GET
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
         public Response getProviderServices(@PathParam("userId") Long userId,
-                                            @BeanParam ProviderServiceBeanParam params) throws NotFoundException, ForbiddenException {
+                                            @BeanParam ProviderServiceBeanParam params) throws NotFoundException, ForbiddenException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
 
-            if (params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            RESTToolkit.authorizeAccessToWebService(params);
             logger.log(Level.INFO, "returning subset of ProviderService entities for given Provider using ProviderResource.ProviderServiceResource.getProviderServices(userId) method of REST API");
 
             // find provider entity for which to get associated provider services
@@ -1729,9 +1730,7 @@ public class ProviderResource {
                 throw new pl.salonea.jaxrs.exceptions.NotFoundException("Could not find provider for id " + userId + ".");
 
             // calculate number of filter query params
-            Integer noOfParams = params.getUriInfo().getQueryParameters().size();
-            if (params.getOffset() != null) noOfParams -= 1;
-            if (params.getLimit() != null) noOfParams -= 1;
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
 
             ResourceList<ProviderService> providerServices = null;
 
@@ -1741,6 +1740,8 @@ public class ProviderResource {
                 List<Provider> providers = new ArrayList<>();
                 providers.add(provider);
 
+                utx.begin();
+
                 // get provider services for given provider filtered by given params
                 providerServices = new ResourceList<>(
                         providerServiceFacade.findByMultipleCriteria(providers, params.getServices(), params.getServiceCategories(),
@@ -1748,6 +1749,8 @@ public class ProviderResource {
                                 params.getMinDiscount(), params.getMaxDiscount(), params.getServicePoints(), params.getWorkStations(),
                                 params.getEmployees(), params.getOffset(), params.getLimit())
                 );
+
+                utx.commit();
 
             } else {
                 logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
@@ -1766,9 +1769,10 @@ public class ProviderResource {
         @Path("/eagerly")
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
         public Response getProviderServicesEagerly(@PathParam("userId") Long userId,
-                                                   @BeanParam ProviderServiceBeanParam params) throws NotFoundException, ForbiddenException {
+                                                   @BeanParam ProviderServiceBeanParam params) throws NotFoundException, ForbiddenException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
 
-            if (params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            RESTToolkit.authorizeAccessToWebService(params);
             logger.log(Level.INFO, "returning subset of ProviderService entities for given Provider eagerly using ProviderResource.ProviderServiceResource.getProviderServicesEagerly(userId) method of REST API");
 
             // find provider entity for which to get associated provider services
@@ -1777,9 +1781,7 @@ public class ProviderResource {
                 throw new NotFoundException("Could not find provider for id " + userId + ".");
 
             // calculate number of filter query params
-            Integer noOfParams = params.getUriInfo().getQueryParameters().size();
-            if (params.getOffset() != null) noOfParams -= 1;
-            if (params.getLimit() != null) noOfParams -= 1;
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
 
             ResourceList<ProviderServiceWrapper> providerServices = null;
 
@@ -1788,6 +1790,8 @@ public class ProviderResource {
 
                 List<Provider> providers = new ArrayList<>();
                 providers.add(provider);
+
+                utx.begin();
 
                 // get provider services for given provider eagerly filtered by given params
                 providerServices = new ResourceList<>(
@@ -1798,6 +1802,8 @@ public class ProviderResource {
                                         params.getEmployees(), params.getOffset(), params.getLimit())
                         )
                 );
+
+                utx.commit();
 
             } else {
                 logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
@@ -2218,9 +2224,9 @@ public class ProviderResource {
         @Path("/discounted-between")
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
         public Response getProviderServicesByDiscount(@PathParam("userId") Long userId,
-                                                      @BeanParam DiscountBeanParam params) throws ForbiddenException, NotFoundException, BadRequestException {
+                                                      @BeanParam DiscountRangeBeanParam params) throws ForbiddenException, NotFoundException, BadRequestException {
 
-            if (params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            RESTToolkit.authorizeAccessToWebService(params);
             logger.log(Level.INFO, "returning provider services for given provider and discounted between given min and max discount limits" +
                     " using ProviderResource.ProviderServiceResource.getProviderServicesByDiscount(userId, minDiscount, maxDiscount) method of REST API");
 
@@ -2229,18 +2235,7 @@ public class ProviderResource {
             if (provider == null)
                 throw new NotFoundException("Could not find provider for id " + userId + ".");
 
-            if (params.getMinDiscount() == null)
-                throw new BadRequestException("Min discount query param cannot be null.");
-            else if (params.getMinDiscount() < 0 || params.getMinDiscount() > 100)
-                throw new BadRequestException("Min discount value should be between 0 and 100.");
-
-            if (params.getMaxDiscount() == null)
-                throw new BadRequestException("Max discount query param cannot be null.");
-            else if (params.getMaxDiscount() < 0 || params.getMaxDiscount() > 100)
-                throw new BadRequestException("Max discount value should be between 0 and 100.");
-
-            if (params.getMaxDiscount() < params.getMinDiscount())
-                throw new BadRequestException("Max discount cannot be less than min discount.");
+            RESTToolkit.validateDiscountRange(params);
 
             // find provider services by given criteria (provider and discount max and min limits)
             ResourceList<ProviderService> providerServices = new ResourceList<>(

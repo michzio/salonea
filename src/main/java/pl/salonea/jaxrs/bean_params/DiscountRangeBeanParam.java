@@ -5,7 +5,7 @@ import javax.ws.rs.QueryParam;
 /**
  * Created by michzio on 06/10/2015.
  */
-public class DiscountBeanParam extends PaginationBeanParam {
+public class DiscountRangeBeanParam extends PaginationBeanParam {
 
     private @QueryParam("minDiscount") Short minDiscount;
     private @QueryParam("maxDiscount") Short maxDiscount;
