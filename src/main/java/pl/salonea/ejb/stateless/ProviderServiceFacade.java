@@ -661,44 +661,49 @@ public class ProviderServiceFacade extends AbstractFacade<ProviderService> imple
     @Override
     public List<ProviderService> findByMultipleCriteria(List<Provider> providers, List<Service> services, List<ServiceCategory> serviceCategories,
                                                         List<String> descriptions, Double minPrice, Double maxPrice, Boolean includeDiscounts,
-                                                        Short minDiscount, Short maxDiscount, List<ServicePoint> servicePoints, List<WorkStation> workStations, List<Employee> employees) {
+                                                        Short minDiscount, Short maxDiscount, Long minDuration, Long maxDuration,
+                                                        List<ServicePoint> servicePoints, List<WorkStation> workStations, List<Employee> employees) {
 
         return findByMultipleCriteria(providers, services, serviceCategories, descriptions, minPrice, maxPrice, includeDiscounts,
-                minDiscount, maxDiscount, servicePoints, workStations, employees, null, null);
+                minDiscount, maxDiscount, minDuration, maxDuration, servicePoints, workStations, employees, null, null);
     }
 
     @Override
     public List<ProviderService> findByMultipleCriteria(List<Provider> providers, List<Service> services, List<ServiceCategory> serviceCategories,
                                                         List<String> descriptions, Double minPrice, Double maxPrice, Boolean includeDiscounts,
-                                                        Short minDiscount, Short maxDiscount, List<ServicePoint> servicePoints, List<WorkStation> workStations, List<Employee> employees,
+                                                        Short minDiscount, Short maxDiscount, Long minDuration, Long maxDuration,
+                                                        List<ServicePoint> servicePoints, List<WorkStation> workStations, List<Employee> employees,
                                                         Integer start, Integer limit) {
 
         return findByMultipleCriteria(providers, services, serviceCategories, descriptions, minPrice, maxPrice, includeDiscounts,
-                minDiscount, maxDiscount, servicePoints, workStations, employees, false, start, limit);
+                minDiscount, maxDiscount, minDuration, maxDuration, servicePoints, workStations, employees, false, start, limit);
     }
 
     @Override
     public List<ProviderService> findByMultipleCriteriaEagerly(List<Provider> providers, List<Service> services, List<ServiceCategory> serviceCategories,
                                                                List<String> descriptions, Double minPrice, Double maxPrice, Boolean includeDiscounts,
-                                                               Short minDiscount, Short maxDiscount, List<ServicePoint> servicePoints, List<WorkStation> workStations, List<Employee> employees) {
+                                                               Short minDiscount, Short maxDiscount, Long minDuration, Long maxDuration,
+                                                               List<ServicePoint> servicePoints, List<WorkStation> workStations, List<Employee> employees) {
 
         return findByMultipleCriteriaEagerly(providers, services, serviceCategories, descriptions, minPrice, maxPrice, includeDiscounts,
-                minDiscount, maxDiscount, servicePoints, workStations, employees, null, null);
+                minDiscount, maxDiscount, minDuration, maxDuration, servicePoints, workStations, employees, null, null);
     }
 
     @Override
     public List<ProviderService> findByMultipleCriteriaEagerly(List<Provider> providers, List<Service> services, List<ServiceCategory> serviceCategories,
                                                                List<String> descriptions, Double minPrice, Double maxPrice, Boolean includeDiscounts,
-                                                               Short minDiscount, Short maxDiscount, List<ServicePoint> servicePoints, List<WorkStation> workStations, List<Employee> employees,
+                                                               Short minDiscount, Short maxDiscount, Long minDuration, Long maxDuration,
+                                                               List<ServicePoint> servicePoints, List<WorkStation> workStations, List<Employee> employees,
                                                                Integer start, Integer limit) {
 
         return findByMultipleCriteria(providers, services, serviceCategories, descriptions, minPrice, maxPrice, includeDiscounts,
-                minDiscount, maxDiscount, servicePoints, workStations, employees, true, start, limit);
+                minDiscount, maxDiscount, minDuration, maxDuration, servicePoints, workStations, employees, true, start, limit);
     }
 
     private List<ProviderService> findByMultipleCriteria(List<Provider> providers, List<Service> services, List<ServiceCategory> serviceCategories,
                                                         List<String> descriptions, Double minPrice, Double maxPrice, Boolean includeDiscounts,
-                                                        Short minDiscount, Short maxDiscount, List<ServicePoint> servicePoints, List<WorkStation> workStations, List<Employee> employees,
+                                                        Short minDiscount, Short maxDiscount, Long minDuration, Long maxDuration,
+                                                        List<ServicePoint> servicePoints, List<WorkStation> workStations, List<Employee> employees,
                                                         Boolean eagerly, Integer start, Integer limit) {
 
         CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
@@ -752,7 +757,7 @@ public class ProviderServiceFacade extends AbstractFacade<ProviderService> imple
         }
 
         if(minPrice != null) {
-            if(includeDiscounts) {
+            if(includeDiscounts != null && includeDiscounts == true) {
 
                 Expression<Number> discount = criteriaBuilder.quot(criteriaBuilder.diff(100.0, criteriaBuilder.toDouble(providerService.get(ProviderService_.discount))), 100.0);
                 Expression<Number> discountedPrice = criteriaBuilder.prod(providerService.get(ProviderService_.price), discount);
@@ -765,7 +770,7 @@ public class ProviderServiceFacade extends AbstractFacade<ProviderService> imple
         }
 
         if(maxPrice != null) {
-            if(includeDiscounts) {
+            if(includeDiscounts != null && includeDiscounts == true) {
 
                 Expression<Number> discount = criteriaBuilder.quot(criteriaBuilder.diff(100.0, criteriaBuilder.toDouble(providerService.get(ProviderService_.discount))), 100.0);
                 Expression<Number> discountedPrice = criteriaBuilder.prod(providerService.get(ProviderService_.price), discount);
@@ -785,6 +790,16 @@ public class ProviderServiceFacade extends AbstractFacade<ProviderService> imple
         if(maxDiscount != null) {
 
             predicates.add(criteriaBuilder.lessThanOrEqualTo(providerService.get(ProviderService_.discount), maxDiscount));
+        }
+
+        if(minDuration != null) {
+
+            predicates.add(criteriaBuilder.greaterThanOrEqualTo(providerService.get(ProviderService_.serviceDuration), minDuration));
+        }
+
+        if(maxDuration != null) {
+
+            predicates.add(criteriaBuilder.lessThanOrEqualTo(providerService.get(ProviderService_.serviceDuration), maxDuration));
         }
 
         if(servicePoints != null && servicePoints.size() > 0) {

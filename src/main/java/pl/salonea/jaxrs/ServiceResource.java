@@ -950,8 +950,8 @@ public class ServiceResource {
                 providerServices = new ResourceList<>(
                         providerServiceFacade.findByMultipleCriteria(params.getProviders(), services, params.getServiceCategories(),
                                 params.getDescriptions(), params.getMinPrice(), params.getMaxPrice(), params.getIncludeDiscounts(),
-                                params.getMinDiscount(), params.getMaxDiscount(), params.getServicePoints(), params.getWorkStations(),
-                                params.getEmployees(), params.getOffset(), params.getLimit())
+                                params.getMinDiscount(), params.getMaxDiscount(), params.getMinDuration(), params.getMaxDuration(),
+                                params.getServicePoints(), params.getWorkStations(), params.getEmployees(), params.getOffset(), params.getLimit())
                 );
 
                 utx.commit();
@@ -1003,8 +1003,8 @@ public class ServiceResource {
                         ProviderServiceWrapper.wrap(
                                 providerServiceFacade.findByMultipleCriteriaEagerly(params.getProviders(), services, params.getServiceCategories(),
                                         params.getDescriptions(), params.getMinPrice(), params.getMaxPrice(), params.getIncludeDiscounts(),
-                                        params.getMinDiscount(), params.getMaxDiscount(), params.getServicePoints(), params.getWorkStations(),
-                                        params.getEmployees(), params.getOffset(), params.getLimit())
+                                        params.getMinDiscount(), params.getMaxDiscount(), params.getMinDuration(), params.getMaxDuration(),
+                                        params.getServicePoints(), params.getWorkStations(), params.getEmployees(), params.getOffset(), params.getLimit())
                         )
                 );
 
@@ -1192,7 +1192,6 @@ public class ServiceResource {
 
             return Response.status(Status.OK).entity(providerServices).build();
         }
-
     }
 
     public class ServicePointResource {

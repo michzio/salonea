@@ -25,6 +25,8 @@ public class ProviderServiceBeanParam extends PaginationBeanParam {
     private @QueryParam("includeDiscounts") Boolean includeDiscounts;
     private @QueryParam("minDiscount") Short minDiscount;
     private @QueryParam("maxDiscount") Short maxDiscount;
+    private @QueryParam("minDuration") Long minDuration;
+    private @QueryParam("maxDuration") Long maxDuration;
     private @QueryParam("workStationId") List<WorkStationId> workStationIds; // {providerId}+{servicePointNumber}+{workStationNumber} composite PK
     private @QueryParam("servicePointId") List<ServicePointId> servicePointIds; // {providerId}+{servicePointNumber} composite PK
     private @QueryParam("employeeId") List<Long> employeeIds;
@@ -139,6 +141,22 @@ public class ProviderServiceBeanParam extends PaginationBeanParam {
 
     public void setMaxDiscount(Short maxDiscount) {
         this.maxDiscount = maxDiscount;
+    }
+
+    public Long getMinDuration() {
+        return minDuration;
+    }
+
+    public void setMinDuration(Long minDuration) {
+        this.minDuration = minDuration;
+    }
+
+    public Long getMaxDuration() {
+        return maxDuration;
+    }
+
+    public void setMaxDuration(Long maxDuration) {
+        this.maxDuration = maxDuration;
     }
 
     public List<WorkStationId> getWorkStationIds() {

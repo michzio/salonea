@@ -2289,8 +2289,9 @@ public class EmployeeResource {
 
                 providerServices = new ResourceList<>(
                         providerServiceFacade.findByMultipleCriteria(params.getProviders(), params.getServices(), params.getServiceCategories(),
-                                params.getDescriptions(), params.getMinPrice(), params.getMaxPrice(), params.getIncludeDiscounts(), params.getMinDiscount(),
-                                params.getMaxDiscount(), params.getServicePoints(), params.getWorkStations(), employees, params.getOffset(), params.getLimit())
+                                params.getDescriptions(), params.getMinPrice(), params.getMaxPrice(), params.getIncludeDiscounts(),
+                                params.getMinDiscount(), params.getMaxDiscount(), params.getMinDuration(), params.getMaxDuration(),
+                                params.getServicePoints(), params.getWorkStations(), employees, params.getOffset(), params.getLimit())
                 );
 
                 utx.commit();
@@ -2345,10 +2346,10 @@ public class EmployeeResource {
 
                 providerServices = new ResourceList<>(
                         ProviderServiceWrapper.wrap(
-                                providerServiceFacade.findByMultipleCriteriaEagerly(params.getProviders(), params.getServices(),
-                                        params.getServiceCategories(), params.getDescriptions(), params.getMinPrice(), params.getMaxPrice(),
-                                        params.getIncludeDiscounts(), params.getMinDiscount(), params.getMaxDiscount(), params.getServicePoints(),
-                                        params.getWorkStations(), employees, params.getOffset(), params.getLimit())
+                                providerServiceFacade.findByMultipleCriteriaEagerly(params.getProviders(), params.getServices(), params.getServiceCategories(),
+                                        params.getDescriptions(), params.getMinPrice(), params.getMaxPrice(), params.getIncludeDiscounts(),
+                                        params.getMinDiscount(), params.getMaxDiscount(), params.getMinDuration(), params.getMaxDuration(),
+                                        params.getServicePoints(), params.getWorkStations(), employees, params.getOffset(), params.getLimit())
                         )
                 );
 

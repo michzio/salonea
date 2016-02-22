@@ -145,8 +145,8 @@ public class ProviderServiceResource {
             providerServices = new ResourceList<>(
                     providerServiceFacade.findByMultipleCriteria(params.getProviders(), params.getServices(), params.getServiceCategories(),
                             params.getDescriptions(), params.getMinPrice(), params.getMaxPrice(), params.getIncludeDiscounts(),
-                            params.getMinDiscount(), params.getMaxDiscount(), params.getServicePoints(), params.getWorkStations(),
-                            params.getEmployees(), params.getOffset(), params.getLimit())
+                            params.getMinDiscount(), params.getMaxDiscount(), params.getMinDuration(), params.getMaxDuration(),
+                            params.getServicePoints(), params.getWorkStations(), params.getEmployees(), params.getOffset(), params.getLimit())
             );
 
             utx.commit();
@@ -187,8 +187,8 @@ public class ProviderServiceResource {
                     ProviderServiceWrapper.wrap(
                         providerServiceFacade.findByMultipleCriteriaEagerly(params.getProviders(), params.getServices(), params.getServiceCategories(),
                                 params.getDescriptions(), params.getMinPrice(), params.getMaxPrice(), params.getIncludeDiscounts(),
-                                params.getMinDiscount(), params.getMaxDiscount(), params.getServicePoints(), params.getWorkStations(),
-                                params.getEmployees(), params.getOffset(), params.getLimit())
+                                params.getMinDiscount(), params.getMaxDiscount(), params.getMinDuration(), params.getMaxDuration(),
+                                params.getServicePoints(), params.getWorkStations(), params.getEmployees(), params.getOffset(), params.getLimit())
                     )
             );
 
@@ -292,8 +292,7 @@ public class ProviderServiceResource {
 
             // get subset of resources hypermedia links
             // described
-            Method providerServicesByDescriptionMethod = ProviderServiceResource.class.getMethod("getProviderServicesByDescription", String.class, PaginationBeanParam.class);
-            providerServices.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(ProviderServiceResource.class).path(providerServicesByDescriptionMethod).build()).rel("described").build() );
+            providerServices.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(ProviderServiceResource.class).path("described").build()).rel("described").build() );
 
         } catch(NoSuchMethodException e) {
             e.printStackTrace();
