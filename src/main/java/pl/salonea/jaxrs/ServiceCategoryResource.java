@@ -1,13 +1,12 @@
 package pl.salonea.jaxrs;
 
+import pl.salonea.ejb.stateless.ProviderServiceFacade;
 import pl.salonea.ejb.stateless.ServiceCategoryFacade;
 import pl.salonea.ejb.stateless.ServiceFacade;
+import pl.salonea.entities.ProviderService;
 import pl.salonea.entities.Service;
 import pl.salonea.entities.ServiceCategory;
-import pl.salonea.jaxrs.bean_params.GenericBeanParam;
-import pl.salonea.jaxrs.bean_params.PaginationBeanParam;
-import pl.salonea.jaxrs.bean_params.ServiceBeanParam;
-import pl.salonea.jaxrs.bean_params.ServiceCategoryBeanParam;
+import pl.salonea.jaxrs.bean_params.*;
 import pl.salonea.jaxrs.exceptions.*;
 import pl.salonea.jaxrs.exceptions.BadRequestException;
 import pl.salonea.jaxrs.exceptions.ForbiddenException;
@@ -16,6 +15,7 @@ import pl.salonea.jaxrs.utils.RESTToolkit;
 import pl.salonea.jaxrs.utils.ResourceList;
 import pl.salonea.jaxrs.utils.ResponseWrapper;
 import pl.salonea.jaxrs.utils.hateoas.Link;
+import pl.salonea.jaxrs.wrappers.ProviderServiceWrapper;
 import pl.salonea.jaxrs.wrappers.ServiceCategoryWrapper;
 import pl.salonea.jaxrs.wrappers.ServiceWrapper;
 
@@ -51,6 +51,8 @@ public class ServiceCategoryResource {
     private ServiceCategoryFacade serviceCategoryFacade;
     @Inject
     private ServiceFacade serviceFacade;
+    @Inject
+    private ProviderServiceFacade providerServiceFacade;
 
     /**
      * Method returns all Service Category resources
@@ -406,6 +408,11 @@ public class ServiceCategoryResource {
         return new ServiceResource();
     }
 
+    @Path("/{serviceCategoryId : \\d+}/provider-services")
+    public ProviderServiceResource getProviderServiceResource() {
+        return new ProviderServiceResource();
+    }
+
     // helper methods e.g. to populate resources/resource lists with HATEOAS links
 
     /**
@@ -627,6 +634,39 @@ public class ServiceCategoryResource {
                     .resolveTemplate("serviceCategoryId", serviceCategory.getCategoryId().toString())
                     .build())
                     .rel("services-containing-keyword").build() );
+
+            /**
+             * Provider Services belonging to current Service Category resource
+             */
+
+            // provider-services relationship
+            Method providerServicesMethod = ServiceCategoryResource.class.getMethod("getProviderServiceResource");
+            serviceCategory.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                            .path(ServiceCategoryResource.class)
+                            .path(providerServicesMethod)
+                            .resolveTemplate("serviceCategoryId", serviceCategory.getCategoryId().toString())
+                            .build())
+                            .rel("provider-services").build() );
+
+            // provider-services eagerly relationship
+            Method providerServicesEagerlyMethod = ServiceCategoryResource.ProviderServiceResource.class.getMethod("getServiceCategoryProviderServicesEagerly", Integer.class, ProviderServiceBeanParam.class);
+            serviceCategory.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                            .path(ServiceCategoryResource.class)
+                            .path(providerServicesMethod)
+                            .path(providerServicesEagerlyMethod)
+                            .resolveTemplate("serviceCategoryId", serviceCategory.getCategoryId().toString())
+                            .build())
+                            .rel("provider-services-eagerly").build() );
+
+            // provider-services count
+            Method countProviderServicesByServiceCategoryMethod = ServiceCategoryResource.ProviderServiceResource.class.getMethod("countProviderServicesByServiceCategory", Integer.class, GenericBeanParam.class);
+            serviceCategory.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                            .path(ServiceCategoryResource.class)
+                            .path(providerServicesMethod)
+                            .path(countProviderServicesByServiceCategoryMethod)
+                            .resolveTemplate("serviceCategoryId", serviceCategory.getCategoryId().toString())
+                            .build())
+                            .rel("provider-services-count").build() );
 
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
@@ -1139,6 +1179,146 @@ public class ServiceCategoryResource {
             pl.salonea.jaxrs.ServiceResource.populateWithHATEOASLinks(services, params.getUriInfo(), params.getOffset(), params.getLimit());
 
             return Response.status(Status.OK).entity(services).build();
+        }
+    }
+
+    public class ProviderServiceResource {
+
+        public ProviderServiceResource() { }
+
+        /**
+         * Method returns subset of Provider Service entities for given Service Category.
+         * The service category id is passed through path param.
+         * They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getServiceCategoryProviderServices( @PathParam("serviceCategoryId") Integer serviceCategoryId,
+                                                            @BeanParam ProviderServiceBeanParam params ) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning subset of Provider Service entities for given Service Category using " +
+                    "ServiceCategoryResource.ProviderServiceResource.getServiceCategoryProviderServices(serviceCategoryId) method of REST API");
+
+            // find service category entity for which to get associated provider services
+            ServiceCategory serviceCategory = serviceCategoryFacade.find(serviceCategoryId);
+            if(serviceCategory == null)
+                throw new NotFoundException("Could not find service category for id " + serviceCategoryId + ".");
+
+            // calculate number of filter query params
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<ProviderService> providerServices = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<ServiceCategory> serviceCategories = new ArrayList<>();
+                serviceCategories.add(serviceCategory);
+
+                utx.begin();
+
+                // get provider services for given service category filtered by given params
+                providerServices = new ResourceList<>(
+                        providerServiceFacade.findByMultipleCriteria(params.getProviders(), params.getServices(), serviceCategories,
+                                params.getDescriptions(), params.getMinPrice(), params.getMaxPrice(), params.getIncludeDiscounts(),
+                                params.getMinDiscount(), params.getMaxDiscount(), params.getMinDuration(), params.getMaxDuration(),
+                                params.getServicePoints(), params.getWorkStations(), params.getEmployees(), params.getOffset(), params.getLimit())
+                );
+
+                utx.commit();
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get provider services for given service category without filtering (eventually paginated)
+                providerServices = new ResourceList<>( providerServiceFacade.findByServiceCategory(serviceCategory, params.getOffset(), params.getLimit()) );
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.ProviderServiceResource.populateWithHATEOASLinks(providerServices, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(providerServices).build();
+        }
+
+        @GET
+        @Path("/eagerly")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getServiceCategoryProviderServicesEagerly( @PathParam("serviceCategoryId") Integer serviceCategoryId,
+                                                                   @BeanParam ProviderServiceBeanParam params ) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning subset of Provider Service entities for given Service Category eagerly using " +
+                    "ServiceCategoryResource.ProviderServiceResource.getServiceCategoryProviderServicesEagerly(serviceCategoryId) method of REST API");
+
+            // find service category entity for which to get associated provider services
+            ServiceCategory serviceCategory = serviceCategoryFacade.find(serviceCategoryId);
+            if(serviceCategory == null)
+                throw new NotFoundException("Could not find service category for id " + serviceCategoryId + ".");
+
+            // calculate number of filter query params
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<ProviderServiceWrapper> providerServices = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<ServiceCategory> serviceCategories = new ArrayList<>();
+                serviceCategories.add(serviceCategory);
+
+                utx.begin();
+
+                // get provider services eagerly for given service category filtered by given query params
+                providerServices = new ResourceList<>(
+                        ProviderServiceWrapper.wrap(
+                                providerServiceFacade.findByMultipleCriteriaEagerly(params.getProviders(), params.getServices(),
+                                        serviceCategories, params.getDescriptions(), params.getMinPrice(), params.getMaxPrice(),
+                                        params.getIncludeDiscounts(), params.getMinDiscount(), params.getMaxDiscount(),
+                                        params.getMinDuration(), params.getMaxDuration(), params.getServicePoints(),
+                                        params.getWorkStations(), params.getEmployees(), params.getOffset(), params.getLimit())
+                        )
+                );
+
+                utx.commit();
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get provider services eagerly for given service category without filtering (eventually paginated)
+                providerServices = new ResourceList<>( ProviderServiceWrapper.wrap(providerServiceFacade.findByServiceCategoryEagerly(serviceCategory, params.getOffset(), params.getLimit())) );
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.ProviderServiceResource.populateWithHATEOASLinks(providerServices, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(providerServices).build();
+        }
+
+        /**
+         * Method that counts Provider Service entities for given Service Category resource
+         * The service category id is passed through path param.
+         */
+        @GET
+        @Path("/count")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response countProviderServicesByServiceCategory( @PathParam("serviceCategoryId") Integer serviceCategoryId,
+                                                                @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning number of provider services for given service category by executing " +
+                    "ServiceCategoryResource.ProviderServiceResource.countProviderServicesByServiceCategory(serviceCategoryId) method of REST API");
+
+            // find service category entity for which to count provider services
+            ServiceCategory serviceCategory = serviceCategoryFacade.find(serviceCategoryId);
+            if(serviceCategory == null)
+                throw new NotFoundException("Could not find service category for id " + serviceCategoryId + ".");
+
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(providerServiceFacade.countByServiceCategory(serviceCategory)),
+                    200, "number of provider services for service category with id " + serviceCategory.getCategoryId());
+            return Response.status(Status.OK).entity(responseEntity).build();
         }
     }
 }
