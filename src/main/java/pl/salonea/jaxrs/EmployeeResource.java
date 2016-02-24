@@ -405,7 +405,7 @@ public class EmployeeResource {
         return new ProviderServiceResource();
     }
 
-    // private helper methods e.g. to populate resources/resource lists with HATEOAS links
+    // helper methods e.g. to populate resources/resource lists with HATEOAS links
 
     /**
      * This method enables to populate list of resources and each individual resource on list with hypermedia links
