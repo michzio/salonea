@@ -5,11 +5,15 @@ import pl.salonea.entities.ServicePointPhoto;
 import pl.salonea.entities.Tag;
 import pl.salonea.jaxrs.exceptions.NotFoundException;
 
+import javax.ejb.LocalBean;
+import javax.ejb.Stateless;
 import javax.inject.Inject;
 
 /**
  * Created by michzio on 25/02/2016.
  */
+@Stateless
+@LocalBean
 public class ServicePointPhotoTagRelationshipManager
         implements ServicePointPhotoTagRelationshipManagerInterface.Local, ServicePointPhotoTagRelationshipManagerInterface.Remote {
 
