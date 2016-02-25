@@ -18,7 +18,6 @@ public class ServicePointPhotoTagRelationshipManager
         @Inject
         private TagFacade tagFacade;
 
-
         @Override
         public void addTagToServicePointPhoto(Long tagId, Long photoId) throws NotFoundException {
 
