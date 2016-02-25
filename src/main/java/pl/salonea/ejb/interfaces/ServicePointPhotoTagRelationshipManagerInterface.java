@@ -5,5 +5,12 @@ package pl.salonea.ejb.interfaces;
  */
 public interface ServicePointPhotoTagRelationshipManagerInterface {
 
+    void addTagToServicePointPhoto(Long tagId, Long photoId);
+    void removeTagFromServicePointPhoto(Long tagId, Long photoId);
 
+    @javax.ejb.Remote
+    interface Remote extends ServicePointPhotoTagRelationshipManagerInterface { }
+
+    @javax.ejb.Local
+    interface Local extends ServicePointPhotoTagRelationshipManagerInterface { }
 }
