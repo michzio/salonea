@@ -43,7 +43,7 @@ public class ProviderServiceWorkStationRelationship {
         logger.log(Level.INFO, "adding association between given provider service and given work station using " +
                 "ProviderServiceWorkStationRelationship.addProviderServiceOnWorkStation(providerId, serviceId, workStationProviderId, servicePointNumber, workStationNumber) method of REST API");
 
-        if(providerId != workStationProviderId)
+        if(providerId.longValue() != workStationProviderId.longValue())
             throw new BadRequestException("Provider Service can only be provided on Work Station of the same provider. " +
                     "This means Provider Service provider id and Work Station provider id cannot be different.");
 
@@ -72,7 +72,7 @@ public class ProviderServiceWorkStationRelationship {
         logger.log(Level.INFO, "removing association between given provider service and given work station using " +
                 "ProviderServiceWorkStationRelationship.removeProviderServiceOnWorkStation(providerId, serviceId, workStationProviderId, servicePointNumber, workStationNumber) method of REST API");
 
-        if(providerId != workStationProviderId)
+        if(providerId.longValue() != workStationProviderId.longValue())
             throw new BadRequestException("Provider Service can only be provided on Work Station of the same provider. " +
                     "This means Provider Service provider id and Work Station provider id cannot be different.");
 
