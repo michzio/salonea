@@ -86,5 +86,4 @@ public class ProviderServiceWorkStationRelationship {
 
         return Response.status(Status.OK).entity(responseEntity).build();
     }
-
 }
