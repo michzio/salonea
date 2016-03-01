@@ -94,6 +94,7 @@ public interface WorkStationFacadeInterface extends AbstractFacadeInterface<Work
     List<WorkStation> findByTermStrictAndServicePoint(ServicePoint servicePoint, Date startTime, Date endTime, Integer start, Integer limit);
 
     Integer deleteByServicePoint(ServicePoint servicePoint);
+    Integer deleteById(WorkStationId workStationId);
     Long countByServicePoint(ServicePoint servicePoint);
     Long countByService(Service service);
     Long countByProviderService(ProviderService providerService);

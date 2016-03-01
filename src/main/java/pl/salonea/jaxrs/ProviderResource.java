@@ -8,6 +8,7 @@ import pl.salonea.entities.idclass.ServicePointId;
 import pl.salonea.entities.idclass.WorkStationId;
 import pl.salonea.enums.ClientType;
 import pl.salonea.enums.ProviderType;
+import pl.salonea.enums.WorkStationType;
 import pl.salonea.jaxrs.bean_params.*;
 import pl.salonea.jaxrs.exceptions.*;
 import pl.salonea.jaxrs.exceptions.ForbiddenException;
@@ -1888,6 +1889,236 @@ public class ProviderResource {
                 pl.salonea.jaxrs.WorkStationResource.populateWithHATEOASLinks(wrappedWorkStation, params.getUriInfo());
 
                 return Response.status(Status.OK).entity(wrappedWorkStation).build();
+            }
+
+            /**
+             * Method that takes Work Station as XML or JSON and creates its new instance in database
+             */
+            @POST
+            @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+            @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+            public Response createWorkStation( @PathParam("userId") Long providerId,
+                                               @PathParam("servicePointNumber") Integer servicePointNumber,
+                                               WorkStation workStation,
+                                               @BeanParam GenericBeanParam params ) throws ForbiddenException, UnprocessableEntityException, InternalServerErrorException {
+
+                RESTToolkit.authorizeAccessToWebService(params);
+                logger.log(Level.INFO, "creating new WorkStation by executing ProviderResource.ServicePointResource.WorkStationResource.createWorkStation(workStation) method of REST API");
+
+                WorkStation createdWorkStation = null;
+                URI locationURI = null;
+
+                try {
+                    // persist new resource in database
+                    createdWorkStation = workStationFacade.createForServicePoint(new ServicePointId(providerId, servicePointNumber), workStation);
+
+                    // populate created resource with hypermedia links
+                    pl.salonea.jaxrs.WorkStationResource.populateWithHATEOASLinks(createdWorkStation, params.getUriInfo());
+
+                    // construct link to newly created resource to return in HTTP Header
+                    String userId = String.valueOf(createdWorkStation.getServicePoint().getProvider().getUserId());
+                    String servicePointNo = String.valueOf(createdWorkStation.getServicePoint().getServicePointNumber());
+                    String workStationNo = String.valueOf(createdWorkStation.getWorkStationNumber());
+
+                    Method servicePointsMethod = ProviderResource.class.getMethod("getServicePointResource");
+                    Method workStationsMethod = ProviderResource.ServicePointResource.class.getMethod("getWorkStationResource");
+                    locationURI = params.getUriInfo().getBaseUriBuilder()
+                            .path(ProviderResource.class)
+                            .path(servicePointsMethod)
+                            .path(workStationsMethod)
+                            .path(workStationNo)
+                            .resolveTemplate("userId", userId)
+                            .resolveTemplate("servicePointNumber", servicePointNo)
+                            .build();
+
+                } catch (EJBTransactionRolledbackException ex) {
+                    ExceptionHandler.handleEJBTransactionRolledbackException(ex);
+                } catch (EJBException ex) {
+                    ExceptionHandler.handleEJBException(ex);
+                } catch (NoSuchMethodException ex) {
+                    ex.printStackTrace();
+                } catch (Exception ex) {
+                    throw new InternalServerErrorException(ExceptionHandler.ENTITY_CREATION_ERROR_MESSAGE);
+                }
+
+                return Response.created(locationURI).entity(createdWorkStation).build();
+            }
+
+            /**
+             * Method that takes updated Work Station as XML or JSON and its composite ID as path params.
+             * It updates Work Station in database for provided composite ID.
+             */
+            @PUT
+            @Path("/{workStationNumber : \\d+}")
+            @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+            @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+            public Response updateWorkStation( @PathParam("userId") Long providerId,
+                                               @PathParam("servicePointNumber") Integer servicePointNumber,
+                                               @PathParam("workStationNumber") Integer workStationNumber,
+                                               WorkStation workStation,
+                                               @BeanParam GenericBeanParam params ) throws ForbiddenException, UnprocessableEntityException, InternalServerErrorException {
+
+                RESTToolkit.authorizeAccessToWebService(params);
+                logger.log(Level.INFO, "updating existing Work Station by executing ProviderResource.ServicePointResource.WorkStationResource.updateWorkStation(workStation) method of REST API");
+
+                // create composite ID based on path params
+                WorkStationId workStationId = new WorkStationId(providerId, servicePointNumber, workStationNumber);
+
+                WorkStation updatedWorkStation = null;
+                try {
+                    // reflect updated resource object in database
+                    updatedWorkStation = workStationFacade.update(workStationId, workStation);
+                    // populate created resource with hypermedia links
+                    pl.salonea.jaxrs.WorkStationResource.populateWithHATEOASLinks(updatedWorkStation, params.getUriInfo());
+
+                } catch (EJBTransactionRolledbackException ex) {
+                    ExceptionHandler.handleEJBTransactionRolledbackException(ex);
+                } catch (EJBException ex) {
+                    ExceptionHandler.handleEJBException(ex);
+                } catch (Exception ex) {
+                    throw new InternalServerErrorException(ExceptionHandler.ENTITY_UPDATE_ERROR_MESSAGE);
+                }
+
+                return Response.status(Status.OK).entity(updatedWorkStation).build();
+            }
+
+            /**
+             * Method that removes subset of Work Station entities from database for given Service Point.
+             * The provider id and service point number are passed through path param.
+             */
+            @DELETE
+            @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+            public Response removeServicePointWorkStations( @PathParam("userId") Long providerId,
+                                                            @PathParam("servicePointNumber") Integer servicePointNumber,
+                                                            @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException,
+            /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+                RESTToolkit.authorizeAccessToWebService(params);
+                logger.log(Level.INFO, "removing subset of Work Station entities for given Service Point by executing " +
+                        "ProviderResource.ServicePointResource.WorkStationResource.removeServicePointWorkStations(providerId, servicePointNumber) method of REST API");
+
+                utx.begin();
+
+                // find service point entity for which to remove work stations
+                ServicePoint servicePoint = servicePointFacade.find( new ServicePointId(providerId, servicePointNumber) );
+                if (servicePoint == null)
+                    throw new NotFoundException("Could not find service point for id (" + providerId + "," + servicePointNumber + ").");
+
+                // remove all specified entities from database
+                Integer noOfDeleted = workStationFacade.deleteByServicePoint(servicePoint);
+
+                utx.commit();
+
+                // create response returning number of deleted entities
+                ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(noOfDeleted), 200,
+                        "number of deleted work stations for service point with id (" + providerId + "," + servicePointNumber + ")");
+
+                return Response.status(Status.OK).entity(responseEntity).build();
+            }
+
+            /**
+             * Method that removes Work Station entity from database for given ID.
+             * The work station composite id is passed through path param.
+             */
+            @DELETE
+            @Path("/{workStationNumber : \\d+}")
+            @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+            public Response removeWorkStation( @PathParam("userId") Long providerId,
+                                               @PathParam("servicePointNumber") Integer servicePointNumber,
+                                               @PathParam("workStationNumber") Integer workStationNumber,
+                                               @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException, InternalServerErrorException {
+
+                RESTToolkit.authorizeAccessToWebService(params);
+                logger.log(Level.INFO, "removing given Work Station by executing ProviderResource.ServicePointResource.WorkStationResource.removeWorkStation(providerId, servicePointNumber, workStationNumber) method of REST API");
+
+                // remove entity from database
+                Integer noOfDeleted = workStationFacade.deleteById(new WorkStationId(providerId, servicePointNumber, workStationNumber));
+
+                if (noOfDeleted == 0)
+                    throw new NotFoundException("Could not find work station to delete for id (" + providerId + "," + servicePointNumber + "," + workStationNumber + ").");
+                else if (noOfDeleted != 1)
+                    throw new InternalServerErrorException("Some error occurred while trying to delete work station with id (" + providerId + "," + servicePointNumber + "," + workStationNumber + ").");
+
+                return Response.status(Status.NO_CONTENT).build();
+            }
+
+            /**
+             * Additional methods returning subset of resources based on given criteria
+             * you can also achieve similar results by applying @QueryParams to generic method
+             * returning all resources in order to filter and limit them.
+             */
+
+            /**
+             * Method that counts Work Station entities for given Service Point resource.
+             * The provider id and service point number are passed through path params.
+             */
+            @GET
+            @Path("/count")
+            @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+            public Response countWorkStationsByServicePoint( @PathParam("userId") Long providerId,
+                                                             @PathParam("servicePointNumber") Integer servicePointNumber,
+                                                             @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException,
+            /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+                RESTToolkit.authorizeAccessToWebService(params);
+                logger.log(Level.INFO, "returning number of work stations for given service point by executing " +
+                        "ProviderResource.ServicePointResource.WorkStationResource.countWorkStationsByServicePoint(providerId, servicePointNumber) method of REST API");
+
+                utx.begin();
+
+                // find service point entity for which to count work stations
+                ServicePoint servicePoint = servicePointFacade.find( new ServicePointId(providerId, servicePointNumber) );
+                if (servicePoint == null)
+                    throw new NotFoundException("Could not find service point for id (" + providerId + "," + servicePointNumber + ").");
+
+                ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(workStationFacade.countByServicePoint(servicePoint)),
+                        200, "number of work stations for service point with id (" + providerId + "," + servicePointNumber + ").");
+
+                utx.commit();
+
+                return Response.status(Status.OK).entity(responseEntity).build();
+            }
+
+            /**
+             * Method returns subset of Work Station entities for given Service Point
+             * entity and work station type. The provider id and service point number
+             * are passed through path param. Work station type is also passed through
+             * path param.
+             */
+            @GET
+            @Path("/typed/{type : \\S+}")
+            @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+            public Response getServicePointWorkStationsByType( @PathParam("userId") Long providerId,
+                                                               @PathParam("servicePointNumber") Integer servicePointNumber,
+                                                               @PathParam("type") WorkStationType type,
+                                                               @BeanParam PaginationBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException,
+            /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+                RESTToolkit.authorizeAccessToWebService(params);
+                logger.log(Level.INFO, "returning work stations for given service point and work station type using " +
+                        "ProviderResource.ServicePointResource.WorkStationResource.getServicePointWorkStationsByType(providerId, servicePointNumber, type) method of REST API");
+
+                utx.begin();
+
+                // find service point entity for which to get associated work stations
+                ServicePoint servicePoint = servicePointFacade.find( new ServicePointId(providerId, servicePointNumber) );
+                if (servicePoint == null)
+                    throw new NotFoundException("Could not find service point for id (" + providerId + "," + servicePointNumber + ").");
+
+                if(type == null)
+                    throw new BadRequestException("Work station type param cannot be null.");
+
+                // find work stations by given criteria (service point and work station type)
+                ResourceList<WorkStation> workStations = new ResourceList<>(
+                        workStationFacade.findByServicePointAndType(servicePoint, type, params.getOffset(), params.getLimit())
+                );
+
+                utx.commit();
+
+                // result resources need to be populated with hypermedia links to enable resource discovery
+                pl.salonea.jaxrs.WorkStationResource.populateWithHATEOASLinks(workStations, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+                return Response.status(Status.OK).entity(workStations).build();
             }
         }
     }

@@ -68,6 +68,7 @@ import java.util.*;
         @NamedQuery(name = WorkStation.FIND_BY_TERM_AND_SERVICE_POINT, query = "SELECT DISTINCT ws FROM WorkStation ws INNER JOIN ws.termsEmployeesWorkOn empl_term INNER JOIN empl_term.term term WHERE ws.servicePoint = :service_point AND term.openingTime < :end_time AND term.closingTime > :start_time"), // constraint: openingTime < closingTime
         @NamedQuery(name = WorkStation.FIND_BY_TERM_STRICT_AND_SERVICE_POINT, query = "SELECT DISTINCT ws FROM WorkStation ws INNER JOIN ws.termsEmployeesWorkOn empl_term INNER JOIN empl_term.term term WHERE ws.servicePoint = :service_point AND term.openingTime <= :start_time AND term.closingTime >= :end_time"),
         @NamedQuery(name = WorkStation.DELETE_BY_SERVICE_POINT, query = "DELETE FROM WorkStation ws WHERE ws.servicePoint = :service_point"),
+        @NamedQuery(name = WorkStation.DELETE_BY_ID, query = "DELETE FROM WorkStation ws WHERE ws.servicePoint = :servicePoint AND ws.workStationNumber = :workStationNumber"),
         @NamedQuery(name = WorkStation.COUNT_BY_SERVICE_POINT, query = "SELECT COUNT(ws) FROM WorkStation ws WHERE ws.servicePoint = :service_point"),
         @NamedQuery(name = WorkStation.COUNT_BY_SERVICE, query = "SELECT COUNT(ws) FROM WorkStation ws INNER JOIN ws.providedServices ps WHERE ps.service = :service"),
         @NamedQuery(name = WorkStation.COUNT_BY_PROVIDER_SERVICE, query = "SELECT COUNT(ws) FROM WorkStation ws WHERE :provider_service MEMBER OF ws.providedServices"),
@@ -110,6 +111,7 @@ public class WorkStation implements Serializable{
     public static final String FIND_BY_TERM_AND_SERVICE_POINT = "WorkStation.findByTermAndServicePoint";
     public static final String FIND_BY_TERM_STRICT_AND_SERVICE_POINT = "WorkStation.findByTermStrictAndServicePoint";
     public static final String DELETE_BY_SERVICE_POINT = "WorkStation.deleteByServicePoint";
+    public static final String DELETE_BY_ID = "WorkStation.deleteById";
     public static final String COUNT_BY_SERVICE_POINT = "WorkStation.countByServicePoint";
     public static final String COUNT_BY_SERVICE = "WorkStation.countByService";
     public static final String COUNT_BY_PROVIDER_SERVICE = "WorkStation.countByProviderService";

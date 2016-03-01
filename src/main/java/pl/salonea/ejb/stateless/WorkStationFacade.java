@@ -12,6 +12,7 @@ import javax.ejb.Stateless;
 import javax.inject.Inject;
 import javax.persistence.*;
 import javax.persistence.criteria.*;
+import javax.ws.rs.QueryParam;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -736,6 +737,17 @@ public class WorkStationFacade extends AbstractFacade<WorkStation> implements Wo
 
         Query query = getEntityManager().createNamedQuery(WorkStation.DELETE_BY_SERVICE_POINT);
         query.setParameter("service_point", servicePoint);
+        return query.executeUpdate();
+    }
+
+    @Override
+    public Integer deleteById(WorkStationId workStationId) {
+
+        ServicePoint servicePoint = getEntityManager().find(ServicePoint.class, workStationId.getServicePoint());
+
+        Query query = getEntityManager().createNamedQuery(WorkStation.DELETE_BY_ID);
+        query.setParameter("servicePoint", servicePoint);
+        query.setParameter("workStationNumber", workStationId.getWorkStationNumber());
         return query.executeUpdate();
     }
 
