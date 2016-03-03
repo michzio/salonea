@@ -3,6 +3,7 @@ package pl.salonea.jaxrs;
 import pl.salonea.ejb.stateless.*;
 import pl.salonea.entities.*;
 import pl.salonea.entities.idclass.ServicePointId;
+import pl.salonea.enums.WorkStationType;
 import pl.salonea.jaxrs.bean_params.*;
 import pl.salonea.jaxrs.exceptions.UnprocessableEntityException;
 import pl.salonea.jaxrs.utils.RESTToolkit;
@@ -387,6 +388,9 @@ public class ServicePointResource {
         return new ProviderServiceResource();
     }
 
+    @Path("/{providerId: \\d+}+{servicePointNumber: \\d+}/work-stations")
+    public WorkStationResource getWorkStationResource() { return new WorkStationResource(); }
+
     /**
      * This method enables to populate list of resources and each individual resource on list with hypermedia links
      */
@@ -691,6 +695,98 @@ public class ServicePointResource {
                         .resolveTemplate("servicePointNumber", servicePoint.getServicePointNumber().toString())
                         .build())
                         .rel("provider-services-count").build());
+
+            /**
+             * Work Stations belonging to current Service Point resource
+             */
+
+            // work-stations
+            Method workStationsMethod = ProviderResource.ServicePointResource.class.getMethod("getWorkStationResource");
+            servicePoint.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                        .path(ProviderResource.class)
+                        .path(servicePointsMethod)
+                        .path(workStationsMethod)
+                        .resolveTemplate("userId", servicePoint.getProvider().getUserId().toString())
+                        .resolveTemplate("servicePointNumber", servicePoint.getServicePointNumber().toString())
+                        .build())
+                        .rel("work-stations").build());
+
+            // work-stations (alternative)
+            Method workStationsAlternativeMethod = ServicePointResource.class.getMethod("getWorkStationResource");
+            servicePoint.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                        .path(ServicePointResource.class)
+                        .path(workStationsAlternativeMethod)
+                        .resolveTemplate("providerId", servicePoint.getProvider().getUserId().toString())
+                        .resolveTemplate("servicePointNumber", servicePoint.getServicePointNumber().toString())
+                        .build())
+                        .rel("work-stations (alternative)").build());
+
+            // work-stations eagerly
+            Method workStationsEagerlyMethod = ProviderResource.ServicePointResource.WorkStationResource.class.getMethod("getServicePointWorkStationsEagerly", Long.class, Integer.class, WorkStationBeanParam.class);
+            servicePoint.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ProviderResource.class)
+                    .path(servicePointsMethod)
+                    .path(workStationsMethod)
+                    .path(workStationsEagerlyMethod)
+                    .resolveTemplate("userId", servicePoint.getProvider().getUserId().toString())
+                    .resolveTemplate("servicePointNumber", servicePoint.getServicePointNumber().toString())
+                    .build())
+                    .rel("work-stations-eagerly").build());
+
+            // work-stations eagerly (alternative)
+            Method workStationsEagerlyAlternativeMethod = ServicePointResource.WorkStationResource.class.getMethod("getServicePointWorkStationsEagerly", Long.class, Integer.class, WorkStationBeanParam.class);
+            servicePoint.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ServicePointResource.class)
+                    .path(workStationsAlternativeMethod)
+                    .path(workStationsEagerlyAlternativeMethod)
+                    .resolveTemplate("providerId", servicePoint.getProvider().getUserId().toString())
+                    .resolveTemplate("servicePointNumber", servicePoint.getServicePointNumber().toString())
+                    .build())
+                    .rel("work-stations-eagerly (alternative)").build());
+
+            // work-stations count
+            Method countWorkStationsByServicePointMethod = ProviderResource.ServicePointResource.WorkStationResource.class.getMethod("countWorkStationsByServicePoint", Long.class, Integer.class, GenericBeanParam.class);
+            servicePoint.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ProviderResource.class)
+                    .path(servicePointsMethod)
+                    .path(workStationsMethod)
+                    .path(countWorkStationsByServicePointMethod)
+                    .resolveTemplate("userId", servicePoint.getProvider().getUserId().toString())
+                    .resolveTemplate("servicePointNumber", servicePoint.getServicePointNumber().toString())
+                    .build())
+                    .rel("work-stations-count").build());
+
+            // work-stations count (alternative)
+            Method countWorkStationsByServicePointAlternativeMethod = ServicePointResource.WorkStationResource.class.getMethod("countWorkStationsByServicePoint", Long.class, Integer.class, GenericBeanParam.class);
+            servicePoint.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ServicePointResource.class)
+                    .path(workStationsAlternativeMethod)
+                    .path(countWorkStationsByServicePointAlternativeMethod)
+                    .resolveTemplate("providerId", servicePoint.getProvider().getUserId().toString())
+                    .resolveTemplate("servicePointNumber", servicePoint.getServicePointNumber().toString())
+                    .build())
+                    .rel("work-stations-count (alternative)").build());
+
+            // work-stations typed
+            servicePoint.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ProviderResource.class)
+                    .path(servicePointsMethod)
+                    .path(workStationsMethod)
+                    .path("typed")
+                    .resolveTemplate("userId", servicePoint.getProvider().getUserId().toString())
+                    .resolveTemplate("servicePointNumber", servicePoint.getServicePointNumber().toString())
+                    .build())
+                    .rel("work-stations-typed").build());
+
+            // work-stations typed (alternative)
+            servicePoint.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ServicePointResource.class)
+                    .path(workStationsAlternativeMethod)
+                    .path("typed")
+                    .resolveTemplate("providerId", servicePoint.getProvider().getUserId().toString())
+                    .resolveTemplate("servicePointNumber", servicePoint.getServicePointNumber().toString())
+                    .build())
+                    .rel("work-stations-typed (alternative)").build());
 
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
@@ -1695,4 +1791,71 @@ public class ServicePointResource {
         }
     }
 
+    public class WorkStationResource {
+
+        public WorkStationResource() { }
+
+        /**
+         * Alternative methods to access Work Station resources for Service Point
+         */
+        @GET
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getServicePointWorkStations( @PathParam("providerId") Long providerId,
+                                                     @PathParam("servicePointNumber") Integer servicePointNumber,
+                                                     @BeanParam WorkStationBeanParam params ) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            return providerResource.getServicePointResource()
+                    .getWorkStationResource().getServicePointWorkStations(providerId, servicePointNumber, params);
+        }
+
+        @GET
+        @Path("/eagerly")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getServicePointWorkStationsEagerly( @PathParam("providerId") Long providerId,
+                                                            @PathParam("servicePointNumber") Integer servicePointNumber,
+                                                            @BeanParam WorkStationBeanParam params ) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            return providerResource.getServicePointResource()
+                    .getWorkStationResource().getServicePointWorkStationsEagerly(providerId, servicePointNumber, params);
+        }
+
+        @DELETE
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response removeServicePointWorkStations( @PathParam("providerId") Long providerId,
+                                                        @PathParam("servicePointNumber") Integer servicePointNumber,
+                                                        @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            return providerResource.getServicePointResource()
+                    .getWorkStationResource().removeServicePointWorkStations(providerId, servicePointNumber, params);
+        }
+
+        @GET
+        @Path("/count")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response countWorkStationsByServicePoint( @PathParam("providerId") Long providerId,
+                                                         @PathParam("servicePointNumber") Integer servicePointNumber,
+                                                         @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException,
+         /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            return providerResource.getServicePointResource()
+                    .getWorkStationResource().countWorkStationsByServicePoint(providerId, servicePointNumber, params);
+        }
+
+        @GET
+        @Path("/typed/{type : \\S+}")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getServicePointWorkStationsByType( @PathParam("providerId") Long providerId,
+                                                           @PathParam("servicePointNumber") Integer servicePointNumber,
+                                                           @PathParam("type") WorkStationType type,
+                                                           @BeanParam PaginationBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            return providerResource.getServicePointResource()
+                    .getWorkStationResource().getServicePointWorkStationsByType(providerId, servicePointNumber, type, params);
+        }
+
+    }
 }

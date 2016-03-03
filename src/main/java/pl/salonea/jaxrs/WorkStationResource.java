@@ -11,6 +11,7 @@ import pl.salonea.jaxrs.bean_params.*;
 import pl.salonea.jaxrs.exceptions.BadRequestException;
 import pl.salonea.jaxrs.exceptions.ForbiddenException;
 import pl.salonea.jaxrs.exceptions.NotFoundException;
+import pl.salonea.jaxrs.exceptions.UnprocessableEntityException;
 import pl.salonea.jaxrs.utils.RESTToolkit;
 import pl.salonea.jaxrs.utils.ResourceList;
 import pl.salonea.jaxrs.utils.ResponseWrapper;
@@ -54,11 +55,71 @@ public class WorkStationResource {
     @Inject
     private ProviderServiceFacade providerServiceFacade;
 
+    @Inject
+    private ProviderResource providerResource;
+
     /**
      * Alternative methods to access Work Station resource
      */
+    @GET
+    @Path("/{providerId: \\d+}+{servicePointNumber: \\d+}+{workStationNumber: \\d+}")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getWorkStation( @PathParam("providerId") Long providerId,
+                                    @PathParam("servicePointNumber") Integer servicePointNumber,
+                                    @PathParam("workStationNumber") Integer workStationNumber,
+                                    @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
 
-    // TODO
+        return providerResource.getServicePointResource().getWorkStationResource().getWorkStation(providerId, servicePointNumber, workStationNumber, params);
+    }
+
+    @GET
+    @Path("/{providerId: \\d+}+{servicePointNumber: \\d+}+{workStationNumber: \\d+}/eagerly")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getWorkStationEagerly( @PathParam("providerId") Long providerId,
+                                           @PathParam("servicePointNumber") Integer servicePointNumber,
+                                           @PathParam("workStationNumber") Integer workStationNumber,
+                                           @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+        return providerResource.getServicePointResource().getWorkStationResource().getWorkStationEagerly(providerId, servicePointNumber, workStationNumber, params);
+    }
+
+    @POST
+    @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response createWorkStation( WorkStation workStation,
+                                       @BeanParam GenericBeanParam params ) throws ForbiddenException, UnprocessableEntityException, InternalServerErrorException {
+
+        return providerResource.getServicePointResource()
+                .getWorkStationResource().createWorkStation(workStation.getServicePoint().getProvider().getUserId(),
+                                                            workStation.getServicePoint().getServicePointNumber(),
+                                                            workStation, params);
+    }
+
+    @PUT
+    @Path("/{providerId: \\d+}+{servicePointNumber: \\d+}+{workStationNumber: \\d+}")
+    @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response updateWorkStation( @PathParam("providerId") Long providerId,
+                                       @PathParam("servicePointNumber") Integer servicePointNumber,
+                                       @PathParam("workStationNumber") Integer workStationNumber,
+                                       WorkStation workStation,
+                                       @BeanParam GenericBeanParam params ) throws ForbiddenException, UnprocessableEntityException, InternalServerErrorException {
+
+        return providerResource.getServicePointResource()
+                .getWorkStationResource().updateWorkStation(providerId, servicePointNumber, workStationNumber, workStation, params);
+    }
+
+    @DELETE
+    @Path("/{providerId: \\d+}+{servicePointNumber: \\d+}+{workStationNumber: \\d+}")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response removeWorkStation( @PathParam("providerId") Long providerId,
+                                       @PathParam("servicePointNumber") Integer servicePointNumber,
+                                       @PathParam("workStationNumber") Integer workStationNumber,
+                                       @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException, InternalServerErrorException {
+
+        return providerResource.getServicePointResource()
+                .getWorkStationResource().removeWorkStation(providerId, servicePointNumber, workStationNumber, params);
+    }
 
     /**
      * Method returns all Work Station entities.
@@ -161,6 +222,28 @@ public class WorkStationResource {
         try {
 
             // self link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/{sub-id}/{sub-subresources}/{sub-sub-id}
+            Method servicePointsMethod = ProviderResource.class.getMethod("getServicePointResource");
+            Method workStationsMethod = ProviderResource.ServicePointResource.class.getMethod("getWorkStationResource");
+            workStation.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ProviderResource.class)
+                    .path(servicePointsMethod)
+                    .path(workStationsMethod)
+                    .path(workStation.getWorkStationNumber().toString())
+                    .resolveTemplate("userId", workStation.getServicePoint().getProvider().getUserId().toString())
+                    .resolveTemplate("servicePointNumber", workStation.getServicePoint().getServicePointNumber().toString())
+                    .build())
+                    .rel("self").build());
+
+            // self alternative link with pattern: http://localhost:port/app/rest/{resources}/{id}+{sub-id}+{sub-sub-id}
+            Method workStationMethod = WorkStationResource.class.getMethod("getWorkStation", Long.class, Integer.class, Integer.class, GenericBeanParam.class);
+            workStation.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(WorkStationResource.class)
+                    .path(workStationMethod)
+                    .resolveTemplate("providerId", workStation.getServicePoint().getProvider().getUserId().toString())
+                    .resolveTemplate("servicePointNumber", workStation.getServicePoint().getServicePointNumber().toString())
+                    .resolveTemplate("workStationNumber", workStation.getWorkStationNumber().toString())
+                    .build())
+                    .rel("self (alternative)").build());
 
             // collection link with pattern: http://localhost:port/app/rest/{resources}
             workStation.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
@@ -169,6 +252,28 @@ public class WorkStationResource {
                     .rel("work-stations").build());
 
             // self eagerly link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/{sub-id}/{sub-subresources}/{sub-sub-id}/eagerly
+            Method workStationEagerlyMethod = ProviderResource.ServicePointResource.WorkStationResource.class.getMethod("getWorkStationEagerly", Long.class, Integer.class, Integer.class, GenericBeanParam.class);
+            workStation.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ProviderResource.class)
+                    .path(servicePointsMethod)
+                    .path(workStationsMethod)
+                    .path(workStationEagerlyMethod)
+                    .resolveTemplate("userId", workStation.getServicePoint().getProvider().getUserId().toString())
+                    .resolveTemplate("servicePointNumber", workStation.getServicePoint().getServicePointNumber().toString())
+                    .resolveTemplate("workStationNumber", workStation.getWorkStationNumber().toString())
+                    .build())
+                    .rel("work-station-eagerly").build());
+
+            // self eagerly alternative link with pattern: http://localhost:port/app/rest/{resources}/{id}+{sub-id}+{sub-sub-id}/eagerly
+            Method workStationEagerlyAlternativeMethod = WorkStationResource.class.getMethod("getWorkStationEagerly", Long.class, Integer.class, Integer.class, GenericBeanParam.class);
+            workStation.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(WorkStationResource.class)
+                    .path(workStationEagerlyAlternativeMethod)
+                    .resolveTemplate("providerId", workStation.getServicePoint().getProvider().getUserId().toString())
+                    .resolveTemplate("servicePointNumber", workStation.getServicePoint().getServicePointNumber().toString())
+                    .resolveTemplate("workStationNumber", workStation.getWorkStationNumber().toString())
+                    .build())
+                    .rel("work-station-eagerly (alternative)").build());
 
             // associated collections links with pattern: http://localhost:port/app/rest/{resources}/{id}/{relationship}
 
