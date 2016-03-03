@@ -55,6 +55,7 @@ public interface WorkStationFacadeInterface extends AbstractFacadeInterface<Work
     List<WorkStation> findByProviderServiceAndTerm(ProviderService providerService, Date startTime, Date endTime, Integer start, Integer limit);
     List<WorkStation> findByProviderServiceAndTermStrict(ProviderService providerService, Date startTime, Date endTime);
     List<WorkStation> findByProviderServiceAndTermStrict(ProviderService providerService, Date startTime, Date endTime, Integer start, Integer limit);
+
     List<WorkStation> findByProviderServiceAndServicePoint(ProviderService providerService, ServicePoint servicePoint);
     List<WorkStation> findByProviderServiceAndServicePoint(ProviderService providerService, ServicePoint servicePoint, Integer start, Integer limit);
     List<WorkStation> findByProviderServiceAndServicePointAndTerm(ProviderService providerService, ServicePoint servicePoint, Date startTime, Date endTime);

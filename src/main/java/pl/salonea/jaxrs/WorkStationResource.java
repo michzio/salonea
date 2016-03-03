@@ -7,6 +7,7 @@ import pl.salonea.ejb.stateless.WorkStationFacade;
 import pl.salonea.entities.*;
 
 import pl.salonea.entities.idclass.WorkStationId;
+import pl.salonea.enums.WorkStationType;
 import pl.salonea.jaxrs.bean_params.*;
 import pl.salonea.jaxrs.exceptions.BadRequestException;
 import pl.salonea.jaxrs.exceptions.ForbiddenException;
@@ -91,8 +92,8 @@ public class WorkStationResource {
 
         return providerResource.getServicePointResource()
                 .getWorkStationResource().createWorkStation(workStation.getServicePoint().getProvider().getUserId(),
-                                                            workStation.getServicePoint().getServicePointNumber(),
-                                                            workStation, params);
+                        workStation.getServicePoint().getServicePointNumber(),
+                        workStation, params);
     }
 
     @PUT
@@ -127,11 +128,85 @@ public class WorkStationResource {
      */
     @GET
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getWorkStations( @BeanParam WorkStationBeanParam params ) throws ForbiddenException {
+    public Response getWorkStations( @BeanParam WorkStationBeanParam params ) throws ForbiddenException,
+    /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
 
-        // TODO
-        return null;
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning all Work Stations by executing WorkStationResource.getWorkStations() method of REST API");
+
+        Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+        ResourceList<WorkStation> workStations = null;
+
+        if(noOfParams > 0) {
+            logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+            utx.begin();
+
+            // get all work stations filtered by given query params
+            workStations = new ResourceList<>(
+                    workStationFacade.findByMultipleCriteria(params.getServicePoints(), params.getServices(), params.getProviderServices(),
+                            params.getEmployees(), params.getWorkStationTypes(), params.getPeriod(), params.getStrictTerm(),
+                            params.getOffset(), params.getLimit())
+            );
+
+            utx.commit();
+
+        } else {
+            logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+            // get all work stations without filtering (eventually paginated)
+            workStations = new ResourceList<>( workStationFacade.findAll(params.getOffset(), params.getLimit()) );
+        }
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        WorkStationResource.populateWithHATEOASLinks(workStations, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(workStations).build();
     }
+
+    @GET
+    @Path("/eagerly")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getWorkStationsEagerly( @BeanParam WorkStationBeanParam params ) throws ForbiddenException,
+    /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning all Work Stations eagerly by executing WorkStationResource.getWorkStationsEagerly() method of REST API");
+
+        Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+        ResourceList<WorkStationWrapper> workStations = null;
+
+        if(noOfParams > 0) {
+            logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+            utx.begin();
+
+            // get all work stations eagerly filtered by given query params
+            workStations = new ResourceList<>(
+                    WorkStationWrapper.wrap(
+                            workStationFacade.findByMultipleCriteriaEagerly(params.getServicePoints(), params.getServices(), params.getProviderServices(),
+                                    params.getEmployees(), params.getWorkStationTypes(), params.getPeriod(), params.getStrictTerm(),
+                                    params.getOffset(), params.getLimit())
+                    )
+            );
+
+            utx.commit();
+
+        } else {
+            logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+            // get all work stations eagerly without filtering (eventually paginated)
+            workStations = new ResourceList<>( WorkStationWrapper.wrap(workStationFacade.findAllEagerly(params.getOffset(), params.getLimit())) );
+        }
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        WorkStationResource.populateWithHATEOASLinks(workStations, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(workStations).build();
+    }
+
 
     /**
      * Additional methods returning a subset of resources based on given criteria
@@ -147,10 +222,40 @@ public class WorkStationResource {
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public Response countWorkStations( @BeanParam GenericBeanParam params ) throws ForbiddenException {
 
-        return null;
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning number of work stations by executing WorkStationResource.countWorkStations() method of REST API");
+
+        ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(workStationFacade.count()), 200, "number of work stations");
+        return Response.status(Status.OK).entity(responseEntity).build();
     }
 
-    // TODO other methods
+    /**
+     * Method returns subset of Work Station entities for given type.
+     * The work station type is passed through path param.
+     */
+    @GET
+    @Path("/typed/{type: \\S+}")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getWorkStationsByType( @PathParam("type") WorkStationType type,
+                                           @BeanParam PaginationBeanParam params ) throws ForbiddenException, BadRequestException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning work stations for given work station type using " +
+                "WorkStationResource.getWorkStationsByType(type) method of REST API");
+
+        if(type == null)
+            throw new BadRequestException("Work station type param cannot be null.");
+
+        // find work stations by given criteria (work station type)
+        ResourceList<WorkStation> workStations = new ResourceList<>(
+                workStationFacade.findByType(type, params.getOffset(), params.getLimit())
+        );
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        WorkStationResource.populateWithHATEOASLinks(workStations, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(workStations).build();
+    }
 
     /**
      * related subresources (through relationships)
@@ -181,11 +286,21 @@ public class WorkStationResource {
             workStations.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(WorkStationResource.class).build()).rel("work-stations").build() );
 
             // get all resources eagerly hypermedia link
-            Method workStationsEagerlyMethod = null;
-            // TODO
+            Method workStationsEagerlyMethod = WorkStationResource.class.getMethod("getWorkStationsEagerly", WorkStationBeanParam.class);
+            workStations.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(WorkStationResource.class)
+                    .path(workStationsEagerlyMethod)
+                    .build())
+                    .rel("work-stations-eagerly").build() );
 
             // get subset of resources hypermedia links
 
+            // typed
+            workStations.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(WorkStationResource.class)
+                    .path("typed")
+                    .build())
+                    .rel("typed").build() );
 
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
