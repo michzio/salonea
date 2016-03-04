@@ -2120,6 +2120,86 @@ public class ProviderResource {
 
                 return Response.status(Status.OK).entity(workStations).build();
             }
+
+            /**
+             * Method returns subset of Work Station entities for given Service Point and
+             * Term's date range. The provider id and service point number are passed through
+             * path params. Term start and end dates are passed through query params.
+             */
+            @GET
+            @Path("/by-term")
+            @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+            public Response getServicePointWorkStationsByTerm( @PathParam("userId") Long providerId,
+                                                               @PathParam("servicePointNumber") Integer servicePointNumber,
+                                                               @BeanParam DateBetweenBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException,
+            /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+                RESTToolkit.authorizeAccessToWebService(params);
+                logger.log(Level.INFO, "returning work stations for given service point and term (startDate, endDate) using " +
+                        "ProviderResource.ServicePointResource.WorkStationResource.getServicePointWorkStationsByTerm(providerId, servicePointNumber, term) method of REST API");
+
+                RESTToolkit.validateDateRange(params); // i.e. startDate and endDate
+
+                utx.begin();
+
+                // find service point entity for which to get associated work stations
+                ServicePoint servicePoint = servicePointFacade.find(new ServicePointId(providerId, servicePointNumber));
+                if(servicePoint == null)
+                    throw new NotFoundException("Could not find service point for id (" + providerId + "," + servicePointNumber + ").");
+
+                // find work stations by given criteria (service point, term)
+                ResourceList<WorkStation> workStations = new ResourceList<>(
+                        workStationFacade.findByServicePointAndTerm(servicePoint, params.getStartDate(), params.getEndDate(),
+                                params.getOffset(), params.getLimit())
+                );
+
+                utx.commit();
+
+                // result resources need to be populated with hypermedia links to enable resource discovery
+                pl.salonea.jaxrs.WorkStationResource.populateWithHATEOASLinks(workStations, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+                return Response.status(Status.OK).entity(workStations).build();
+            }
+
+            /**
+             * Method returns subset of Work Station entities for given Service Point entity and
+             * Term's date range (strict). The provider id and service point number are passed through
+             * path params. Term (strict) start and end dates are passed through query params.
+             */
+            @GET
+            @Path("/by-term-strict")
+            @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+            public Response getServicePointWorkStationsByTermStrict( @PathParam("userId") Long providerId,
+                                                                     @PathParam("servicePointNumber") Integer servicePointNumber,
+                                                                     @BeanParam DateBetweenBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException,
+            /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+                RESTToolkit.authorizeAccessToWebService(params);
+                logger.log(Level.INFO, "returning work stations for given service point and term strict (startDate, endDate) using " +
+                        "ProviderResource.ServicePointResource.WorkStationResource.getServicePointWorkStationsByTermStrict(providerId, servicePointNumber, termStrict) method of REST API");
+
+                RESTToolkit.validateDateRange(params); // i.e. startDate and endDate
+
+                utx.begin();
+
+                // find service point entity for which to get associated work stations
+                ServicePoint servicePoint = servicePointFacade.find(new ServicePointId(providerId, servicePointNumber));
+                if(servicePoint == null)
+                    throw new NotFoundException("Could not find service point for id (" + providerId + "," + servicePointNumber + ").");
+
+                // find work stations by given criteria (service point, term strict)
+                ResourceList<WorkStation> workStations = new ResourceList<>(
+                        workStationFacade.findByServicePointAndTermStrict(servicePoint, params.getStartDate(), params.getEndDate(),
+                                params.getOffset(), params.getLimit())
+                );
+
+                utx.commit();
+
+                // result resources need to be populated with hypermedia links to enable resource discovery
+                pl.salonea.jaxrs.WorkStationResource.populateWithHATEOASLinks(workStations, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+                return Response.status(Status.OK).entity(workStations).build();
+            }
         }
     }
 

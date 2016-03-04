@@ -160,6 +160,42 @@ public class WorkStationFacade extends AbstractFacade<WorkStation> implements Wo
     }
 
     @Override
+    public List<WorkStation> findByTerm(Date startTime, Date endTime) {
+        return findByTerm(startTime, endTime, null, null);
+    }
+
+    @Override
+    public List<WorkStation> findByTerm(Date startTime, Date endTime, Integer start, Integer limit) {
+
+        TypedQuery<WorkStation> query = getEntityManager().createNamedQuery(WorkStation.FIND_BY_TERM, WorkStation.class);
+        query.setParameter("start_time", startTime);
+        query.setParameter("end_time", endTime);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
+    public List<WorkStation> findByTermStrict(Date startTime, Date endTime) {
+        return findByTermStrict(startTime, endTime, null, null);
+    }
+
+    @Override
+    public List<WorkStation> findByTermStrict(Date startTime, Date endTime, Integer start, Integer limit) {
+
+        TypedQuery<WorkStation> query = getEntityManager().createNamedQuery(WorkStation.FIND_BY_TERM_STRICT, WorkStation.class);
+        query.setParameter("start_time", startTime);
+        query.setParameter("end_time", endTime);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
     public List<WorkStation> findByServicePoint(ServicePoint servicePoint) {
         return findByServicePoint(servicePoint, null, null);
     }
@@ -204,6 +240,44 @@ public class WorkStationFacade extends AbstractFacade<WorkStation> implements Wo
         TypedQuery<WorkStation> query = getEntityManager().createNamedQuery(WorkStation.FIND_BY_SERVICE_POINT_AND_TYPE, WorkStation.class);
         query.setParameter("service_point", servicePoint);
         query.setParameter("work_station_type", type);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
+    public List<WorkStation> findByServicePointAndTerm(ServicePoint servicePoint, Date startTime, Date endTime) {
+        return findByServicePointAndTerm(servicePoint, startTime, endTime, null, null);
+    }
+
+    @Override
+    public List<WorkStation> findByServicePointAndTerm(ServicePoint servicePoint, Date startTime, Date endTime, Integer start, Integer limit) {
+
+        TypedQuery<WorkStation> query = getEntityManager().createNamedQuery(WorkStation.FIND_BY_TERM_AND_SERVICE_POINT, WorkStation.class);
+        query.setParameter("service_point", servicePoint);
+        query.setParameter("start_time", startTime);
+        query.setParameter("end_time", endTime);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
+    public List<WorkStation> findByServicePointAndTermStrict(ServicePoint servicePoint, Date startTime, Date endTime) {
+        return findByServicePointAndTermStrict(servicePoint, startTime, endTime, null, null);
+    }
+
+    @Override
+    public List<WorkStation> findByServicePointAndTermStrict(ServicePoint servicePoint, Date startTime, Date endTime, Integer start, Integer limit) {
+
+        TypedQuery<WorkStation> query = getEntityManager().createNamedQuery(WorkStation.FIND_BY_TERM_STRICT_AND_SERVICE_POINT, WorkStation.class);
+        query.setParameter("service_point", servicePoint);
+        query.setParameter("start_time", startTime);
+        query.setParameter("end_time", endTime);
         if(start != null && limit != null) {
             query.setFirstResult(start);
             query.setMaxResults(limit);
@@ -649,80 +723,6 @@ public class WorkStationFacade extends AbstractFacade<WorkStation> implements Wo
         TypedQuery<WorkStation> query = getEntityManager().createNamedQuery(WorkStation.FIND_BY_EMPLOYEE_AND_SERVICE_AND_TERM_STRICT, WorkStation.class);
         query.setParameter("employee", employee);
         query.setParameter("service", service);
-        query.setParameter("start_time", startTime);
-        query.setParameter("end_time", endTime);
-        if(start != null && limit != null) {
-            query.setFirstResult(start);
-            query.setMaxResults(limit);
-        }
-        return query.getResultList();
-    }
-
-    @Override
-    public List<WorkStation> findByTerm(Date startTime, Date endTime) {
-        return findByTerm(startTime, endTime, null, null);
-    }
-
-    @Override
-    public List<WorkStation> findByTerm(Date startTime, Date endTime, Integer start, Integer limit) {
-
-        TypedQuery<WorkStation> query = getEntityManager().createNamedQuery(WorkStation.FIND_BY_TERM, WorkStation.class);
-        query.setParameter("start_time", startTime);
-        query.setParameter("end_time", endTime);
-        if(start != null && limit != null) {
-            query.setFirstResult(start);
-            query.setMaxResults(limit);
-        }
-        return query.getResultList();
-    }
-
-    @Override
-    public List<WorkStation> findByTermStrict(Date startTime, Date endTime) {
-        return findByTermStrict(startTime, endTime, null, null);
-    }
-
-    @Override
-    public List<WorkStation> findByTermStrict(Date startTime, Date endTime, Integer start, Integer limit) {
-
-        TypedQuery<WorkStation> query = getEntityManager().createNamedQuery(WorkStation.FIND_BY_TERM_STRICT, WorkStation.class);
-        query.setParameter("start_time", startTime);
-        query.setParameter("end_time", endTime);
-        if(start != null && limit != null) {
-            query.setFirstResult(start);
-            query.setMaxResults(limit);
-        }
-        return query.getResultList();
-    }
-
-    @Override
-    public List<WorkStation> findByTermAndServicePoint(ServicePoint servicePoint, Date startTime, Date endTime) {
-        return findByTermAndServicePoint(servicePoint, startTime, endTime, null, null);
-    }
-
-    @Override
-    public List<WorkStation> findByTermAndServicePoint(ServicePoint servicePoint, Date startTime, Date endTime, Integer start, Integer limit) {
-
-        TypedQuery<WorkStation> query = getEntityManager().createNamedQuery(WorkStation.FIND_BY_TERM_AND_SERVICE_POINT, WorkStation.class);
-        query.setParameter("service_point", servicePoint);
-        query.setParameter("start_time", startTime);
-        query.setParameter("end_time", endTime);
-        if(start != null && limit != null) {
-            query.setFirstResult(start);
-            query.setMaxResults(limit);
-        }
-        return query.getResultList();
-    }
-
-    @Override
-    public List<WorkStation> findByTermStrictAndServicePoint(ServicePoint servicePoint, Date startTime, Date endTime) {
-        return findByTermStrictAndServicePoint(servicePoint, startTime, endTime, null, null);
-    }
-
-    @Override
-    public List<WorkStation> findByTermStrictAndServicePoint(ServicePoint servicePoint, Date startTime, Date endTime, Integer start, Integer limit) {
-
-        TypedQuery<WorkStation> query = getEntityManager().createNamedQuery(WorkStation.FIND_BY_TERM_STRICT_AND_SERVICE_POINT, WorkStation.class);
-        query.setParameter("service_point", servicePoint);
         query.setParameter("start_time", startTime);
         query.setParameter("end_time", endTime);
         if(start != null && limit != null) {

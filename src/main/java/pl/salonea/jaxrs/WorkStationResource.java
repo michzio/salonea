@@ -258,6 +258,58 @@ public class WorkStationResource {
     }
 
     /**
+     *  Method returns subset of Work Station entities for given Term's data range.
+     *  Term start and end dates are passed through query params.
+     */
+    @GET
+    @Path("/by-term")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getWorkStationsByTerm( @BeanParam DateBetweenBeanParam params ) throws ForbiddenException, BadRequestException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning work stations for given term (startDate, endDate) using " +
+                "WorkStationResource.getWorkStationsByTerm(term) method of REST API");
+
+        RESTToolkit.validateDateRange(params); // i.e. startDate and endDate
+
+        // find work stations by given criteria (term)
+        ResourceList<WorkStation> workStations = new ResourceList<>(
+                workStationFacade.findByTerm(params.getStartDate(), params.getEndDate(), params.getOffset(), params.getLimit())
+        );
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        WorkStationResource.populateWithHATEOASLinks(workStations, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(workStations).build();
+    }
+
+    /**
+     *  Method returns subset of Work Station entities for given Term's data range (strict).
+     *  Term (strict) start and end dates are passed through query params.
+     */
+    @GET
+    @Path("/by-term-strict")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getWorkStationsByTermStrict( @BeanParam DateBetweenBeanParam params ) throws ForbiddenException, BadRequestException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning work stations for given term strict (startDate, endDate) using " +
+                "WorkStationResource.getWorkStationsByTermStrict(termStrict) method of REST API");
+
+        RESTToolkit.validateDateRange(params); // i.e. startDate and endDate
+
+        // find work stations by given criteria (term strict)
+        ResourceList<WorkStation> workStations = new ResourceList<>(
+                workStationFacade.findByTermStrict(params.getStartDate(), params.getEndDate(), params.getOffset(), params.getLimit())
+        );
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        WorkStationResource.populateWithHATEOASLinks(workStations, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(workStations).build();
+    }
+
+    /**
      * related subresources (through relationships)
      */
     @Path("/{providerId: \\d+}+{servicePointNumber: \\d+}+{workStationNumber: \\d+}/employees")
@@ -301,6 +353,22 @@ public class WorkStationResource {
                     .path("typed")
                     .build())
                     .rel("typed").build() );
+
+            // by-term
+            Method workStationsByTermMethod = WorkStationResource.class.getMethod("getWorkStationsByTerm", DateBetweenBeanParam.class);
+            workStations.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(WorkStationResource.class)
+                    .path(workStationsByTermMethod)
+                    .build())
+                    .rel("by-term").build() );
+
+            // by-term-strict
+            Method workStationsByTermStrictMethod = WorkStationResource.class.getMethod("getWorkStationsByTermStrict", DateBetweenBeanParam.class);
+            workStations.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(WorkStationResource.class)
+                    .path(workStationsByTermStrictMethod)
+                    .build())
+                    .rel("by-term-strict").build() );
 
         } catch (NoSuchMethodException e) {
             e.printStackTrace();

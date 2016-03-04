@@ -788,6 +788,52 @@ public class ServicePointResource {
                     .build())
                     .rel("work-stations-typed (alternative)").build());
 
+            // work-stations by-term
+            Method workStationsByTermMethod = ProviderResource.ServicePointResource.WorkStationResource.class.getMethod("getServicePointWorkStationsByTerm", Long.class, Integer.class, DateBetweenBeanParam.class);
+            servicePoint.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ProviderResource.class)
+                    .path(servicePointsMethod)
+                    .path(workStationsMethod)
+                    .path(workStationsByTermMethod)
+                    .resolveTemplate("userId", servicePoint.getProvider().getUserId().toString())
+                    .resolveTemplate("servicePointNumber", servicePoint.getServicePointNumber().toString())
+                    .build())
+                    .rel("work-stations-by-term").build());
+
+            // work-stations by-term (alternative)
+            Method workStationsByTermAlternativeMethod = ServicePointResource.WorkStationResource.class.getMethod("getServicePointWorkStationsByTerm", Long.class, Integer.class, DateBetweenBeanParam.class);
+            servicePoint.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ServicePointResource.class)
+                    .path(workStationsAlternativeMethod)
+                    .path(workStationsByTermAlternativeMethod)
+                    .resolveTemplate("providerId", servicePoint.getProvider().getUserId().toString())
+                    .resolveTemplate("servicePointNumber", servicePoint.getServicePointNumber().toString())
+                    .build())
+                    .rel("work-stations-by-term (alternative)").build());
+
+            // work-stations by-term-strict
+            Method workStationsByTermStrictMethod = ProviderResource.ServicePointResource.WorkStationResource.class.getMethod("getServicePointWorkStationsByTermStrict", Long.class, Integer.class, DateBetweenBeanParam.class);
+            servicePoint.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ProviderResource.class)
+                    .path(servicePointsMethod)
+                    .path(workStationsMethod)
+                    .path(workStationsByTermStrictMethod)
+                    .resolveTemplate("userId", servicePoint.getProvider().getUserId().toString())
+                    .resolveTemplate("servicePointNumber", servicePoint.getServicePointNumber().toString())
+                    .build())
+                    .rel("work-stations-by-term-strict").build());
+
+            // work-stations by-term-strict (alternative)
+            Method workStationsByTermStrictAlternativeMethod = ServicePointResource.WorkStationResource.class.getMethod("getServicePointWorkStationsByTermStrict", Long.class, Integer.class, DateBetweenBeanParam.class);
+            servicePoint.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ServicePointResource.class)
+                    .path(workStationsAlternativeMethod)
+                    .path(workStationsByTermStrictAlternativeMethod)
+                    .resolveTemplate("providerId", servicePoint.getProvider().getUserId().toString())
+                    .resolveTemplate("servicePointNumber", servicePoint.getServicePointNumber().toString())
+                    .build())
+                    .rel("work-stations-by-term-strict (alternative)").build());
+
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
         }
@@ -1857,5 +1903,28 @@ public class ServicePointResource {
                     .getWorkStationResource().getServicePointWorkStationsByType(providerId, servicePointNumber, type, params);
         }
 
+        @GET
+        @Path("/by-term")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getServicePointWorkStationsByTerm( @PathParam("providerId") Long providerId,
+                                                           @PathParam("servicePointNumber") Integer servicePointNumber,
+                                                           @BeanParam DateBetweenBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            return providerResource.getServicePointResource()
+                    .getWorkStationResource().getServicePointWorkStationsByTerm(providerId, servicePointNumber, params);
+        }
+
+        @GET
+        @Path("/by-term-strict")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getServicePointWorkStationsByTermStrict( @PathParam("providerId") Long providerId,
+                                                                 @PathParam("servicePointNumber") Integer servicePointNumber,
+                                                                 @BeanParam DateBetweenBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            return providerResource.getServicePointResource()
+                    .getWorkStationResource().getServicePointWorkStationsByTermStrict(providerId, servicePointNumber, params);
+        }
     }
 }

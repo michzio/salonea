@@ -25,12 +25,22 @@ public interface WorkStationFacadeInterface extends AbstractFacadeInterface<Work
     List<WorkStation> findByType(WorkStationType type);
     List<WorkStation> findByType(WorkStationType type, Integer start, Integer limit);
 
+    List<WorkStation> findByTerm(Date startTime, Date endTime);
+    List<WorkStation> findByTerm(Date startTime, Date endTime, Integer start, Integer limit);
+    List<WorkStation> findByTermStrict(Date startTime, Date endTime);
+    List<WorkStation> findByTermStrict(Date startTime, Date endTime, Integer start, Integer limit);
+
     List<WorkStation> findByServicePoint(ServicePoint servicePoint);
     List<WorkStation> findByServicePoint(ServicePoint servicePoint, Integer start, Integer limit);
     List<WorkStation> findByServicePointEagerly(ServicePoint servicePoint);
     List<WorkStation> findByServicePointEagerly(ServicePoint servicePoint, Integer start, Integer limit);
     List<WorkStation> findByServicePointAndType(ServicePoint servicePoint, WorkStationType type);
     List<WorkStation> findByServicePointAndType(ServicePoint servicePoint, WorkStationType type, Integer start, Integer limit);
+
+    List<WorkStation> findByServicePointAndTerm(ServicePoint servicePoint, Date startTime, Date endTime);
+    List<WorkStation> findByServicePointAndTerm(ServicePoint servicePoint, Date startTime, Date endTime, Integer start, Integer limit);
+    List<WorkStation> findByServicePointAndTermStrict(ServicePoint servicePoint, Date startTime, Date endTime);
+    List<WorkStation> findByServicePointAndTermStrict(ServicePoint servicePoint, Date startTime, Date endTime, Integer start, Integer limit);
 
     List<WorkStation> findByService(Service service);
     List<WorkStation> findByService(Service service, Integer start, Integer limit);
@@ -40,6 +50,7 @@ public interface WorkStationFacadeInterface extends AbstractFacadeInterface<Work
     List<WorkStation> findByServiceAndTerm(Service service, Date startTime, Date endTime, Integer start, Integer limit);
     List<WorkStation> findByServiceAndTermStrict(Service service, Date startTime, Date endTime);
     List<WorkStation> findByServiceAndTermStrict(Service service, Date startTime, Date endTime, Integer start, Integer limit);
+
     List<WorkStation> findByServiceAndServicePoint(Service service, ServicePoint servicePoint);
     List<WorkStation> findByServiceAndServicePoint(Service service, ServicePoint servicePoint, Integer start, Integer limit);
     List<WorkStation> findByServiceAndServicePointAndTerm(Service service, ServicePoint servicePoint, Date startTime, Date endTime);
@@ -78,21 +89,13 @@ public interface WorkStationFacadeInterface extends AbstractFacadeInterface<Work
     List<WorkStation> findByEmployeeAndServicePointAndTerm(Employee employee, ServicePoint servicePoint, Date startTime, Date endTime, Integer start, Integer limit);
     List<WorkStation> findByEmployeeAndServicePointAndTermStrict(Employee employee, ServicePoint servicePoint, Date startTime, Date endTime);
     List<WorkStation> findByEmployeeAndServicePointAndTermStrict(Employee employee, ServicePoint servicePoint, Date startTime, Date endTime, Integer start, Integer limit);
+
     List<WorkStation> findByEmployeeAndService(Employee employee, Service service);
     List<WorkStation> findByEmployeeAndService(Employee employee, Service service, Integer start, Integer limit);
     List<WorkStation> findByEmployeeAndServiceAndTerm(Employee employee, Service service, Date startTime, Date endTime);
     List<WorkStation> findByEmployeeAndServiceAndTerm(Employee employee, Service service, Date startTime, Date endTime, Integer start, Integer limit);
     List<WorkStation> findByEmployeeAndServiceAndTermStrict(Employee employee, Service service, Date startTime, Date endTime);
     List<WorkStation> findByEmployeeAndServiceAndTermStrict(Employee employee, Service service, Date startTime, Date endTime, Integer start, Integer limit);
-
-    List<WorkStation> findByTerm(Date startTime, Date endTime);
-    List<WorkStation> findByTerm(Date startTime, Date endTime, Integer start, Integer limit);
-    List<WorkStation> findByTermStrict(Date startTime, Date endTime);
-    List<WorkStation> findByTermStrict(Date startTime, Date endTime, Integer start, Integer limit);
-    List<WorkStation> findByTermAndServicePoint(ServicePoint servicePoint, Date startTime, Date endTime);
-    List<WorkStation> findByTermAndServicePoint(ServicePoint servicePoint, Date startTime, Date endTime, Integer start, Integer limit);
-    List<WorkStation> findByTermStrictAndServicePoint(ServicePoint servicePoint, Date startTime, Date endTime);
-    List<WorkStation> findByTermStrictAndServicePoint(ServicePoint servicePoint, Date startTime, Date endTime, Integer start, Integer limit);
 
     Integer deleteByServicePoint(ServicePoint servicePoint);
     Integer deleteById(WorkStationId workStationId);
