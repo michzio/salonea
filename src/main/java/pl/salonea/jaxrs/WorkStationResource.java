@@ -503,6 +503,8 @@ public class WorkStationResource {
              * Employee Terms (TermEmployeeWorkOn entity) associated with current Work Station resource
              */
 
+            // TODO
+
             /**
              * Employees working on current Work Station resource
              */
@@ -608,8 +610,6 @@ public class WorkStationResource {
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
         }
-
-        // TODO
     }
 
     public class ProviderServiceResource {

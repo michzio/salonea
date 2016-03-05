@@ -33,18 +33,22 @@ public interface ServiceFacadeInterface extends AbstractFacadeInterface<Service>
     List<Service> findByCategoryAndDescription(ServiceCategory serviceCategory, String description, Integer start, Integer limit);
     List<Service> findByCategoryAndKeyword(ServiceCategory serviceCategory, String keyword);
     List<Service> findByCategoryAndKeyword(ServiceCategory serviceCategory, String keyword, Integer start, Integer limit);
+
     List<Service> findByProvider(Provider provider);
     List<Service> findByProvider(Provider provider, Integer start, Integer limit);
     List<Service> findByProviderEagerly(Provider provider);
     List<Service> findByProviderEagerly(Provider provider, Integer start, Integer limit);
+
     List<Service> findByEmployee(Employee employee);
     List<Service> findByEmployee(Employee employee, Integer start, Integer limit);
     List<Service> findByEmployeeEagerly(Employee employee);
     List<Service> findByEmployeeEagerly(Employee employee, Integer start, Integer limit);
+
     List<Service> findByWorkStation(WorkStation workStation);
     List<Service> findByWorkStation(WorkStation workStation, Integer start, Integer limit);
     List<Service> findByWorkStationEagerly(WorkStation workStation);
     List<Service> findByWorkStationEagerly(WorkStation workStation, Integer start, Integer limit);
+
     List<Service> findByServicePoint(ServicePoint servicePoint);
     List<Service> findByServicePoint(ServicePoint servicePoint, Integer start, Integer limit);
     List<Service> findByServicePointEagerly(ServicePoint servicePoint);

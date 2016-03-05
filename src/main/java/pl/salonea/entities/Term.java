@@ -3,6 +3,7 @@ package pl.salonea.entities;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import pl.salonea.constraints.ChronologicalDates;
+import pl.salonea.jaxrs.utils.hateoas.Link;
 
 import javax.persistence.*;
 import javax.validation.constraints.Future;
@@ -11,6 +12,7 @@ import javax.xml.bind.annotation.*;
 import java.io.Serializable;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 @XmlRootElement(name = "term")
@@ -93,6 +95,11 @@ public class Term  implements Serializable {
 
     /* one-to-many relationships */
     private Set<TermEmployeeWorkOn> employeesWorkStation;
+    private Set<Transaction> transactions;
+    private Set<HistoricalTransaction> historicalTransactions;
+
+    // HATEOAS support for RESTFul web service in JAX-RS
+    private LinkedHashSet<Link> links = new LinkedHashSet<>();
 
     /* constructors */
 
@@ -152,6 +159,37 @@ public class Term  implements Serializable {
 
     public void setEmployeesWorkStation(Set<TermEmployeeWorkOn> employeesWorkStation) {
         this.employeesWorkStation = employeesWorkStation;
+    }
+
+    @XmlTransient
+    @OneToMany(mappedBy = "term", fetch = FetchType.LAZY)
+    public Set<Transaction> getTransactions() {
+        return transactions;
+    }
+
+    public void setTransactions(Set<Transaction> transactions) {
+        this.transactions = transactions;
+    }
+
+    @XmlTransient
+    @OneToMany(mappedBy = "term", fetch = FetchType.LAZY)
+    public Set<HistoricalTransaction> getHistoricalTransactions() {
+        return historicalTransactions;
+    }
+
+    public void setHistoricalTransactions(Set<HistoricalTransaction> historicalTransactions) {
+        this.historicalTransactions = historicalTransactions;
+    }
+
+    @Transient
+    @XmlElementWrapper(name = "links")
+    @XmlElement(name = "link")
+    public LinkedHashSet<Link> getLinks() {
+        return links;
+    }
+
+    public void setLinks(LinkedHashSet<Link> links) {
+        this.links = links;
     }
 
     @Override

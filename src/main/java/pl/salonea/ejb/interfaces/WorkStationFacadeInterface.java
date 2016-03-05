@@ -36,7 +36,6 @@ public interface WorkStationFacadeInterface extends AbstractFacadeInterface<Work
     List<WorkStation> findByServicePointEagerly(ServicePoint servicePoint, Integer start, Integer limit);
     List<WorkStation> findByServicePointAndType(ServicePoint servicePoint, WorkStationType type);
     List<WorkStation> findByServicePointAndType(ServicePoint servicePoint, WorkStationType type, Integer start, Integer limit);
-
     List<WorkStation> findByServicePointAndTerm(ServicePoint servicePoint, Date startTime, Date endTime);
     List<WorkStation> findByServicePointAndTerm(ServicePoint servicePoint, Date startTime, Date endTime, Integer start, Integer limit);
     List<WorkStation> findByServicePointAndTermStrict(ServicePoint servicePoint, Date startTime, Date endTime);

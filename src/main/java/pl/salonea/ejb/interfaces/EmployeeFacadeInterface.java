@@ -38,10 +38,12 @@ public interface EmployeeFacadeInterface extends AbstractFacadeInterface<Employe
     List<Employee> findByService(Service service, Integer start, Integer limit);
     List<Employee> findByServiceEagerly(Service service);
     List<Employee> findByServiceEagerly(Service service, Integer start, Integer limit);
+
     List<Employee> findByProviderService(ProviderService providerService);
     List<Employee> findByProviderService(ProviderService providerService, Integer start, Integer limit);
     List<Employee> findByProviderServiceEagerly(ProviderService providerService);
     List<Employee> findByProviderServiceEagerly(ProviderService providerService, Integer start, Integer limit);
+
     List<Employee> findByServicePoint(ServicePoint servicePoint);
     List<Employee> findByServicePoint(ServicePoint servicePoint, Integer start, Integer limit);
     List<Employee> findByServicePointEagerly(ServicePoint servicePoint);
@@ -50,6 +52,7 @@ public interface EmployeeFacadeInterface extends AbstractFacadeInterface<Employe
     List<Employee> findByServicePointAndTerm(ServicePoint servicePoint, Date startTime, Date endTime, Integer start, Integer limit);
     List<Employee> findByServicePointAndTermStrict(ServicePoint servicePoint, Date startTime, Date endTime);
     List<Employee> findByServicePointAndTermStrict(ServicePoint servicePoint, Date startTime, Date endTime, Integer start, Integer limit);
+
     List<Employee> findByWorkStation(WorkStation workStation);
     List<Employee> findByWorkStation(WorkStation workStation, Integer start, Integer limit);
     List<Employee> findByWorkStationEagerly(WorkStation workStation);
@@ -58,6 +61,7 @@ public interface EmployeeFacadeInterface extends AbstractFacadeInterface<Employe
     List<Employee> findByWorkStationAndTerm(WorkStation workStation, Date startTime, Date endTime, Integer start, Integer limit);
     List<Employee> findByWorkStationAndTermStrict(WorkStation workStation, Date startTime, Date endTime);
     List<Employee> findByWorkStationAndTermStrict(WorkStation workStation, Date startTime, Date endTime, Integer start, Integer limit);
+
     List<Employee> findRatedByClient(Client client);
     List<Employee> findRatedByClient(Client client, Integer start, Integer limit);
     List<Employee> findRatedByClientEagerly(Client client);
