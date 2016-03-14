@@ -2,16 +2,16 @@ package pl.salonea.entities.idclass;
 
 import java.io.Serializable;
 
-public class TermEmployeeId implements Serializable {
+public class EmployeeTermId implements Serializable {
 
     private Long term; // PK (matches name of attribute)
     private Long employee; // PK (matches name of attribute)
 
     /* constructors */
 
-    public TermEmployeeId() { }
+    public EmployeeTermId() { }
 
-    public TermEmployeeId(Long termId, Long employeeId) {
+    public EmployeeTermId(Long termId, Long employeeId) {
         this.term = termId;
         this.employee = employeeId;
     }
@@ -41,7 +41,7 @@ public class TermEmployeeId implements Serializable {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        TermEmployeeId that = (TermEmployeeId) o;
+        EmployeeTermId that = (EmployeeTermId) o;
 
         if (term != null ? !term.equals(that.term) : that.term != null) return false;
         return !(employee != null ? !employee.equals(that.employee) : that.employee != null);

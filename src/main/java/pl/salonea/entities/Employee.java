@@ -1,7 +1,6 @@
 package pl.salonea.entities;
 
 import pl.salonea.enums.Gender;
-import pl.salonea.jaxrs.utils.hateoas.Link;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
@@ -91,7 +90,7 @@ public class Employee extends NaturalPerson {
     private String description;
 
     /* one-to-many relationships */
-    private Set<TermEmployeeWorkOn> termsOnWorkStation = new HashSet<>();
+    private Set<EmployeeTerm> termsOnWorkStation = new HashSet<>();
     private Set<EmployeeRating> receivedRatings = new HashSet<>();
 
     /* many-to-many relationships */
@@ -180,11 +179,11 @@ public class Employee extends NaturalPerson {
 
     @XmlTransient
     @OneToMany(mappedBy = "employee", fetch = FetchType.LAZY)
-    public Set<TermEmployeeWorkOn> getTermsOnWorkStation() {
+    public Set<EmployeeTerm> getTermsOnWorkStation() {
         return termsOnWorkStation;
     }
 
-    public void setTermsOnWorkStation(Set<TermEmployeeWorkOn> termsOnWorkStation) {
+    public void setTermsOnWorkStation(Set<EmployeeTerm> termsOnWorkStation) {
         this.termsOnWorkStation = termsOnWorkStation;
     }
 

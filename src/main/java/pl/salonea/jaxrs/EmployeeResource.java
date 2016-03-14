@@ -473,7 +473,7 @@ public class EmployeeResource {
        for(ProviderService providerService : employeeWrapper.getSuppliedServices())
            pl.salonea.jaxrs.ProviderServiceResource.populateWithHATEOASLinks(providerService, uriInfo);
 
-       for(TermEmployeeWorkOn employeeTerm : employeeWrapper.getTermsOnWorkStation())
+       for(EmployeeTerm employeeTerm : employeeWrapper.getTermsOnWorkStation())
            pl.salonea.jaxrs.EmployeeTermResource.populateWithHATEOASLinks(employeeTerm, uriInfo);
 
        for(EmployeeRating employeeRating : employeeWrapper.getReceivedRatings())

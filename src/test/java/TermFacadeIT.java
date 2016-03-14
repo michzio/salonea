@@ -56,7 +56,7 @@ public class TermFacadeIT {
     public void shouldCreateNewTerm() {
 
         // get opening and closing datetimes
-        Calendar calendar = new GregorianCalendar(2016, 1, 12, 8, 00);
+        Calendar calendar = new GregorianCalendar(2018, 1, 12, 8, 00);
         Date openingTime = calendar.getTime();
         calendar.add(Calendar.HOUR_OF_DAY, 8);
         Date closingTime = calendar.getTime();

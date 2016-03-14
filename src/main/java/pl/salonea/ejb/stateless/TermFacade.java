@@ -7,9 +7,7 @@ import pl.salonea.utils.Period;
 import javax.ejb.LocalBean;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
-import javax.persistence.EntityManager;
-import javax.persistence.Query;
-import javax.persistence.TypedQuery;
+import javax.persistence.*;
 import javax.persistence.criteria.*;
 import java.util.ArrayList;
 import java.util.Date;
@@ -33,6 +31,49 @@ public class TermFacade extends AbstractFacade<Term>
 
     public TermFacade() {
         super(Term.class);
+    }
+
+    @Override
+    public Term update(Term term, Boolean retainTransientFields) {
+
+        if(retainTransientFields) {
+            // keep current collection attributes of resource (and other marked @XmlTransient)
+            Term currentTerm = findByIdEagerly(term.getTermId());
+            if (currentTerm != null) {
+                term.setEmployeeTerms(currentTerm.getEmployeeTerms());
+                term.setTransactions(currentTerm.getTransactions());
+                term.setHistoricalTransactions(currentTerm.getHistoricalTransactions());
+            }
+        }
+        return update(term);
+    }
+
+    @Override
+    public List<Term> findAllEagerly() {
+        return findAllEagerly(null, null);
+    }
+
+    @Override
+    public List<Term> findAllEagerly(Integer start, Integer limit) {
+
+        TypedQuery<Term> query = getEntityManager().createNamedQuery(Term.FIND_ALL_EAGERLY, Term.class);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
+    public Term findByIdEagerly(Long termId) {
+
+        TypedQuery<Term> query = getEntityManager().createNamedQuery(Term.FIND_BY_ID_EAGERLY, Term.class);
+        query.setParameter("termId", termId);
+        try {
+            return query.getSingleResult();
+        } catch (NoResultException | NonUniqueResultException ex) {
+            return null;
+        }
     }
 
     @Override
@@ -177,6 +218,23 @@ public class TermFacade extends AbstractFacade<Term>
     }
 
     @Override
+    public List<Term> findByEmployeeEagerly(Employee employee) {
+        return findByEmployeeEagerly(employee, null, null);
+    }
+
+    @Override
+    public List<Term> findByEmployeeEagerly(Employee employee, Integer start, Integer limit) {
+
+        TypedQuery<Term> query = getEntityManager().createNamedQuery(Term.FIND_BY_EMPLOYEE_EAGERLY, Term.class);
+        query.setParameter("employee", employee);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
     public List<Term> findByWorkStation(WorkStation workStation) {
         return findByWorkStation(workStation, null, null);
     }
@@ -185,6 +243,23 @@ public class TermFacade extends AbstractFacade<Term>
     public List<Term> findByWorkStation(WorkStation workStation, Integer start, Integer limit) {
 
         TypedQuery<Term> query = getEntityManager().createNamedQuery(Term.FIND_BY_WORK_STATION, Term.class);
+        query.setParameter("work_station", workStation);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
+    public List<Term> findByWorkStationEagerly(WorkStation workStation) {
+        return findByWorkStationEagerly(workStation, null, null);
+    }
+
+    @Override
+    public List<Term> findByWorkStationEagerly(WorkStation workStation, Integer start, Integer limit) {
+
+        TypedQuery<Term> query = getEntityManager().createNamedQuery(Term.FIND_BY_WORK_STATION_EAGERLY, Term.class);
         query.setParameter("work_station", workStation);
         if(start != null && limit != null) {
             query.setFirstResult(start);
@@ -211,6 +286,23 @@ public class TermFacade extends AbstractFacade<Term>
     }
 
     @Override
+    public List<Term> findByServiceEagerly(Service service) {
+        return findByServiceEagerly(service, null, null);
+    }
+
+    @Override
+    public List<Term> findByServiceEagerly(Service service, Integer start, Integer limit) {
+
+        TypedQuery<Term> query = getEntityManager().createNamedQuery(Term.FIND_BY_SERVICE_EAGERLY, Term.class);
+        query.setParameter("service", service);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
     public List<Term> findByProviderService(ProviderService providerService) {
         return findByProviderService(providerService, null, null);
     }
@@ -219,6 +311,23 @@ public class TermFacade extends AbstractFacade<Term>
     public List<Term> findByProviderService(ProviderService providerService, Integer start, Integer limit) {
 
         TypedQuery<Term> query = getEntityManager().createNamedQuery(Term.FIND_BY_PROVIDER_SERVICE, Term.class);
+        query.setParameter("provider_service", providerService);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
+    public List<Term> findByProviderServiceEagerly(ProviderService providerService) {
+        return findByProviderServiceEagerly(providerService, null, null);
+    }
+
+    @Override
+    public List<Term> findByProviderServiceEagerly(ProviderService providerService, Integer start, Integer limit) {
+
+        TypedQuery<Term> query = getEntityManager().createNamedQuery(Term.FIND_BY_PROVIDER_SERVICE_EAGERLY, Term.class);
         query.setParameter("provider_service", providerService);
         if(start != null && limit != null) {
             query.setFirstResult(start);
@@ -373,6 +482,23 @@ public class TermFacade extends AbstractFacade<Term>
     }
 
     @Override
+    public List<Term> findByServicePointEagerly(ServicePoint servicePoint) {
+        return findByServicePointEagerly(servicePoint, null, null);
+    }
+
+    @Override
+    public List<Term> findByServicePointEagerly(ServicePoint servicePoint, Integer start, Integer limit) {
+
+        TypedQuery<Term> query = getEntityManager().createNamedQuery(Term.FIND_BY_SERVICE_POINT_EAGERLY, Term.class);
+        query.setParameter("service_point", servicePoint);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
     public List<Term> findByServicePointAndEmployee(ServicePoint servicePoint, Employee employee) {
         return findByServicePointAndEmployee(servicePoint, employee, null, null);
     }
@@ -465,12 +591,85 @@ public class TermFacade extends AbstractFacade<Term>
     }
 
     @Override
-    public List<Term> findByMultipleCriteria(List<ServicePoint> servicePoints, List<WorkStation> workStations, List<Employee> employees, List<Service> services, List<ProviderService> providerServices, Period period, Boolean strictTerm) {
+    public Long countByEmployee(Employee employee) {
+
+        TypedQuery<Long> query = getEntityManager().createNamedQuery(Term.COUNT_BY_EMPLOYEE, Long.class);
+        query.setParameter("employee", employee);
+        return query.getSingleResult();
+    }
+
+    @Override
+    public Long countByWorkStation(WorkStation workStation) {
+
+        TypedQuery<Long> query = getEntityManager().createNamedQuery(Term.COUNT_BY_WORK_STATION, Long.class);
+        query.setParameter("work_station", workStation);
+        return query.getSingleResult();
+    }
+
+    @Override
+    public Long countByService(Service service) {
+
+        TypedQuery<Long> query = getEntityManager().createNamedQuery(Term.COUNT_BY_SERVICE, Long.class);
+        query.setParameter("service", service);
+        return query.getSingleResult();
+    }
+
+    @Override
+    public Long countByProviderService(ProviderService providerService) {
+
+        TypedQuery<Long> query = getEntityManager().createNamedQuery(Term.COUNT_BY_PROVIDER_SERVICE, Long.class);
+        query.setParameter("provider_service", providerService);
+        return query.getSingleResult();
+    }
+
+    @Override
+    public Long countByServicePoint(ServicePoint servicePoint) {
+
+        TypedQuery<Long> query = getEntityManager().createNamedQuery(Term.COUNT_BY_SERVICE_POINT, Long.class);
+        query.setParameter("service_point", servicePoint);
+        return query.getSingleResult();
+    }
+
+    @Override
+    public Integer deleteOlderThan(Date time) {
+
+        Query query = getEntityManager().createNamedQuery(Term.DELETE_OLDER_THAN);
+        query.setParameter("time", time);
+        return query.executeUpdate();
+    }
+
+    @Override
+    public List<Term> findByMultipleCriteria(List<ServicePoint> servicePoints, List<WorkStation> workStations, List<Employee> employees,
+                                             List<Service> services, List<ProviderService> providerServices, Period period, Boolean strictTerm) {
+
         return findByMultipleCriteria(servicePoints, workStations, employees, services, providerServices, period, strictTerm, null, null);
     }
 
     @Override
-    public List<Term> findByMultipleCriteria(List<ServicePoint> servicePoints, List<WorkStation> workStations, List<Employee> employees, List<Service> services, List<ProviderService> providerServices, Period period, Boolean strictTerm, Integer start, Integer limit) {
+    public List<Term> findByMultipleCriteria(List<ServicePoint> servicePoints, List<WorkStation> workStations, List<Employee> employees,
+                                             List<Service> services, List<ProviderService> providerServices, Period period, Boolean strictTerm,
+                                             Integer start, Integer limit) {
+
+        return findByMultipleCriteria(servicePoints, workStations, employees, services, providerServices, period, strictTerm, false, start, limit);
+    }
+
+    @Override
+    public List<Term> findByMultipleCriteriaEagerly(List<ServicePoint> servicePoints, List<WorkStation> workStations, List<Employee> employees,
+                                                    List<Service> services, List<ProviderService> providerServices, Period period, Boolean strictTerm) {
+
+        return findByMultipleCriteriaEagerly(servicePoints, workStations, employees, services, providerServices, period, strictTerm, null, null);
+    }
+
+    @Override
+    public List<Term> findByMultipleCriteriaEagerly(List<ServicePoint> servicePoints, List<WorkStation> workStations, List<Employee> employees,
+                                                    List<Service> services, List<ProviderService> providerServices, Period period, Boolean strictTerm,
+                                                    Integer start, Integer limit) {
+        return findByMultipleCriteria(servicePoints, workStations, employees, services, providerServices, period, strictTerm, true, start, limit);
+    }
+
+    private List<Term> findByMultipleCriteria(List<ServicePoint> servicePoints, List<WorkStation> workStations, List<Employee> employees,
+                                              List<Service> services, List<ProviderService> providerServices, Period period, Boolean strictTerm,
+                                              Boolean eagerly, Integer start, Integer limit) {
 
         CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
         CriteriaQuery<Term> criteriaQuery = criteriaBuilder.createQuery(Term.class);
@@ -480,9 +679,9 @@ public class TermFacade extends AbstractFacade<Term>
         criteriaQuery.select(term).distinct(true);
 
         // INNER JOIN-s
-        Join<Term, TermEmployeeWorkOn> employeeTerm = null;
-        Join<TermEmployeeWorkOn, Employee> employee = null;
-        Join<TermEmployeeWorkOn, WorkStation> workStation = null;
+        Join<Term, EmployeeTerm> employeeTerm = null;
+        Join<EmployeeTerm, Employee> employee = null;
+        Join<EmployeeTerm, WorkStation> workStation = null;
         Join<WorkStation, ServicePoint> servicePoint = null;
         Join<WorkStation, ProviderService> providerService = null;
         Join<ProviderService, Service> service = null;
@@ -492,8 +691,8 @@ public class TermFacade extends AbstractFacade<Term>
 
         if(servicePoints != null && servicePoints.size() > 0) {
 
-            if(employeeTerm == null) employeeTerm = term.join(Term_.employeesWorkStation);
-            if(workStation == null) workStation = employeeTerm.join(TermEmployeeWorkOn_.workStation);
+            if(employeeTerm == null) employeeTerm = term.join(Term_.employeeTerms);
+            if(workStation == null) workStation = employeeTerm.join(EmployeeTerm_.workStation);
             if(servicePoint == null) servicePoint = workStation.join(WorkStation_.servicePoint);
 
             predicates.add( servicePoint.in(servicePoints) );
@@ -501,24 +700,24 @@ public class TermFacade extends AbstractFacade<Term>
 
         if(workStations != null && workStations.size() > 0) {
 
-            if(employeeTerm == null) employeeTerm = term.join(Term_.employeesWorkStation);
-            if(workStation == null) workStation = employeeTerm.join(TermEmployeeWorkOn_.workStation);
+            if(employeeTerm == null) employeeTerm = term.join(Term_.employeeTerms);
+            if(workStation == null) workStation = employeeTerm.join(EmployeeTerm_.workStation);
 
             predicates.add( workStation.in(workStations) );
         }
 
         if(employees != null && employees.size() > 0) {
 
-            if(employeeTerm == null) employeeTerm = term.join(Term_.employeesWorkStation);
-            if(employee == null) employee = employeeTerm.join(TermEmployeeWorkOn_.employee);
+            if(employeeTerm == null) employeeTerm = term.join(Term_.employeeTerms);
+            if(employee == null) employee = employeeTerm.join(EmployeeTerm_.employee);
 
             predicates.add( employee.in(employees) );
         }
 
         if(services != null && services.size() > 0) {
 
-            if(employeeTerm == null) employeeTerm = term.join(Term_.employeesWorkStation);
-            if(workStation == null) workStation = employeeTerm.join(TermEmployeeWorkOn_.workStation);
+            if(employeeTerm == null) employeeTerm = term.join(Term_.employeeTerms);
+            if(workStation == null) workStation = employeeTerm.join(EmployeeTerm_.workStation);
             if(providerService == null) providerService = workStation.join(WorkStation_.providedServices);
             if(service == null) service = providerService.join(ProviderService_.service);
 
@@ -527,8 +726,8 @@ public class TermFacade extends AbstractFacade<Term>
 
         if(providerServices != null && providerServices.size() > 0) {
 
-            if(employeeTerm == null) employeeTerm = term.join(Term_.employeesWorkStation);
-            if(workStation == null) workStation = employeeTerm.join(TermEmployeeWorkOn_.workStation);
+            if(employeeTerm == null) employeeTerm = term.join(Term_.employeeTerms);
+            if(workStation == null) workStation = employeeTerm.join(EmployeeTerm_.workStation);
             if(providerService == null) providerService = workStation.join(WorkStation_.providedServices);
 
             predicates.add( providerService.in(providerServices) );
@@ -548,13 +747,23 @@ public class TermFacade extends AbstractFacade<Term>
         // take into account that both employee and work station must provide given provider service
         if(providerServices != null || services != null) {
 
-            if(employeeTerm == null) employeeTerm = term.join(Term_.employeesWorkStation);
-            if(workStation == null) workStation = employeeTerm.join(TermEmployeeWorkOn_.workStation);
+            if(employeeTerm == null) employeeTerm = term.join(Term_.employeeTerms);
+            if(workStation == null) workStation = employeeTerm.join(EmployeeTerm_.workStation);
             if(providerService == null) providerService = workStation.join(WorkStation_.providedServices);
-            if(employee == null) employee = employeeTerm.join(TermEmployeeWorkOn_.employee);
+            if(employee == null) employee = employeeTerm.join(EmployeeTerm_.employee);
             // if(employeeProviderService == null) employeeProviderService = employee.join(Employee_.suppliedServices);
 
             predicates.add( criteriaBuilder.isMember(providerService, (employee.get(Employee_.suppliedServices)) ) );
+        }
+
+        if(eagerly) {
+            if(employeeTerm != null) {
+                term.fetch("employeeTerms", JoinType.INNER);
+            } else {
+                term.fetch("employeeTerms", JoinType.LEFT);
+            }
+            term.fetch("transactions", JoinType.LEFT);
+            term.fetch("historicalTransactions", JoinType.LEFT);
         }
 
         // WHERE predicate1 AND predicate2 AND ... AND predicateN
@@ -566,13 +775,5 @@ public class TermFacade extends AbstractFacade<Term>
             query.setMaxResults(limit);
         }
         return query.getResultList();
-    }
-
-    @Override
-    public Integer deleteOlderThan(Date time) {
-
-        Query query = getEntityManager().createNamedQuery(Term.DELETE_OLDER_THAN);
-        query.setParameter("time", time);
-        return query.executeUpdate();
     }
 }

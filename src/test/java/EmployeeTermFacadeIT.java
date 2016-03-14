@@ -7,11 +7,10 @@ import org.jboss.shrinkwrap.resolver.api.maven.Maven;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import pl.salonea.ejb.interfaces.*;
-import pl.salonea.ejb.stateless.ServicePointFacade;
 import pl.salonea.embeddables.Address;
 import pl.salonea.entities.*;
 import pl.salonea.entities.idclass.ServicePointId;
-import pl.salonea.entities.idclass.TermEmployeeId;
+import pl.salonea.entities.idclass.EmployeeTermId;
 import pl.salonea.entities.idclass.WorkStationId;
 import pl.salonea.enums.Gender;
 import pl.salonea.enums.ProviderType;
@@ -30,16 +29,16 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertNotNull;
 
 /**
- * TermEmployeeWorkOnFacade Tester.
+ * EmployeeTermFacade Tester.
  *
  * @author Michal Ziobro
  * @since <pre>Aug 18, 2015</pre>
  * @version 1.0
  */
 @RunWith(Arquillian.class)
-public class TermEmployeeWorkOnFacadeIT {
+public class EmployeeTermFacadeIT {
 
-    private static final Logger logger = Logger.getLogger(TermEmployeeWorkOnFacadeIT.class.getName());
+    private static final Logger logger = Logger.getLogger(EmployeeTermFacadeIT.class.getName());
 
     @Deployment
     public static WebArchive createDeployment() {
@@ -59,7 +58,7 @@ public class TermEmployeeWorkOnFacadeIT {
     }
 
     @Inject
-    private TermEmployeeWorkOnFacadeInterface.Local employeeTermFacade;
+    private EmployeeTermFacadeInterface.Local employeeTermFacade;
 
     @Inject
     private TermFacadeInterface.Local termFacade;
@@ -83,7 +82,7 @@ public class TermEmployeeWorkOnFacadeIT {
     public void shouldCreateNewTermEmployeeWorkOn() throws Exception {
 
         // get opening and closing datetimes
-        Calendar calendar = new GregorianCalendar(2016, 1, 12, 8, 00);
+        Calendar calendar = new GregorianCalendar(2018, 1, 12, 8, 00);
         Date openingTime = calendar.getTime();
         calendar.add(Calendar.HOUR_OF_DAY, 8);
         Date closingTime = calendar.getTime();
@@ -108,7 +107,7 @@ public class TermEmployeeWorkOnFacadeIT {
         WorkStation workStation = new WorkStation(servicePoint, 1, WorkStationType.OTHER);
 
         // create ternary association between Term, Employee and WorkStation
-        TermEmployeeWorkOn termEmployeeWorkOn = new TermEmployeeWorkOn(employee, term, workStation);
+        EmployeeTerm employeeTerm = new EmployeeTerm(employee, term, workStation);
 
         utx.begin();
         providerFacade.create(provider);
@@ -116,31 +115,32 @@ public class TermEmployeeWorkOnFacadeIT {
         workStationFacade.create(workStation);
         employeeFacade.create(employee);
         termFacade.create(term);
-        employeeTermFacade.create(termEmployeeWorkOn);
+        employeeTermFacade.create(employeeTerm);
         utx.commit();
 
-        assertTrue("There should be one TermEmployeeWorkOn entity in database.", employeeTermFacade.count() == 1);
-        assertNotNull("TermEmployeeWorkOn ID can not be null.");
+        assertTrue("There should be one EmployeeTerm entity in database.", employeeTermFacade.count() == 1);
+        assertNotNull("EmployeeTerm ID can not be null.");
 
-        TermEmployeeWorkOn foundTermEmployeeWorkOn = employeeTermFacade.find(
-                new TermEmployeeId(termEmployeeWorkOn.getTerm().getTermId(), termEmployeeWorkOn.getEmployee().getUserId()) );
-        assertEquals("TermEmployeeWorkOn persisted and found should be the same.", termEmployeeWorkOn, foundTermEmployeeWorkOn);
+        EmployeeTerm foundEmployeeTerm = employeeTermFacade.find(
+                new EmployeeTermId(employeeTerm.getTerm().getTermId(), employeeTerm.getEmployee().getUserId()) );
+        assertEquals("EmployeeTerm persisted and found should be the same.", employeeTerm, foundEmployeeTerm);
 
-        // remove TermEmployeeWorkOn entity from database
+        // remove EmployeeTerm entity from database
         utx.begin();
         employee = employeeFacade.find(employee.getUserId());
         provider = providerFacade.find(provider.getUserId());
         servicePoint = pointFacade.find( new ServicePointId(provider.getUserId(), servicePoint.getServicePointNumber()) );
         workStation = workStationFacade.find(
                 new WorkStationId(provider.getUserId(), servicePoint.getServicePointNumber(), workStation.getWorkStationNumber()) );
-        termEmployeeWorkOn = employeeTermFacade.find( new TermEmployeeId(termEmployeeWorkOn.getTerm().getTermId(), termEmployeeWorkOn.getEmployee().getUserId()) );
-        employeeTermFacade.remove(termEmployeeWorkOn);
+        employeeTerm = employeeTermFacade.find( new EmployeeTermId(employeeTerm.getTerm().getTermId(), employeeTerm.getEmployee().getUserId()) );
+        employeeTermFacade.remove(employeeTerm);
         termFacade.remove(term);
         employeeFacade.remove(employee);
+        workStationFacade.remove(workStation);
         pointFacade.remove(servicePoint);
         providerFacade.remove(provider);
         utx.commit();
-        assertTrue("There should not be any TermEmployeeWorkOn entity in database.", employeeTermFacade.count() == 0);
+        assertTrue("There should not be any EmployeeTerm entity in database.", employeeTermFacade.count() == 0);
     }
 
 }

@@ -963,8 +963,8 @@ public class ServicePointFacade extends AbstractFacade<ServicePoint> implements 
         Join<ServicePoint, WorkStation> workStation = null;
         Join<WorkStation, ProviderService> providerService = null;
         Join<ProviderService, Service> service = null;
-        Join<WorkStation, TermEmployeeWorkOn> termEmployeeWorkOn = null;
-        Join<TermEmployeeWorkOn, Employee> employee = null;
+        Join<WorkStation, EmployeeTerm> employeeTerm = null;
+        Join<EmployeeTerm, Employee> employee = null;
 
         // WHERE PREDICATES
         List<Predicate> predicates = new ArrayList<>();
@@ -993,8 +993,8 @@ public class ServicePointFacade extends AbstractFacade<ServicePoint> implements 
         if(employees != null && employees.size() > 0) {
 
             if(workStation == null) workStation = servicePoint.join(ServicePoint_.workStations);
-            if(termEmployeeWorkOn == null)  termEmployeeWorkOn = workStation.join(WorkStation_.termsEmployeesWorkOn);
-            if(employee == null) employee = termEmployeeWorkOn.join(TermEmployeeWorkOn_.employee);
+            if(employeeTerm == null)  employeeTerm = workStation.join(WorkStation_.termsEmployeesWorkOn);
+            if(employee == null) employee = employeeTerm.join(EmployeeTerm_.employee);
 
             predicates.add(employee.in(employees));
         }

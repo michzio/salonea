@@ -856,7 +856,7 @@ public class ProviderServiceFacade extends AbstractFacade<ProviderService> imple
         if(workStation != null && employee != null) {
 
             predicates.add(criteriaBuilder.equal(
-                    workStation.join(WorkStation_.termsEmployeesWorkOn).get(TermEmployeeWorkOn_.employee), employee));
+                    workStation.join(WorkStation_.termsEmployeesWorkOn).get(EmployeeTerm_.employee), employee));
         }
 
         if(eagerly) {

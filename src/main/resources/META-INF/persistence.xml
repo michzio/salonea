@@ -26,7 +26,7 @@
         <class>pl.salonea.entities.Education</class>
         <class>pl.salonea.entities.Skill</class>
         <class>pl.salonea.entities.Term</class>
-        <class>pl.salonea.entities.TermEmployeeWorkOn</class>
+        <class>pl.salonea.entities.EmployeeTerm</class>
         <class>pl.salonea.entities.Service</class>
         <class>pl.salonea.entities.ServiceCategory</class>
         <class>pl.salonea.entities.ProviderService</class>

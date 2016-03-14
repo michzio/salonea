@@ -12,7 +12,6 @@ import javax.ejb.Stateless;
 import javax.inject.Inject;
 import javax.persistence.*;
 import javax.persistence.criteria.*;
-import javax.ws.rs.QueryParam;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -817,9 +816,9 @@ public class WorkStationFacade extends AbstractFacade<WorkStation> implements Wo
         Join<WorkStation, ServicePoint> servicePoint = null;
         Join<WorkStation, ProviderService> providerService = null;
         Join<ProviderService, Service> service = null;
-        Join<WorkStation, TermEmployeeWorkOn> employeeTerm = null;
-        Join<TermEmployeeWorkOn, Term> term = null;
-        Join<TermEmployeeWorkOn, Employee> employee = null;
+        Join<WorkStation, EmployeeTerm> employeeTerm = null;
+        Join<EmployeeTerm, Term> term = null;
+        Join<EmployeeTerm, Employee> employee = null;
         // Join<Employee, ProviderService> employeeProviderService = null;
 
         // WHERE PREDICATES
@@ -850,7 +849,7 @@ public class WorkStationFacade extends AbstractFacade<WorkStation> implements Wo
         if(employees != null && employees.size() > 0) {
 
             if(employeeTerm == null) employeeTerm = workStation.join(WorkStation_.termsEmployeesWorkOn);
-            if(employee == null) employee = employeeTerm.join(TermEmployeeWorkOn_.employee);
+            if(employee == null) employee = employeeTerm.join(EmployeeTerm_.employee);
 
             predicates.add( employee.in(employees) );
         }
@@ -862,7 +861,7 @@ public class WorkStationFacade extends AbstractFacade<WorkStation> implements Wo
         if(period != null) {
 
             if(employeeTerm == null) employeeTerm = workStation.join(WorkStation_.termsEmployeesWorkOn);
-            if(term == null) term = employeeTerm.join(TermEmployeeWorkOn_.term);
+            if(term == null) term = employeeTerm.join(EmployeeTerm_.term);
 
             if(strictTerm != null && strictTerm) {
                 predicates.add( criteriaBuilder.lessThanOrEqualTo( term.get(Term_.openingTime), period.getStartTime()) );
@@ -880,7 +879,7 @@ public class WorkStationFacade extends AbstractFacade<WorkStation> implements Wo
 
             if(providerService == null) providerService = workStation.join(WorkStation_.providedServices);
             if(employeeTerm == null) employeeTerm = workStation.join(WorkStation_.termsEmployeesWorkOn);
-            if(employee == null) employee = employeeTerm.join(TermEmployeeWorkOn_.employee);
+            if(employee == null) employee = employeeTerm.join(EmployeeTerm_.employee);
             // if(employeeProviderService == null) employeeProviderService = employee.join(Employee_.suppliedServices);
 
             predicates.add( criteriaBuilder.isMember(providerService, (employee.get(Employee_.suppliedServices)) ) );

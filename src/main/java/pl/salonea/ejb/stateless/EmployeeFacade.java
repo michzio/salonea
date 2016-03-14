@@ -510,9 +510,9 @@ public class EmployeeFacade extends AbstractFacade<Employee> implements Employee
         criteriaQuery.select(employee).distinct(true);
 
         // INNER JOIN-s
-        Join<Employee, TermEmployeeWorkOn> employeeTerm = null;
-        Join<TermEmployeeWorkOn, WorkStation> workStation = null;
-        Join<TermEmployeeWorkOn, Term> term = null;
+        Join<Employee, EmployeeTerm> employeeTerm = null;
+        Join<EmployeeTerm, WorkStation> workStation = null;
+        Join<EmployeeTerm, Term> term = null;
         Join<WorkStation, ServicePoint> servicePoint = null;
         Join<Employee, ProviderService> providerService = null;
         Join<ProviderService, Service> service = null;
@@ -616,12 +616,12 @@ public class EmployeeFacade extends AbstractFacade<Employee> implements Employee
             fetchProviderServices = employee.fetch("suppliedServices", JoinType.LEFT);
         }
 
-        Fetch<Employee, TermEmployeeWorkOn> fetchEmployeeTerms = null;
+        Fetch<Employee, EmployeeTerm> fetchEmployeeTerms = null;
 
         if(servicePoints != null && servicePoints.size() > 0) {
 
             if(employeeTerm == null) employeeTerm = employee.join(Employee_.termsOnWorkStation);
-            if(workStation == null) workStation = employeeTerm.join(TermEmployeeWorkOn_.workStation);
+            if(workStation == null) workStation = employeeTerm.join(EmployeeTerm_.workStation);
             if(servicePoint == null) servicePoint =  workStation.join(WorkStation_.servicePoint);
 
             predicates.add( servicePoint.in(servicePoints) );
@@ -637,7 +637,7 @@ public class EmployeeFacade extends AbstractFacade<Employee> implements Employee
 
             if(employeeTerm == null) employeeTerm = employee.join(Employee_.termsOnWorkStation);
 
-            predicates.add( employeeTerm.get(TermEmployeeWorkOn_.workStation).in(workStations) );
+            predicates.add( employeeTerm.get(EmployeeTerm_.workStation).in(workStations) );
 
             if(eagerly && fetchEmployeeTerms == null) {
                 // then fetch associated collection of entities
@@ -648,7 +648,7 @@ public class EmployeeFacade extends AbstractFacade<Employee> implements Employee
         if(period != null) {
 
             if(employeeTerm == null) employeeTerm = employee.join(Employee_.termsOnWorkStation);
-            if(term == null) term = employeeTerm.join(TermEmployeeWorkOn_.term);
+            if(term == null) term = employeeTerm.join(EmployeeTerm_.term);
 
             if(strictTerm != null && strictTerm) {
                 predicates.add( criteriaBuilder.lessThanOrEqualTo( term.get(Term_.openingTime), period.getStartTime()) );
@@ -669,7 +669,7 @@ public class EmployeeFacade extends AbstractFacade<Employee> implements Employee
 
             if(providerService == null) providerService = employee.join(Employee_.suppliedServices);
             if(employeeTerm == null) employeeTerm = employee.join(Employee_.termsOnWorkStation);
-            if(workStation == null) workStation = employeeTerm.join(TermEmployeeWorkOn_.workStation);
+            if(workStation == null) workStation = employeeTerm.join(EmployeeTerm_.workStation);
 
             predicates.add( criteriaBuilder.isMember(providerService, (workStation.get(WorkStation_.providedServices)) ) );
 

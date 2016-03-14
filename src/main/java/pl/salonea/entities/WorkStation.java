@@ -123,7 +123,7 @@ public class WorkStation implements Serializable{
     private WorkStationType workStationType;
 
     /* one-to-many relationship */
-    private Set<TermEmployeeWorkOn> termsEmployeesWorkOn = new HashSet<>();
+    private Set<EmployeeTerm> termsEmployeesWorkOn = new HashSet<>();
 
     /* many-to-many relationship */
     private Set<ProviderService> providedServices = new HashSet<>();
@@ -190,11 +190,11 @@ public class WorkStation implements Serializable{
     /* one-to-many relationship */
     @XmlTransient
     @OneToMany(mappedBy = "workStation", fetch = FetchType.LAZY)
-    public Set<TermEmployeeWorkOn> getTermsEmployeesWorkOn() {
+    public Set<EmployeeTerm> getTermsEmployeesWorkOn() {
         return termsEmployeesWorkOn;
     }
 
-    public void setTermsEmployeesWorkOn(Set<TermEmployeeWorkOn> termsEmployeesWorkOn) {
+    public void setTermsEmployeesWorkOn(Set<EmployeeTerm> termsEmployeesWorkOn) {
         this.termsEmployeesWorkOn = termsEmployeesWorkOn;
     }
 

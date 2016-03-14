@@ -1,7 +1,7 @@
 package pl.salonea.jaxrs.wrappers;
 
+import pl.salonea.entities.EmployeeTerm;
 import pl.salonea.entities.ProviderService;
-import pl.salonea.entities.TermEmployeeWorkOn;
 import pl.salonea.entities.WorkStation;
 
 import javax.xml.bind.annotation.XmlAccessType;
@@ -20,7 +20,7 @@ import java.util.Set;
 public class WorkStationWrapper {
 
     private WorkStation workStation;
-    private Set<TermEmployeeWorkOn> termsEmployeesWorkOn;
+    private Set<EmployeeTerm> termsEmployeesWorkOn;
     private Set<ProviderService> providedServices;
 
     // default no-args constructor
@@ -52,11 +52,11 @@ public class WorkStationWrapper {
     }
 
     @XmlElement(name = "termsEmployeesWorkOn", nillable = true)
-    public Set<TermEmployeeWorkOn> getTermsEmployeesWorkOn() {
+    public Set<EmployeeTerm> getTermsEmployeesWorkOn() {
         return termsEmployeesWorkOn;
     }
 
-    public void setTermsEmployeesWorkOn(Set<TermEmployeeWorkOn> termsEmployeesWorkOn) {
+    public void setTermsEmployeesWorkOn(Set<EmployeeTerm> termsEmployeesWorkOn) {
         this.termsEmployeesWorkOn = termsEmployeesWorkOn;
     }
 

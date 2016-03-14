@@ -21,7 +21,7 @@ public class EmployeeWrapper {
     private Set<Education> educations;
     private Set<Skill> skills;
     private Set<ProviderService> suppliedServices;
-    private Set<TermEmployeeWorkOn> termsOnWorkStation;
+    private Set<EmployeeTerm> termsOnWorkStation;
     private Set<EmployeeRating> receivedRatings;
 
     // default no-args constructor
@@ -83,11 +83,11 @@ public class EmployeeWrapper {
     }
 
     @XmlElement(name = "termsOnWorkStation", nillable = true)
-    public Set<TermEmployeeWorkOn> getTermsOnWorkStation() {
+    public Set<EmployeeTerm> getTermsOnWorkStation() {
         return termsOnWorkStation;
     }
 
-    public void setTermsOnWorkStation(Set<TermEmployeeWorkOn> termsOnWorkStation) {
+    public void setTermsOnWorkStation(Set<EmployeeTerm> termsOnWorkStation) {
         this.termsOnWorkStation = termsOnWorkStation;
     }
 

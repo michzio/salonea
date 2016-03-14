@@ -76,7 +76,7 @@ public class StartupBean {
     @Inject
     private TermFacade termFacade;
     @Inject
-    private TermEmployeeWorkOnFacade termEmployeeWorkOnFacade;
+    private EmployeeTermFacade termEmployeeWorkOnFacade;
     @Inject
     private ServicePointPhotoFacade photoFacade;
     @Inject
@@ -403,8 +403,8 @@ public class StartupBean {
         Term term20122017 = new Term(startDate20122017, endDate20122017);
         Term term10012018 = new Term(startDate10012018, endDate10012018);
 
-        TermEmployeeWorkOn hairdresserTermOnChair1 = new TermEmployeeWorkOn(hairdresserEmployee, term20122017, hairdressingChair1);
-        TermEmployeeWorkOn hairdresserTermOnChair2 = new TermEmployeeWorkOn(hairdresserEmployee, term10012018, hairdressingChair2);
+        EmployeeTerm hairdresserTermOnChair1 = new EmployeeTerm(hairdresserEmployee, term20122017, hairdressingChair1);
+        EmployeeTerm hairdresserTermOnChair2 = new EmployeeTerm(hairdresserEmployee, term10012018, hairdressingChair2);
 
         termFacade.create(term20122017);
         termFacade.create(term10012018);

@@ -29,16 +29,16 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 /**
- * TermEmployeeWorkOn Tester.
+ * EmployeeTerm Tester.
  *
  * @author Michal Ziobro
  * @since <pre>Jun 13, 2015</pre>
  * @version 1.0
  */
 @RunWith(Arquillian.class)
-public class TermEmployeeWorkOnIT {
+public class EmployeeTermIT {
 
-    private static final Logger logger = Logger.getLogger(TermEmployeeWorkOnIT.class.getName());
+    private static final Logger logger = Logger.getLogger(EmployeeTermIT.class.getName());
 
 
     private static EntityManagerFactory emf;
@@ -105,7 +105,7 @@ public class TermEmployeeWorkOnIT {
         WorkStation workStation = new WorkStation(servicePoint, 1, WorkStationType.OTHER);
 
         // create ternary association between Term, Employee and WorkStation
-        TermEmployeeWorkOn termEmployeeWorkOn = new TermEmployeeWorkOn(employee, term, workStation);
+        EmployeeTerm employeeTerm = new EmployeeTerm(employee, term, workStation);
 
         transaction.begin();
         em.persist(term);
@@ -113,13 +113,13 @@ public class TermEmployeeWorkOnIT {
         em.persist(provider);
         em.persist(servicePoint);
         em.persist(workStation);
-        em.persist(termEmployeeWorkOn);
+        em.persist(employeeTerm);
         transaction.commit();
 
 
-        assertEquals(termEmployeeWorkOn.getEmployee(), employee);
-        assertEquals(termEmployeeWorkOn.getTerm(), term);
-        assertEquals(termEmployeeWorkOn.getWorkStation(), workStation);
+        assertEquals(employeeTerm.getEmployee(), employee);
+        assertEquals(employeeTerm.getTerm(), term);
+        assertEquals(employeeTerm.getWorkStation(), workStation);
 
         transaction.begin();
         em.refresh(employee);
@@ -127,12 +127,12 @@ public class TermEmployeeWorkOnIT {
         em.refresh(term);
         transaction.commit();
 
-        assertTrue(employee.getTermsOnWorkStation().contains(termEmployeeWorkOn));
-        assertTrue(workStation.getTermsEmployeesWorkOn().contains(termEmployeeWorkOn));
-        assertTrue(term.getEmployeesWorkStation().contains(termEmployeeWorkOn));
+        assertTrue(employee.getTermsOnWorkStation().contains(employeeTerm));
+        assertTrue(workStation.getTermsEmployeesWorkOn().contains(employeeTerm));
+        assertTrue(term.getEmployeeTerms().contains(employeeTerm));
 
         transaction.begin();
-        em.remove(termEmployeeWorkOn);
+        em.remove(employeeTerm);
         em.remove(workStation);
         em.remove(servicePoint);
         em.remove(provider);

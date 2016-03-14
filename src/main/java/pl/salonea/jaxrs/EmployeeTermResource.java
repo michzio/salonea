@@ -1,6 +1,6 @@
 package pl.salonea.jaxrs;
 
-import pl.salonea.entities.TermEmployeeWorkOn;
+import pl.salonea.entities.EmployeeTerm;
 import pl.salonea.jaxrs.bean_params.GenericBeanParam;
 import pl.salonea.jaxrs.exceptions.ForbiddenException;
 import pl.salonea.jaxrs.exceptions.NotFoundException;
@@ -33,7 +33,7 @@ public class EmployeeTermResource {
     /**
      * This method enables to populate each individual resource with hypermedia links
      */
-    public static void populateWithHATEOASLinks(TermEmployeeWorkOn employeeTerm, UriInfo uriInfo) {
+    public static void populateWithHATEOASLinks(EmployeeTerm employeeTerm, UriInfo uriInfo) {
 
         try {
             // self link with pattern: http://localhost:port/app/rest/{resources}/{id1}+{id2}

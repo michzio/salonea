@@ -390,7 +390,7 @@ public class WorkStationResource {
 
         WorkStationResource.populateWithHATEOASLinks(workStationWrapper.getWorkStation(), uriInfo);
 
-      for(TermEmployeeWorkOn employeeTerm : workStationWrapper.getTermsEmployeesWorkOn())
+      for(EmployeeTerm employeeTerm : workStationWrapper.getTermsEmployeesWorkOn())
           pl.salonea.jaxrs.EmployeeTermResource.populateWithHATEOASLinks(employeeTerm, uriInfo);
 
       for(ProviderService providerService : workStationWrapper.getProvidedServices())
@@ -500,7 +500,7 @@ public class WorkStationResource {
                         .rel("provider-services-count").build());
 
             /**
-             * Employee Terms (TermEmployeeWorkOn entity) associated with current Work Station resource
+             * Employee Terms (EmployeeTerm entity) associated with current Work Station resource
              */
 
             // TODO
