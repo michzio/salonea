@@ -3,6 +3,7 @@ package pl.salonea.ejb.stateless;
 import pl.salonea.ejb.interfaces.EmployeeTermFacadeInterface;
 import pl.salonea.entities.*;
 import pl.salonea.entities.idclass.EmployeeTermId;
+import pl.salonea.entities.idclass.WorkStationId;
 import pl.salonea.utils.Period;
 
 import javax.ejb.LocalBean;
@@ -41,10 +42,19 @@ public class EmployeeTermFacade extends AbstractFacade<EmployeeTerm>
     @Override
     public EmployeeTerm createForEmployeeAndTerm(Long employeeId, Long termId, EmployeeTerm employeeTerm) {
 
+        // set composite ID component entities
         Employee foundEmployee = getEntityManager().find(Employee.class, employeeId);
         Term foundTerm = getEntityManager().find(Term.class, termId);
         employeeTerm.setEmployee(foundEmployee);
         employeeTerm.setTerm(foundTerm);
+
+        // fetch and set work station entity based on detached work station id
+        WorkStationId workStationId = new WorkStationId(employeeTerm.getWorkStation().getServicePoint().getProvider().getUserId(),
+                                                        employeeTerm.getWorkStation().getServicePoint().getServicePointNumber(),
+                                                        employeeTerm.getWorkStation().getWorkStationNumber());
+        WorkStation workStation = getEntityManager().find(WorkStation.class, workStationId);
+        employeeTerm.setWorkStation(workStation);
+
         getEntityManager().persist(employeeTerm);
         return employeeTerm;
     }
@@ -52,10 +62,18 @@ public class EmployeeTermFacade extends AbstractFacade<EmployeeTerm>
     @Override
     public EmployeeTerm update(EmployeeTermId employeeTermId, EmployeeTerm employeeTerm) {
 
+        // set composite ID component entities
         Employee foundEmployee = getEntityManager().find(Employee.class, employeeTermId.getEmployee());
         Term foundTerm = getEntityManager().find(Term.class, employeeTermId.getTerm());
         employeeTerm.setEmployee(foundEmployee);
         employeeTerm.setTerm(foundTerm);
+
+        // fetch and set work station entity based on detached work station id
+        WorkStationId workStationId = new WorkStationId(employeeTerm.getWorkStation().getServicePoint().getProvider().getUserId(),
+                employeeTerm.getWorkStation().getServicePoint().getServicePointNumber(),
+                employeeTerm.getWorkStation().getWorkStationNumber());
+        WorkStation workStation = getEntityManager().find(WorkStation.class, workStationId);
+        employeeTerm.setWorkStation(workStation);
 
         return update(employeeTerm);
     }

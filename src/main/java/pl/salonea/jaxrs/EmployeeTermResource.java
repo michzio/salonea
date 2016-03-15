@@ -1,14 +1,18 @@
 package pl.salonea.jaxrs;
 
 import pl.salonea.ejb.stateless.EmployeeTermFacade;
+import pl.salonea.entities.Employee;
 import pl.salonea.entities.EmployeeTerm;
 import pl.salonea.entities.idclass.EmployeeTermId;
+import pl.salonea.jaxrs.bean_params.DateBetweenBeanParam;
 import pl.salonea.jaxrs.bean_params.EmployeeTermBeanParam;
 import pl.salonea.jaxrs.bean_params.GenericBeanParam;
-import pl.salonea.jaxrs.exceptions.ExceptionHandler;
+import pl.salonea.jaxrs.bean_params.PaginationBeanParam;
+import pl.salonea.jaxrs.exceptions.*;
 import pl.salonea.jaxrs.exceptions.ForbiddenException;
 import pl.salonea.jaxrs.exceptions.NotFoundException;
-import pl.salonea.jaxrs.exceptions.UnprocessableEntityException;
+import pl.salonea.jaxrs.exceptions.BadRequestException;
+import pl.salonea.jaxrs.utils.RESTDateTime;
 import pl.salonea.jaxrs.utils.RESTToolkit;
 import pl.salonea.jaxrs.utils.ResourceList;
 import pl.salonea.jaxrs.utils.ResponseWrapper;
@@ -244,6 +248,170 @@ public class EmployeeTermResource {
     }
 
     /**
+     * Method returns subset of Employee Term entities for given Term's date range (Period).
+     * Term start and end dates are passed through query params.
+     */
+    @GET
+    @Path("/by-term")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getEmployeeTermsByTerm( @BeanParam DateBetweenBeanParam params ) throws ForbiddenException, BadRequestException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning employee terms for given term (startDate, endDate) using " +
+                "EmployeeTermResource.getEmployeeTermsByTerm(term) method of REST API");
+
+        RESTToolkit.validateDateRange(params); // i.e. startDate and endDate
+
+        // find employee terms by given criteria (term)
+        ResourceList<EmployeeTerm> employeeTerms = new ResourceList<>(
+                employeeTermFacade.findByPeriod(params.getStartDate(), params.getEndDate(), params.getOffset(), params.getLimit())
+        );
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        EmployeeTermResource.populateWithHATEOASLinks(employeeTerms, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(employeeTerms).build();
+    }
+
+    /**
+     * Method returns subset of Employee Term entities for given Term's date range strict (Period strict)
+     * Term (strict) start and end dates are passed through query params.
+     */
+    @GET
+    @Path("/by-term-strict")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getEmployeeTermsByTermStrict( @BeanParam DateBetweenBeanParam params ) throws ForbiddenException, BadRequestException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning employee terms for given term strict (startDate, endDate) using " +
+                "EmployeeTermResource.getEmployeeTermsByTermStrict(termStrict) method of REST API");
+
+        RESTToolkit.validateDateRange(params); // i.e. startDate and endDate
+
+        // find employee terms by given criteria (term strict)
+        ResourceList<EmployeeTerm> employeeTerms = new ResourceList<>(
+                employeeTermFacade.findByPeriodStrict(params.getStartDate(), params.getEndDate(), params.getOffset(), params.getLimit())
+        );
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        EmployeeTermResource.populateWithHATEOASLinks(employeeTerms, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(employeeTerms).build();
+    }
+
+    /**
+     * Method returns subset of Employee Term entities with Term defined after given date.
+     * REST Date Time is passed through path param.
+     */
+    @GET
+    @Path("/after/{date : \\S+}")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getEmployeeTermsAfterDate( @PathParam("date") RESTDateTime date,
+                                               @BeanParam PaginationBeanParam params ) throws ForbiddenException, BadRequestException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning employee terms defined after given date using " +
+                "EmployeeTermResource.getEmployeeTermsAfterDate(date) method of REST API");
+
+        if(date == null)
+            throw new BadRequestException("Date param must be specified correctly.");
+
+        // find employee terms after given date
+        ResourceList<EmployeeTerm> employeeTerms = new ResourceList<>(
+                employeeTermFacade.findAfter(date, params.getOffset(), params.getLimit())
+        );
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        EmployeeTermResource.populateWithHATEOASLinks(employeeTerms, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(employeeTerms).build();
+    }
+
+    /**
+     * Method returns subset of Employee Term entities with Term defined after given date (strict).
+     * REST Date Time is passed through path param.
+     */
+    @GET
+    @Path("/after-strict/{date : \\S+}")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getEmployeeTermsAfterDateStrict( @PathParam("date") RESTDateTime date,
+                                                     @BeanParam PaginationBeanParam params ) throws ForbiddenException, BadRequestException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning employee terms defined after given date (strict) using " +
+                "EmployeeTermResource.getEmployeeTermsAfterDateStrict(date) method of REST API");
+
+        if(date == null)
+            throw new BadRequestException("Date param must be specified correctly.");
+
+        // find employee terms after given date (strict)
+        ResourceList<EmployeeTerm> employeeTerms = new ResourceList<>(
+                employeeTermFacade.findAfterStrict(date, params.getOffset(), params.getLimit())
+        );
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        EmployeeTermResource.populateWithHATEOASLinks(employeeTerms, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(employeeTerms).build();
+    }
+
+    /**
+     * Method returns subset of Employee Term entities with Term defined before given date.
+     * REST Date Time is passed through path param.
+     */
+    @GET
+    @Path("/before/{date : \\S+}")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getEmployeeTermsBeforeDate( @PathParam("date") RESTDateTime date,
+                                                @BeanParam PaginationBeanParam params ) throws ForbiddenException, BadRequestException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning employee terms defined before given date using " +
+                "EmployeeTermResource.getEmployeeTermsBeforeDate(date) method of REST API");
+
+        if(date == null)
+            throw new BadRequestException("Date param must be specified correctly.");
+
+        // find employee terms before given date
+        ResourceList<EmployeeTerm> employeeTerms = new ResourceList<>(
+                employeeTermFacade.findBefore(date, params.getOffset(), params.getLimit())
+        );
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        EmployeeTermResource.populateWithHATEOASLinks(employeeTerms, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(employeeTerms).build();
+    }
+
+    /**
+     * Method returns subset of Employee Term entities with Term defined before given date (strict).
+     * REST Date Time is passed through path param.
+     */
+    @GET
+    @Path("/before-strict/{date : \\S+}")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getEmployeeTermsBeforeDateStrict( @PathParam("date") RESTDateTime date,
+                                                      @BeanParam PaginationBeanParam params ) throws ForbiddenException, BadRequestException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning employee terms defined before given date (strict) using " +
+                "EmployeeTermResource.getEmployeeTermsBeforeDateStrict(date) method of REST API");
+
+        if(date == null)
+            throw new BadRequestException("Date param must be specified correctly.");
+
+        // find employee terms before given date (strict)
+        ResourceList<EmployeeTerm> employeeTerms = new ResourceList<>(
+                employeeTermFacade.findBeforeStrict(date, params.getOffset(), params.getLimit())
+        );
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        EmployeeTermResource.populateWithHATEOASLinks(employeeTerms, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(employeeTerms).build();
+    }
+
+    /**
      * This method enables to populate list of resources and each individual resource on list with hypermedia links
      */
     public static void populateWithHATEOASLinks(ResourceList<EmployeeTerm> employeeTerms, UriInfo uriInfo, Integer offset, Integer limit) {
@@ -260,6 +428,50 @@ public class EmployeeTermResource {
             employeeTerms.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(EmployeeTermResource.class).build()).rel("employee-terms").build() );
 
             // get subset of resources hypermedia links
+
+            // by-term
+            Method byTermMethod = EmployeeTermResource.class.getMethod("getEmployeeTermsByTerm", DateBetweenBeanParam.class);
+            employeeTerms.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(EmployeeTermResource.class)
+                    .path(byTermMethod)
+                    .build())
+                    .rel("by-term").build() );
+
+            // by-term-strict
+            Method byTermStrictMethod = EmployeeTermResource.class.getMethod("getEmployeeTermsByTermStrict", DateBetweenBeanParam.class);
+            employeeTerms.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(EmployeeTermResource.class)
+                    .path(byTermStrictMethod)
+                    .build())
+                    .rel("by-term-strict").build() );
+
+            // after
+            employeeTerms.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(EmployeeTermResource.class)
+                    .path("after")
+                    .build())
+                    .rel("after").build() );
+
+            // after-strict
+            employeeTerms.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(EmployeeTermResource.class)
+                    .path("after-strict")
+                    .build())
+                    .rel("after-strict").build() );
+
+            // before
+            employeeTerms.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(EmployeeTermResource.class)
+                    .path("before")
+                    .build())
+                    .rel("before").build() );
+
+            // before-strict
+            employeeTerms.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(EmployeeTermResource.class)
+                    .path("before-strict")
+                    .build())
+                    .rel("before-strict").build() );
 
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
@@ -284,6 +496,22 @@ public class EmployeeTermResource {
                     .resolveTemplate("termId", employeeTerm.getTerm().getTermId().toString())
                     .build())
                     .rel("self").build());
+
+            // collection link with pattern: http://localhost:port/app/rest/{resources}
+            employeeTerm.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(EmployeeTermResource.class)
+                    .build())
+                    .rel("employee-terms").build());
+
+            /**
+             * Services executed during current Employee Term resource
+             */
+            // TODO
+
+            /**
+             * Provider Services executed during current Employee Term resource
+             */
+            // TODO
 
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
