@@ -412,6 +412,10 @@ public class EmployeeTermResource {
     }
 
     /**
+     * related
+     */
+
+    /**
      * This method enables to populate list of resources and each individual resource on list with hypermedia links
      */
     public static void populateWithHATEOASLinks(ResourceList<EmployeeTerm> employeeTerms, UriInfo uriInfo, Integer offset, Integer limit) {
@@ -506,12 +510,20 @@ public class EmployeeTermResource {
             /**
              * Services executed during current Employee Term resource
              */
-            // TODO
+            // services
+
+            // services eagerly
+
+            // services count
 
             /**
              * Provider Services executed during current Employee Term resource
              */
-            // TODO
+            // provider services
+
+            // provider services eagerly
+
+            // provider services count
 
         } catch (NoSuchMethodException e) {
             e.printStackTrace();

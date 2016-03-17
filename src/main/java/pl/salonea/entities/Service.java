@@ -37,11 +37,23 @@ import java.util.*;
         @NamedQuery(name = Service.FIND_BY_WORK_STATION_EAGERLY, query = "SELECT DISTINCT s FROM Service s INNER JOIN FETCH s.providedServiceOffers ps WHERE :work_station MEMBER OF ps.workStations"),
         @NamedQuery(name = Service.FIND_BY_SERVICE_POINT, query = "SELECT DISTINCT s FROM Service s INNER JOIN s.providedServiceOffers ps INNER JOIN ps.workStations ws WHERE ws.servicePoint = :service_point"),
         @NamedQuery(name = Service.FIND_BY_SERVICE_POINT_EAGERLY, query = "SELECT DISTINCT s FROM Service s INNER JOIN FETCH s.providedServiceOffers ps INNER JOIN ps.workStations ws WHERE ws.servicePoint = :service_point"),
+        @NamedQuery(name = Service.FIND_BY_EMPLOYEE_TERM, query = "SELECT DISTINCT s FROM Service s INNER JOIN s.providedServiceOffers ps INNER JOIN ps.supplyingEmployees e INNER JOIN ps.workStations ws " +
+                "INNER JOIN e.termsOnWorkStation empl_term INNER JOIN ws.termsEmployeesWorkOn ws_empl_term WHERE empl_term = ws_empl_term AND empl_term = :employee_term"),
+        @NamedQuery(name = Service.FIND_BY_EMPLOYEE_TERM_EAGERLY, query = "SELECT DISTINCT s FROM Service s INNER JOIN FETCH s.providedServiceOffers ps INNER JOIN ps.supplyingEmployees e INNER JOIN ps.workStations ws " +
+                "INNER JOIN e.termsOnWorkStation empl_term INNER JOIN ws.termsEmployeesWorkOn ws_empl_term WHERE empl_term = ws_empl_term AND empl_term = :employee_term"),
+        @NamedQuery(name = Service.FIND_BY_TERM, query = "SELECT DISTINCT s FROM Service s INNER JOIN s.providedServiceOffers ps INNER JOIN ps.supplyingEmployees e INNER JOIN ps.workStations ws " +
+                "INNER JOIN e.termsOnWorkStation empl_term INNER JOIN ws.termsEmployeesWorkOn ws_empl_term WHERE empl_term = ws_empl_term AND empl_term.term = :term"),
+        @NamedQuery(name = Service.FIND_BY_TERM_EAGERLY, query = "SELECT DISTINCT s FROM Service s INNER JOIN FETCH s.providedServiceOffers ps INNER JOIN ps.supplyingEmployees e INNER JOIN ps.workStations ws " +
+                "INNER JOIN e.termsOnWorkStation empl_term INNER JOIN ws.termsEmployeesWorkOn ws_empl_term WHERE empl_term = ws_empl_term AND empl_term.term = :term"),
         @NamedQuery(name = Service.COUNT_BY_CATEGORY, query = "SELECT COUNT(s) FROM Service s WHERE s.serviceCategory = :service_category"),
         @NamedQuery(name = Service.COUNT_BY_PROVIDER, query = "SELECT COUNT(s) FROM Service s INNER JOIN s.providedServiceOffers ps WHERE ps.provider = :provider"),
         @NamedQuery(name = Service.COUNT_BY_EMPLOYEE, query = "SELECT COUNT(DISTINCT s) FROM Service s INNER JOIN s.providedServiceOffers ps WHERE :employee MEMBER OF ps.supplyingEmployees"),
         @NamedQuery(name = Service.COUNT_BY_WORK_STATION, query = "SELECT COUNT(DISTINCT s) FROM Service s INNER JOIN s.providedServiceOffers ps WHERE :work_station MEMBER OF ps.workStations"),
         @NamedQuery(name = Service.COUNT_BY_SERVICE_POINT, query = "SELECT COUNT(DISTINCT s) FROM Service s INNER JOIN s.providedServiceOffers ps INNER JOIN ps.workStations ws WHERE ws.servicePoint = :service_point"),
+        @NamedQuery(name = Service.COUNT_BY_EMPLOYEE_TERM, query = "SELECT COUNT(DISTINCT s) FROM Service s INNER JOIN s.providedServiceOffers ps INNER JOIN ps.supplyingEmployees e INNER JOIN ps.workStations ws " +
+                "INNER JOIN e.termsOnWorkStation empl_term INNER JOIN ws.termsEmployeesWorkOn ws_empl_term WHERE empl_term = ws_empl_term AND empl_term = :employee_term"),
+        @NamedQuery(name = Service.COUNT_BY_TERM, query = "SELECT COUNT(DISTINCT s) FROM Service s INNER JOIN s.providedServiceOffers ps INNER JOIN ps.supplyingEmployees e INNER JOIN ps.workStations ws " +
+                "INNER JOIN e.termsOnWorkStation empl_term INNER JOIN ws.termsEmployeesWorkOn ws_empl_term WHERE empl_term = ws_empl_term AND empl_term.term = :term"),
         @NamedQuery(name = Service.DELETE_BY_NAME, query = "DELETE FROM Service s WHERE s.serviceName = :name"),
         @NamedQuery(name = Service.DELETE_BY_CATEGORY, query = "DELETE FROM Service s WHERE s.serviceCategory = :service_category"),
 
@@ -66,11 +78,17 @@ public class Service {
     public static final String FIND_BY_WORK_STATION_EAGERLY = "Service.findByWorkStationEagerly";
     public static final String FIND_BY_SERVICE_POINT = "Service.findByServicePoint";
     public static final String FIND_BY_SERVICE_POINT_EAGERLY = "Service.findByServicePointEagerly";
+    public static final String FIND_BY_EMPLOYEE_TERM = "Service.findByEmployeeTerm";
+    public static final String FIND_BY_EMPLOYEE_TERM_EAGERLY = "Service.findByEmployeeTermEagerly";
+    public static final String FIND_BY_TERM = "Service.findByTerm";
+    public static final String FIND_BY_TERM_EAGERLY = "Service.findByTermEagerly";
     public static final String COUNT_BY_CATEGORY = "Service.countByCategory";
     public static final String COUNT_BY_PROVIDER = "Service.countByProvider";
     public static final String COUNT_BY_EMPLOYEE = "Service.countByEmployee";
     public static final String COUNT_BY_WORK_STATION = "Service.countByWorkStation";
     public static final String COUNT_BY_SERVICE_POINT = "Service.countByServicePoint";
+    public static final String COUNT_BY_EMPLOYEE_TERM = "Service.countByEmployeeTerm";
+    public static final String COUNT_BY_TERM = "Service.countByTerm";
     public static final String DELETE_BY_NAME = "Service.deleteByName";
     public static final String DELETE_BY_CATEGORY = "Service.deleteByCategory";
 

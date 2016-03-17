@@ -54,32 +54,52 @@ public interface ServiceFacadeInterface extends AbstractFacadeInterface<Service>
     List<Service> findByServicePointEagerly(ServicePoint servicePoint);
     List<Service> findByServicePointEagerly(ServicePoint servicePoint, Integer start, Integer limit);
 
+    List<Service> findByEmployeeTerm(EmployeeTerm employeeTerm);
+    List<Service> findByEmployeeTerm(EmployeeTerm employeeTerm, Integer start, Integer limit);
+    List<Service> findByEmployeeTermEagerly(EmployeeTerm employeeTerm);
+    List<Service> findByEmployeeTermEagerly(EmployeeTerm employeeTerm, Integer start, Integer limit);
+
+    List<Service> findByTerm(Term term);
+    List<Service> findByTerm(Term term, Integer start, Integer limit);
+    List<Service> findByTermEagerly(Term term);
+    List<Service> findByTermEagerly(Term term, Integer start, Integer limit);
+
     Long countByCategory(ServiceCategory serviceCategory);
     Long countByProvider(Provider provider);
     Long countByEmployee(Employee employee);
     Long countByServicePoint(ServicePoint servicePoint);
     Long countByWorkStation(WorkStation workStation);
+    Long countByEmployeeTerm(EmployeeTerm employeeTerm);
+    Long countByTerm(Term term);
 
     Integer deleteByName(String name);
     Integer deleteByCategory(ServiceCategory serviceCategory);
 
     List<Service> findByMultipleCriteria(List<String> names, List<String> descriptions, List<ServiceCategory> serviceCategories,
-                                         List<Provider> providers, List<Employee> employees, List<WorkStation> workStations, List<ServicePoint> servicePoints);
+                                         List<Provider> providers, List<Employee> employees, List<WorkStation> workStations,
+                                         List<ServicePoint> servicePoints, List<EmployeeTerm> employeeTerms, List<Term> terms);
     List<Service> findByMultipleCriteria(List<String> names, List<String> descriptions, List<ServiceCategory> serviceCategories,
-                                         List<Provider> providers, List<Employee> employees, List<WorkStation> workStations, List<ServicePoint> servicePoints, Integer start, Integer limit);
+                                         List<Provider> providers, List<Employee> employees, List<WorkStation> workStations,
+                                         List<ServicePoint> servicePoints, List<EmployeeTerm> employeeTerms, List<Term> terms, Integer start, Integer limit);
     List<Service> findByMultipleCriteria(List<String> keywords, List<ServiceCategory> serviceCategories,
-                                         List<Provider> providers, List<Employee> employees, List<WorkStation> workStations, List<ServicePoint> servicePoints);
+                                         List<Provider> providers, List<Employee> employees, List<WorkStation> workStations,
+                                         List<ServicePoint> servicePoints, List<EmployeeTerm> employeeTerms, List<Term> terms);
     List<Service> findByMultipleCriteria(List<String> keywords, List<ServiceCategory> serviceCategories,
-                                         List<Provider> providers, List<Employee> employees, List<WorkStation> workStations, List<ServicePoint> servicePoints, Integer start, Integer limit);
+                                         List<Provider> providers, List<Employee> employees, List<WorkStation> workStations,
+                                         List<ServicePoint> servicePoints, List<EmployeeTerm> employeeTerms, List<Term> terms, Integer start, Integer limit);
 
     List<Service> findByMultipleCriteriaEagerly(List<String> names, List<String> descriptions, List<ServiceCategory> serviceCategories,
-                                                List<Provider> providers, List<Employee> employees, List<WorkStation> workStations, List<ServicePoint> servicePoints);
+                                                List<Provider> providers, List<Employee> employees, List<WorkStation> workStations,
+                                                List<ServicePoint> servicePoints, List<EmployeeTerm> employeeTerms, List<Term> terms);
     List<Service> findByMultipleCriteriaEagerly(List<String> names, List<String> descriptions, List<ServiceCategory> serviceCategories,
-                                                List<Provider> providers, List<Employee> employees, List<WorkStation> workStations, List<ServicePoint> servicePoints, Integer start, Integer limit);
+                                                List<Provider> providers, List<Employee> employees, List<WorkStation> workStations,
+                                                List<ServicePoint> servicePoints, List<EmployeeTerm> employeeTerms, List<Term> terms, Integer start, Integer limit);
     List<Service> findByMultipleCriteriaEagerly(List<String> keywords, List<ServiceCategory> serviceCategories,
-                                                List<Provider> providers, List<Employee> employees, List<WorkStation> workStations, List<ServicePoint> servicePoints);
+                                                List<Provider> providers, List<Employee> employees, List<WorkStation> workStations,
+                                                List<ServicePoint> servicePoints, List<EmployeeTerm> employeeTerms, List<Term> terms);
     List<Service> findByMultipleCriteriaEagerly(List<String> keywords, List<ServiceCategory> serviceCategories,
-                                                List<Provider> providers, List<Employee> employees, List<WorkStation> workStations, List<ServicePoint> servicePoints, Integer start, Integer limit);
+                                                List<Provider> providers, List<Employee> employees, List<WorkStation> workStations,
+                                                List<ServicePoint> servicePoints, List<EmployeeTerm> employeeTerms, List<Term> terms, Integer start, Integer limit);
 
 
     @javax.ejb.Local

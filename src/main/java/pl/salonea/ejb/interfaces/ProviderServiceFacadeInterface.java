@@ -68,6 +68,16 @@ public interface ProviderServiceFacadeInterface extends AbstractFacadeInterface<
     List<ProviderService> findByEmployeeEagerly(Employee employee);
     List<ProviderService> findByEmployeeEagerly(Employee employee, Integer start, Integer limit);
 
+    List<ProviderService> findByEmployeeTerm(EmployeeTerm employeeTerm);
+    List<ProviderService> findByEmployeeTerm(EmployeeTerm employeeTerm, Integer start, Integer limit);
+    List<ProviderService> findByEmployeeTermEagerly(EmployeeTerm employeeTerm);
+    List<ProviderService> findByEmployeeTermEagerly(EmployeeTerm employeeTerm, Integer start, Integer limit);
+
+    List<ProviderService> findByTerm(Term term);
+    List<ProviderService> findByTerm(Term term, Integer start, Integer limit);
+    List<ProviderService> findByTermEagerly(Term term);
+    List<ProviderService> findByTermEagerly(Term term, Integer start, Integer limit);
+
     Integer updateDiscountForProvider(Provider provider, Short newDiscount);
     Integer updateDiscountForProviderAndServiceCategory(Provider provider, ServiceCategory serviceCategory, Short newDiscount);
     Integer updateDiscountForProviderAndEmployee(Provider provider, Employee employee, Short newDiscount);
@@ -87,24 +97,30 @@ public interface ProviderServiceFacadeInterface extends AbstractFacadeInterface<
     Long countByWorkStation(WorkStation workStation);
     Long countByServicePoint(ServicePoint servicePoint);
     Long countByEmployee(Employee employee);
+    Long countByEmployeeTerm(EmployeeTerm employeeTerm);
+    Long countByTerm(Term term);
 
 
     List<ProviderService> findByMultipleCriteria(List<Provider> providers, List<Service> services, List<ServiceCategory> serviceCategories,
                                                  List<String> descriptions, Double minPrice, Double maxPrice, Boolean includeDiscounts,
                                                  Short minDiscount, Short maxDiscount, Long minDuration, Long maxDuration,
-                                                 List<ServicePoint> servicePoints, List<WorkStation> workStations, List<Employee> employees);
+                                                 List<ServicePoint> servicePoints, List<WorkStation> workStations, List<Employee> employees,
+                                                 List<EmployeeTerm> employeeTerms, List<Term> terms);
     List<ProviderService> findByMultipleCriteria(List<Provider> providers, List<Service> services, List<ServiceCategory> serviceCategories,
                                                  List<String> descriptions, Double minPrice, Double maxPrice, Boolean includeDiscounts,
                                                  Short minDiscount, Short maxDiscount, Long minDuration, Long maxDuration,
-                                                 List<ServicePoint> servicePoints, List<WorkStation> workStations, List<Employee> employees, Integer start, Integer limit);
+                                                 List<ServicePoint> servicePoints, List<WorkStation> workStations, List<Employee> employees,
+                                                 List<EmployeeTerm> employeeTerms, List<Term> terms, Integer start, Integer limit);
     List<ProviderService> findByMultipleCriteriaEagerly(List<Provider> providers, List<Service> services, List<ServiceCategory> serviceCategories,
                                                  List<String> descriptions, Double minPrice, Double maxPrice, Boolean includeDiscounts,
                                                  Short minDiscount, Short maxDiscount, Long minDuration, Long maxDuration,
-                                                 List<ServicePoint> servicePoints, List<WorkStation> workStations, List<Employee> employees);
+                                                 List<ServicePoint> servicePoints, List<WorkStation> workStations, List<Employee> employees,
+                                                 List<EmployeeTerm> employeeTerms, List<Term> terms);
     List<ProviderService> findByMultipleCriteriaEagerly(List<Provider> providers, List<Service> services, List<ServiceCategory> serviceCategories,
                                                  List<String> descriptions, Double minPrice, Double maxPrice, Boolean includeDiscounts,
                                                  Short minDiscount, Short maxDiscount, Long minDuration, Long maxDuration,
-                                                 List<ServicePoint> servicePoints, List<WorkStation> workStations, List<Employee> employees, Integer start, Integer limit);
+                                                 List<ServicePoint> servicePoints, List<WorkStation> workStations, List<Employee> employees,
+                                                 List<EmployeeTerm> employeeTerms, List<Term> terms, Integer start, Integer limit);
 
     @javax.ejb.Remote
     interface Remote extends ProviderServiceFacadeInterface { }

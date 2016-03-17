@@ -29,27 +29,35 @@ import java.util.*;
 @NamedQueries({
         @NamedQuery(name = ProviderService.FIND_ALL_EAGERLY, query = "SELECT ps FROM ProviderService ps LEFT JOIN FETCH ps.supplyingEmployees e LEFT JOIN FETCH ps.workStations ws"),
         @NamedQuery(name = ProviderService.FIND_BY_ID_EAGERLY, query = "SELECT ps FROM ProviderService ps LEFT JOIN FETCH ps.supplyingEmployees e LEFT JOIN FETCH  ps.workStations ws WHERE ps.provider.userId = :userId AND ps.service.serviceId = :serviceId"),
+        @NamedQuery(name = ProviderService.FIND_BY_PROVIDER_AND_SERVICE_CATEGORY, query = "SELECT ps FROM ProviderService ps INNER JOIN ps.service s WHERE ps.provider = :provider AND s.serviceCategory = :service_category"),
         @NamedQuery(name = ProviderService.FIND_BY_PROVIDER, query = "SELECT ps FROM ProviderService ps WHERE ps.provider = :provider"),
         @NamedQuery(name = ProviderService.FIND_BY_PROVIDER_EAGERLY, query = "SELECT DISTINCT ps FROM ProviderService ps LEFT JOIN FETCH ps.supplyingEmployees e LEFT JOIN FETCH ps.workStations ws WHERE ps.provider = :provider"),
+        @NamedQuery(name = ProviderService.FIND_BY_PROVIDER_AND_DESCRIPTION, query = "SELECT ps FROM ProviderService ps WHERE ps.provider = :provider AND ps.description LIKE :description"),
+        @NamedQuery(name = ProviderService.FIND_BY_PROVIDER_AND_DISCOUNT, query = "SELECT ps FROM ProviderService ps WHERE ps.provider = :provider AND ps.discount >= :min_discount AND ps.discount <= :max_discount"),
+        @NamedQuery(name = ProviderService.FIND_BY_PROVIDER_AND_SERVICE_CATEGORY, query = "SELECT ps FROM ProviderService ps INNER JOIN ps.service s WHERE ps.provider = :provider AND s.serviceCategory = :service_category"),
+        @NamedQuery(name = ProviderService.FIND_BY_PROVIDER_AND_EMPLOYEE, query = "SELECT ps FROM ProviderService ps WHERE ps.provider = :provider AND :employee MEMBER OF ps.supplyingEmployees"),
         @NamedQuery(name = ProviderService.FIND_BY_SERVICE, query = "SELECT ps FROM ProviderService ps WHERE ps.service = :service"),
         @NamedQuery(name = ProviderService.FIND_BY_SERVICE_EAGERLY, query =  "SELECT DISTINCT ps FROM ProviderService ps LEFT JOIN FETCH ps.supplyingEmployees e LEFT JOIN FETCH ps.workStations ws WHERE ps.service = :service"),
         @NamedQuery(name = ProviderService.FIND_BY_SERVICE_CATEGORY, query = "SELECT ps FROM ProviderService ps INNER JOIN ps.service s WHERE s.serviceCategory = :service_category"),
         @NamedQuery(name = ProviderService.FIND_BY_SERVICE_CATEGORY_EAGERLY, query = "SELECT DISTINCT ps FROM ProviderService ps LEFT JOIN FETCH ps.supplyingEmployees e LEFT JOIN FETCH ps.workStations ws INNER JOIN ps.service s WHERE s.serviceCategory = :service_category"),
-        @NamedQuery(name = ProviderService.FIND_BY_PROVIDER_AND_SERVICE_CATEGORY, query = "SELECT ps FROM ProviderService ps INNER JOIN ps.service s WHERE ps.provider = :provider AND s.serviceCategory = :service_category"),
-        @NamedQuery(name = ProviderService.FIND_BY_DESCRIPTION, query = "SELECT ps FROM ProviderService ps WHERE ps.description LIKE :description"),
-        @NamedQuery(name = ProviderService.FIND_BY_PROVIDER_AND_DESCRIPTION, query = "SELECT ps FROM ProviderService ps WHERE ps.provider = :provider AND ps.description LIKE :description"),
         @NamedQuery(name = ProviderService.FIND_BY_SERVICE_AND_DESCRIPTION, query = "SELECT ps FROM ProviderService ps WHERE ps.service = :service  AND ps.description LIKE :description"),
         @NamedQuery(name = ProviderService.FIND_BY_SERVICE_AND_PRICE, query = "SELECT ps FROM ProviderService ps WHERE ps.service = :service AND ps.price >= :min_price AND ps.price <= :max_price"),
         @NamedQuery(name = ProviderService.FIND_BY_SERVICE_AND_DISCOUNTED_PRICE, query = "SELECT ps FROM ProviderService ps WHERE ps.service = :service AND ps.price*(100.0-ps.discount)/100.0 >= :min_price AND ps.price*(100.0-ps.discount)/100.0 <= :max_price"),
         @NamedQuery(name = ProviderService.FIND_BY_SERVICE_AND_DISCOUNT, query = "SELECT ps FROM ProviderService ps WHERE ps.service = :service AND ps.discount >= :min_discount AND ps.discount <= :max_discount"),
-        @NamedQuery(name = ProviderService.FIND_BY_PROVIDER_AND_DISCOUNT, query = "SELECT ps FROM ProviderService ps WHERE ps.provider = :provider AND ps.discount >= :min_discount AND ps.discount <= :max_discount"),
         @NamedQuery(name = ProviderService.FIND_BY_WORK_STATION, query = "SELECT ps FROM ProviderService ps WHERE :work_station MEMBER OF ps.workStations"),
         @NamedQuery(name = ProviderService.FIND_BY_WORK_STATION_EAGERLY, query = "SELECT DISTINCT ps FROM ProviderService ps LEFT JOIN FETCH ps.supplyingEmployees e INNER JOIN FETCH ps.workStations ws WHERE ws = :work_station"),
         @NamedQuery(name = ProviderService.FIND_BY_SERVICE_POINT, query = "SELECT ps FROM ProviderService ps INNER JOIN ps.workStations ws WHERE ws.servicePoint = :service_point"),
         @NamedQuery(name = ProviderService.FIND_BY_SERVICE_POINT_EAGERLY, query = "SELECT DISTINCT ps FROM ProviderService ps LEFT JOIN FETCH ps.supplyingEmployees e INNER JOIN FETCH ps.workStations ws WHERE ws.servicePoint = :service_point"),
         @NamedQuery(name = ProviderService.FIND_BY_EMPLOYEE, query = "SELECT ps FROM ProviderService ps WHERE :employee MEMBER OF ps.supplyingEmployees"),
         @NamedQuery(name = ProviderService.FIND_BY_EMPLOYEE_EAGERLY, query = "SELECT DISTINCT ps FROM ProviderService ps INNER JOIN FETCH ps.supplyingEmployees e LEFT JOIN FETCH ps.workStations ws WHERE e = :employee"),
-        @NamedQuery(name = ProviderService.FIND_BY_PROVIDER_AND_EMPLOYEE, query = "SELECT ps FROM ProviderService ps WHERE ps.provider = :provider AND :employee MEMBER OF ps.supplyingEmployees"),
+        @NamedQuery(name = ProviderService.FIND_BY_EMPLOYEE_TERM, query = "SELECT DISTINCT ps FROM ProviderService ps INNER JOIN ps.supplyingEmployees e INNER JOIN ps.workStations ws " +
+                "INNER JOIN e.termsOnWorkStation empl_term INNER JOIN ws.termsEmployeesWorkOn ws_empl_term WHERE empl_term = ws_empl_term AND empl_term = :employee_term"),
+        @NamedQuery(name = ProviderService.FIND_BY_EMPLOYEE_TERM_EAGERLY, query = "SELECT DISTINCT ps FROM ProviderService ps INNER JOIN FETCH ps.supplyingEmployees e INNER JOIN FETCH ps.workStations ws " +
+                "INNER JOIN e.termsOnWorkStation empl_term INNER JOIN ws.termsEmployeesWorkOn ws_empl_term WHERE empl_term = ws_empl_term AND empl_term = :employee_term"),
+        @NamedQuery(name = ProviderService.FIND_BY_TERM, query = "SELECT DISTINCT ps FROM ProviderService ps INNER JOIN ps.supplyingEmployees e INNER JOIN ps.workStations ws " +
+                "INNER JOIN e.termsOnWorkStation empl_term INNER JOIN ws.termsEmployeesWorkOn ws_empl_term WHERE empl_term = ws_empl_term AND empl_term.term = :term"),
+        @NamedQuery(name = ProviderService.FIND_BY_TERM_EAGERLY, query = "SELECT DISTINCT ps FROM ProviderService ps INNER JOIN FETCH ps.supplyingEmployees e INNER JOIN FETCH ps.workStations ws " +
+                "INNER JOIN e.termsOnWorkStation empl_term INNER JOIN ws.termsEmployeesWorkOn ws_empl_term WHERE empl_term = ws_empl_term AND empl_term.term = :term"),
         @NamedQuery(name = ProviderService.UPDATE_DISCOUNT_FOR_PROVIDER, query = "UPDATE ProviderService ps SET ps.discount = :new_discount WHERE ps.provider = :provider"),
         @NamedQuery(name = ProviderService.UPDATE_DISCOUNT_FOR_PROVIDER_AND_SERVICE_CATEGORY, query = "UPDATE ProviderService ps SET ps.discount = :new_discount WHERE ps.provider = :provider AND ps.service IN (SELECT s FROM Service s WHERE s.serviceCategory = :service_category)"),
         @NamedQuery(name = ProviderService.UPDATE_DISCOUNT_FOR_PROVIDER_AND_EMPLOYEE, query = "UPDATE ProviderService ps SET ps.discount = :new_discount WHERE ps.provider = :provider AND :employee MEMBER OF ps.supplyingEmployees"),
@@ -69,6 +77,10 @@ import java.util.*;
         @NamedQuery(name = ProviderService.COUNT_BY_WORK_STATION, query = "SELECT COUNT(ps) FROM ProviderService ps WHERE :work_station MEMBER OF ps.workStations"),
         @NamedQuery(name = ProviderService.COUNT_BY_SERVICE_POINT, query = "SELECT COUNT(DISTINCT ps) FROM ProviderService ps INNER JOIN ps.workStations ws WHERE ws.servicePoint = :service_point"),
         @NamedQuery(name = ProviderService.COUNT_BY_EMPLOYEE, query = "SELECT COUNT(ps) FROM ProviderService ps WHERE :employee MEMBER OF ps.supplyingEmployees"),
+        @NamedQuery(name = ProviderService.COUNT_BY_EMPLOYEE_TERM, query = "SELECT COUNT(DISTINCT ps) FROM ProviderService ps INNER JOIN ps.supplyingEmployees e INNER JOIN ps.workStations ws " +
+                "INNER JOIN e.termsOnWorkStation empl_term INNER JOIN ws.termsEmployeesWorkOn ws_empl_term WHERE empl_term = ws_empl_term AND empl_term = :employee_term"),
+        @NamedQuery(name = ProviderService.COUNT_BY_TERM, query = "SELECT COUNT(DISTINCT ps) FROM ProviderService ps INNER JOIN ps.supplyingEmployees e INNER JOIN ps.workStations ws " +
+                "INNER JOIN e.termsOnWorkStation empl_term INNER JOIN ws.termsEmployeesWorkOn ws_empl_term WHERE empl_term = ws_empl_term AND empl_term.term = :term")
 })
 @MutualProvider
 @PriceNeedType
@@ -105,6 +117,12 @@ public class ProviderService {
     public static final String FIND_BY_EMPLOYEE = "ProviderService.findByEmployee";
     public static final String FIND_BY_EMPLOYEE_EAGERLY = "ProviderService.findByEmployeeEagerly";
 
+    public static final String FIND_BY_EMPLOYEE_TERM = "ProviderService.findByEmployeeTerm";
+    public static final String FIND_BY_EMPLOYEE_TERM_EAGERLY = "ProviderService.findByEmployeeTermEagerly";
+
+    public static final String FIND_BY_TERM = "ProviderService.findByTerm";
+    public static final String FIND_BY_TERM_EAGERLY = "ProviderService.findByTermEagerly";
+
     public static final String UPDATE_DISCOUNT_FOR_PROVIDER = "ProviderService.updateDiscountForProvider";
     public static final String UPDATE_DISCOUNT_FOR_PROVIDER_AND_SERVICE_CATEGORY = "ProviderService.updateDiscountForProviderAndServiceCategory";
     public static final String UPDATE_DISCOUNT_FOR_PROVIDER_AND_EMPLOYEE = "ProviderService.updateDiscountForProviderAndEmployee";
@@ -124,6 +142,8 @@ public class ProviderService {
     public static final String COUNT_BY_WORK_STATION = "ProviderService.countByWorkStation";
     public static final String COUNT_BY_SERVICE_POINT = "ProviderService.countByServicePoint";
     public static final String COUNT_BY_EMPLOYEE = "ProviderService.countByEmployee";
+    public static final String COUNT_BY_EMPLOYEE_TERM = "ProviderService.countByEmployeeTerm";
+    public static final String COUNT_BY_TERM = "ProviderService.countByTerm";
 
     private Provider provider; // PK, FK
     private Service service; // PK, FK
