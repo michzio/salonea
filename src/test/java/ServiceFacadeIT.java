@@ -316,7 +316,7 @@ public class ServiceFacadeIT {
         providers.add(provider4);
         List<String> keywords = new ArrayList<>();
         keywords.add("is");
-        List<Service> foundServices = serviceFacade.findByMultipleCriteria(keywords, null, providers, null, null, null);
+        List<Service> foundServices = serviceFacade.findByMultipleCriteria(keywords, null, providers, null, null, null, null, null);
 
         assertTrue("There should be defined offers for two services by given providers.", foundServices.size() == 2);
         assertTrue(foundServices.contains(hairDyeing));

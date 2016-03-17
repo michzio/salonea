@@ -84,14 +84,15 @@ public class ServiceResource {
                 // find only by keywords
                 services = new ResourceList<>(
                         serviceFacade.findByMultipleCriteria(params.getKeywords(), params.getServiceCategories(), params.getProviders(),
-                                params.getEmployees(), params.getWorkStations(), params.getServicePoints(), params.getOffset(), params.getLimit())
+                                params.getEmployees(), params.getWorkStations(), params.getServicePoints(), params.getEmployeeTerms(),
+                                params.getTerms(),params.getOffset(), params.getLimit())
                 );
             } else {
                 // find by service names and descriptions
                 services = new ResourceList<>(
                         serviceFacade.findByMultipleCriteria(params.getNames(), params.getDescriptions(), params.getServiceCategories(),
                                 params.getProviders(), params.getEmployees(), params.getWorkStations(), params.getServicePoints(),
-                                params.getOffset(), params.getLimit())
+                                params.getEmployeeTerms(), params.getTerms(), params.getOffset(), params.getLimit())
                 );
             }
 
@@ -138,7 +139,8 @@ public class ServiceResource {
                 services = new ResourceList<>(
                         ServiceWrapper.wrap(
                                 serviceFacade.findByMultipleCriteriaEagerly(params.getKeywords(), params.getServiceCategories(), params.getProviders(),
-                                        params.getEmployees(), params.getWorkStations(), params.getServicePoints(), params.getOffset(), params.getLimit())
+                                        params.getEmployees(), params.getWorkStations(), params.getServicePoints(), params.getEmployeeTerms(),
+                                        params.getTerms(),params.getOffset(), params.getLimit())
                         )
                 );
             } else {
@@ -147,7 +149,7 @@ public class ServiceResource {
                         ServiceWrapper.wrap(
                                 serviceFacade.findByMultipleCriteriaEagerly(params.getNames(), params.getDescriptions(), params.getServiceCategories(),
                                         params.getProviders(), params.getEmployees(), params.getWorkStations(), params.getServicePoints(),
-                                        params.getOffset(), params.getLimit())
+                                        params.getEmployeeTerms(), params.getTerms(), params.getOffset(), params.getLimit())
                         )
                 );
             }
@@ -951,7 +953,8 @@ public class ServiceResource {
                         providerServiceFacade.findByMultipleCriteria(params.getProviders(), services, params.getServiceCategories(),
                                 params.getDescriptions(), params.getMinPrice(), params.getMaxPrice(), params.getIncludeDiscounts(),
                                 params.getMinDiscount(), params.getMaxDiscount(), params.getMinDuration(), params.getMaxDuration(),
-                                params.getServicePoints(), params.getWorkStations(), params.getEmployees(), params.getOffset(), params.getLimit())
+                                params.getServicePoints(), params.getWorkStations(), params.getEmployees(), params.getEmployeeTerms(),
+                                params.getTerms(), params.getOffset(), params.getLimit())
                 );
 
                 utx.commit();
@@ -1004,7 +1007,8 @@ public class ServiceResource {
                                 providerServiceFacade.findByMultipleCriteriaEagerly(params.getProviders(), services, params.getServiceCategories(),
                                         params.getDescriptions(), params.getMinPrice(), params.getMaxPrice(), params.getIncludeDiscounts(),
                                         params.getMinDiscount(), params.getMaxDiscount(), params.getMinDuration(), params.getMaxDuration(),
-                                        params.getServicePoints(), params.getWorkStations(), params.getEmployees(), params.getOffset(), params.getLimit())
+                                        params.getServicePoints(), params.getWorkStations(), params.getEmployees(), params.getEmployeeTerms(),
+                                        params.getTerms(), params.getOffset(), params.getLimit())
                         )
                 );
 

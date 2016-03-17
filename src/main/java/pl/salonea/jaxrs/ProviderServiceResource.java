@@ -146,7 +146,8 @@ public class ProviderServiceResource {
                     providerServiceFacade.findByMultipleCriteria(params.getProviders(), params.getServices(), params.getServiceCategories(),
                             params.getDescriptions(), params.getMinPrice(), params.getMaxPrice(), params.getIncludeDiscounts(),
                             params.getMinDiscount(), params.getMaxDiscount(), params.getMinDuration(), params.getMaxDuration(),
-                            params.getServicePoints(), params.getWorkStations(), params.getEmployees(), params.getOffset(), params.getLimit())
+                            params.getServicePoints(), params.getWorkStations(), params.getEmployees(), params.getEmployeeTerms(),
+                            params.getTerms(), params.getOffset(), params.getLimit())
             );
 
             utx.commit();
@@ -188,7 +189,8 @@ public class ProviderServiceResource {
                         providerServiceFacade.findByMultipleCriteriaEagerly(params.getProviders(), params.getServices(), params.getServiceCategories(),
                                 params.getDescriptions(), params.getMinPrice(), params.getMaxPrice(), params.getIncludeDiscounts(),
                                 params.getMinDiscount(), params.getMaxDiscount(), params.getMinDuration(), params.getMaxDuration(),
-                                params.getServicePoints(), params.getWorkStations(), params.getEmployees(), params.getOffset(), params.getLimit())
+                                params.getServicePoints(), params.getWorkStations(), params.getEmployees(), params.getEmployeeTerms(),
+                                params.getTerms(), params.getOffset(), params.getLimit())
                     )
             );
 

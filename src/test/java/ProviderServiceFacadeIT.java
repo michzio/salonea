@@ -347,7 +347,7 @@ public class ProviderServiceFacadeIT {
         services.add(removals);
         services.add(haircut);
 
-        List<ProviderService> matchingOffers = providerServiceFacade.findByMultipleCriteria(providers, services, null, null, null, null, false, null, null, null, null, null, null, null);
+        List<ProviderService> matchingOffers = providerServiceFacade.findByMultipleCriteria(providers, services, null, null, null, null, false, null, null, null, null, null, null, null, null, null);
         assertTrue("There should be three offers matching given combination of providers and services",
                 matchingOffers.size() == 3);
         assertTrue(matchingOffers.contains(provider1Filling));
@@ -362,18 +362,18 @@ public class ProviderServiceFacadeIT {
         List<String> descriptions = new ArrayList<>();
         descriptions.add("hair");
 
-        List<ProviderService> cheapHairOffers = providerServiceFacade.findByMultipleCriteria(null, hairServices, null, descriptions, 40.0, 70.0, false, null, null, null, null, null, null, null );
+        List<ProviderService> cheapHairOffers = providerServiceFacade.findByMultipleCriteria(null, hairServices, null, descriptions, 40.0, 70.0, false, null, null, null, null, null, null, null, null, null);
         assertTrue(cheapHairOffers.size() == 1);
         assertTrue(cheapHairOffers.contains(provider3Haircut));
         assertFalse(cheapHairOffers.contains(provider3Dyeing));
 
-        List<ProviderService> cheapDiscountedHairOffers = providerServiceFacade.findByMultipleCriteria(null, hairServices, null, descriptions, 40.0, 70.0, true, null, null, null, null, null, null, null);
+        List<ProviderService> cheapDiscountedHairOffers = providerServiceFacade.findByMultipleCriteria(null, hairServices, null, descriptions, 40.0, 70.0, true, null, null, null, null, null, null, null, null, null);
         assertTrue(cheapDiscountedHairOffers.size() == 2);
         assertTrue(cheapDiscountedHairOffers.contains(provider3Haircut));
         assertTrue(cheapDiscountedHairOffers.contains(provider3Dyeing));
 
         providers.add(provider2);
-        List<ProviderService> discountedOffers = providerServiceFacade.findByMultipleCriteria(providers, null, null, null, null, null, false, (short) 10, (short) 60, null, null, null, null, null);
+        List<ProviderService> discountedOffers = providerServiceFacade.findByMultipleCriteria(providers, null, null, null, null, null, false, (short) 10, (short) 60, null, null, null, null, null, null, null);
         assertTrue(discountedOffers.size() == 2);
         assertTrue(discountedOffers.contains(provider2Filling));
         assertTrue(discountedOffers.contains(provider3Dyeing));

@@ -29,7 +29,6 @@ import java.util.*;
 @NamedQueries({
         @NamedQuery(name = ProviderService.FIND_ALL_EAGERLY, query = "SELECT ps FROM ProviderService ps LEFT JOIN FETCH ps.supplyingEmployees e LEFT JOIN FETCH ps.workStations ws"),
         @NamedQuery(name = ProviderService.FIND_BY_ID_EAGERLY, query = "SELECT ps FROM ProviderService ps LEFT JOIN FETCH ps.supplyingEmployees e LEFT JOIN FETCH  ps.workStations ws WHERE ps.provider.userId = :userId AND ps.service.serviceId = :serviceId"),
-        @NamedQuery(name = ProviderService.FIND_BY_PROVIDER_AND_SERVICE_CATEGORY, query = "SELECT ps FROM ProviderService ps INNER JOIN ps.service s WHERE ps.provider = :provider AND s.serviceCategory = :service_category"),
         @NamedQuery(name = ProviderService.FIND_BY_PROVIDER, query = "SELECT ps FROM ProviderService ps WHERE ps.provider = :provider"),
         @NamedQuery(name = ProviderService.FIND_BY_PROVIDER_EAGERLY, query = "SELECT DISTINCT ps FROM ProviderService ps LEFT JOIN FETCH ps.supplyingEmployees e LEFT JOIN FETCH ps.workStations ws WHERE ps.provider = :provider"),
         @NamedQuery(name = ProviderService.FIND_BY_PROVIDER_AND_DESCRIPTION, query = "SELECT ps FROM ProviderService ps WHERE ps.provider = :provider AND ps.description LIKE :description"),
