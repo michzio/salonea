@@ -54,4 +54,29 @@ public class EmployeeTermId implements Serializable {
         result = 31 * result + (employee != null ? employee.hashCode() : 0);
         return result;
     }
+
+    /**
+     * Allowed serialized employee term id formats:
+     * [1,2]  [1+2]  [1-2]
+     * (1,2)  (1+2)  (1-2)
+     * 1,2    1+2    1-2
+     */
+    public static EmployeeTermId valueOf(String employeeTermIdString) {
+
+        if( !employeeTermIdString.matches("[(\\[]?\\d+[,+ -]{1}\\d+[\\])]?") )
+            throw new IllegalArgumentException("Serialized employee term id doesn't match specified regex pattern.");
+
+        // trim leading and trailing brackets
+        employeeTermIdString = employeeTermIdString.replaceAll("[(\\[)\\]]", "");
+        // split identifiers by several possible delimiters
+        String[] tokens = employeeTermIdString.split("[,+ -]", 2);
+        if( tokens.length != 2 )
+            throw new IllegalArgumentException("Serialized employee term id should consist of two delimited tokens ex. 1+2");
+
+        Long employeeId = Long.valueOf(tokens[0]);
+        Long termId = Long.valueOf(tokens[1]);
+
+        // construct employee term id
+        return new EmployeeTermId(termId, employeeId);
+    }
 }

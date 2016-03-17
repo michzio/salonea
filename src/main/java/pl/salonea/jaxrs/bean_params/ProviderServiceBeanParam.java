@@ -2,6 +2,7 @@ package pl.salonea.jaxrs.bean_params;
 
 import pl.salonea.ejb.stateless.*;
 import pl.salonea.entities.*;
+import pl.salonea.entities.idclass.EmployeeTermId;
 import pl.salonea.entities.idclass.ServicePointId;
 import pl.salonea.entities.idclass.WorkStationId;
 import pl.salonea.jaxrs.exceptions.NotFoundException;
@@ -30,6 +31,8 @@ public class ProviderServiceBeanParam extends PaginationBeanParam {
     private @QueryParam("workStationId") List<WorkStationId> workStationIds; // {providerId}+{servicePointNumber}+{workStationNumber} composite PK
     private @QueryParam("servicePointId") List<ServicePointId> servicePointIds; // {providerId}+{servicePointNumber} composite PK
     private @QueryParam("employeeId") List<Long> employeeIds;
+    private @QueryParam("employeeTermId") List<EmployeeTermId> employeeTermIds; // {employeeId}+{termId} composite PK
+    private @QueryParam("termId") List<Long> termIds;
 
     @Inject
     private ProviderFacade providerFacade;
@@ -43,6 +46,10 @@ public class ProviderServiceBeanParam extends PaginationBeanParam {
     private ServicePointFacade servicePointFacade;
     @Inject
     private EmployeeFacade employeeFacade;
+    @Inject
+    private EmployeeTermFacade employeeTermFacade;
+    @Inject
+    private TermFacade termFacade;
 
     public List<Long> getProviderIds() {
         return providerIds;
@@ -206,6 +213,40 @@ public class ProviderServiceBeanParam extends PaginationBeanParam {
             final List<Employee> employees = employeeFacade.find( new ArrayList<>(getEmployeeIds()) );
             if(employees.size() != getEmployeeIds().size()) throw new NotFoundException("Could not find employees for all provided ids.");
             return employees;
+        }
+        return null;
+    }
+
+    public List<EmployeeTermId> getEmployeeTermIds() {
+        return employeeTermIds;
+    }
+
+    public void setEmployeeTermIds(List<EmployeeTermId> employeeTermIds) {
+        this.employeeTermIds = employeeTermIds;
+    }
+
+    public List<EmployeeTerm> getEmployeeTerms() throws NotFoundException {
+        if(getEmployeeTermIds() != null && getEmployeeTermIds().size() > 0) {
+            final List<EmployeeTerm> employeeTerms = employeeTermFacade.find( new ArrayList<>(getEmployeeTermIds()) );
+            if(employeeTerms.size() != getEmployeeTermIds().size()) throw new NotFoundException("Could not find employee terms for all provided ids.");
+            return employeeTerms;
+        }
+        return null;
+    }
+
+    public List<Long> getTermIds() {
+        return termIds;
+    }
+
+    public void setTermIds(List<Long> termIds) {
+        this.termIds = termIds;
+    }
+
+    public List<Term> getTerms() throws NotFoundException {
+        if(getTermIds() != null && getTermIds().size() > 0) {
+            final List<Term> terms = termFacade.find( new ArrayList<>(getTermIds()) );
+            if(terms.size() != getTermIds().size()) throw new NotFoundException("Could not find terms for all provided ids.");
+            return terms;
         }
         return null;
     }

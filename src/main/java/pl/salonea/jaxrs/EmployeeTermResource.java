@@ -1,13 +1,12 @@
 package pl.salonea.jaxrs;
 
 import pl.salonea.ejb.stateless.EmployeeTermFacade;
+import pl.salonea.ejb.stateless.ServiceFacade;
 import pl.salonea.entities.Employee;
 import pl.salonea.entities.EmployeeTerm;
+import pl.salonea.entities.Service;
 import pl.salonea.entities.idclass.EmployeeTermId;
-import pl.salonea.jaxrs.bean_params.DateBetweenBeanParam;
-import pl.salonea.jaxrs.bean_params.EmployeeTermBeanParam;
-import pl.salonea.jaxrs.bean_params.GenericBeanParam;
-import pl.salonea.jaxrs.bean_params.PaginationBeanParam;
+import pl.salonea.jaxrs.bean_params.*;
 import pl.salonea.jaxrs.exceptions.*;
 import pl.salonea.jaxrs.exceptions.ForbiddenException;
 import pl.salonea.jaxrs.exceptions.NotFoundException;
@@ -30,6 +29,8 @@ import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 import java.lang.reflect.Method;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -46,6 +47,8 @@ public class EmployeeTermResource {
 
     @Inject
     private EmployeeTermFacade employeeTermFacade;
+    @Inject
+    private ServiceFacade serviceFacade;
 
     /**
      * Method returns all Employee Term entities.
@@ -412,8 +415,17 @@ public class EmployeeTermResource {
     }
 
     /**
-     * related
+     * related subresources (through relationships)
      */
+    @Path("/{employeeId: \\d+}+{termId: \\d+}/services")
+    public ServiceResource getServiceResource() {
+        return new ServiceResource();
+    }
+
+    @Path("/{employeeId: \\d+}+{termId: \\d+}/provider-services")
+    public ProviderServiceResource getProviderServiceResource() {
+        return new ProviderServiceResource();
+    }
 
     /**
      * This method enables to populate list of resources and each individual resource on list with hypermedia links
@@ -511,22 +523,149 @@ public class EmployeeTermResource {
              * Services executed during current Employee Term resource
              */
             // services
+            Method servicesMethod = EmployeeTermResource.class.getMethod("getServiceResource");
+            employeeTerm.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(EmployeeTermResource.class)
+                    .path(servicesMethod)
+                    .resolveTemplate("employeeId", employeeTerm.getEmployee().getUserId())
+                    .resolveTemplate("termId", employeeTerm.getTerm().getTermId())
+                    .build())
+                    .rel("services").build());
 
             // services eagerly
+            Method servicesEagerlyMethod = EmployeeTermResource.ServiceResource.class.getMethod("getEmployeeTermServicesEagerly", Long.class, Long.class, ServiceBeanParam.class);
+            employeeTerm.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(EmployeeTermResource.class)
+                    .path(servicesMethod)
+                    .path(servicesEagerlyMethod)
+                    .resolveTemplate("employeeId", employeeTerm.getEmployee().getUserId())
+                    .resolveTemplate("termId", employeeTerm.getTerm().getTermId())
+                    .build())
+                    .rel("services-eagerly").build());
 
             // services count
+            Method countServicesByEmployeeTermMethod = EmployeeTermResource.ServiceResource.class.getMethod("countServicesByEmployeeTerm", Long.class, Long.class, GenericBeanParam.class);
+            employeeTerm.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(EmployeeTermResource.class)
+                    .path(servicesMethod)
+                    .path(countServicesByEmployeeTermMethod)
+                    .resolveTemplate("employeeId", employeeTerm.getEmployee().getUserId())
+                    .resolveTemplate("termId", employeeTerm.getTerm().getTermId())
+                    .build())
+                    .rel("services-count").build());
 
             /**
              * Provider Services executed during current Employee Term resource
              */
             // provider services
+            Method providerServicesMethod = EmployeeTermResource.class.getMethod("getProviderServiceResource");
+            employeeTerm.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(EmployeeTermResource.class)
+                    .path(providerServicesMethod)
+                    .resolveTemplate("employeeId",employeeTerm.getEmployee().getUserId() )
+                    .resolveTemplate("termId", employeeTerm.getTerm().getTermId())
+                    .build())
+                    .rel("provider-services").build());
 
             // provider services eagerly
+            Method providerServicesEagerlyMethod = EmployeeTermResource.ProviderServiceResource.class.getMethod("getEmployeeTermProviderServicesEagerly", Long.class, Long.class, ProviderServiceBeanParam.class);
+            employeeTerm.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(EmployeeTermResource.class)
+                    .path(providerServicesMethod)
+                    .path(providerServicesEagerlyMethod)
+                    .resolveTemplate("employeeId", employeeTerm.getEmployee().getUserId())
+                    .resolveTemplate("termId", employeeTerm.getTerm().getTermId())
+                    .build())
+                    .rel("provider-services-eagerly").build());
 
             // provider services count
+            Method countProviderServicesByEmployeeTermMethod = EmployeeTermResource.ProviderServiceResource.class.getMethod("countProviderServicesByEmployeeTerm", Long.class, Long.class, GenericBeanParam.class);
+            employeeTerm.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(EmployeeTermResource.class)
+                    .path(providerServicesMethod)
+                    .path(countProviderServicesByEmployeeTermMethod)
+                    .resolveTemplate("employeeId", employeeTerm.getEmployee().getUserId())
+                    .resolveTemplate("termId", employeeTerm.getTerm().getTermId())
+                    .build())
+                    .rel("provider-services-count").build());
 
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
         }
     }
+
+    public class ServiceResource {
+
+        public ServiceResource() { }
+
+        /**
+         * Method returns subset of Service entities for given Employee Term entity.
+         * The employee id and term id are passed through path params.
+         * They can be additionally filtered and paginated by query params.
+         */
+        @GET
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getEmployeeTermServices( @PathParam("employeeId") Long employeeId,
+                                                 @PathParam("termId") Long termId,
+                                                 @BeanParam ServiceBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning services for given employee term using " +
+                    "EmployeeTermResource.ServiceResource.getEmployeeTermServices(employeeId,termId) method of REST API");
+
+            utx.begin();
+
+            // find employee term entity for which to get associated services
+            EmployeeTerm employeeTerm = employeeTermFacade.find(new EmployeeTermId(termId, employeeId));
+            if (employeeTerm == null)
+                throw new NotFoundException("Could not find employee term for id (" + employeeId + "," + termId + ").");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<Service> services = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<EmployeeTerm> employeeTerms = new ArrayList<>();
+                employeeTerms.add(employeeTerm);
+
+                // get services for given employee term filtered by given query params
+
+                if(RESTToolkit.isSet(params.getKeywords())) {
+                    if( RESTToolkit.isSet(params.getNames()) || RESTToolkit.isSet(params.getDescriptions()) )
+                        throw new BadRequestException("Query params cannot include keywords and names or descriptions at the same time.");
+
+                    // find only by keywords
+                    services = new ResourceList<>(
+                            serviceFacade.findByMultipleCriteria(params.getKeywords(), params.getServiceCategories(), params.getProviders(),
+                                    params.getEmployees(), params.getWorkStations(), params.getServicePoints(), employeeTerms, params.getTerms(),
+                                    params.getOffset(), params.getLimit())
+                    );
+                } else {
+                    // find by names, descriptions
+                    services = new ResourceList<>(
+                            serviceFacade.findByMultipleCriteria(params.getNames(), params.getDescriptions(), params.getServiceCategories(),
+                                    params.getProviders(), params.getEmployees(), params.getWorkStations(), params.getServicePoints(),
+                                    employeeTerms, params.getTerms(), params.getOffset(), params.getLimit())
+                    );
+                }
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get services for given employee term without filtering (eventually paginated)
+                services = new ResourceList<>( serviceFacade.findByEmployeeTerm(employeeTerm, params.getOffset(), params.getLimit()) );
+            }
+
+            utx.commit();
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.ServiceResource.populateWithHATEOASLinks(services, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(services).build();
+        }
+
+    }
+
 }
