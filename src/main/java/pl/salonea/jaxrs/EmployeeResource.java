@@ -64,6 +64,10 @@ public class EmployeeResource {
     private ServiceFacade serviceFacade;
     @Inject
     private ProviderServiceFacade providerServiceFacade;
+    @Inject
+    private EmployeeTermFacade employeeTermFacade;
+    @Inject
+    private TermFacade termFacade;
 
     /**
      * Method returns all Employee resources
@@ -404,6 +408,12 @@ public class EmployeeResource {
     public ProviderServiceResource getProviderServiceResource() {
         return new ProviderServiceResource();
     }
+
+    @Path("/{userId: \\d+}/employee-terms")
+    public EmployeeTermResource getEmployeeTermResource() { return new EmployeeTermResource(); }
+
+    @Path("/{userId: \\d+}/terms")
+    public TermResource getTermResource() { return new TermResource(); }
 
     // helper methods e.g. to populate resources/resource lists with HATEOAS links
 
@@ -860,6 +870,62 @@ public class EmployeeResource {
                     .resolveTemplate("userId", employee.getUserId().toString())
                     .build())
                     .rel("provider-services-count").build());
+
+            /**
+             * Employee Terms defined for current Employee resource
+             */
+
+            // employee-terms
+            Method employeeTermsMethod = EmployeeResource.class.getMethod("getEmployeeTermResource");
+            employee.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(EmployeeResource.class)
+                    .path(employeeTermsMethod)
+                    .resolveTemplate("userId", employee.getUserId().toString())
+                    .build())
+                    .rel("employee-terms").build());
+
+            // employee-terms count
+            Method countEmployeeTermsByEmployeeMethod = EmployeeResource.EmployeeTermResource.class.getMethod("countEmployeeTermsByEmployee", Long.class, GenericBeanParam.class);
+            employee.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(EmployeeResource.class)
+                    .path(employeeTermsMethod)
+                    .path(countEmployeeTermsByEmployeeMethod)
+                    .resolveTemplate("userId", employee.getUserId().toString())
+                    .build())
+                    .rel("employee-terms-count").build());
+
+            /**
+             * Terms associated with current Employee resource
+             */
+
+            // terms
+            Method termsMethod = EmployeeResource.class.getMethod("getTermResource");
+            employee.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(EmployeeResource.class)
+                    .path(termsMethod)
+                    .resolveTemplate("userId", employee.getUserId().toString())
+                    .build())
+                    .rel("terms").build());
+
+            // terms eagerly
+            Method termsEagerlyMethod = EmployeeResource.TermResource.class.getMethod("getEmployeeTermsEagerly", Long.class, TermBeanParam.class);
+            employee.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(EmployeeResource.class)
+                    .path(termsMethod)
+                    .path(termsEagerlyMethod)
+                    .resolveTemplate("userId", employee.getUserId().toString())
+                    .build())
+                    .rel("terms-eagerly").build());
+
+            // terms count
+            Method countTermsByEmployeeMethod = EmployeeResource.TermResource.class.getMethod("countTermsByEmployee", Long.class, GenericBeanParam.class);
+            employee.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(EmployeeResource.class)
+                    .path(termsMethod)
+                    .path(countTermsByEmployeeMethod)
+                    .resolveTemplate("userId", employee.getUserId().toString())
+                    .build())
+                    .rel("terms-count").build());
 
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
@@ -2396,6 +2462,233 @@ public class EmployeeResource {
 
             ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(providerServiceFacade.countByEmployee(employee)), 200,
                     "number of provider services for employee with id " + employee.getUserId());
+            return Response.status(Status.OK).entity(responseEntity).build();
+        }
+    }
+
+    public class EmployeeTermResource {
+
+        public EmployeeTermResource() { }
+
+        /**
+         * Method returns subset of Employee Term entities for given Employee entity.
+         * The employee id is passed through path param.
+         * They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getEmployeeEmployeeTerms( @PathParam("userId") Long employeeId,
+                                                  @BeanParam EmployeeTermBeanParam params ) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning employee terms for given employee using " +
+                    "EmployeeResource.EmployeeTermResource.getEmployeeEmployeeTerms(employeeId) method of REST API");
+
+            // find employee entity for which to get associated employee terms
+            Employee employee = employeeFacade.find(employeeId);
+            if (employee == null)
+                throw new NotFoundException("Could not find employee for id " + employeeId + ".");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<EmployeeTerm> employeeTerms = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Employee> employees = new ArrayList<>();
+                employees.add(employee);
+
+                // get employee terms for given employee filtered by given query params
+
+                utx.begin();
+
+                employeeTerms = new ResourceList<>(
+                        employeeTermFacade.findByMultipleCriteria(params.getServicePoints(), params.getWorkStations(), employees,
+                                params.getTerms(), params.getServices(), params.getProviderServices(), params.getPeriod(), params.getStrictTerm(),
+                                params.getOffset(), params.getLimit())
+                );
+
+                utx.commit();
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get employee terms for given employee without filtering (eventually paginated)
+                employeeTerms = new ResourceList<>( employeeTermFacade.findByEmployee(employee, params.getOffset(), params.getLimit()) );
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.EmployeeTermResource.populateWithHATEOASLinks(employeeTerms, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(employeeTerms).build();
+        }
+
+        /**
+         * Method that counts Employee Term entities for given Employee resource.
+         * The employee id is passed through path param.
+         */
+        @GET
+        @Path("/count")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response countEmployeeTermsByEmployee( @PathParam("userId") Long employeeId,
+                                                      @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning number of employee terms for given employee by executing " +
+                    "EmployeeResource.EmployeeTermResource.countEmployeeTermsByEmployee(employeeId) method of REST API");
+
+            // find employee entity for which to count employee terms
+            Employee employee = employeeFacade.find(employeeId);
+            if (employee == null)
+                throw new NotFoundException("Could not find employee for id " + employeeId + ".");
+
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(employeeTermFacade.countByEmployee(employee)), 200,
+                    "number of employee terms for employee with id " + employee.getUserId() );
+            return Response.status(Status.OK).entity(responseEntity).build();
+        }
+    }
+
+    public class TermResource {
+
+        public TermResource() { }
+
+        /**
+         * Method returns subset of Term entities for given Employee entity.
+         * The employee id is passed through path param.
+         * They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getEmployeeTerms( @PathParam("userId") Long employeeId,
+                                          @BeanParam TermBeanParam params ) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning terms for given employee using " +
+                    "EmployeeResource.TermResource.getEmployeeTerms(employeeId) method of REST API");
+
+            // find employee entity for which to get associated terms
+            Employee employee = employeeFacade.find(employeeId);
+            if (employee == null)
+                throw new NotFoundException("Could not find employee for id " + employeeId + ".");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<Term> terms = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Employee> employees = new ArrayList<>();
+                employees.add(employee);
+
+                // get terms for given employee filtered by given query params
+
+                utx.begin();
+
+                terms = new ResourceList<>(
+                        termFacade.findByMultipleCriteria(params.getServicePoints(), params.getWorkStations(), employees,
+                                params.getServices(), params.getProviderServices(), params.getPeriod(), params.getStrictTerm(),
+                                params.getOffset(), params.getLimit())
+                );
+
+                utx.commit();
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get terms for given employee without filtering (eventually paginated)
+                terms = new ResourceList<>( termFacade.findByEmployee(employee, params.getOffset(), params.getLimit()) );
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.TermResource.populateWithHATEOASLinks(terms, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(terms).build();
+        }
+
+        /**
+         * Method returns subset of Term entities for given Employee fetching them eagerly.
+         * The employee id is passed through path param.
+         * They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Path("/eagerly")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getEmployeeTermsEagerly( @PathParam("userId") Long employeeId,
+                                                 @BeanParam TermBeanParam params ) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning terms eagerly for given employee using " +
+                    "EmployeeResource.TermResource.getEmployeeTermsEagerly(employeeId) method of REST API");
+
+            // find employee entity for which to get associated terms
+            Employee employee = employeeFacade.find(employeeId);
+            if (employee == null)
+                throw new NotFoundException("Could not find employee for id " + employeeId + ".");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<TermWrapper> terms = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Employee> employees = new ArrayList<>();
+                employees.add(employee);
+
+                // get terms eagerly for given employee filtered by given query params
+
+                utx.begin();
+
+                terms = new ResourceList<>(
+                        TermWrapper.wrap(
+                                termFacade.findByMultipleCriteriaEagerly(params.getServicePoints(), params.getWorkStations(), employees,
+                                        params.getServices(), params.getProviderServices(), params.getPeriod(), params.getStrictTerm(),
+                                        params.getOffset(), params.getLimit())
+                        )
+                );
+
+                utx.commit();
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get terms eagerly for given employee without filtering (eventually paginated)
+                terms = new ResourceList<>( TermWrapper.wrap(termFacade.findByEmployeeEagerly(employee, params.getOffset(), params.getLimit())) );
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.TermResource.populateWithHATEOASLinks(terms, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(terms).build();
+        }
+
+        /**
+         * Method that counts Term entities for given Employee resource.
+         * The employee id is passed through path param.
+         */
+        @GET
+        @Path("/count")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response countTermsByEmployee( @PathParam("userId") Long employeeId,
+                                              @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning number of terms for given employee by executing " +
+                    "EmployeeResource.TermResource.countTermsByEmployee(employeeId) method of REST API");
+
+            // find employee entity for which to count terms
+            Employee employee = employeeFacade.find(employeeId);
+            if (employee == null)
+                throw new NotFoundException("Could not find employee for id " + employeeId + ".");
+
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(termFacade.countByEmployee(employee)), 200,
+                    "number of terms for employee with id " + employee.getUserId() );
             return Response.status(Status.OK).entity(responseEntity).build();
         }
     }
