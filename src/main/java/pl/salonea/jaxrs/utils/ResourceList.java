@@ -72,7 +72,9 @@ public class ResourceList<T> {
             @XmlElement(name = "work-station", type = WorkStation.class),
             @XmlElement(name = "work-station", type = WorkStationWrapper.class),
             @XmlElement(name = "service-category", type = ServiceCategory.class),
-            @XmlElement(name = "service-category", type = ServiceCategoryWrapper.class)
+            @XmlElement(name = "service-category", type = ServiceCategoryWrapper.class),
+            @XmlElement(name = "term", type = Term.class),
+            @XmlElement(name = "term", type = TermWrapper.class),
     })
     public List<T> getResources() {
         return resources;
