@@ -2481,7 +2481,6 @@ public class EmployeeResource {
                                                   @BeanParam EmployeeTermBeanParam params ) throws ForbiddenException, NotFoundException,
         /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
 
-
             RESTToolkit.authorizeAccessToWebService(params);
             logger.log(Level.INFO, "returning employee terms for given employee using " +
                     "EmployeeResource.EmployeeTermResource.getEmployeeEmployeeTerms(employeeId) method of REST API");

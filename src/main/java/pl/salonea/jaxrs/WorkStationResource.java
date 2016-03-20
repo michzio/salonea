@@ -1,9 +1,6 @@
 package pl.salonea.jaxrs;
 
-import pl.salonea.ejb.stateless.EmployeeFacade;
-import pl.salonea.ejb.stateless.ProviderServiceFacade;
-import pl.salonea.ejb.stateless.ServiceFacade;
-import pl.salonea.ejb.stateless.WorkStationFacade;
+import pl.salonea.ejb.stateless.*;
 import pl.salonea.entities.*;
 
 import pl.salonea.entities.idclass.WorkStationId;
@@ -17,10 +14,7 @@ import pl.salonea.jaxrs.utils.RESTToolkit;
 import pl.salonea.jaxrs.utils.ResourceList;
 import pl.salonea.jaxrs.utils.ResponseWrapper;
 import pl.salonea.jaxrs.utils.hateoas.Link;
-import pl.salonea.jaxrs.wrappers.EmployeeWrapper;
-import pl.salonea.jaxrs.wrappers.ProviderServiceWrapper;
-import pl.salonea.jaxrs.wrappers.ServiceWrapper;
-import pl.salonea.jaxrs.wrappers.WorkStationWrapper;
+import pl.salonea.jaxrs.wrappers.*;
 
 import javax.inject.Inject;
 import javax.transaction.*;
@@ -55,6 +49,10 @@ public class WorkStationResource {
     private ServiceFacade serviceFacade;
     @Inject
     private ProviderServiceFacade providerServiceFacade;
+    @Inject
+    private EmployeeTermFacade employeeTermFacade;
+    @Inject
+    private TermFacade termFacade;
 
     @Inject
     private ProviderResource providerResource;
@@ -321,6 +319,12 @@ public class WorkStationResource {
     @Path("/{providerId: \\d+}+{servicePointNumber: \\d+}+{workStationNumber: \\d+}/provider-services")
     public ProviderServiceResource getProviderServiceResource() { return new ProviderServiceResource(); }
 
+    @Path("/{providerId: \\d+}+{servicePointNumber: \\d+}+{workStationNumber: \\d+}/employee-terms")
+    public EmployeeTermResource getEmployeeTermResource() { return new EmployeeTermResource(); }
+
+    @Path("/{providerId: \\d+}+{servicePointNumber: \\d+}+{workStationNumber: \\d+}/terms")
+    public TermResource getTermResource() { return new TermResource(); }
+
     /**
      * This method enables to populate list of resources and each individual resource on list with hypermedia links
      */
@@ -503,7 +507,67 @@ public class WorkStationResource {
              * Employee Terms (EmployeeTerm entity) associated with current Work Station resource
              */
 
-            // TODO
+            // employee-terms
+            Method employeeTermsMethod = WorkStationResource.class.getMethod("getEmployeeTermResource");
+            workStation.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(WorkStationResource.class)
+                    .path(employeeTermsMethod)
+                    .resolveTemplate("providerId", workStation.getServicePoint().getProvider().getUserId().toString())
+                    .resolveTemplate("servicePointNumber", workStation.getServicePoint().getServicePointNumber().toString())
+                    .resolveTemplate("workStationNumber", workStation.getWorkStationNumber().toString())
+                    .build())
+                    .rel("employee-terms").build() );
+
+            // employee-terms count
+            Method countEmployeeTermsByWorkStationMethod = WorkStationResource.EmployeeTermResource.class.getMethod("countEmployeeTermsByWorkStation", Long.class, Integer.class, Integer.class, GenericBeanParam.class);
+            workStation.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(WorkStationResource.class)
+                    .path(employeeTermsMethod)
+                    .path(countEmployeeTermsByWorkStationMethod)
+                    .resolveTemplate("providerId", workStation.getServicePoint().getProvider().getUserId().toString())
+                    .resolveTemplate("servicePointNumber", workStation.getServicePoint().getServicePointNumber().toString())
+                    .resolveTemplate("workStationNumber", workStation.getWorkStationNumber().toString())
+                    .build())
+                    .rel("employee-terms-count").build() );
+
+            /**
+             * Terms of executing any provider services on current Work Station resource
+             */
+
+            // terms
+            Method termsMethod = WorkStationResource.class.getMethod("getTermResource");
+            workStation.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(WorkStationResource.class)
+                    .path(termsMethod)
+                    .resolveTemplate("providerId", workStation.getServicePoint().getProvider().getUserId().toString())
+                    .resolveTemplate("servicePointNumber", workStation.getServicePoint().getServicePointNumber().toString())
+                    .resolveTemplate("workStationNumber", workStation.getWorkStationNumber().toString())
+                    .build())
+                    .rel("terms").build() );
+
+            // terms eagerly
+            Method termsEagerlyMethod = WorkStationResource.TermResource.class.getMethod("getWorkStationTermsEagerly", Long.class, Integer.class, Integer.class, TermBeanParam.class);
+            workStation.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(WorkStationResource.class)
+                    .path(termsMethod)
+                    .path(termsEagerlyMethod)
+                    .resolveTemplate("providerId", workStation.getServicePoint().getProvider().getUserId().toString())
+                    .resolveTemplate("servicePointNumber", workStation.getServicePoint().getServicePointNumber().toString())
+                    .resolveTemplate("workStationNumber", workStation.getWorkStationNumber().toString())
+                    .build())
+                    .rel("terms-eagerly").build() );
+
+            // terms count
+            Method countTermsByWorkStationMethod = WorkStationResource.TermResource.class.getMethod("countTermsByWorkStation", Long.class, Integer.class, Integer.class, GenericBeanParam.class);
+            workStation.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(WorkStationResource.class)
+                    .path(termsMethod)
+                    .path(countTermsByWorkStationMethod)
+                    .resolveTemplate("providerId", workStation.getServicePoint().getProvider().getUserId().toString())
+                    .resolveTemplate("servicePointNumber", workStation.getServicePoint().getServicePointNumber().toString())
+                    .resolveTemplate("workStationNumber", workStation.getWorkStationNumber().toString())
+                    .build())
+                    .rel("terms-count").build() );
 
             /**
              * Employees working on current Work Station resource
@@ -1171,6 +1235,252 @@ public class WorkStationResource {
 
             ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(serviceFacade.countByWorkStation(workStation)), 200,
                     "number of services for work station with id (" + providerId + "," + servicePointNumber + "," + workStationNumber + ").");
+
+            utx.commit();
+
+            return Response.status(Status.OK).entity(responseEntity).build();
+        }
+    }
+
+    public class EmployeeTermResource {
+
+        public EmployeeTermResource() { }
+
+        /**
+         * Method returns subset of Employee Term entities for given Work Station entity.
+         * The provider id, service point number and work station number are passed through path params.
+         * They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getWorkStationEmployeeTerms( @PathParam("providerId") Long providerId,
+                                                     @PathParam("servicePointNumber") Integer servicePointNumber,
+                                                     @PathParam("workStationNumber") Integer workStationNumber,
+                                                     @BeanParam EmployeeTermBeanParam params ) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning employee terms for given work station using " +
+                    "WorkStationResource.EmployeeTermResource.getWorkStationEmployeeTerms(providerId, servicePointNumber, workStationNumber) method of REST API");
+
+            utx.begin();
+
+            // find work station entity for which to get associated employee terms
+            WorkStation workStation = workStationFacade.find( new WorkStationId(providerId, servicePointNumber, workStationNumber) );
+            if(workStation == null)
+                throw new NotFoundException("Could not find work station for id (" + providerId + "," + servicePointNumber + "," + workStationNumber + ").");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<EmployeeTerm> employeeTerms = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<WorkStation> workStations = new ArrayList<>();
+                workStations.add(workStation);
+
+                // get employee terms for given work station filtered by given query params
+                employeeTerms = new ResourceList<>(
+                        employeeTermFacade.findByMultipleCriteria(params.getServicePoints(), workStations, params.getEmployees(),
+                                params.getTerms(), params.getServices(), params.getProviderServices(), params.getPeriod(), params.getStrictTerm(),
+                                params.getOffset(), params.getLimit())
+                );
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get employee terms for given work station without filtering (eventually paginated)
+                employeeTerms = new ResourceList<>( employeeTermFacade.findByWorkStation(workStation, params.getOffset(), params.getLimit()) );
+            }
+
+            utx.commit();
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.EmployeeTermResource.populateWithHATEOASLinks(employeeTerms, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(employeeTerms).build();
+        }
+
+        /**
+         * Method that counts Employee Term entities for given Work Station resource.
+         * The provider id, service point number and work station number are passed through path params.
+         */
+        @GET
+        @Path("/count")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response countEmployeeTermsByWorkStation( @PathParam("providerId") Long providerId,
+                                                         @PathParam("servicePointNumber") Integer servicePointNumber,
+                                                         @PathParam("workStationNumber") Integer workStationNumber,
+                                                         @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning number of employee terms for given work station by executing " +
+                    "WorkStationResource.EmployeeTermResource.countEmployeeTermsByWorkStation(providerId, servicePointNumber, workStationNumber) method of REST API");
+
+            utx.begin();
+
+            // find work station entity for which to count employee terms
+            WorkStation workStation = workStationFacade.find( new WorkStationId(providerId, servicePointNumber, workStationNumber) );
+            if(workStation == null)
+                throw new NotFoundException("Could not find work station for id (" + providerId + "," + servicePointNumber + "," + workStationNumber + ").");
+
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(employeeTermFacade.countByWorkStation(workStation)), 200,
+                    "number of employee terms for work station with id (" + workStation.getServicePoint().getProvider().getUserId() + ","
+                            + workStation.getServicePoint().getServicePointNumber() + "," + workStation.getWorkStationNumber() + ")");
+
+            utx.commit();
+
+            return Response.status(Status.OK).entity(responseEntity).build();
+        }
+    }
+
+    public class TermResource {
+
+        public TermResource() { }
+
+        /**
+         * Method returns subset of Term entities for given Work Station entity.
+         * The provider id, service point number and work station number are passed through path params.
+         * They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getWorkStationTerms( @PathParam("providerId") Long providerId,
+                                             @PathParam("servicePointNumber") Integer servicePointNumber,
+                                             @PathParam("workStationNumber") Integer workStationNumber,
+                                             @BeanParam TermBeanParam params ) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning terms for given work station using " +
+                    "WorkStationResource.TermResource.getWorkStationTerms(providerId, servicePointNumber, workStationNumber) method of REST API");
+
+            utx.begin();
+
+            // find work station entity for which to get associated terms
+            WorkStation workStation = workStationFacade.find(new WorkStationId(providerId, servicePointNumber, workStationNumber));
+            if (workStation == null)
+                throw new NotFoundException("Could not find work station for id (" + providerId + "," + servicePointNumber + "," + workStationNumber + ").");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<Term> terms = null;
+
+            if (noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<WorkStation> workStations = new ArrayList<>();
+                workStations.add(workStation);
+
+                // get terms for given work station filtered by given query params
+                terms = new ResourceList<>(
+                        termFacade.findByMultipleCriteria(params.getServicePoints(), workStations, params.getEmployees(),
+                                params.getServices(), params.getProviderServices(), params.getPeriod(), params.getStrictTerm(),
+                                params.getOffset(), params.getLimit())
+                );
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get terms for given work station without filtering (eventually paginated)
+                terms = new ResourceList<>( termFacade.findByWorkStation(workStation, params.getOffset(), params.getLimit()) );
+            }
+
+            utx.commit();
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.TermResource.populateWithHATEOASLinks(terms, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(terms).build();
+        }
+
+        /**
+         * Method returns subset of Term entities for given Work Station fetching them eagerly.
+         * The provider id, service point number and work station number are passed through path params.
+         * They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Path("/eagerly")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getWorkStationTermsEagerly( @PathParam("providerId") Long providerId,
+                                                    @PathParam("servicePointNumber") Integer servicePointNumber,
+                                                    @PathParam("workStationNumber") Integer workStationNumber,
+                                                    @BeanParam TermBeanParam params ) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning terms eagerly for given work station using " +
+                    "WorkStationResource.TermResource.getWorkStationTermsEagerly(providerId, servicePointNumber, workStationNumber) method of REST API");
+
+            utx.begin();
+
+            // find work station entity for which to get associated terms
+            WorkStation workStation = workStationFacade.find(new WorkStationId(providerId, servicePointNumber, workStationNumber));
+            if (workStation == null)
+                throw new NotFoundException("Could not find work station for id (" + providerId + "," + servicePointNumber + "," + workStationNumber + ").");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<TermWrapper> terms = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<WorkStation> workStations = new ArrayList<>();
+                workStations.add(workStation);
+
+                // get terms eagerly for given work station filtered by given query params
+                terms = new ResourceList<>(
+                        TermWrapper.wrap(
+                                termFacade.findByMultipleCriteriaEagerly(params.getServicePoints(), workStations, params.getEmployees(),
+                                        params.getServices(), params.getProviderServices(), params.getPeriod(), params.getStrictTerm(),
+                                        params.getOffset(), params.getLimit())
+                        )
+                );
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get terms eagerly for given work station without filtering (eventually paginated)
+                terms = new ResourceList<>( TermWrapper.wrap(termFacade.findByWorkStationEagerly(workStation, params.getOffset(), params.getLimit())) );
+            }
+
+            utx.commit();
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.TermResource.populateWithHATEOASLinks(terms, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(terms).build();
+        }
+
+        /**
+         * Method that counts Term entities for given Work Station resource.
+         * The provider id, service point number and work station number are passed through path params.
+         */
+        @GET
+        @Path("/count")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response countTermsByWorkStation( @PathParam("providerId") Long providerId,
+                                                 @PathParam("servicePointNumber") Integer servicePointNumber,
+                                                 @PathParam("workStationNumber") Integer workStationNumber,
+                                                 @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning number of terms for given work station by executing " +
+                    "WorkStationResource.TermResource.countTermsByWorkStation(providerId, servicePointNumber, workStationNumber) method of REST API");
+
+            utx.begin();
+
+            // find work station entity for which to count terms
+            WorkStation workStation = workStationFacade.find( new WorkStationId(providerId, servicePointNumber, workStationNumber) );
+            if(workStation == null)
+                throw new NotFoundException("Could not find work station for id (" + providerId + "," + servicePointNumber + "," + workStationNumber + ").");
+
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(termFacade.countByWorkStation(workStation)), 200,
+                    "number of terms for work station with id (" + workStation.getServicePoint().getProvider().getUserId() + ","
+                            + workStation.getServicePoint().getServicePointNumber() + "," + workStation.getWorkStationNumber() + ")");
 
             utx.commit();
 
