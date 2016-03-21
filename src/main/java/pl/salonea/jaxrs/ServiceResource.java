@@ -2005,8 +2005,7 @@ public class ServiceResource {
 
     public class TermResource {
 
-        public TermResource() {
-        }
+        public TermResource() { }
 
         /**
          * Method returns subset of Term entities for given Service entity.

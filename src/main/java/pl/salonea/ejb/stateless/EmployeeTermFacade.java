@@ -436,6 +436,8 @@ public class EmployeeTermFacade extends AbstractFacade<EmployeeTerm>
         Join<WorkStation, ProviderService> providerService = null;
         Join<ProviderService, Service> service = null;
 
+        Join<Employee, ProviderService> employeeProviderService = null;
+
         // WHERE PREDICATES
         List<Predicate> predicates = new ArrayList<>();
 
@@ -475,9 +477,12 @@ public class EmployeeTermFacade extends AbstractFacade<EmployeeTerm>
             if(service == null) service = providerService.join(ProviderService_.service);
 
             if(employee == null) employee = employeeTerm.join(EmployeeTerm_.employee);
+            if(employeeProviderService == null) employeeProviderService = employee.join(Employee_.suppliedServices);
 
             // only provider services that are executed on associated work station and by associated employee
-            predicates.add( criteriaBuilder.and(providerService.in(employee.get(Employee_.suppliedServices)), service.in(services)) );
+            /** deprecated: predicates.add( criteriaBuilder.and(providerService.in(employee.get(Employee_.suppliedServices)), service.in(services)) ); **/
+            predicates.add( criteriaBuilder.and( criteriaBuilder.equal(providerService, employeeProviderService),
+                                                 service.in(services) ) );
         }
 
         if(providerServices != null && providerServices.size() > 0) {
@@ -486,9 +491,12 @@ public class EmployeeTermFacade extends AbstractFacade<EmployeeTerm>
             if(providerService == null) providerService = workStation.join(WorkStation_.providedServices);
 
             if(employee == null) employee = employeeTerm.join(EmployeeTerm_.employee);
+            if(employeeProviderService == null) employeeProviderService = employee.join(Employee_.suppliedServices);
 
             // only provider services that are executed on associated work station and by associated employee
-            predicates.add( criteriaBuilder.and(providerService.in(employee.get(Employee_.suppliedServices)), providerService.in(providerServices)) );
+            /** deprecated: predicates.add( criteriaBuilder.and(providerService.in(employee.get(Employee_.suppliedServices)), providerService.in(providerServices)) ); **/
+           predicates.add( criteriaBuilder.and( criteriaBuilder.equal(providerService, employeeProviderService),
+                                                providerService.in(providerServices) ) );
         }
 
         if(period != null) {

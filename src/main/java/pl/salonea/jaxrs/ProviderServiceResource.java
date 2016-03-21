@@ -1,14 +1,8 @@
 package pl.salonea.jaxrs;
 
 
-import pl.salonea.ejb.stateless.EmployeeFacade;
-import pl.salonea.ejb.stateless.ProviderServiceFacade;
-import pl.salonea.ejb.stateless.ServicePointFacade;
-import pl.salonea.ejb.stateless.WorkStationFacade;
-import pl.salonea.entities.Employee;
-import pl.salonea.entities.ProviderService;
-import pl.salonea.entities.ServicePoint;
-import pl.salonea.entities.WorkStation;
+import pl.salonea.ejb.stateless.*;
+import pl.salonea.entities.*;
 import pl.salonea.entities.idclass.ProviderServiceId;
 import pl.salonea.jaxrs.bean_params.*;
 import pl.salonea.jaxrs.exceptions.UnprocessableEntityException;
@@ -16,8 +10,7 @@ import pl.salonea.jaxrs.utils.RESTToolkit;
 import pl.salonea.jaxrs.utils.ResourceList;
 import pl.salonea.jaxrs.utils.ResponseWrapper;
 import pl.salonea.jaxrs.utils.hateoas.Link;
-import pl.salonea.jaxrs.wrappers.EmployeeWrapper;
-import pl.salonea.jaxrs.wrappers.ProviderServiceWrapper;
+import pl.salonea.jaxrs.wrappers.*;
 
 import javax.inject.Inject;
 import javax.transaction.*;
@@ -35,8 +28,6 @@ import java.util.logging.Logger;
 import pl.salonea.jaxrs.exceptions.NotFoundException;
 import pl.salonea.jaxrs.exceptions.ForbiddenException;
 import pl.salonea.jaxrs.exceptions.BadRequestException;
-import pl.salonea.jaxrs.wrappers.ServicePointWrapper;
-import pl.salonea.jaxrs.wrappers.WorkStationWrapper;
 
 import javax.ws.rs.core.Response.Status;
 
@@ -60,6 +51,10 @@ public class ProviderServiceResource {
     private WorkStationFacade workStationFacade;
     @Inject
     private EmployeeFacade employeeFacade;
+    @Inject
+    private EmployeeTermFacade employeeTermFacade;
+    @Inject
+    private TermFacade termFacade;
 
     /* Resource objects */
     @Inject
@@ -267,6 +262,12 @@ public class ProviderServiceResource {
     @Path("/{providerId : \\d+}+{serviceId : \\d+}/employees")
     public EmployeeResource getEmployeeResource() { return new EmployeeResource(); }
 
+    @Path("/{providerId : \\d+}+{serviceId : \\d+}/employee-terms")
+    public EmployeeTermResource getEmployeeTermResource() { return new EmployeeTermResource(); }
+
+    @Path("/{providerId : \\d+}+{serviceId : \\d+}/terms")
+    public TermResource getTermResource() { return new TermResource(); }
+
     /**
      * This method enables to populate list of resources and each individual resource on list
      * with hypermedia links
@@ -307,7 +308,6 @@ public class ProviderServiceResource {
                 ProviderServiceResource.populateWithHATEOASLinks( (ProviderServiceWrapper) object, uriInfo);
             }
         }
-
     }
 
     /**
@@ -518,6 +518,65 @@ public class ProviderServiceResource {
                     .resolveTemplate("serviceId", providerService.getService().getServiceId().toString())
                     .build())
                     .rel("employees-count").build());
+
+            /**
+             * Employee Terms when current Provider Service resource is executed
+             */
+            // employee-terms
+            Method employeeTermsMethod = ProviderServiceResource.class.getMethod("getEmployeeTermResource");
+            providerService.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ProviderServiceResource.class)
+                    .path(employeeTermsMethod)
+                    .resolveTemplate("providerId", providerService.getProvider().getUserId().toString())
+                    .resolveTemplate("serviceId", providerService.getService().getServiceId().toString())
+                    .build())
+                    .rel("employee-terms").build() );
+
+            // employee-terms count
+            Method countEmployeeTermsByProviderServiceMethod = ProviderServiceResource.EmployeeTermResource.class.getMethod("countEmployeeTermsByProviderService", Long.class, Integer.class, GenericBeanParam.class);
+            providerService.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ProviderServiceResource.class)
+                    .path(employeeTermsMethod)
+                    .path(countEmployeeTermsByProviderServiceMethod)
+                    .resolveTemplate("providerId", providerService.getProvider().getUserId().toString())
+                    .resolveTemplate("serviceId", providerService.getService().getServiceId().toString())
+                    .build())
+                    .rel("employee-terms-count").build());
+
+            /**
+             * Terms when current Provider Service resource is executed
+             */
+            // terms
+            Method termsMethod = ProviderServiceResource.class.getMethod("getTermResource");
+            providerService.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ProviderServiceResource.class)
+                    .path(termsMethod)
+                    .resolveTemplate("providerId", providerService.getProvider().getUserId().toString())
+                    .resolveTemplate("serviceId", providerService.getService().getServiceId().toString())
+                    .build())
+                    .rel("terms").build() );
+
+            // terms eagerly
+            Method termsEagerlyMethod = ProviderServiceResource.TermResource.class.getMethod("getProviderServiceTermsEagerly", Long.class, Integer.class, TermBeanParam.class);
+            providerService.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ProviderServiceResource.class)
+                    .path(termsMethod)
+                    .path(termsEagerlyMethod)
+                    .resolveTemplate("providerId", providerService.getProvider().getUserId().toString())
+                    .resolveTemplate("serviceId", providerService.getService().getServiceId().toString())
+                    .build())
+                    .rel("terms-eagerly").build() );
+
+            // terms count
+            Method countTermsByProviderServiceMethod = ProviderServiceResource.TermResource.class.getMethod("countTermsByProviderService", Long.class, Integer.class, GenericBeanParam.class);
+            providerService.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ProviderServiceResource.class)
+                    .path(termsMethod)
+                    .path(countTermsByProviderServiceMethod)
+                    .resolveTemplate("providerId", providerService.getProvider().getUserId().toString())
+                    .resolveTemplate("serviceId", providerService.getService().getServiceId().toString())
+                    .build())
+                    .rel("terms-count").build());
 
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
@@ -1230,4 +1289,242 @@ public class ProviderServiceResource {
         }
     }
 
+    public class EmployeeTermResource {
+
+        public EmployeeTermResource() {
+        }
+
+        /**
+         * Method returns subset of Employee Term entities for given Provider Service entity.
+         * The provider id and service id are passed through path params.
+         * They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getProviderServiceEmployeeTerms(@PathParam("providerId") Long providerId,
+                                                        @PathParam("serviceId") Integer serviceId,
+                                                        @BeanParam EmployeeTermBeanParam params) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning employee terms for given provider service using " +
+                    "ProviderServiceResource.EmployeeTermResource.getProviderServiceEmployeeTerms(providerId, serviceId) method of REST API");
+
+            utx.begin();
+
+            // find provider service entity for which to get associated employee terms
+            ProviderService providerService = providerServiceFacade.find(new ProviderServiceId(providerId, serviceId));
+            if (providerService == null)
+                throw new NotFoundException("Could not find provider service for id (" + providerId + "," + serviceId + ").");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<EmployeeTerm> employeeTerms = null;
+
+            if (noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<ProviderService> providerServices = new ArrayList<>();
+                providerServices.add(providerService);
+
+                // get employee terms for given provider service filtered by given query params
+                employeeTerms = new ResourceList<>(
+                        employeeTermFacade.findByMultipleCriteria(params.getServicePoints(), params.getWorkStations(), params.getEmployees(),
+                                params.getTerms(), params.getServices(), providerServices, params.getPeriod(), params.getStrictTerm(),
+                                params.getOffset(), params.getLimit())
+                );
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get employee terms for given provider service without filtering (eventually paginated)
+                employeeTerms = new ResourceList<>(employeeTermFacade.findByProviderService(providerService, params.getOffset(), params.getLimit()));
+            }
+
+            utx.commit();
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.EmployeeTermResource.populateWithHATEOASLinks(employeeTerms, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(employeeTerms).build();
+        }
+
+        /**
+         * Method that counts Employee Term entities for given Provider Service resource.
+         * The provider id and service id are passed through path params.
+         */
+        @GET
+        @Path("/count")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response countEmployeeTermsByProviderService( @PathParam("providerId") Long providerId,
+                                                             @PathParam("serviceId") Integer serviceId,
+                                                             @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning number of employee terms for given provider service by executing " +
+                    "ProviderServiceResource.EmployeeTermResource.countEmployeeTermsByProviderService(providerId, serviceId) method of REST API");
+
+            utx.begin();
+
+            // find provider service entity for which to count employee terms
+            ProviderService providerService = providerServiceFacade.find(new ProviderServiceId(providerId, serviceId));
+            if (providerService == null)
+                throw new NotFoundException("Could not find provider service for id (" + providerId + "," + serviceId + ").");
+
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(employeeTermFacade.countByProviderService(providerService)), 200,
+                    "number of employee terms for provider service with id (" + providerService.getProvider().getUserId() + "," + providerService.getService().getServiceId() + ")");
+
+            utx.commit();
+
+            return Response.status(Status.OK).entity(responseEntity).build();
+        }
+    }
+
+    public class TermResource {
+
+        public TermResource() { }
+
+        /**
+         * Method returns subset of Term entities for given Provider Service entity.
+         * The provider id and service id are passed through path params.
+         * They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getProviderServiceTerms( @PathParam("providerId") Long providerId,
+                                                 @PathParam("serviceId") Integer serviceId,
+                                                 @BeanParam TermBeanParam params) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning terms for given provider service using " +
+                    "ProviderServiceResource.TermResource.getProviderServiceTerms(providerId, serviceId) method of REST API");
+
+            utx.begin();
+
+            // find provider service entity for which to get associated terms
+            ProviderService providerService = providerServiceFacade.find(new ProviderServiceId(providerId, serviceId));
+            if (providerService == null)
+                throw new NotFoundException("Could not find provider service for id (" + providerId + "," + serviceId + ").");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<Term> terms = null;
+
+            if (noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<ProviderService> providerServices = new ArrayList<>();
+                providerServices.add(providerService);
+
+                // get terms for given provider service filtered by given query params
+                terms = new ResourceList<>(
+                        termFacade.findByMultipleCriteria(params.getServicePoints(), params.getWorkStations(), params.getEmployees(),
+                                params.getServices(), providerServices, params.getPeriod(), params.getStrictTerm(),
+                                params.getOffset(), params.getLimit())
+                );
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get terms for given provider service without filtering (eventually paginated)
+                terms = new ResourceList<>( termFacade.findByProviderService(providerService, params.getOffset(), params.getLimit()) );
+            }
+
+            utx.commit();
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.TermResource.populateWithHATEOASLinks(terms, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(terms).build();
+        }
+
+        /**
+         * Method returns subset of Term entities for given Provider Service fetching them eagerly.
+         * The provider id and service id are passed through path params.
+         * They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Path("/eagerly")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getProviderServiceTermsEagerly( @PathParam("providerId") Long providerId,
+                                                        @PathParam("serviceId") Integer serviceId,
+                                                        @BeanParam TermBeanParam params ) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning terms eagerly for given provider service using " +
+                    "ProviderServiceResource.TermResource.getProviderServiceTermsEagerly(providerId, serviceId) method of REST API");
+
+            utx.begin();
+
+            // find provider service entity for which to get associated terms
+            ProviderService providerService = providerServiceFacade.find(new ProviderServiceId(providerId, serviceId));
+            if (providerService == null)
+                throw new NotFoundException("Could not find provider service for id (" + providerId + "," + serviceId + ").");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<TermWrapper> terms = null;
+
+            if (noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<ProviderService> providerServices = new ArrayList<>();
+                providerServices.add(providerService);
+
+                // get terms eagerly for given provider service filtered by given query params
+                terms = new ResourceList<>(
+                        TermWrapper.wrap(
+                                termFacade.findByMultipleCriteriaEagerly(params.getServicePoints(), params.getWorkStations(), params.getEmployees(),
+                                        params.getServices(), providerServices, params.getPeriod(), params.getStrictTerm(),
+                                        params.getOffset(), params.getLimit())
+                        )
+                );
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get terms eagerly for given provider service without filtering (eventually paginated)
+                terms = new ResourceList<>( TermWrapper.wrap(termFacade.findByProviderServiceEagerly(providerService, params.getOffset(), params.getLimit())) );
+            }
+
+            utx.commit();
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.TermResource.populateWithHATEOASLinks(terms, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(terms).build();
+        }
+
+        /**
+         * Method that counts Term entities for given Provider Service resource.
+         * The provider id and service id are passed through path params.
+         */
+        @GET
+        @Path("/count")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response countTermsByProviderService( @PathParam("providerId") Long providerId,
+                                                     @PathParam("serviceId") Integer serviceId,
+                                                     @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning number of terms for given provider service by executing " +
+                    "ProviderServiceResource.TermResource.countTermsByProviderService(providerId, serviceId) method of REST API");
+
+            utx.begin();
+
+            // find provider service entity for which to count terms
+            ProviderService providerService = providerServiceFacade.find(new ProviderServiceId(providerId, serviceId));
+            if (providerService == null)
+                throw new NotFoundException("Could not find provider service for id (" + providerId + "," + serviceId + ").");
+
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(termFacade.countByProviderService(providerService)), 200,
+                    "number of terms for provider service with id (" + providerService.getProvider().getUserId() + "," + providerService.getService().getServiceId() + ")");
+
+            utx.commit();
+
+            return Response.status(Status.OK).entity(responseEntity).build();
+        }
+    }
 }
