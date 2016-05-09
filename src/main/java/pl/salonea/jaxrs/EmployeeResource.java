@@ -131,7 +131,7 @@ public class EmployeeResource {
 
             utx.begin();
 
-            // get employees filtered by criteria provided in query params
+            // get employees eagerly filtered by criteria provided in query params
             employees = new ResourceList<>(
                     EmployeeWrapper.wrap(
                             employeeFacade.findByMultipleCriteriaEagerly(params.getDescriptions(), params.getJobPositions(), params.getSkills(),
@@ -146,7 +146,7 @@ public class EmployeeResource {
         } else {
             logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
 
-            // get all employees without filtering (eventually paginated)
+            // get all employees eagerly without filtering (eventually paginated)
             employees = new ResourceList<>( EmployeeWrapper.wrap(employeeFacade.findAllEagerly(params.getOffset(), params.getLimit())) );
         }
 

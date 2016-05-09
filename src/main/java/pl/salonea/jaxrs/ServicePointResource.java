@@ -54,6 +54,10 @@ public class ServicePointResource {
     private ServiceFacade serviceFacade;
     @Inject
     private ProviderServiceFacade providerServiceFacade;
+    @Inject
+    private EmployeeTermFacade employeeTermFacade;
+    @Inject
+    private TermFacade termFacade;
 
     @Inject
     private ProviderResource providerResource;
@@ -390,6 +394,12 @@ public class ServicePointResource {
 
     @Path("/{providerId: \\d+}+{servicePointNumber: \\d+}/work-stations")
     public WorkStationResource getWorkStationResource() { return new WorkStationResource(); }
+
+    @Path("/{providerId: \\d+}+{servicePointNumber: \\d+}/employee-terms")
+    public EmployeeTermResource getEmployeeTermResource() { return new EmployeeTermResource(); }
+
+    @Path("/{providerId: \\d+}+{servicePointNumber: \\d+}/terms")
+    public TermResource getTermResource() { return new TermResource(); }
 
     /**
      * This method enables to populate list of resources and each individual resource on list with hypermedia links
@@ -833,6 +843,66 @@ public class ServicePointResource {
                     .resolveTemplate("servicePointNumber", servicePoint.getServicePointNumber().toString())
                     .build())
                     .rel("work-stations-by-term-strict (alternative)").build());
+
+
+            /**
+             * Employee Terms associated with current Service Point resource
+             */
+            // employee-terms
+            Method employeeTermsMethod = ServicePointResource.class.getMethod("getEmployeeTermResource");
+            servicePoint.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ServicePointResource.class)
+                    .path(employeeTermsMethod)
+                    .resolveTemplate("providerId", servicePoint.getProvider().getUserId().toString())
+                    .resolveTemplate("servicePointNumber", servicePoint.getServicePointNumber().toString())
+                    .build())
+                    .rel("employee-terms").build() );
+
+            // employee-terms count
+            Method countEmployeeTermsByServicePointMethod = ServicePointResource.EmployeeTermResource.class.getMethod("countEmployeeTermsByServicePoint", Long.class, Integer.class, GenericBeanParam.class);
+            servicePoint.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ServicePointResource.class)
+                    .path(employeeTermsMethod)
+                    .path(countEmployeeTermsByServicePointMethod)
+                    .resolveTemplate("providerId", servicePoint.getProvider().getUserId().toString())
+                    .resolveTemplate("servicePointNumber", servicePoint.getServicePointNumber().toString())
+                    .build())
+                    .rel("employee-terms-count").build() );
+
+            /**
+             * Terms associated with current Service Point resource
+             */
+            // terms
+            Method termsMethod = ServicePointResource.class.getMethod("getTermResource");
+            servicePoint.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ServicePointResource.class)
+                    .path(termsMethod)
+                    .resolveTemplate("providerId", servicePoint.getProvider().getUserId().toString())
+                    .resolveTemplate("servicePointNumber", servicePoint.getServicePointNumber().toString())
+                    .build())
+                    .rel("terms").build() );
+
+            // terms eagerly
+            Method termsEagerlyMethod = ServicePointResource.TermResource.class.getMethod("getServicePointTermsEagerly", Long.class, Integer.class, TermBeanParam.class);
+            servicePoint.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ServicePointResource.class)
+                    .path(termsMethod)
+                    .path(termsEagerlyMethod)
+                    .resolveTemplate("providerId", servicePoint.getProvider().getUserId().toString())
+                    .resolveTemplate("servicePointNumber", servicePoint.getServicePointNumber().toString())
+                    .build())
+                    .rel("terms-eagerly").build() );
+
+            // terms count
+            Method countTermsByServicePointMethod = ServicePointResource.TermResource.class.getMethod("countTermsByServicePoint", Long.class, Integer.class, GenericBeanParam.class);
+            servicePoint.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ServicePointResource.class)
+                    .path(termsMethod)
+                    .path(countTermsByServicePointMethod)
+                    .resolveTemplate("providerId", servicePoint.getProvider().getUserId().toString())
+                    .resolveTemplate("servicePointNumber", servicePoint.getServicePointNumber().toString())
+                    .build())
+                    .rel("terms-count").build() );
 
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
@@ -1929,5 +1999,243 @@ public class ServicePointResource {
             return providerResource.getServicePointResource()
                     .getWorkStationResource().getServicePointWorkStationsByTermStrict(providerId, servicePointNumber, params);
         }
+    }
+
+    public class EmployeeTermResource {
+
+        public EmployeeTermResource() { }
+
+        /**
+         * Method returns subset of Employee Term entities for given Service Point entity.
+         * The provider id and service point number are passed through path params.
+         * They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getServicePointEmployeeTerms(@PathParam("providerId") Long providerId,
+                                                     @PathParam("servicePointNumber") Integer servicePointNumber,
+                                                     @BeanParam EmployeeTermBeanParam params) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning employee terms for given service point using " +
+                    "ServicePointResource.EmployeeTermResource.getServicePointEmployeeTerms(providerId, servicePointNumber) method of REST API");
+
+            utx.begin();
+
+            // find service point entity for which to get associated employee terms
+            ServicePoint servicePoint = servicePointFacade.find(new ServicePointId(providerId, servicePointNumber));
+            if (servicePoint == null)
+                throw new NotFoundException("Could not find service point for id (" + providerId + "," + servicePointNumber + ").");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<EmployeeTerm> employeeTerms = null;
+
+            if (noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<ServicePoint> servicePoints = new ArrayList<>();
+                servicePoints.add(servicePoint);
+
+                // get employee terms for given service point filtered by given query params
+                employeeTerms = new ResourceList<>(
+                        employeeTermFacade.findByMultipleCriteria(servicePoints, params.getWorkStations(), params.getEmployees(),
+                                params.getTerms(), params.getServices(), params.getProviderServices(), params.getPeriod(), params.getStrictTerm(),
+                                params.getOffset(), params.getLimit())
+                );
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get employee terms for given service point without filtering (eventually paginated)
+                employeeTerms = new ResourceList<>(employeeTermFacade.findByServicePoint(servicePoint, params.getOffset(), params.getLimit()));
+            }
+
+            utx.commit();
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.EmployeeTermResource.populateWithHATEOASLinks(employeeTerms, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(employeeTerms).build();
+        }
+
+        /**
+         * Method that counts Employee Term entities for given Service Point resource.
+         * The provider id and service point number are passed through path params.
+         */
+        @GET
+        @Path("/count")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response countEmployeeTermsByServicePoint(@PathParam("providerId") Long providerId,
+                                                         @PathParam("servicePointNumber") Integer servicePointNumber,
+                                                         @BeanParam GenericBeanParam params) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning number of employee terms for given service point by executing " +
+                    "ServicePointResource.EmployeeTermResource.countEmployeeTermsByServicePoint(providerId, servicePointNumber) method of REST API");
+
+            utx.begin();
+
+            // find service point entity for which to count employee terms
+            ServicePoint servicePoint = servicePointFacade.find(new ServicePointId(providerId, servicePointNumber));
+            if (servicePoint == null)
+                throw new NotFoundException("Could not find service point for id (" + providerId + "," + servicePointNumber + ").");
+
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(employeeTermFacade.countByServicePoint(servicePoint)), 200,
+                    "number of employee terms for service point with id (" + servicePoint.getProvider().getUserId() + "," + servicePoint.getServicePointNumber() + ")");
+
+            utx.commit();
+
+            return Response.status(Status.OK).entity(responseEntity).build();
+        }
+    }
+
+    public class TermResource {
+
+        public TermResource() { }
+
+        /**
+         * Method returns subset of Term entities for given Service Point entity.
+         * The provider id and service point number are passed through path params.
+         * They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getServicePointTerms( @PathParam("providerId") Long providerId,
+                                              @PathParam("servicePointNumber") Integer servicePointNumber,
+                                              @BeanParam TermBeanParam params) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning terms for given service point using " +
+                    "ServicePointResource.TermResource.getServicePointTerms(providerId, servicePointNumber) method of REST API");
+
+            utx.begin();
+
+            // find service point entity for which to get associated terms
+            ServicePoint servicePoint = servicePointFacade.find(new ServicePointId(providerId, servicePointNumber));
+            if (servicePoint == null)
+                throw new NotFoundException("Could not find service point for id (" + providerId + "," + servicePointNumber + ").");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<Term> terms = null;
+
+            if (noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<ServicePoint> servicePoints = new ArrayList<>();
+                servicePoints.add(servicePoint);
+
+                // get terms for given service point filtered by given query params
+                terms = new ResourceList<>(
+                        termFacade.findByMultipleCriteria(servicePoints, params.getWorkStations(), params.getEmployees(),
+                                params.getServices(), params.getProviderServices(), params.getPeriod(), params.getStrictTerm(),
+                                params.getOffset(), params.getLimit())
+                );
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get terms for given service point without filtering (eventually paginated)
+                terms = new ResourceList<>( termFacade.findByServicePoint(servicePoint, params.getOffset(), params.getLimit()) );
+            }
+
+            utx.commit();
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.TermResource.populateWithHATEOASLinks(terms, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(terms).build();
+        }
+
+        /**
+         * Method returns subset of Term entities for given Service Point fetching them eagerly.
+         * The provider id and service point number are passed through path params.
+         * They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Path("/eagerly")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getServicePointTermsEagerly( @PathParam("providerId") Long providerId,
+                                                     @PathParam("servicePointNumber") Integer servicePointNumber,
+                                                     @BeanParam TermBeanParam params ) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning terms eagerly for given service point using " +
+                    "ServicePointResource.TermResource.getServicePointTermsEagerly(providerId, servicePointNumber) method of REST API");
+
+            utx.begin();
+
+            // find service point entity for which to get associated terms
+            ServicePoint servicePoint = servicePointFacade.find(new ServicePointId(providerId, servicePointNumber));
+            if (servicePoint == null)
+                throw new NotFoundException("Could not find service point for id (" + providerId + "," + servicePointNumber + ").");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<TermWrapper> terms = null;
+
+            if (noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<ServicePoint> servicePoints = new ArrayList<>();
+                servicePoints.add(servicePoint);
+
+                // get terms eagerly for given service point filtered by given query params
+                terms = new ResourceList<>(
+                        TermWrapper.wrap(
+                                termFacade.findByMultipleCriteriaEagerly(servicePoints, params.getWorkStations(), params.getEmployees(),
+                                        params.getServices(), params.getProviderServices(), params.getPeriod(), params.getStrictTerm(),
+                                        params.getOffset(), params.getLimit())
+                        )
+                );
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get terms eagerly for given service point without filtering (eventually paginated)
+                terms = new ResourceList<>( TermWrapper.wrap(termFacade.findByServicePointEagerly(servicePoint, params.getOffset(), params.getLimit())) );
+            }
+
+            utx.commit();
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.TermResource.populateWithHATEOASLinks(terms, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(terms).build();
+        }
+
+        /**
+         * Method that counts Term entities for given Service Point resource.
+         * The provider id and service point number are passed through path params.
+         */
+        @GET
+        @Path("/count")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response countTermsByServicePoint( @PathParam("providerId") Long providerId,
+                                                  @PathParam("servicePointNumber") Integer servicePointNumber,
+                                                  @BeanParam GenericBeanParam params) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning number of terms for given service point by executing " +
+                    "ServicePointResource.TermResource.countTermsByServicePoint(providerId, servicePointNumber) method of REST API");
+
+            utx.begin();
+
+            // find service point entity for which to count terms
+            ServicePoint servicePoint = servicePointFacade.find(new ServicePointId(providerId, servicePointNumber));
+            if (servicePoint == null)
+                throw new NotFoundException("Could not find service point for id (" + providerId + "," + servicePointNumber + ").");
+
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(termFacade.countByServicePoint(servicePoint)), 200,
+                    "number of terms for service point with id (" + servicePoint.getProvider().getUserId() + "," + servicePoint.getServicePointNumber() + ")");
+
+            utx.commit();
+
+            return Response.status(Status.OK).entity(responseEntity).build();
+        }
+
     }
 }

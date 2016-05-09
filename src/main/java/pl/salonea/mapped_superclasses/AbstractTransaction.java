@@ -1,14 +1,21 @@
 package pl.salonea.mapped_superclasses;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import pl.salonea.constraints.BookedTimeInTerm;
 import pl.salonea.constraints.ChronologicalDates;
 import pl.salonea.entities.*;
 import pl.salonea.entities.idclass.TransactionId;
 import pl.salonea.enums.CurrencyCode;
+import pl.salonea.jaxrs.utils.hateoas.Link;
 
 import javax.persistence.*;
 import javax.validation.constraints.*;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlElementWrapper;
+import javax.xml.bind.annotation.XmlTransient;
 import java.util.Date;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 @MappedSuperclass
@@ -37,6 +44,9 @@ public abstract class AbstractTransaction {
     private Term term;
 
     private Set<Employee> employees;
+
+    // HATEOAS support for RESTFul web service in JAX-RS
+    private LinkedHashSet<Link> links = new LinkedHashSet<>();
 
     /* constructors */
 
@@ -233,6 +243,7 @@ public abstract class AbstractTransaction {
 
     /* many-to-many relationships */
 
+    @XmlTransient
     @NotNull
     @ManyToMany
     @JoinTable(name = "transaction_executed_by",
@@ -249,5 +260,41 @@ public abstract class AbstractTransaction {
 
     public void setEmployees(Set<Employee> employees) {
         this.employees = employees;
+    }
+
+    @Override
+    public int hashCode() {
+
+        return new HashCodeBuilder(17, 31) // two randomly chosen prime numbers
+                // if deriving: .appendSuper(super.hashCode())
+                .append(getClient())
+                .append(getTransactionNumber())
+                .toHashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if(obj == null || !(obj instanceof AbstractTransaction))
+            return false;
+        if(obj == this)
+            return true;
+
+        AbstractTransaction rhs = (AbstractTransaction) obj;
+        return new EqualsBuilder()
+                // if deriving: .appendSuper(super.equals(obj))
+                .append(getClient(), rhs.getClient())
+                .append(getTransactionNumber(), rhs.getTransactionNumber())
+                .isEquals();
+    }
+
+    @Transient
+    @XmlElementWrapper(name = "links")
+    @XmlElement(name = "link")
+    public LinkedHashSet<Link> getLinks() {
+        return links;
+    }
+
+    public void setLinks(LinkedHashSet<Link> links) {
+        this.links = links;
     }
 }
