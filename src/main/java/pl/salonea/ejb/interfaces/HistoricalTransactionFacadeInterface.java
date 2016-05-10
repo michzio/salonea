@@ -150,20 +150,20 @@ public interface HistoricalTransactionFacadeInterface extends AbstractFacadeInte
     List<HistoricalTransaction> findByMultipleCriteria(List<Client> clients, List<Provider> providers, List<Service> services, List<ServicePoint> servicePoints, List<WorkStation> workStations,
                                                        List<Employee> employees, List<ProviderService> providerServices, Period transactionTimePeriod, Period bookedTimePeriod, List<Term> terms,
                                                        PriceRange priceRange, List<CurrencyCode> currencyCodes, List<PaymentMethod> paymentMethods,  Boolean paid,
-                                                       List<TransactionCompletionStatus> completionStatuses, RatingRange clientRatingRange, String clientComment, RatingRange providerRatingRange, String providerDementi);
+                                                       List<TransactionCompletionStatus> completionStatuses, RatingRange clientRatingRange, List<String> clientComments, RatingRange providerRatingRange, List<String> providerDementis);
     List<HistoricalTransaction> findByMultipleCriteria(List<Client> clients, List<Provider> providers, List<Service> services, List<ServicePoint> servicePoints, List<WorkStation> workStations,
                                                        List<Employee> employees, List<ProviderService> providerServices, Period transactionTimePeriod, Period bookedTimePeriod, List<Term> terms,
                                                        PriceRange priceRange, List<CurrencyCode> currencyCodes, List<PaymentMethod> paymentMethods,  Boolean paid,
-                                                       List<TransactionCompletionStatus> completionStatuses, RatingRange clientRatingRange, String clientComment, RatingRange providerRatingRange, String providerDementi,
+                                                       List<TransactionCompletionStatus> completionStatuses, RatingRange clientRatingRange, List<String> clientComments, RatingRange providerRatingRange, List<String> providerDementis,
                                                        Integer start, Integer limit);
     List<HistoricalTransaction> findByMultipleCriteriaEagerly(List<Client> clients, List<Provider> providers, List<Service> services, List<ServicePoint> servicePoints, List<WorkStation> workStations,
                                                        List<Employee> employees, List<ProviderService> providerServices, Period transactionTimePeriod, Period bookedTimePeriod, List<Term> terms,
                                                        PriceRange priceRange, List<CurrencyCode> currencyCodes, List<PaymentMethod> paymentMethods,  Boolean paid,
-                                                       List<TransactionCompletionStatus> completionStatuses, RatingRange clientRatingRange, String clientComment, RatingRange providerRatingRange, String providerDementi);
+                                                       List<TransactionCompletionStatus> completionStatuses, RatingRange clientRatingRange, List<String> clientComments, RatingRange providerRatingRange, List<String> providerDementis);
     List<HistoricalTransaction> findByMultipleCriteriaEagerly(List<Client> clients, List<Provider> providers, List<Service> services, List<ServicePoint> servicePoints, List<WorkStation> workStations,
                                                        List<Employee> employees, List<ProviderService> providerServices, Period transactionTimePeriod, Period bookedTimePeriod, List<Term> terms,
                                                        PriceRange priceRange, List<CurrencyCode> currencyCodes, List<PaymentMethod> paymentMethods,  Boolean paid,
-                                                       List<TransactionCompletionStatus> completionStatuses, RatingRange clientRatingRange, String clientComment, RatingRange providerRatingRange, String providerDementi,
+                                                       List<TransactionCompletionStatus> completionStatuses, RatingRange clientRatingRange, List<String> clientComments, RatingRange providerRatingRange, List<String> providerDementis,
                                                        Integer start, Integer limit);
 
     Long countByClient(Client client);
