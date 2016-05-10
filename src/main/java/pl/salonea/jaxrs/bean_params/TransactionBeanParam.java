@@ -1,15 +1,17 @@
 package pl.salonea.jaxrs.bean_params;
 
 import pl.salonea.ejb.stateless.*;
-import pl.salonea.entities.WorkStation;
+import pl.salonea.entities.*;
 import pl.salonea.entities.idclass.ProviderServiceId;
 import pl.salonea.entities.idclass.ServicePointId;
 import pl.salonea.entities.idclass.WorkStationId;
 import pl.salonea.enums.CurrencyCode;
+import pl.salonea.jaxrs.exceptions.NotFoundException;
 import pl.salonea.jaxrs.utils.RESTDateTime;
 
 import javax.inject.Inject;
 import javax.ws.rs.QueryParam;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -34,8 +36,6 @@ public class TransactionBeanParam extends PaginationBeanParam {
     private @QueryParam("currencyCode") List<CurrencyCode> currencyCodes;
     private @QueryParam("paymentMethodId") List<Integer> paymentMethodIds;
     private @QueryParam("paid") Boolean paid;
-
-    // TODO
 
     @Inject
     private ClientFacade clientFacade;
@@ -64,12 +64,30 @@ public class TransactionBeanParam extends PaginationBeanParam {
         this.clientIds = clientIds;
     }
 
+    public List<Client> getClients() throws NotFoundException {
+        if(getClientIds() != null && getClientIds().size() > 0) {
+            final List<Client> clients = clientFacade.find( new ArrayList<>(getClientIds()) );
+            if(clients.size() != getClientIds().size()) throw new NotFoundException("Could not find clients for all provided ids.");
+            return clients;
+        }
+        return null;
+    }
+
     public List<Long> getProviderIds() {
         return providerIds;
     }
 
     public void setProviderIds(List<Long> providerIds) {
         this.providerIds = providerIds;
+    }
+
+    public List<Provider> getProviders() throws NotFoundException {
+        if(getProviderIds() != null && getProviderIds().size() > 0) {
+            final List<Provider> providers = providerFacade.find( new ArrayList<>(getProviderIds()) );
+            if(providers.size() != getProviderIds().size()) throw new NotFoundException("Could not find providers for all provided ids.");
+            return providers;
+        }
+        return null;
     }
 
     public List<Integer> getServiceIds() {
@@ -80,12 +98,30 @@ public class TransactionBeanParam extends PaginationBeanParam {
         this.serviceIds = serviceIds;
     }
 
+    public List<Service> getServices() throws NotFoundException {
+        if(getServiceIds() != null && getServiceIds().size() > 0) {
+            final List<Service> services = serviceFacade.find( new ArrayList<>(getServiceIds()) );
+            if(services.size() != getServiceIds().size()) throw new NotFoundException("Could not find services for all provided ids.");
+            return services;
+        }
+        return null;
+    }
+
     public List<ServicePointId> getServicePointIds() {
         return servicePointIds;
     }
 
     public void setServicePointIds(List<ServicePointId> servicePointIds) {
         this.servicePointIds = servicePointIds;
+    }
+
+    public List<ServicePoint> getServicePoints() throws NotFoundException {
+        if(getServicePointIds() != null && getServicePointIds().size() > 0) {
+            final List<ServicePoint> servicePoints = servicePointFacade.find( new ArrayList<>(getServicePointIds()) );
+            if(servicePoints.size() != getServicePointIds().size()) throw new NotFoundException("Could not find service points for all provided ids.");
+            return servicePoints;
+        }
+        return null;
     }
 
     public List<WorkStationId> getWorkStationIds() {
@@ -96,6 +132,15 @@ public class TransactionBeanParam extends PaginationBeanParam {
         this.workStationIds = workStationIds;
     }
 
+    public List<WorkStation> getWorkStations() throws NotFoundException {
+        if(getWorkStationIds() != null && getWorkStationIds().size() > 0) {
+            final List<WorkStation> workStations = workStationFacade.find( new ArrayList<>(getWorkStationIds()) );
+            if(workStations.size() != getWorkStationIds().size()) throw new NotFoundException("Could not find work stations for all provided ids.");
+            return workStations;
+        }
+        return null;
+    }
+
     public List<Long> getEmployeeIds() {
         return employeeIds;
     }
@@ -104,12 +149,30 @@ public class TransactionBeanParam extends PaginationBeanParam {
         this.employeeIds = employeeIds;
     }
 
+    public List<Employee> getEmployees() throws NotFoundException {
+        if(getEmployeeIds() != null && getEmployeeIds().size() > 0) {
+            final List<Employee> employees = employeeFacade.find( new ArrayList<>(getEmployeeIds()) );
+            if(employees.size() != getEmployeeIds().size()) throw new NotFoundException("Could not find employees for all provided ids.");
+            return employees;
+        }
+        return null;
+    }
+
     public List<ProviderServiceId> getProviderServiceIds() {
         return providerServiceIds;
     }
 
     public void setProviderServiceIds(List<ProviderServiceId> providerServiceIds) {
         this.providerServiceIds = providerServiceIds;
+    }
+
+    public List<ProviderService> getProviderServices() throws NotFoundException {
+        if(getProviderServiceIds() != null && getProviderServiceIds().size() > 0) {
+            final List<ProviderService> providerServices = providerServiceFacade.find( new ArrayList<>(getProviderServiceIds()) );
+            if(providerServices.size() != getProviderServiceIds().size()) throw new NotFoundException("Could not find provider services for all provided ids.");
+            return providerServices;
+        }
+        return null;
     }
 
     public RESTDateTime getTransactionTimeAfter() {
@@ -152,6 +215,15 @@ public class TransactionBeanParam extends PaginationBeanParam {
         this.termIds = termIds;
     }
 
+    public List<Term> getTerms() throws NotFoundException {
+        if(getTermIds() != null && getTermIds().size() > 0) {
+            final List<Term> terms = termFacade.find( new ArrayList<>(getTermIds()) );
+            if(terms.size() != getTermIds().size()) throw new NotFoundException("Could not find terms for all provided ids.");
+            return terms;
+        }
+        return null;
+    }
+
     public Double getMinPrice() {
         return minPrice;
     }
@@ -182,6 +254,15 @@ public class TransactionBeanParam extends PaginationBeanParam {
 
     public void setPaymentMethodIds(List<Integer> paymentMethodIds) {
         this.paymentMethodIds = paymentMethodIds;
+    }
+
+    public List<PaymentMethod> getPaymentMethods() throws NotFoundException {
+        if(getPaymentMethodIds() != null && getPaymentMethodIds().size() > 0) {
+            final List<PaymentMethod> paymentMethods = paymentMethodFacade.find( new ArrayList<>(getPaymentMethodIds()) );
+            if(paymentMethods.size() != getPaymentMethodIds().size()) throw new NotFoundException("Could not find payment methods for all provided ids.");
+            return paymentMethods;
+        }
+        return null;
     }
 
     public Boolean getPaid() {
