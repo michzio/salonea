@@ -13,7 +13,7 @@ import java.util.Date;
 
 @XmlRootElement(name = "transaction")
 @XmlAccessorType(XmlAccessType.PROPERTY)
-@XmlType(propOrder = {"client", "transactionNumber", "price", "priceCurrencyCode", "transactionTime", "bookedTime", "paid", "providerService", "provider", "service", "servicePoint", "workStation", "paymentMethod", "term"})
+@XmlType(propOrder = {"client", "transactionNumber", "price", "priceCurrencyCode", "transactionTime", "bookedTime", "paid", "providerService", "provider", "service", "servicePoint", "workStation", "paymentMethod", "term", "links"})
 
 @Entity
 @Table(name = "transaction")

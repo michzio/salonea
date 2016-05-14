@@ -486,7 +486,7 @@ public class HistoricalTransactionFacade extends AbstractFacade<HistoricalTransa
 
         TypedQuery<HistoricalTransaction> query = getEntityManager().createNamedQuery(HistoricalTransaction.FIND_BY_CLIENT_AND_CLIENT_COMMENT, HistoricalTransaction.class);
         query.setParameter("client", client);
-        query.setParameter("client_comment", clientComment);
+        query.setParameter("client_comment", "%" + clientComment + "%");
         if (start != null && limit != null) {
             query.setFirstResult(start);
             query.setMaxResults(limit);
@@ -523,7 +523,7 @@ public class HistoricalTransactionFacade extends AbstractFacade<HistoricalTransa
 
         TypedQuery<HistoricalTransaction> query = getEntityManager().createNamedQuery(HistoricalTransaction.FIND_BY_CLIENT_AND_PROVIDER_DEMENTI, HistoricalTransaction.class);
         query.setParameter("client", client);
-        query.setParameter("provider_dementi", providerDementi);
+        query.setParameter("provider_dementi", "%" + providerDementi + "%");
         if (start != null && limit != null) {
             query.setFirstResult(start);
             query.setMaxResults(limit);
