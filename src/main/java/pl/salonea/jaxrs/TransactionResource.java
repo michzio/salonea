@@ -7,6 +7,7 @@ import pl.salonea.jaxrs.bean_params.GenericBeanParam;
 import pl.salonea.jaxrs.bean_params.TransactionBeanParam;
 import pl.salonea.jaxrs.utils.ResourceList;
 import pl.salonea.jaxrs.utils.hateoas.Link;
+import pl.salonea.jaxrs.wrappers.TransactionWrapper;
 
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
