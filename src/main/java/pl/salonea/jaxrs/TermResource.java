@@ -1,9 +1,8 @@
 package pl.salonea.jaxrs;
 
 import pl.salonea.ejb.stateless.*;
-import pl.salonea.entities.EmployeeTerm;
-import pl.salonea.entities.HistoricalTransaction;
-import pl.salonea.entities.Term;
+import pl.salonea.entities.*;
+import pl.salonea.entities.Transaction;
 import pl.salonea.jaxrs.bean_params.*;
 import pl.salonea.jaxrs.exceptions.*;
 import pl.salonea.jaxrs.exceptions.BadRequestException;
@@ -813,12 +812,50 @@ public class TermResource {
         @GET
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
         public Response getTermTransactions( @PathParam("termId") Long termId,
-                                             @BeanParam TransactionBeanParam params ) throws ForbiddenException, NotFoundException {
+                                             @BeanParam TransactionBeanParam params ) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
 
             RESTToolkit.authorizeAccessToWebService(params);
             logger.log(Level.INFO, "returning transactions for given term using " +
                     "TermResource.TransactionResource.getTermTransactions(termId) method of REST API");
 
+            // find term entity for which to get associated transactions
+            Term term = termFacade.find(termId);
+            if(term == null)
+                throw new NotFoundException("Could not find term for id " + termId + ".");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<Transaction> transactions = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Term> terms = new ArrayList<>();
+                terms.add(term);
+
+                // get transactions for given term filtered by given query params
+
+                utx.begin();
+
+                transactions = new ResourceList<>(
+                        transactionFacade.findByMultipleCriteria(params.getClients(), params.getProviders(), params.getServices(), params.getServicePoints(),
+                                params.getWorkStations(), params.getEmployees(), params.getProviderServices(), params.getTransactionTimePeriod(),
+                                params.getBookedTimePeriod(), terms, params.getPriceRange(), params.getCurrencyCodes(), params.getPaymentMethods(),
+                                params.getPaid(), params.getOffset(), params.getLimit())
+                );
+
+                utx.commit();
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get transactions for given term without filtering (eventually paginated)
+                transactions = new ResourceList<>( transactionFacade.findByTerm(term, params.getOffset(), params.getLimit()) );
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            // TODO pl.salonea.jaxrs.TransactionResource.
 
             return null;
         }

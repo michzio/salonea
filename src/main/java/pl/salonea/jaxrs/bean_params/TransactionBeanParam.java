@@ -8,6 +8,8 @@ import pl.salonea.entities.idclass.WorkStationId;
 import pl.salonea.enums.CurrencyCode;
 import pl.salonea.jaxrs.exceptions.NotFoundException;
 import pl.salonea.jaxrs.utils.RESTDateTime;
+import pl.salonea.utils.Period;
+import pl.salonea.utils.PriceRange;
 
 import javax.inject.Inject;
 import javax.ws.rs.QueryParam;
@@ -191,6 +193,10 @@ public class TransactionBeanParam extends PaginationBeanParam {
         this.transactionTimeBefore = transactionTimeBefore;
     }
 
+    public Period getTransactionTimePeriod() {
+        return new Period(getTransactionTimeAfter(), getTransactionTimeBefore());
+    }
+
     public RESTDateTime getBookedTimeAfter() {
         return bookedTimeAfter;
     }
@@ -205,6 +211,10 @@ public class TransactionBeanParam extends PaginationBeanParam {
 
     public void setBookedTimeBefore(RESTDateTime bookedTimeBefore) {
         this.bookedTimeBefore = bookedTimeBefore;
+    }
+
+    public Period getBookedTimePeriod() {
+        return new Period(getBookedTimeAfter(), getBookedTimeBefore());
     }
 
     public List<Long> getTermIds() {
@@ -238,6 +248,10 @@ public class TransactionBeanParam extends PaginationBeanParam {
 
     public void setMaxPrice(Double maxPrice) {
         this.maxPrice = maxPrice;
+    }
+
+    public PriceRange getPriceRange() {
+        return new PriceRange(getMinPrice(), getMaxPrice());
     }
 
     public List<CurrencyCode> getCurrencyCodes() {

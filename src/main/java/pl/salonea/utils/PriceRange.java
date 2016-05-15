@@ -8,7 +8,7 @@ public class PriceRange {
     private Double minPrice;
     private Double maxPrice;
 
-    PriceRange(Double minPrice, Double maxPrice) {
+    public PriceRange(Double minPrice, Double maxPrice) {
         this.minPrice = minPrice;
         this.maxPrice = maxPrice;
     }
