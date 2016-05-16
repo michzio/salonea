@@ -14,6 +14,7 @@ import pl.salonea.jaxrs.utils.ResourceList;
 import pl.salonea.jaxrs.utils.ResponseWrapper;
 import pl.salonea.jaxrs.utils.hateoas.Link;
 import pl.salonea.jaxrs.wrappers.TermWrapper;
+import pl.salonea.jaxrs.wrappers.TransactionWrapper;
 
 import javax.ejb.EJBException;
 import javax.ejb.EJBTransactionRolledbackException;
@@ -652,10 +653,33 @@ public class TermResource {
              * Transactions associated with current Term resource
              */
             // transactions
+            Method transactionsMethod = TermResource.class.getMethod("getTransactionResource");
+            term.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(TermResource.class)
+                    .path(transactionsMethod)
+                    .resolveTemplate("termId", term.getTermId().toString())
+                    .build())
+                    .rel("transactions").build() );
 
             // transactions eagerly
+            Method transactionsEagerlyMethod = TermResource.TransactionResource.class.getMethod("getTermTransactionsEagerly", Long.class, TransactionBeanParam.class);
+            term.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(TermResource.class)
+                    .path(transactionsMethod)
+                    .path(transactionsEagerlyMethod)
+                    .resolveTemplate("termId", term.getTermId().toString())
+                    .build())
+                    .rel("transactions-eagerly").build() );
 
             // transactions count
+            Method countTransactionsByTermMethod = TermResource.TransactionResource.class.getMethod("countTransactionsByTerm", Long.class, GenericBeanParam.class);
+            term.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(TermResource.class)
+                    .path(transactionsMethod)
+                    .path(countTransactionsByTermMethod)
+                    .resolveTemplate("termId", term.getTermId().toString())
+                    .build())
+                    .rel("transactions-count").build() );
 
             /**
              * Historical Transactions associated with current Term resource
@@ -855,12 +879,93 @@ public class TermResource {
             }
 
             // result resources need to be populated with hypermedia links to enable resource discovery
-            // TODO pl.salonea.jaxrs.TransactionResource.
+            pl.salonea.jaxrs.TransactionResource.populateWithHATEOASLinks(transactions, params.getUriInfo(), params.getOffset(), params.getLimit());
 
-            return null;
+            return Response.status(Status.OK).entity(transactions).build();
         }
 
-        // TODO
+        /**
+         * Method returns subset of Transaction entities for given Term fetching them eagerly.
+         * The term id is passed through path param.
+         * They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Path("/eagerly")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getTermTransactionsEagerly( @PathParam("termId") Long termId,
+                                                    @BeanParam TransactionBeanParam params ) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning transactions eagerly for given term using " +
+                    "TermResource.TransactionResource.getTermTransactionsEagerly(termId) method of REST API");
+
+            // find term entity for which to get associated transactions
+            Term term = termFacade.find(termId);
+            if(term == null)
+                throw new NotFoundException("Could not find term for id " + termId + ".");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<TransactionWrapper> transactions = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Term> terms = new ArrayList<>();
+                terms.add(term);
+
+                // get transactions eagerly for given term filtered by given query params
+
+                utx.begin();
+
+                transactions = new ResourceList<>(
+                        TransactionWrapper.wrap(
+                                transactionFacade.findByMultipleCriteriaEagerly(params.getClients(), params.getProviders(), params.getServices(),
+                                        params.getServicePoints(), params.getWorkStations(), params.getEmployees(), params.getProviderServices(),
+                                        params.getTransactionTimePeriod(), params.getBookedTimePeriod(), terms, params.getPriceRange(),
+                                        params.getCurrencyCodes(), params.getPaymentMethods(), params.getPaid(), params.getOffset(), params.getLimit())
+                        )
+                );
+
+                utx.commit();
+
+            }  else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get transactions eagerly for given term without filtering (eventually paginated)
+                transactions = new ResourceList<>( TransactionWrapper.wrap(transactionFacade.findByTermEagerly(term, params.getOffset(), params.getLimit())) );
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.TransactionResource.populateWithHATEOASLinks(transactions, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(transactions).build();
+        }
+
+        /**
+         * Method that counts Transaction entities for given Term resource.
+         * The term id is passed through path param.
+         */
+        @GET
+        @Path("/count")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response countTransactionsByTerm( @PathParam("termId") Long termId,
+                                                 @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning number of transactions for given term by executing " +
+                    "TermResource.TransactionResource.countTransactionsByTerm(termId) method of REST API");
+
+            // find term entity for which to count transactions
+            Term term = termFacade.find(termId);
+            if(term == null)
+                throw new NotFoundException("Could not find term for id " + termId + ".");
+
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(transactionFacade.countByTerm(term)), 200,
+                    "number of transactions for term with id " + term.getTermId());
+            return Response.status(Status.OK).entity(responseEntity).build();
+        }
     }
 
     public class HistoricalTransactionResource {

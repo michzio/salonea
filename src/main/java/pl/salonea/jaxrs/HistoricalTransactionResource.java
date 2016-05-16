@@ -5,7 +5,6 @@ import pl.salonea.entities.Employee;
 import pl.salonea.entities.HistoricalTransaction;
 import pl.salonea.jaxrs.bean_params.GenericBeanParam;
 import pl.salonea.jaxrs.bean_params.HistoricalTransactionBeanParam;
-import pl.salonea.jaxrs.bean_params.TransactionBeanParam;
 import pl.salonea.jaxrs.utils.ResourceList;
 import pl.salonea.jaxrs.utils.hateoas.Link;
 import pl.salonea.jaxrs.wrappers.HistoricalTransactionWrapper;
@@ -121,7 +120,7 @@ public class HistoricalTransactionResource {
             // associated collections links with pattern: http://localhost:port/app/rest/{resources}/{id1}+{id2}/{relationship}
 
             /**
-             * Employees executing current Transaction resource
+             * Employees that executed current HistoricalTransaction resource
              */
             // employees
 
