@@ -25,6 +25,7 @@ import java.util.Set;
 // @ProviderServiceExists
 // @ProviderServiceSuppliedOnWorkStation
 // @EmployeeWorksOnWorkStationInGivenTerm
+@Access(AccessType.PROPERTY)
 public abstract class AbstractTransaction {
     private Client client; // PK, FK
     private Integer transactionNumber; // PK
@@ -133,7 +134,6 @@ public abstract class AbstractTransaction {
         this.transactionTime = transactionTime;
     }
 
-    @Future
     @NotNull
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "booked_time", nullable = false, columnDefinition = "DATETIME")

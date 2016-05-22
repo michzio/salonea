@@ -869,8 +869,8 @@ public class WorkStationResource {
                 employees = new ResourceList<>(
                         employeeFacade.findByMultipleCriteria(params.getDescriptions(), params.getJobPositions(), params.getSkills(),
                                 params.getEducations(), params.getServices(), params.getProviderServices(), params.getServicePoints(),
-                                workStations, params.getPeriod(), params.getStrictTerm(), params.getRated(), params.getMinAvgRating(),
-                                params.getMaxAvgRating(), params.getRatingClients(), params.getOffset(), params.getLimit())
+                                workStations, params.getPeriod(), params.getStrictTerm(),  params.getTerms(), params.getRated(),
+                                params.getMinAvgRating(), params.getMaxAvgRating(), params.getRatingClients(), params.getOffset(), params.getLimit())
                 );
             } else {
                 logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
@@ -927,8 +927,8 @@ public class WorkStationResource {
                         EmployeeWrapper.wrap(
                                 employeeFacade.findByMultipleCriteriaEagerly(params.getDescriptions(), params.getJobPositions(), params.getSkills(),
                                         params.getEducations(), params.getServices(), params.getProviderServices(), params.getServicePoints(),
-                                        workStations, params.getPeriod(), params.getStrictTerm(), params.getRated(), params.getMinAvgRating(),
-                                        params.getMaxAvgRating(), params.getRatingClients(), params.getOffset(), params.getLimit())
+                                        workStations, params.getPeriod(), params.getStrictTerm(),  params.getTerms(), params.getRated(),
+                                        params.getMinAvgRating(), params.getMaxAvgRating(), params.getRatingClients(), params.getOffset(), params.getLimit())
                         )
                 );
             } else {

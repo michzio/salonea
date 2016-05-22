@@ -1614,7 +1614,7 @@ public class ServiceResource {
                 employees = new ResourceList<>(
                         employeeFacade.findByMultipleCriteria(params.getDescriptions(), params.getJobPositions(), params.getSkills(),
                                 params.getEducations(), services, params.getProviderServices(), params.getServicePoints(),
-                                params.getWorkStations(), params.getPeriod(), params.getStrictTerm(), params.getRated(),
+                                params.getWorkStations(), params.getPeriod(), params.getStrictTerm(), params.getTerms(), params.getRated(),
                                 params.getMinAvgRating(), params.getMaxAvgRating(), params.getRatingClients(), params.getOffset(), params.getLimit())
                 );
 
@@ -1669,7 +1669,7 @@ public class ServiceResource {
                         EmployeeWrapper.wrap(
                                 employeeFacade.findByMultipleCriteriaEagerly(params.getDescriptions(), params.getJobPositions(), params.getSkills(),
                                         params.getEducations(), services, params.getProviderServices(), params.getServicePoints(),
-                                        params.getWorkStations(), params.getPeriod(), params.getStrictTerm(), params.getRated(),
+                                        params.getWorkStations(), params.getPeriod(), params.getStrictTerm(), params.getTerms(), params.getRated(),
                                         params.getMinAvgRating(), params.getMaxAvgRating(), params.getRatingClients(), params.getOffset(), params.getLimit())
                         )
                 );

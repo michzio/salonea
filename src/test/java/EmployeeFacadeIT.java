@@ -232,7 +232,7 @@ public class EmployeeFacadeIT {
                         desiredEducations.add(stanfordUniversity);
         List<String> descriptions = new ArrayList<>();
         descriptions.add("Developer");
-        List<Employee> multiEmployees = employeeFacade.findByMultipleCriteria(descriptions, null, desiredSkills, desiredEducations, null, null, null, null, null, null, null, null, null, null);
+        List<Employee> multiEmployees = employeeFacade.findByMultipleCriteria(descriptions, null, desiredSkills, desiredEducations, null, null, null, null, null, null, null, null, null, null, null);
         assertTrue("There should be only one employee matching given criteria.", multiEmployees.size() == 1);
         assertTrue(multiEmployees.contains(employee3));
 

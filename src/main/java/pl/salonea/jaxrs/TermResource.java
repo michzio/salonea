@@ -13,6 +13,8 @@ import pl.salonea.jaxrs.utils.RESTToolkit;
 import pl.salonea.jaxrs.utils.ResourceList;
 import pl.salonea.jaxrs.utils.ResponseWrapper;
 import pl.salonea.jaxrs.utils.hateoas.Link;
+import pl.salonea.jaxrs.wrappers.EmployeeWrapper;
+import pl.salonea.jaxrs.wrappers.HistoricalTransactionWrapper;
 import pl.salonea.jaxrs.wrappers.TermWrapper;
 import pl.salonea.jaxrs.wrappers.TransactionWrapper;
 
@@ -589,12 +591,11 @@ public class TermResource {
         for(EmployeeTerm employeeTerm : termWrapper.getEmployeeTerms())
             pl.salonea.jaxrs.EmployeeTermResource.populateWithHATEOASLinks(employeeTerm, uriInfo);
 
-   // TODO UNCOMMENT WHEN DONE!
-   //     for(Transaction transaction : termWrapper.getTransactions())
-   //         pl.salonea.jaxrs.TransactionResource.populateWithHATEOASLinks(transaction, uriInfo);
+        for(Transaction transaction : termWrapper.getTransactions())
+            pl.salonea.jaxrs.TransactionResource.populateWithHATEOASLinks(transaction, uriInfo);
 
-   //     for(HistoricalTransaction historicalTransaction : termWrapper.getHistoricalTransactions())
-   //         pl.salonea.jaxrs.HistoricalTransactionResource.populateWithHATEOASLinks(historicalTransaction, uriInfo);
+        for(HistoricalTransaction historicalTransaction : termWrapper.getHistoricalTransactions())
+            pl.salonea.jaxrs.HistoricalTransactionResource.populateWithHATEOASLinks(historicalTransaction, uriInfo);
     }
 
     /**
@@ -685,19 +686,65 @@ public class TermResource {
              * Historical Transactions associated with current Term resource
              */
             // historical-transactions
+            Method historicalTransactionsMethod = TermResource.class.getMethod("getHistoricalTransactionResource");
+            term.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(TermResource.class)
+                    .path(historicalTransactionsMethod)
+                    .resolveTemplate("termId", term.getTermId().toString())
+                    .build())
+                    .rel("historical-transactions").build() );
 
             // historical-transactions eagerly
+            Method historicalTransactionsEagerlyMethod = TermResource.HistoricalTransactionResource.class.getMethod("getTermHistoricalTransactionsEagerly", Long.class, HistoricalTransactionBeanParam.class);
+            term.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(TermResource.class)
+                    .path(historicalTransactionsMethod)
+                    .path(historicalTransactionsEagerlyMethod)
+                    .resolveTemplate("termId", term.getTermId().toString())
+                    .build())
+                    .rel("historical-transactions-eagerly").build());
 
             // historical-transactions count
+            Method countHistoricalTransactionsByTermMethod = TermResource.HistoricalTransactionResource.class.getMethod("countHistoricalTransactionsByTerm", Long.class, GenericBeanParam.class);
+            term.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(TermResource.class)
+                    .path(historicalTransactionsMethod)
+                    .path(countHistoricalTransactionsByTermMethod)
+                    .resolveTemplate("termId", term.getTermId().toString())
+                    .build())
+                    .rel("historical-transactions-count").build());
 
             /**
              * Employees working during current Term resource
              */
             // employees
+            Method employeesMethod = TermResource.class.getMethod("getEmployeeResource");
+            term.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(TermResource.class)
+                    .path(employeesMethod)
+                    .resolveTemplate("termId", term.getTermId().toString())
+                    .build())
+                    .rel("employees").build() );
 
             // employees eagerly
+            Method employeesEagerlyMethod = TermResource.EmployeeResource.class.getMethod("getTermEmployeesEagerly", Long.class, EmployeeBeanParam.class);
+            term.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(TermResource.class)
+                    .path(employeesMethod)
+                    .path(employeesEagerlyMethod)
+                    .resolveTemplate("termId", term.getTermId().toString())
+                    .build())
+                    .rel("employees-eagerly").build() );
 
             // employees count
+            Method countEmployeesByTermMethod = TermResource.EmployeeResource.class.getMethod("countEmployeesByTerm", Long.class, GenericBeanParam.class);
+            term.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(TermResource.class)
+                    .path(employeesMethod)
+                    .path(countEmployeesByTermMethod)
+                    .resolveTemplate("termId", term.getTermId().toString())
+                    .build())
+                    .rel("employees-count").build() );
 
             /**
              * Work Stations for which current Term resource is defined
@@ -972,14 +1019,291 @@ public class TermResource {
 
         public HistoricalTransactionResource() { }
 
-        // TODO
+        /**
+         * Method returns subset of Historical Transaction entities for given Term entity.
+         * The term id is passed through path param.
+         * They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getTermHistoricalTransactions(@PathParam("termId") Long termId,
+                                                      @BeanParam HistoricalTransactionBeanParam params) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning historical transactions for given term using " +
+                    "TermResource.HistoricalTransactionResource.getTermHistoricalTransactions(termId) method of REST API");
+
+            // find term entity for which to get associated historical transactions
+            Term term = termFacade.find(termId);
+            if (term == null)
+                throw new NotFoundException("Could not find term for id " + termId + ".");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<HistoricalTransaction> historicalTransactions = null;
+
+            if (noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Term> terms = new ArrayList<>();
+                terms.add(term);
+
+                // get historical transactions for given term filtered by given query params
+
+                utx.begin();
+
+                historicalTransactions = new ResourceList<>(
+                        historicalTransactionFacade.findByMultipleCriteria(params.getClients(), params.getProviders(), params.getServices(), params.getServicePoints(),
+                                params.getWorkStations(), params.getEmployees(), params.getProviderServices(), params.getTransactionTimePeriod(),
+                                params.getBookedTimePeriod(), terms, params.getPriceRange(), params.getCurrencyCodes(), params.getPaymentMethods(),
+                                params.getPaid(), params.getCompletionStatuses(), params.getClientRatingRange(), params.getClientComments(),
+                                params.getProviderRatingRange(), params.getProviderDementis(), params.getOffset(), params.getLimit())
+                );
+
+                utx.commit();
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get historical transactions for given term without filtering (eventually paginated)
+                historicalTransactions = new ResourceList<>(historicalTransactionFacade.findByTerm(term, params.getOffset(), params.getLimit()));
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.HistoricalTransactionResource.populateWithHATEOASLinks(historicalTransactions, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(historicalTransactions).build();
+        }
+
+        /**
+         * Method returns subset of Historical Transaction entities for given Term fetching them eagerly.
+         * The term id is passed through path param.
+         * They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Path("/eagerly")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getTermHistoricalTransactionsEagerly(@PathParam("termId") Long termId,
+                                                             @BeanParam HistoricalTransactionBeanParam params) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning historical transactions eagerly for given term using " +
+                    "TermResource.HistoricalTransactionResource.getTermHistoricalTransactionsEagerly(termId) method of REST API");
+
+            // find term entity for which to get associated historical transactions
+            Term term = termFacade.find(termId);
+            if (term == null)
+                throw new NotFoundException("Could not find term for id " + termId + ".");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<HistoricalTransactionWrapper> historicalTransactions = null;
+
+            if (noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Term> terms = new ArrayList<>();
+                terms.add(term);
+
+                // get historical transactions eagerly for given term filtered by given query params
+
+                utx.begin();
+
+                historicalTransactions = new ResourceList<>(
+                        HistoricalTransactionWrapper.wrap(
+                                historicalTransactionFacade.findByMultipleCriteriaEagerly(params.getClients(), params.getProviders(), params.getServices(), params.getServicePoints(),
+                                        params.getWorkStations(), params.getEmployees(), params.getProviderServices(), params.getTransactionTimePeriod(),
+                                        params.getBookedTimePeriod(), terms, params.getPriceRange(), params.getCurrencyCodes(), params.getPaymentMethods(),
+                                        params.getPaid(), params.getCompletionStatuses(), params.getClientRatingRange(), params.getClientComments(),
+                                        params.getProviderRatingRange(), params.getProviderDementis(), params.getOffset(), params.getLimit())
+                        )
+                );
+
+                utx.commit();
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get historical transactions eagerly for given term without filtering (eventually paginated)
+                historicalTransactions = new ResourceList<>(HistoricalTransactionWrapper.wrap(historicalTransactionFacade.findByTermEagerly(term, params.getOffset(), params.getLimit())));
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.HistoricalTransactionResource.populateWithHATEOASLinks(historicalTransactions, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(historicalTransactions).build();
+        }
+
+        /**
+         * Method that counts Historical Transaction entities for given Term resource.
+         * The term id is passed through path param.
+         */
+        @GET
+        @Path("/count")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response countHistoricalTransactionsByTerm( @PathParam("termId") Long termId,
+                                                           @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning number of historical transactions for given term by executing " +
+                    "TermResource.HistoricalTransactionResource.countHistoricalTransactionsByTerm(termId) method of REST API");
+
+            // find term entity for which to count historical transactions
+            Term term = termFacade.find(termId);
+            if (term == null)
+                throw new NotFoundException("Could not find term for id " + termId + ".");
+
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(historicalTransactionFacade.countByTerm(term)), 200,
+                    "number of historical transactions for term with id " + term.getTermId());
+            return Response.status(Status.OK).entity(responseEntity).build();
+        }
     }
 
     public class EmployeeResource {
 
         public EmployeeResource() { }
 
-        // TODO
+        /**
+         * Method returns subset of Employee entities for given Term entity.
+         * The term id is passed through path param.
+         * They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getTermEmployees(@PathParam("termId") Long termId,
+                                         @BeanParam EmployeeBeanParam params) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning employees for given term using " +
+                    "TermResource.EmployeeResource.getTermEmployees(termId) method of REST API");
+
+            // find term entity for which to get associated employees
+            Term term = termFacade.find(termId);
+            if (term == null)
+                throw new NotFoundException("Could not find term for id " + termId + ".");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<Employee> employees = null;
+
+            if (noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Term> terms = new ArrayList<>();
+                terms.add(term);
+
+                // get employees for given term filtered by given query params
+
+                utx.begin();
+
+                employees = new ResourceList<>(
+                        employeeFacade.findByMultipleCriteria(params.getDescriptions(), params.getJobPositions(), params.getSkills(),
+                                params.getEducations(), params.getServices(), params.getProviderServices(), params.getServicePoints(),
+                                params.getWorkStations(), params.getPeriod(), params.getStrictTerm(), terms, params.getRated(),
+                                params.getMinAvgRating(), params.getMaxAvgRating(), params.getRatingClients(), params.getOffset(), params.getLimit())
+                );
+
+                utx.commit();
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get employees for given term without filtering (eventually paginated)
+                employees = new ResourceList<>(employeeFacade.findByTerm(term, params.getOffset(), params.getLimit()));
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.EmployeeResource.populateWithHATEOASLinks(employees, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(employees).build();
+        }
+
+        /**
+         * Method returns subset of Employee entities for given Term fetching them eagerly.
+         * The term id is passed through path param.
+         * They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Path("/eagerly")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getTermEmployeesEagerly( @PathParam("termId") Long termId,
+                                                 @BeanParam EmployeeBeanParam params ) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning employees eagerly for given term using " +
+                    "TermResource.EmployeeResource.getTermEmployeesEagerly(termId) method of REST API");
+
+            // find term entity for which to get associated employees
+            Term term = termFacade.find(termId);
+            if (term == null)
+                throw new NotFoundException("Could not find term for id " + termId + ".");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<EmployeeWrapper> employees = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Term> terms = new ArrayList<>();
+                terms.add(term);
+
+                // get employees eagerly for given term filtered by given query params
+
+                utx.begin();
+
+                employees = new ResourceList<>(
+                        EmployeeWrapper.wrap(
+                                employeeFacade.findByMultipleCriteriaEagerly(params.getDescriptions(), params.getJobPositions(),
+                                        params.getSkills(), params.getEducations(), params.getServices(), params.getProviderServices(),
+                                        params.getServicePoints(), params.getWorkStations(), params.getPeriod(), params.getStrictTerm(),
+                                        terms, params.getRated(), params.getMinAvgRating(), params.getMaxAvgRating(), params.getRatingClients(),
+                                        params.getOffset(), params.getLimit())
+                        )
+                );
+
+                utx.commit();
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get employees eagerly for given term without filtering (eventually paginated)
+                employees = new ResourceList<>( EmployeeWrapper.wrap(employeeFacade.findByTermEagerly(term, params.getOffset(), params.getLimit())) );
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.EmployeeResource.populateWithHATEOASLinks(employees, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(employees).build();
+        }
+
+        /**
+         * Method that counts Employee entities for given Term resource
+         * The term id is passed through path param.
+         */
+        @GET
+        @Path("/count")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response countEmployeesByTerm( @PathParam("termId") Long termId,
+                                              @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning number of employees for given term by executing " +
+                    "TermResource.EmployeeResource.countEmployeesByTerm(termId) method of REST API");
+
+            // find term entity for which to count employees
+            Term term = termFacade.find(termId);
+            if (term == null)
+                throw new NotFoundException("Could not find term for id " + termId + ".");
+
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(employeeFacade.countByTerm(term)), 200,
+                    "number of employees for term with id " + term.getTermId());
+            return Response.status(Status.OK).entity(responseEntity).build();
+        }
     }
 
     public class WorkStationResource {

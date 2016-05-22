@@ -75,6 +75,10 @@ public class ResourceList<T> {
             @XmlElement(name = "service-category", type = ServiceCategoryWrapper.class),
             @XmlElement(name = "term", type = Term.class),
             @XmlElement(name = "term", type = TermWrapper.class),
+            @XmlElement(name = "transaction", type = Transaction.class),
+            @XmlElement(name = "transaction", type = TransactionWrapper.class),
+            @XmlElement(name = "historical-transaction", type = HistoricalTransaction.class),
+            @XmlElement(name = "historical-transaction", type = HistoricalTransactionWrapper.class),
     })
     public List<T> getResources() {
         return resources;

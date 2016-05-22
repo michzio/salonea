@@ -1,9 +1,12 @@
 package pl.salonea.entities;
 
+import pl.salonea.constraints.BookedTimeInFuture;
 import pl.salonea.enums.CurrencyCode;
 import pl.salonea.mapped_superclasses.AbstractTransaction;
 
 import javax.persistence.*;
+import javax.validation.constraints.Future;
+import javax.validation.constraints.NotNull;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -17,6 +20,7 @@ import java.util.Date;
 
 @Entity
 @Table(name = "transaction")
+@BookedTimeInFuture
 @Access(AccessType.PROPERTY)
 @NamedQueries({
         @NamedQuery(name = Transaction.FIND_ALL_EAGERLY, query = "SELECT DISTINCT tx FROM Transaction tx LEFT JOIN FETCH tx.employees"),
@@ -132,7 +136,8 @@ public class Transaction extends AbstractTransaction implements Serializable {
     public static final String COUNT_BY_TERM = "Transaction.countByTerm";
     public static final String DELETE_BY_CLIENT = "Transaction.deleteByClient";
 
-    public Transaction() { }
+    public Transaction() {
+    }
 
     public Transaction(Client client, Integer transactionNumber) {
         super(client, transactionNumber);

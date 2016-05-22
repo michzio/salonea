@@ -583,7 +583,7 @@ public class EducationResource {
                 employees = new ResourceList<>(
                         employeeFacade.findByMultipleCriteria(params.getDescriptions(), params.getJobPositions(), params.getSkills(),
                                 educations, params.getServices(), params.getProviderServices(), params.getServicePoints(),
-                                params.getWorkStations(), params.getPeriod(), params.getStrictTerm(), params.getRated(),
+                                params.getWorkStations(), params.getPeriod(), params.getStrictTerm(),  params.getTerms(), params.getRated(),
                                 params.getMinAvgRating(), params.getMaxAvgRating(), params.getRatingClients(), params.getOffset(), params.getLimit())
                 );
 
@@ -639,7 +639,7 @@ public class EducationResource {
                         EmployeeWrapper.wrap(
                                 employeeFacade.findByMultipleCriteriaEagerly(params.getDescriptions(), params.getJobPositions(), params.getSkills(),
                                         educations, params.getServices(), params.getProviderServices(), params.getServicePoints(),
-                                        params.getWorkStations(), params.getPeriod(), params.getStrictTerm(), params.getRated(),
+                                        params.getWorkStations(), params.getPeriod(), params.getStrictTerm(),  params.getTerms(), params.getRated(),
                                         params.getMinAvgRating(), params.getMaxAvgRating(), params.getRatingClients(), params.getOffset(), params.getLimit())
                         )
                 );

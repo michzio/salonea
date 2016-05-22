@@ -27,6 +27,7 @@ public class EmployeeBeanParam extends DateBetweenBeanParam { // incl. Paginatio
     private @QueryParam("servicePointId") List<ServicePointId> servicePointIds; // {providerId}+{servicePointNumber} composite PK
     private @QueryParam("workStationId") List<WorkStationId> workStationIds; // {providerId}+{servicePointNumber}+{workStationNumber} composite PK
     private @QueryParam("strictTerm") Boolean strictTerm;
+    private @QueryParam("termId") List<Long> termIds;
     private @QueryParam("rated") Boolean rated;
     private @QueryParam("minAvgRating") Double minAvgRating;
     private @QueryParam("maxAvgRating") Double maxAvgRating;
@@ -44,6 +45,8 @@ public class EmployeeBeanParam extends DateBetweenBeanParam { // incl. Paginatio
     private ServicePointFacade servicePointFacade;
     @Inject
     private WorkStationFacade workStationFacade;
+    @Inject
+    private TermFacade termFacade;
     @Inject
     private ClientFacade clientFacade;
 
@@ -171,6 +174,23 @@ public class EmployeeBeanParam extends DateBetweenBeanParam { // incl. Paginatio
 
     public void setStrictTerm(Boolean strictTerm) {
         this.strictTerm = strictTerm;
+    }
+
+    public List<Long> getTermIds() {
+        return termIds;
+    }
+
+    public void setTermIds(List<Long> termIds) {
+        this.termIds = termIds;
+    }
+
+    public List<Term> getTerms() throws NotFoundException {
+        if(getTermIds() != null && getTermIds().size() > 0) {
+            final List<Term> terms = termFacade.find(new ArrayList<>(getTermIds()));
+            if(terms.size() != getTermIds().size()) throw new NotFoundException("Could not find terms for all provided ids.");
+            return terms;
+        }
+        return null;
     }
 
     public Boolean getRated() {

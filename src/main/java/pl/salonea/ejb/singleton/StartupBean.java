@@ -4,18 +4,14 @@ import pl.salonea.ejb.stateless.*;
 import pl.salonea.embeddables.Address;
 import pl.salonea.entities.*;
 import pl.salonea.entities.idclass.ServicePointId;
-import pl.salonea.enums.CreditCardType;
-import pl.salonea.enums.Gender;
-import pl.salonea.enums.ProviderType;
-import pl.salonea.enums.WorkStationType;
+import pl.salonea.entities.idclass.WorkStationId;
+import pl.salonea.enums.*;
 
 import javax.annotation.PostConstruct;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
 import javax.inject.Inject;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.GregorianCalendar;
+import java.util.*;
 import java.util.logging.Logger;
 
 /**
@@ -87,6 +83,10 @@ public class StartupBean {
     private SkillFacade skillFacade;
     @Inject
     private EducationFacade educationFacade;
+    @Inject
+    private TransactionFacade transactionFacade;
+    @Inject
+    private HistoricalTransactionFacade historicalTransactionFacade;
 
     public StartupBean() { }
 
@@ -110,6 +110,7 @@ public class StartupBean {
         populateServicePointAssets();
         populateSkillsAndEducation();
         populateServiceCategories();
+        populateTransactions();
     }
 
     private void populateUserAccounts() {
@@ -391,23 +392,23 @@ public class StartupBean {
 
         Calendar calendar = Calendar.getInstance();
         calendar.set(2017, Calendar.DECEMBER, 20, 9, 0, 0);
-        Date startDate20122017 = calendar.getTime();
+        Date startDate20_12_2017 = calendar.getTime();
         calendar.set(Calendar.HOUR_OF_DAY, 17);
-        Date endDate20122017 = calendar.getTime();
+        Date endDate20_12_2017 = calendar.getTime();
 
         calendar.set(2018, Calendar.JANUARY, 10, 8, 0, 0);
-        Date startDate10012018 = calendar.getTime();
+        Date startDate10_01_2018 = calendar.getTime();
         calendar.set(Calendar.HOUR_OF_DAY, 16);
-        Date endDate10012018 = calendar.getTime();
+        Date endDate10_01_2018 = calendar.getTime();
 
-        Term term20122017 = new Term(startDate20122017, endDate20122017);
-        Term term10012018 = new Term(startDate10012018, endDate10012018);
+        Term term20_12_2017 = new Term(startDate20_12_2017, endDate20_12_2017);
+        Term term10_01_2018 = new Term(startDate10_01_2018, endDate10_01_2018);
 
-        EmployeeTerm hairdresserTermOnChair1 = new EmployeeTerm(hairdresserEmployee, term20122017, hairdressingChair1);
-        EmployeeTerm hairdresserTermOnChair2 = new EmployeeTerm(hairdresserEmployee, term10012018, hairdressingChair2);
+        EmployeeTerm hairdresserTermOnChair1 = new EmployeeTerm(hairdresserEmployee, term20_12_2017, hairdressingChair1);
+        EmployeeTerm hairdresserTermOnChair2 = new EmployeeTerm(hairdresserEmployee, term10_01_2018, hairdressingChair2);
 
-        termFacade.create(term20122017);
-        termFacade.create(term10012018);
+        termFacade.create(term20_12_2017);
+        termFacade.create(term10_01_2018);
         termEmployeeWorkOnFacade.create(hairdresserTermOnChair1);
         termEmployeeWorkOnFacade.create(hairdresserTermOnChair2);
     }
@@ -510,6 +511,47 @@ public class StartupBean {
         serviceCategoryFacade.create(manHairCuttingCategory);
         serviceCategoryFacade.create(womanHairCuttingCategory);
         serviceCategoryFacade.create(hairStylingCategory);
+    }
+
+    private void populateTransactions() {
+
+        Calendar calendar = Calendar.getInstance();
+        Date now = calendar.getTime();
+
+        calendar.set(2017, Calendar.DECEMBER, 20, 11, 30, 00);
+        Date date20_12_2017_11_30 = calendar.getTime();
+
+        calendar.set(2017, Calendar.DECEMBER, 20, 12, 30, 00);
+        Date date20_12_2017_12_30 = calendar.getTime();
+
+        Term term20_12_2017 = termFacade.find(1L);
+
+        Client client1 = clientFacade.find(1L);
+        Client client2 = clientFacade.find(2L);
+        Service hairCut = serviceFacade.find(1);
+        WorkStation workStation = workStationFacade.find(new WorkStationId(9L, 1, 1));
+        PaymentMethod cash = paymentMethodFacade.find(1);
+        PaymentMethod creditCard = paymentMethodFacade.find(2);
+
+        Employee hairdresser = employeeFacade.find(11L);
+        Set<Employee> employees = new HashSet<>();
+        employees.add(hairdresser);
+
+        Transaction transaction1 = new Transaction(client1, 1, 120.0, CurrencyCode.PLN, now, date20_12_2017_11_30, false, hairCut, workStation, cash, term20_12_2017);
+        transaction1.setEmployees(employees);
+        Transaction transaction2 = new Transaction(client2, 1, 25.0, CurrencyCode.EUR, now, date20_12_2017_12_30, true, hairCut, workStation, creditCard, term20_12_2017);
+        transaction2.setEmployees(employees);
+
+        transactionFacade.create(transaction1);
+        transactionFacade.create(transaction2);
+
+        HistoricalTransaction historicalTransaction1 = new HistoricalTransaction(client1, 1, 99.0, CurrencyCode.PLN, now, date20_12_2017_11_30, false, hairCut, workStation, cash, term20_12_2017, TransactionCompletionStatus.CANCELED);
+        historicalTransaction1.setEmployees(employees);
+        HistoricalTransaction historicalTransaction2 = new HistoricalTransaction(client2, 1, 39.0, CurrencyCode.USD, now, date20_12_2017_12_30, true, hairCut, workStation, creditCard, term20_12_2017, TransactionCompletionStatus.COMPLETED);
+        historicalTransaction2.setEmployees(employees);
+
+        historicalTransactionFacade.create(historicalTransaction1);
+        historicalTransactionFacade.create(historicalTransaction2);
     }
 
 }

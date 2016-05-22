@@ -1180,7 +1180,7 @@ public class ProviderServiceResource {
                 employees = new ResourceList<>(
                         employeeFacade.findByMultipleCriteria(params.getDescriptions(), params.getJobPositions(), params.getSkills(),
                                 params.getEducations(), params.getServices(), providerServices, params.getServicePoints(),
-                                params.getWorkStations(), params.getPeriod(), params.getStrictTerm(), params.getRated(),
+                                params.getWorkStations(), params.getPeriod(), params.getStrictTerm(), params.getTerms(), params.getRated(),
                                 params.getMinAvgRating(), params.getMaxAvgRating(), params.getRatingClients(), params.getOffset(), params.getLimit())
                 );
             } else {
@@ -1235,11 +1235,10 @@ public class ProviderServiceResource {
                 // get employees eagerly for given provider service filtered by given params
                 employees = new ResourceList<>(
                         EmployeeWrapper.wrap(
-                                employeeFacade.findByMultipleCriteriaEagerly(params.getDescriptions(), params.getJobPositions(),
-                                        params.getSkills(), params.getEducations(), params.getServices(), providerServices,
-                                        params.getServicePoints(), params.getWorkStations(), params.getPeriod(), params.getStrictTerm(),
-                                        params.getRated(), params.getMinAvgRating(), params.getMaxAvgRating(), params.getRatingClients(),
-                                        params.getOffset(), params.getLimit())
+                                employeeFacade.findByMultipleCriteriaEagerly(params.getDescriptions(), params.getJobPositions(), params.getSkills(),
+                                        params.getEducations(), params.getServices(), providerServices, params.getServicePoints(),
+                                        params.getWorkStations(), params.getPeriod(), params.getStrictTerm(), params.getTerms(), params.getRated(),
+                                        params.getMinAvgRating(), params.getMaxAvgRating(), params.getRatingClients(), params.getOffset(), params.getLimit())
                         )
                 );
             } else {

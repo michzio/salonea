@@ -50,11 +50,15 @@ import java.util.*;
         @NamedQuery(name = Employee.FIND_BY_WORK_STATION_AND_TERM_STRICT, query = "SELECT DISTINCT e FROM Employee e INNER JOIN e.termsOnWorkStation empl_term INNER JOIN empl_term.term term WHERE empl_term.workStation = :work_station AND term.openingTime <= :start_time AND term.closingTime >= :end_time"),
         @NamedQuery(name = Employee.FIND_RATED_BY_CLIENT, query = "SELECT e FROM Employee e INNER JOIN e.receivedRatings er WHERE er.client = :client"),
         @NamedQuery(name = Employee.FIND_RATED_BY_CLIENT_EAGERLY, query = "SELECT e FROM Employee e LEFT JOIN FETCH e.termsOnWorkStation LEFT JOIN FETCH e.educations " +
-                                                    "LEFT JOIN FETCH e.skills LEFT JOIN FETCH e.suppliedServices INNER JOIN FETCH e.receivedRatings er WHERE er.client = :client"),
+                "LEFT JOIN FETCH e.skills LEFT JOIN FETCH e.suppliedServices INNER JOIN FETCH e.receivedRatings er WHERE er.client = :client"),
+        @NamedQuery(name = Employee.FIND_BY_TERM, query = "SELECT DISTINCT e FROM Employee e INNER JOIN e.termsOnWorkStation empl_term WHERE empl_term.term = :term"),
+        @NamedQuery(name = Employee.FIND_BY_TERM_EAGERLY, query = "SELECT DISTINCT e FROM Employee e INNER JOIN FETCH e.termsOnWorkStation empl_term LEFT JOIN FETCH e.educations " +
+                "LEFT JOIN FETCH e.skills LEFT JOIN FETCH e.suppliedServices LEFT JOIN FETCH e.receivedRatings WHERE empl_term.term = :term"),
         @NamedQuery(name = Employee.COUNT_BY_SERVICE, query = "SELECT COUNT(DISTINCT e) FROM Employee e INNER JOIN e.suppliedServices ps WHERE ps.service = :service"),
         @NamedQuery(name = Employee.COUNT_BY_PROVIDER_SERVICE, query = "SELECT COUNT(DISTINCT e) FROM Employee e INNER JOIN e.suppliedServices ps WHERE ps = :provider_service"),
         @NamedQuery(name = Employee.COUNT_BY_SERVICE_POINT, query = "SELECT COUNT(DISTINCT e) FROM Employee e INNER JOIN e.termsOnWorkStation empl_term INNER JOIN empl_term.workStation ws WHERE ws.servicePoint = :service_point"),
         @NamedQuery(name = Employee.COUNT_BY_WORK_STATION, query = "SELECT COUNT(DISTINCT e) FROM Employee e INNER JOIN e.termsOnWorkStation empl_term WHERE empl_term.workStation = :work_station"),
+        @NamedQuery(name = Employee.COUNT_BY_TERM, query = "SELECT COUNT(DISTINCT e) FROM Employee e INNER JOIN e.termsOnWorkStation empl_term WHERE empl_term.term = :term"),
 })
 public class Employee extends NaturalPerson {
 
@@ -81,10 +85,13 @@ public class Employee extends NaturalPerson {
     public static final String FIND_BY_WORK_STATION_AND_TERM_STRICT = "Employee.findByWorkStationAndTermStrict";
     public static final String FIND_RATED_BY_CLIENT = "Employee.findRatedByClient";
     public static final String FIND_RATED_BY_CLIENT_EAGERLY = "Employee.findRatedByClientEagerly";
+    public static final String FIND_BY_TERM = "Employee.findByTerm";
+    public static final String FIND_BY_TERM_EAGERLY = "Employee.findByTermEagerly";
     public static final String COUNT_BY_SERVICE = "Employee.countByService";
     public static final String COUNT_BY_PROVIDER_SERVICE = "Employee.countByProviderService";
     public static final String COUNT_BY_SERVICE_POINT = "Employee.countByServicePoint";
     public static final String COUNT_BY_WORK_STATION = "Employee.countByWorkStation";
+    public static final String COUNT_BY_TERM = "Employee.countByTerm";
 
     private String jobPosition;
     private String description;

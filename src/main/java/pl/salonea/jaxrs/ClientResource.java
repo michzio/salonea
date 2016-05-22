@@ -1555,7 +1555,7 @@ public class ClientResource {
                 employees = new ResourceList<>(
                         employeeFacade.findByMultipleCriteria(params.getDescriptions(), params.getJobPositions(), params.getSkills(), params.getEducations(),
                                 params.getServices(), params.getProviderServices(), params.getServicePoints(), params.getWorkStations(), params.getPeriod(),
-                                params.getStrictTerm(), params.getRated(), params.getMinAvgRating(), params.getMaxAvgRating(), clients,
+                                params.getStrictTerm(),  params.getTerms(), params.getRated(), params.getMinAvgRating(), params.getMaxAvgRating(), clients,
                                 params.getOffset(), params.getLimit())
                 );
 
@@ -1606,8 +1606,8 @@ public class ClientResource {
                         EmployeeWrapper.wrap(
                                 employeeFacade.findByMultipleCriteriaEagerly(params.getDescriptions(), params.getJobPositions(), params.getSkills(),
                                         params.getEducations(), params.getServices(), params.getProviderServices(), params.getServicePoints(),
-                                        params.getWorkStations(), params.getPeriod(), params.getStrictTerm(), params.getRated(), params.getMinAvgRating(),
-                                        params.getMaxAvgRating(), clients, params.getOffset(), params.getLimit())
+                                        params.getWorkStations(), params.getPeriod(), params.getStrictTerm(), params.getTerms(), params.getRated(),
+                                        params.getMinAvgRating(), params.getMaxAvgRating(), clients, params.getOffset(), params.getLimit())
                         )
                 );
 

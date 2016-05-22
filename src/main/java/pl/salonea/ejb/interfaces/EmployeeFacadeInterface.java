@@ -67,15 +67,21 @@ public interface EmployeeFacadeInterface extends AbstractFacadeInterface<Employe
     List<Employee> findRatedByClientEagerly(Client client);
     List<Employee> findRatedByClientEagerly(Client client, Integer start, Integer limit);
 
+    List<Employee> findByTerm(Term term);
+    List<Employee> findByTerm(Term term, Integer start, Integer limit);
+    List<Employee> findByTermEagerly(Term term);
+    List<Employee> findByTermEagerly(Term term, Integer start, Integer limit);
+
     Long countByService(Service service);
     Long countByProviderService(ProviderService providerService);
     Long countByServicePoint(ServicePoint servicePoint);
     Long countByWorkStation(WorkStation workStation);
+    Long countByTerm(Term term);
 
-    List<Employee> findByMultipleCriteria(List<String> descriptions, List<String> jobPositions, List<Skill> skills, List<Education> educations, List<Service> services, List<ProviderService> providerServices, List<ServicePoint> servicePoints, List<WorkStation> workStations, Period period, Boolean strictTerm, Boolean rated, Double minAvgRating, Double maxAvgRating, List<Client> ratingClients);
-    List<Employee> findByMultipleCriteria(List<String> descriptions, List<String> jobPositions, List<Skill> skills, List<Education> educations, List<Service> services, List<ProviderService> providerServices, List<ServicePoint> servicePoints, List<WorkStation> workStations, Period period, Boolean strictTerm, Boolean rated, Double minAvgRating, Double maxAvgRating, List<Client> ratingClients, Integer start, Integer limit);
-    List<Employee> findByMultipleCriteriaEagerly(List<String> descriptions, List<String> jobPositions, List<Skill> skills, List<Education> educations, List<Service> services, List<ProviderService> providerServices, List<ServicePoint> servicePoints, List<WorkStation> workStations, Period period, Boolean strictTerm, Boolean rated, Double minAvgRating, Double maxAvgRating, List<Client> ratingClients);
-    List<Employee> findByMultipleCriteriaEagerly(List<String> descriptions, List<String> jobPositions, List<Skill> skills, List<Education> educations, List<Service> services, List<ProviderService> providerServices, List<ServicePoint> servicePoints, List<WorkStation> workStations, Period period, Boolean strictTerm, Boolean rated, Double minAvgRating, Double maxAvgRating, List<Client> ratingClients,  Integer start, Integer limit);
+    List<Employee> findByMultipleCriteria(List<String> descriptions, List<String> jobPositions, List<Skill> skills, List<Education> educations, List<Service> services, List<ProviderService> providerServices, List<ServicePoint> servicePoints, List<WorkStation> workStations, Period period, Boolean strictTerm, List<Term> terms, Boolean rated, Double minAvgRating, Double maxAvgRating, List<Client> ratingClients);
+    List<Employee> findByMultipleCriteria(List<String> descriptions, List<String> jobPositions, List<Skill> skills, List<Education> educations, List<Service> services, List<ProviderService> providerServices, List<ServicePoint> servicePoints, List<WorkStation> workStations, Period period, Boolean strictTerm, List<Term> terms, Boolean rated, Double minAvgRating, Double maxAvgRating, List<Client> ratingClients, Integer start, Integer limit);
+    List<Employee> findByMultipleCriteriaEagerly(List<String> descriptions, List<String> jobPositions, List<Skill> skills, List<Education> educations, List<Service> services, List<ProviderService> providerServices, List<ServicePoint> servicePoints, List<WorkStation> workStations, Period period, Boolean strictTerm, List<Term> terms, Boolean rated, Double minAvgRating, Double maxAvgRating, List<Client> ratingClients);
+    List<Employee> findByMultipleCriteriaEagerly(List<String> descriptions, List<String> jobPositions, List<Skill> skills, List<Education> educations, List<Service> services, List<ProviderService> providerServices, List<ServicePoint> servicePoints, List<WorkStation> workStations, Period period, Boolean strictTerm, List<Term> terms, Boolean rated, Double minAvgRating, Double maxAvgRating, List<Client> ratingClients,  Integer start, Integer limit);
 
     @javax.ejb.Local
     interface Local extends EmployeeFacadeInterface { }

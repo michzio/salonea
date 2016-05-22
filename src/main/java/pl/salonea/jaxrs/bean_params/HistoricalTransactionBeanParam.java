@@ -1,6 +1,7 @@
 package pl.salonea.jaxrs.bean_params;
 
 import pl.salonea.enums.TransactionCompletionStatus;
+import pl.salonea.utils.RatingRange;
 
 import javax.ws.rs.QueryParam;
 import java.util.List;
@@ -42,6 +43,10 @@ public class HistoricalTransactionBeanParam extends TransactionBeanParam {
         this.maxClientRating = maxClientRating;
     }
 
+    public RatingRange getClientRatingRange() {
+        return new RatingRange(getMinClientRating(), getMaxClientRating());
+    }
+
     public List<String> getClientComments() {
         return clientComments;
     }
@@ -64,6 +69,10 @@ public class HistoricalTransactionBeanParam extends TransactionBeanParam {
 
     public void setMaxProviderRating(Short maxProviderRating) {
         this.maxProviderRating = maxProviderRating;
+    }
+
+    public RatingRange getProviderRatingRange() {
+        return new RatingRange(getMinProviderRating(), getMaxProviderRating());
     }
 
     public List<String> getProviderDementis() {
