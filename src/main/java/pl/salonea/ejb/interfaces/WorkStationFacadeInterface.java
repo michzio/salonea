@@ -30,6 +30,11 @@ public interface WorkStationFacadeInterface extends AbstractFacadeInterface<Work
     List<WorkStation> findByTermStrict(Date startTime, Date endTime);
     List<WorkStation> findByTermStrict(Date startTime, Date endTime, Integer start, Integer limit);
 
+    List<WorkStation> findByTerm(Term term);
+    List<WorkStation> findByTerm(Term term, Integer start, Integer limit);
+    List<WorkStation> findByTermEagerly(Term term);
+    List<WorkStation> findByTermEagerly(Term term, Integer start, Integer limit);
+
     List<WorkStation> findByServicePoint(ServicePoint servicePoint);
     List<WorkStation> findByServicePoint(ServicePoint servicePoint, Integer start, Integer limit);
     List<WorkStation> findByServicePointEagerly(ServicePoint servicePoint);
@@ -98,15 +103,17 @@ public interface WorkStationFacadeInterface extends AbstractFacadeInterface<Work
 
     Integer deleteByServicePoint(ServicePoint servicePoint);
     Integer deleteById(WorkStationId workStationId);
+
     Long countByServicePoint(ServicePoint servicePoint);
     Long countByService(Service service);
     Long countByProviderService(ProviderService providerService);
     Long countByEmployee(Employee employee);
+    Long countByTerm(Term term);
 
-    List<WorkStation> findByMultipleCriteria(List<ServicePoint> servicePoints, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<WorkStationType> types, Period period, Boolean strictTerm);
-    List<WorkStation> findByMultipleCriteria(List<ServicePoint> servicePoints, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<WorkStationType> types, Period period, Boolean strictTerm, Integer start, Integer limit);
-    List<WorkStation> findByMultipleCriteriaEagerly(List<ServicePoint> servicePoints, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<WorkStationType> types, Period period, Boolean strictTerm);
-    List<WorkStation> findByMultipleCriteriaEagerly(List<ServicePoint> servicePoints, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<WorkStationType> types, Period period, Boolean strictTerm, Integer start, Integer limit);
+    List<WorkStation> findByMultipleCriteria(List<ServicePoint> servicePoints, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<WorkStationType> types, Period period, Boolean strictTerm, List<Term> terms);
+    List<WorkStation> findByMultipleCriteria(List<ServicePoint> servicePoints, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<WorkStationType> types, Period period, Boolean strictTerm, List<Term> terms, Integer start, Integer limit);
+    List<WorkStation> findByMultipleCriteriaEagerly(List<ServicePoint> servicePoints, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<WorkStationType> types, Period period, Boolean strictTerm, List<Term> terms);
+    List<WorkStation> findByMultipleCriteriaEagerly(List<ServicePoint> servicePoints, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<WorkStationType> types, Period period, Boolean strictTerm, List<Term> terms, Integer start, Integer limit);
 
 
     @javax.ejb.Local

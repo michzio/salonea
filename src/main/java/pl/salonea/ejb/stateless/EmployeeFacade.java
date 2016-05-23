@@ -720,7 +720,7 @@ public class EmployeeFacade extends AbstractFacade<Employee> implements Employee
         }
 
         // take into account that work station must provide given services when searching by (term or work station or service point) and (services or provider services)
-        if( (period != null || workStations != null || servicePoints != null) && (services != null || providerServices != null) ) {
+        if( (period != null || terms != null || workStations != null || servicePoints != null) && (services != null || providerServices != null) ) {
 
             if(providerService == null) providerService = employee.join(Employee_.suppliedServices);
             if(employeeTerm == null) employeeTerm = employee.join(Employee_.termsOnWorkStation);

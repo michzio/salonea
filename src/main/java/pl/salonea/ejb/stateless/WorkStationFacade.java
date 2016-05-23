@@ -166,7 +166,7 @@ public class WorkStationFacade extends AbstractFacade<WorkStation> implements Wo
     @Override
     public List<WorkStation> findByTerm(Date startTime, Date endTime, Integer start, Integer limit) {
 
-        TypedQuery<WorkStation> query = getEntityManager().createNamedQuery(WorkStation.FIND_BY_TERM, WorkStation.class);
+        TypedQuery<WorkStation> query = getEntityManager().createNamedQuery(WorkStation.FIND_BY_PERIOD, WorkStation.class);
         query.setParameter("start_time", startTime);
         query.setParameter("end_time", endTime);
         if(start != null && limit != null) {
@@ -184,9 +184,43 @@ public class WorkStationFacade extends AbstractFacade<WorkStation> implements Wo
     @Override
     public List<WorkStation> findByTermStrict(Date startTime, Date endTime, Integer start, Integer limit) {
 
-        TypedQuery<WorkStation> query = getEntityManager().createNamedQuery(WorkStation.FIND_BY_TERM_STRICT, WorkStation.class);
+        TypedQuery<WorkStation> query = getEntityManager().createNamedQuery(WorkStation.FIND_BY_PERIOD_STRICT, WorkStation.class);
         query.setParameter("start_time", startTime);
         query.setParameter("end_time", endTime);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
+    public List<WorkStation> findByTerm(Term term) {
+        return findByTerm(term, null, null);
+    }
+
+    @Override
+    public List<WorkStation> findByTerm(Term term, Integer start, Integer limit) {
+
+        TypedQuery<WorkStation> query = getEntityManager().createNamedQuery(WorkStation.FIND_BY_TERM, WorkStation.class);
+        query.setParameter("term", term);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
+    public List<WorkStation> findByTermEagerly(Term term) {
+        return findByTermEagerly(term, null, null);
+    }
+
+    @Override
+    public List<WorkStation> findByTermEagerly(Term term, Integer start, Integer limit) {
+
+        TypedQuery<WorkStation> query = getEntityManager().createNamedQuery(WorkStation.FIND_BY_TERM_EAGERLY, WorkStation.class);
+        query.setParameter("term", term);
         if(start != null && limit != null) {
             query.setFirstResult(start);
             query.setMaxResults(limit);
@@ -254,7 +288,7 @@ public class WorkStationFacade extends AbstractFacade<WorkStation> implements Wo
     @Override
     public List<WorkStation> findByServicePointAndTerm(ServicePoint servicePoint, Date startTime, Date endTime, Integer start, Integer limit) {
 
-        TypedQuery<WorkStation> query = getEntityManager().createNamedQuery(WorkStation.FIND_BY_TERM_AND_SERVICE_POINT, WorkStation.class);
+        TypedQuery<WorkStation> query = getEntityManager().createNamedQuery(WorkStation.FIND_BY_SERVICE_POINT_AND_TERM, WorkStation.class);
         query.setParameter("service_point", servicePoint);
         query.setParameter("start_time", startTime);
         query.setParameter("end_time", endTime);
@@ -273,7 +307,7 @@ public class WorkStationFacade extends AbstractFacade<WorkStation> implements Wo
     @Override
     public List<WorkStation> findByServicePointAndTermStrict(ServicePoint servicePoint, Date startTime, Date endTime, Integer start, Integer limit) {
 
-        TypedQuery<WorkStation> query = getEntityManager().createNamedQuery(WorkStation.FIND_BY_TERM_STRICT_AND_SERVICE_POINT, WorkStation.class);
+        TypedQuery<WorkStation> query = getEntityManager().createNamedQuery(WorkStation.FIND_BY_SERVICE_POINT_AND_TERM_STRICT, WorkStation.class);
         query.setParameter("service_point", servicePoint);
         query.setParameter("start_time", startTime);
         query.setParameter("end_time", endTime);
@@ -783,27 +817,35 @@ public class WorkStationFacade extends AbstractFacade<WorkStation> implements Wo
     }
 
     @Override
-    public List<WorkStation> findByMultipleCriteria(List<ServicePoint> servicePoints, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<WorkStationType> types, Period period, Boolean strictTerm) {
-        return findByMultipleCriteria(servicePoints, services, providerServices, employees, types, period, strictTerm, null, null);
+    public Long countByTerm(Term term) {
+
+        TypedQuery<Long> query = getEntityManager().createNamedQuery(WorkStation.COUNT_BY_TERM, Long.class);
+        query.setParameter("term", term);
+        return query.getSingleResult();
     }
 
     @Override
-    public List<WorkStation> findByMultipleCriteria(List<ServicePoint> servicePoints, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<WorkStationType> types, Period period, Boolean strictTerm, Integer start, Integer limit) {
-        return findByMultipleCriteria(servicePoints, services, providerServices, employees, types, period, strictTerm, false, start, limit);
+    public List<WorkStation> findByMultipleCriteria(List<ServicePoint> servicePoints, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<WorkStationType> types, Period period, Boolean strictTerm, List<Term> terms) {
+        return findByMultipleCriteria(servicePoints, services, providerServices, employees, types, period, strictTerm, terms, null, null);
     }
 
     @Override
-    public List<WorkStation> findByMultipleCriteriaEagerly(List<ServicePoint> servicePoints, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<WorkStationType> types, Period period, Boolean strictTerm) {
-        return findByMultipleCriteriaEagerly(servicePoints, services, providerServices, employees, types, period, strictTerm, null, null);
+    public List<WorkStation> findByMultipleCriteria(List<ServicePoint> servicePoints, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<WorkStationType> types, Period period, Boolean strictTerm, List<Term> terms, Integer start, Integer limit) {
+        return findByMultipleCriteria(servicePoints, services, providerServices, employees, types, period, strictTerm, terms, false, start, limit);
     }
 
     @Override
-    public List<WorkStation> findByMultipleCriteriaEagerly(List<ServicePoint> servicePoints, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<WorkStationType> types, Period period, Boolean strictTerm, Integer start, Integer limit) {
-        return findByMultipleCriteria(servicePoints, services, providerServices, employees, types, period, strictTerm, true, start, limit);
+    public List<WorkStation> findByMultipleCriteriaEagerly(List<ServicePoint> servicePoints, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<WorkStationType> types, Period period, Boolean strictTerm, List<Term> terms) {
+        return findByMultipleCriteriaEagerly(servicePoints, services, providerServices, employees, types, period, strictTerm, terms, null, null);
+    }
+
+    @Override
+    public List<WorkStation> findByMultipleCriteriaEagerly(List<ServicePoint> servicePoints, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<WorkStationType> types, Period period, Boolean strictTerm, List<Term> terms, Integer start, Integer limit) {
+        return findByMultipleCriteria(servicePoints, services, providerServices, employees, types, period, strictTerm, terms, true, start, limit);
     }
 
 
-    private List<WorkStation> findByMultipleCriteria(List<ServicePoint> servicePoints, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<WorkStationType> types, Period period, Boolean strictTerm, Boolean eagerly, Integer start, Integer limit) {
+    private List<WorkStation> findByMultipleCriteria(List<ServicePoint> servicePoints, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<WorkStationType> types, Period period, Boolean strictTerm, List<Term> terms, Boolean eagerly, Integer start, Integer limit) {
 
         CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
         CriteriaQuery<WorkStation> criteriaQuery = criteriaBuilder.createQuery(WorkStation.class);
@@ -872,10 +914,19 @@ public class WorkStationFacade extends AbstractFacade<WorkStation> implements Wo
             }
         }
 
+        if(terms != null && terms.size() > 0) {
+
+            if(employeeTerm == null) employeeTerm = workStation.join(WorkStation_.termsEmployeesWorkOn);
+            if(term == null) term = employeeTerm.join(EmployeeTerm_.term);
+
+            predicates.add( term.in(terms) );
+        }
+
         // take into account that employee must supply given provider services when searching by (term or employee) and services
         // if( (employees != null && services != null) || (employees != null && providerServices != null)
-        //        || (services != null && period != null) || (providerServices != null && period != null)) {
-        if( (employees != null || period != null) && (providerServices != null || services != null) ) {
+        //        || (services != null && period != null) || (providerServices != null && period != null)
+        //        || (terms != null && providerServices != null) || (terms != null && services != null)) {
+        if( (employees != null || period != null || terms != null) && (providerServices != null || services != null) ) {
 
             if(providerService == null) providerService = workStation.join(WorkStation_.providedServices);
             if(employeeTerm == null) employeeTerm = workStation.join(WorkStation_.termsEmployeesWorkOn);
