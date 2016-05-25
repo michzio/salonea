@@ -144,7 +144,7 @@ public class WorkStationResource {
             // get all work stations filtered by given query params
             workStations = new ResourceList<>(
                     workStationFacade.findByMultipleCriteria(params.getServicePoints(), params.getServices(), params.getProviderServices(),
-                            params.getEmployees(), params.getWorkStationTypes(), params.getPeriod(), params.getStrictTerm(),
+                            params.getEmployees(), params.getWorkStationTypes(), params.getPeriod(), params.getStrictTerm(), params.getTerms(),
                             params.getOffset(), params.getLimit())
             );
 
@@ -185,7 +185,7 @@ public class WorkStationResource {
             workStations = new ResourceList<>(
                     WorkStationWrapper.wrap(
                             workStationFacade.findByMultipleCriteriaEagerly(params.getServicePoints(), params.getServices(), params.getProviderServices(),
-                                    params.getEmployees(), params.getWorkStationTypes(), params.getPeriod(), params.getStrictTerm(),
+                                    params.getEmployees(), params.getWorkStationTypes(), params.getPeriod(), params.getStrictTerm(), params.getTerms(),
                                     params.getOffset(), params.getLimit())
                     )
             );

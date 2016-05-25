@@ -1754,7 +1754,7 @@ public class ServiceResource {
                 workStations = new ResourceList<>(
                         workStationFacade.findByMultipleCriteria(params.getServicePoints(), services, params.getProviderServices(),
                                 params.getEmployees(), params.getWorkStationTypes(), params.getPeriod(), params.getStrictTerm(),
-                                params.getOffset(), params.getLimit())
+                                params.getTerms(), params.getOffset(), params.getLimit())
                 );
 
                 utx.commit();
@@ -1808,7 +1808,7 @@ public class ServiceResource {
                         WorkStationWrapper.wrap(
                                 workStationFacade.findByMultipleCriteriaEagerly(params.getServicePoints(), services,
                                         params.getProviderServices(), params.getEmployees(), params.getWorkStationTypes(),
-                                        params.getPeriod(), params.getStrictTerm(), params.getOffset(), params.getLimit())
+                                        params.getPeriod(), params.getStrictTerm(), params.getTerms(), params.getOffset(), params.getLimit())
                         )
                 );
 

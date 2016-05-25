@@ -1769,7 +1769,7 @@ public class ProviderResource {
                     workStations = new ResourceList<>(
                             workStationFacade.findByMultipleCriteria(servicePoints, params.getServices(), params.getProviderServices(),
                                     params.getEmployees(), params.getWorkStationTypes(), params.getPeriod(), params.getStrictTerm(),
-                                    params.getOffset(), params.getLimit())
+                                    params.getTerms(), params.getOffset(), params.getLimit())
                     );
                 } else {
                     logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
@@ -1820,7 +1820,7 @@ public class ProviderResource {
                             WorkStationWrapper.wrap(
                                     workStationFacade.findByMultipleCriteriaEagerly(servicePoints, params.getServices(), params.getProviderServices(),
                                             params.getEmployees(), params.getWorkStationTypes(), params.getPeriod(), params.getStrictTerm(),
-                                            params.getOffset(), params.getLimit())
+                                            params.getTerms(), params.getOffset(), params.getLimit())
                             )
                     );
                 } else {

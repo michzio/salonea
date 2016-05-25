@@ -1983,7 +1983,7 @@ public class EmployeeResource {
 
                 workStations = new ResourceList<>(
                         workStationFacade.findByMultipleCriteria(params.getServicePoints(), params.getServices(), params.getProviderServices(),
-                                employees, params.getWorkStationTypes(), params.getPeriod(), params.getStrictTerm(), params.getOffset(), params.getLimit() )
+                                employees, params.getWorkStationTypes(), params.getPeriod(), params.getStrictTerm(), params.getTerms(), params.getOffset(), params.getLimit() )
                 );
 
                 utx.commit();
@@ -2037,7 +2037,7 @@ public class EmployeeResource {
                         WorkStationWrapper.wrap(
                                 workStationFacade.findByMultipleCriteriaEagerly(params.getServicePoints(), params.getServices(),
                                         params.getProviderServices(), employees, params.getWorkStationTypes(), params.getPeriod(),
-                                        params.getStrictTerm(), params.getOffset(), params.getLimit())
+                                        params.getStrictTerm(), params.getTerms(), params.getOffset(), params.getLimit())
                         )
                 );
 

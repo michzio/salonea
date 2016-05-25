@@ -1,13 +1,7 @@
 package pl.salonea.jaxrs.bean_params;
 
-import pl.salonea.ejb.stateless.EmployeeFacade;
-import pl.salonea.ejb.stateless.ProviderServiceFacade;
-import pl.salonea.ejb.stateless.ServiceFacade;
-import pl.salonea.ejb.stateless.ServicePointFacade;
-import pl.salonea.entities.Employee;
-import pl.salonea.entities.ProviderService;
-import pl.salonea.entities.Service;
-import pl.salonea.entities.ServicePoint;
+import pl.salonea.ejb.stateless.*;
+import pl.salonea.entities.*;
 import pl.salonea.entities.idclass.ProviderServiceId;
 import pl.salonea.entities.idclass.ServicePointId;
 import pl.salonea.enums.WorkStationType;
@@ -30,6 +24,7 @@ public class WorkStationBeanParam extends DateBetweenBeanParam { // incl. Pagina
     private @QueryParam("employeeId") List<Long> employeeIds;
     private @QueryParam("workStationType") List<WorkStationType> workStationTypes;
     private @QueryParam("strictTerm") Boolean strictTerm;
+    private @QueryParam("termId") List<Long> termIds;
 
     @Inject
     private ServicePointFacade servicePointFacade;
@@ -39,7 +34,8 @@ public class WorkStationBeanParam extends DateBetweenBeanParam { // incl. Pagina
     private ProviderServiceFacade providerServiceFacade;
     @Inject
     private EmployeeFacade employeeFacade;
-
+    @Inject
+    private TermFacade termFacade;
 
     public List<ServicePointId> getServicePointIds() {
         return servicePointIds;
@@ -130,5 +126,22 @@ public class WorkStationBeanParam extends DateBetweenBeanParam { // incl. Pagina
 
     public void setStrictTerm(Boolean strictTerm) {
         this.strictTerm = strictTerm;
+    }
+
+    public List<Long> getTermIds() {
+        return termIds;
+    }
+
+    public void setTermIds(List<Long> termIds) {
+        this.termIds = termIds;
+    }
+
+    public List<Term> getTerms() throws NotFoundException {
+        if(getTermIds() != null && getTermIds().size() > 0) {
+            final List<Term> terms = termFacade.find(new ArrayList<>(getTermIds()));
+            if(terms.size() != getTermIds().size()) throw new NotFoundException("Could not find terms for all provided ids.");
+            return terms;
+        }
+        return null;
     }
 }

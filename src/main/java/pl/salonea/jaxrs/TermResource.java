@@ -13,10 +13,7 @@ import pl.salonea.jaxrs.utils.RESTToolkit;
 import pl.salonea.jaxrs.utils.ResourceList;
 import pl.salonea.jaxrs.utils.ResponseWrapper;
 import pl.salonea.jaxrs.utils.hateoas.Link;
-import pl.salonea.jaxrs.wrappers.EmployeeWrapper;
-import pl.salonea.jaxrs.wrappers.HistoricalTransactionWrapper;
-import pl.salonea.jaxrs.wrappers.TermWrapper;
-import pl.salonea.jaxrs.wrappers.TransactionWrapper;
+import pl.salonea.jaxrs.wrappers.*;
 
 import javax.ejb.EJBException;
 import javax.ejb.EJBTransactionRolledbackException;
@@ -1310,15 +1307,312 @@ public class TermResource {
 
         public WorkStationResource() { }
 
+        /**
+         * Method returns subset of Work Station entities for given Term entity.
+         * The term id is passed through path param.
+         * They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getTermWorkStations(@PathParam("termId") Long termId,
+                                            @BeanParam WorkStationBeanParam params) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
 
-        // TODO
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning work stations for given term using " +
+                    "TermResource.WorkStationResource.getTermWorkStations(termId) method of REST API");
+
+            // find term entity for which to get associated work stations
+            Term term = termFacade.find(termId);
+            if(term == null)
+                throw new NotFoundException("Could not find term for id " + termId + ".");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<WorkStation> workStations = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Term> terms = new ArrayList<>();
+                terms.add(term);
+
+                // get work stations for given term filtered by given query params
+
+                utx.begin();
+
+                workStations = new ResourceList<>(
+                        workStationFacade.findByMultipleCriteria(params.getServicePoints(), params.getServices(), params.getProviderServices(),
+                                params.getEmployees(), params.getWorkStationTypes(), params.getPeriod(), params.getStrictTerm(), terms,
+                                params.getOffset(), params.getLimit())
+                );
+
+                utx.commit();
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get work stations for given term without filtering (eventually paginated)
+                workStations = new ResourceList<>( workStationFacade.findByTerm(term, params.getOffset(), params.getLimit()) );
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.WorkStationResource.populateWithHATEOASLinks(workStations, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(workStations).build();
+        }
+
+        /**
+         * Method returns subset of Work Station entities for given Term entity fetching them eagerly.
+         * The term id is passed through path param.
+         * They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Path("/eagerly")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getTermWorkStationsEagerly(@PathParam("termId") Long termId,
+                                                   @BeanParam WorkStationBeanParam params ) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning work stations eagerly for given term using " +
+                    "TermResource.WorkStationResource.getTermWorkStationsEagerly(termId) method of REST API");
+
+            // find term entity for which to get associated work stations
+            Term term = termFacade.find(termId);
+            if (term == null)
+                throw new NotFoundException("Could not find term for id " + termId + ".");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<WorkStationWrapper> workStations = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Term> terms = new ArrayList<>();
+                terms.add(term);
+
+                // get work stations eagerly for given term filtered by given query params
+
+                utx.begin();
+
+                workStations = new ResourceList<>(
+                        WorkStationWrapper.wrap(
+                                workStationFacade.findByMultipleCriteriaEagerly(params.getServicePoints(), params.getServices(),
+                                        params.getProviderServices(), params.getEmployees(), params.getWorkStationTypes(),
+                                        params.getPeriod(), params.getStrictTerm(), terms, params.getOffset(), params.getLimit())
+                        )
+                );
+
+                utx.commit();
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get work stations eagerly for given term without filtering (eventually paginated)
+                workStations = new ResourceList<>( WorkStationWrapper.wrap(workStationFacade.findByTermEagerly(term, params.getOffset(), params.getLimit())) );
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.WorkStationResource.populateWithHATEOASLinks(workStations, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(workStations).build();
+        }
+
+        /**
+         * Method that counts Work Station entities for given Term resource.
+         * The term id is passed through path param.
+         */
+        @GET
+        @Path("/count")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response countWorkStationsByTerm( @PathParam("termId") Long termId,
+                                                 @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning number of work stations for given term by executing " +
+                    "TermResource.WorkStationResource.countWorkStationsByTerm(termId) method of REST API");
+
+            // find term entity for which to count work stations
+            Term term = termFacade.find(termId);
+            if (term == null)
+                throw new NotFoundException("Could not find term for id " + termId + ".");
+
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(workStationFacade.countByTerm(term)), 200,
+                    "number of work stations for term with id " + term.getTermId());
+            return Response.status(Status.OK).entity(responseEntity).build();
+        }
     }
 
     public class ServiceResource {
 
         public ServiceResource() { }
 
-        // TODO
+        /**
+         * Method returns subset of Service entities for given Term entity.
+         * The term id is passed through path param.
+         * They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getTermServices(@PathParam("termId") Long termId,
+                                        @BeanParam ServiceBeanParam params) throws ForbiddenException, NotFoundException, BadRequestException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning services for given term using " +
+                    "TermResource.ServiceResource.getTermServices(termId) method of REST API");
+
+            // find term entity for which to get associated services
+            Term term = termFacade.find(termId);
+            if(term == null)
+                throw new NotFoundException("Could not find term for id " + termId + ".");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<Service> services = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Term> terms = new ArrayList<>();
+                terms.add(term);
+
+                // get services for given term filtered by given query params
+
+                utx.begin();
+
+                if( RESTToolkit.isSet(params.getKeywords()) ) {
+                    if( RESTToolkit.isSet(params.getNames()) || RESTToolkit.isSet(params.getDescriptions()) )
+                        throw new BadRequestException("Query params cannot include keywords and service names or descriptions at the same time.");
+
+                    // find only by keywords
+                    services = new ResourceList<>(
+                            serviceFacade.findByMultipleCriteria(params.getKeywords(), params.getServiceCategories(), params.getProviders(),
+                                    params.getEmployees(), params.getWorkStations(), params.getServicePoints(), params.getEmployeeTerms(),
+                                    terms, params.getOffset(), params.getLimit())
+                    );
+                } else {
+                    // find by service names and descriptions
+                    services = new ResourceList<>(
+                            serviceFacade.findByMultipleCriteria(params.getNames(), params.getDescriptions(), params.getServiceCategories(),
+                                    params.getProviders(), params.getEmployees(), params.getWorkStations(), params.getServicePoints(),
+                                    params.getEmployeeTerms(), terms, params.getOffset(), params.getLimit())
+                    );
+                }
+
+                utx.commit();
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get services for given term without filtering (eventually paginated)
+                services = new ResourceList<>( serviceFacade.findByTerm(term, params.getOffset(), params.getLimit()) );
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.ServiceResource.populateWithHATEOASLinks(services, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(services).build();
+        }
+
+        /**
+         * Method returns subset of Service entities for given Term entity fetching them eagerly.
+         * The term id is passed through path param.
+         * They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Path("/eagerly")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getTermServicesEagerly(@PathParam("termId") Long termId,
+                                               @BeanParam ServiceBeanParam params) throws ForbiddenException, NotFoundException, BadRequestException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning services eagerly for given term using " +
+                    "TermResource.ServiceResource.getTermServicesEagerly(termId) method of REST API");
+
+            // find term entity for which to get associated services
+            Term term = termFacade.find(termId);
+            if (term == null)
+                throw new NotFoundException("Could not find term for id " + termId + ".");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<ServiceWrapper> services = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Term> terms = new ArrayList<>();
+                terms.add(term);
+
+                // get services eagerly for given term filtered by given query params
+
+                utx.begin();
+
+                if( RESTToolkit.isSet(params.getKeywords()) ) {
+                    if (RESTToolkit.isSet(params.getNames()) || RESTToolkit.isSet(params.getDescriptions()))
+                        throw new BadRequestException("Query params cannot include keywords and service names or descriptions at the same time.");
+
+                    // find only by keywords
+                    services = new ResourceList<>(
+                            ServiceWrapper.wrap(
+                                    serviceFacade.findByMultipleCriteriaEagerly(params.getKeywords(), params.getServiceCategories(), params.getProviders(),
+                                            params.getEmployees(), params.getWorkStations(), params.getServicePoints(), params.getEmployeeTerms(),
+                                            terms, params.getOffset(), params.getLimit())
+                            )
+                    );
+                } else {
+                    // find by service names and descriptions
+                    services = new ResourceList<>(
+                            ServiceWrapper.wrap(
+                                    serviceFacade.findByMultipleCriteriaEagerly(params.getNames(), params.getDescriptions(), params.getServiceCategories(),
+                                            params.getProviders(), params.getEmployees(), params.getWorkStations(), params.getServicePoints(),
+                                            params.getEmployeeTerms(), terms, params.getOffset(), params.getLimit())
+                            )
+                    );
+                }
+
+                utx.commit();
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get services eagerly for given term without filtering (eventually paginated)
+                services = new ResourceList<>( ServiceWrapper.wrap(serviceFacade.findByTermEagerly(term, params.getOffset(), params.getLimit())) );
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.ServiceResource.populateWithHATEOASLinks(services, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(services).build();
+        }
+
+        /**
+         * Method that counts Service entities for given Term resource.
+         * The term id is passed through path param.
+         */
+        @GET
+        @Path("/count")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response countServicesByTerm( @PathParam("termId") Long termId,
+                                             @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning number of services for given term by executing " +
+                    "TermResource.ServiceResource.countServicesByTerm(termId) method of REST API");
+
+            // find term entity for which to count services
+            Term term = termFacade.find(termId);
+            if (term == null)
+                throw new NotFoundException("Could not find term for id " + termId + ".");
+
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(serviceFacade.countByTerm(term)), 200,
+                    "number of services for term with id " + term.getTermId());
+            return Response.status(Status.OK).entity(responseEntity).build();
+        }
     }
 
     public class ProviderServiceResource {
