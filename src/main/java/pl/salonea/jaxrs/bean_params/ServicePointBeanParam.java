@@ -29,11 +29,14 @@ public class ServicePointBeanParam extends PaginationBeanParam {
     private @BeanParam AddressBeanParam addressParams;
     private @BeanParam CoordinatesSquareBeanParam coordinatesSquareParams;
     private @BeanParam CoordinatesCircleBeanParam coordinatesCircleParams;
+    private @QueryParam("termId") List<Long> termIds;
 
     @Inject
     private ProviderFacade providerFacade;
     @Inject
     private ServiceFacade serviceFacade;
+    @Inject
+    private ProviderServiceFacade providerServiceFacade;
     @Inject
     private EmployeeFacade employeeFacade;
     @Inject
@@ -43,7 +46,7 @@ public class ServicePointBeanParam extends PaginationBeanParam {
     @Inject
     private ServiceCategoryFacade serviceCategoryFacade;
     @Inject
-    private ProviderServiceFacade providerServiceFacade;
+    private TermFacade termFacade;
 
     public List<Long> getProviderIds() {
         return providerIds;
@@ -247,5 +250,22 @@ public class ServicePointBeanParam extends PaginationBeanParam {
         if(getCoordinatesCircleParams().getRadius() == null) return false;
 
         return true;
+    }
+
+    public List<Long> getTermIds() {
+        return termIds;
+    }
+
+    public void setTermIds(List<Long> termIds) {
+        this.termIds = termIds;
+    }
+
+    public List<Term> getTerms() throws NotFoundException {
+        if(getTermIds() != null && getTermIds().size() > 0) {
+            final List<Term> terms = termFacade.find( new ArrayList<>(getTermIds()) );
+            if(terms.size() != getTermIds().size()) throw new NotFoundException("Could not find terms for all provided ids.");
+            return terms;
+        }
+        return null;
     }
 }

@@ -747,37 +747,129 @@ public class TermResource {
              * Work Stations for which current Term resource is defined
              */
             // work-stations
+            Method workStationsMethod = TermResource.class.getMethod("getWorkStationResource");
+            term.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(TermResource.class)
+                    .path(workStationsMethod)
+                    .resolveTemplate("termId", term.getTermId().toString())
+                    .build())
+                    .rel("work-stations").build() );
 
             // work-stations eagerly
+            Method workStationsEagerlyMethod = TermResource.WorkStationResource.class.getMethod("getTermWorkStationsEagerly", Long.class, WorkStationBeanParam.class);
+            term.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(TermResource.class)
+                    .path(workStationsMethod)
+                    .path(workStationsEagerlyMethod)
+                    .resolveTemplate("termId", term.getTermId().toString())
+                    .build())
+                    .rel("work-stations-eagerly").build());
 
             // work-stations count
+            Method countWorkStationsByTermMethod = TermResource.WorkStationResource.class.getMethod("countWorkStationsByTerm", Long.class, GenericBeanParam.class);
+            term.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(TermResource.class)
+                    .path(workStationsMethod)
+                    .path(countWorkStationsByTermMethod)
+                    .resolveTemplate("termId", term.getTermId().toString())
+                    .build())
+                    .rel("work-stations-count").build() );
 
             /**
              * Services provided in current Term
              */
             // services
+            Method servicesMethod = TermResource.class.getMethod("getServiceResource");
+            term.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(TermResource.class)
+                    .path(servicesMethod)
+                    .resolveTemplate("termId", term.getTermId().toString())
+                    .build())
+                    .rel("services").build() );
 
             // services eagerly
+            Method servicesEagerlyMethod = TermResource.ServiceResource.class.getMethod("getTermServicesEagerly", Long.class, ServiceBeanParam.class);
+            term.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(TermResource.class)
+                    .path(servicesMethod)
+                    .path(servicesEagerlyMethod)
+                    .resolveTemplate("termId", term.getTermId().toString())
+                    .build())
+                    .rel("services-eagerly").build() );
 
             // services count
+            Method countServicesByTermMethod = TermResource.ServiceResource.class.getMethod("countServicesByTerm", Long.class, GenericBeanParam.class);
+            term.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(TermResource.class)
+                    .path(servicesMethod)
+                    .path(countServicesByTermMethod)
+                    .resolveTemplate("termId", term.getTermId().toString())
+                    .build())
+                    .rel("services-count").build() );
 
             /**
              * Provider Services provided in current Term
              */
             // provider-services
+            Method providerServicesMethod = TermResource.class.getMethod("getProviderServiceResource");
+            term.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(TermResource.class)
+                    .path(providerServicesMethod)
+                    .resolveTemplate("termId", term.getTermId().toString())
+                    .build())
+                    .rel("provider-services").build() );
 
             // provider-services eagerly
+            Method providerServicesEagerlyMethod = TermResource.ProviderServiceResource.class.getMethod("getTermProviderServicesEagerly", Long.class, ProviderServiceBeanParam.class);
+            term.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(TermResource.class)
+                    .path(providerServicesMethod)
+                    .path(providerServicesEagerlyMethod)
+                    .resolveTemplate("termId", term.getTermId().toString())
+                    .build())
+                    .rel("provider-services-eagerly").build() );
 
             // provider-services count
+            Method countProviderServicesByTermMethod = TermResource.ProviderServiceResource.class.getMethod("countProviderServicesByTerm", Long.class, GenericBeanParam.class);
+            term.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(TermResource.class)
+                    .path(providerServicesMethod)
+                    .path(countProviderServicesByTermMethod)
+                    .resolveTemplate("termId", term.getTermId().toString())
+                    .build())
+                    .rel("provider-services-count").build() );
 
             /**
              * Service Points for which current Term resource is defined
              */
             // service-points
+            Method servicePointsMethod = TermResource.class.getMethod("getServicePointResource");
+            term.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(TermResource.class)
+                    .path(servicePointsMethod)
+                    .resolveTemplate("termId", term.getTermId().toString())
+                    .build())
+                    .rel("service-points").build() );
 
             // service-points eagerly
+            Method servicePointsEagerlyMethod = TermResource.ServicePointResource.class.getMethod("getTermServicePointsEagerly", Long.class, ServicePointBeanParam.class);
+            term.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(TermResource.class)
+                    .path(servicePointsMethod)
+                    .path(servicePointsEagerlyMethod)
+                    .resolveTemplate("termId", term.getTermId().toString())
+                    .build())
+                    .rel("service-points-eagerly").build() );
 
             // service-points count
+            Method countServicePointsByTermMethod = TermResource.ServicePointResource.class.getMethod("countServicePointsByTerm", Long.class, GenericBeanParam.class);
+            term.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(TermResource.class)
+                    .path(servicePointsMethod)
+                    .path(countServicePointsByTermMethod)
+                    .resolveTemplate("termId", term.getTermId().toString())
+                    .build())
+                    .rel("service-points-count").build() );
 
         } catch(NoSuchMethodException e) {
             e.printStackTrace();
@@ -1619,13 +1711,349 @@ public class TermResource {
 
         public ProviderServiceResource() { }
 
-        // TODO
+        /**
+         * Method returns subset of Provider Service entities for given Term entity.
+         * The term id is passed through path param.
+         * They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getTermProviderServices(@PathParam("termId") Long termId,
+                                                @BeanParam ProviderServiceBeanParam params) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning provider services for given term using " +
+                    "TermResource.ProviderServiceResource.getTermProviderServices(termId) method of REST API");
+
+            // find term entity for which to get associated provider services
+            Term term = termFacade.find(termId);
+            if(term == null)
+                throw new NotFoundException("Could not find term for id " + termId + ".");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<ProviderService> providerServices = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Term> terms = new ArrayList<>();
+                terms.add(term);
+
+                // get provider services for given term filtered by given query params
+
+                utx.begin();
+
+                providerServices = new ResourceList<>(
+                        providerServiceFacade.findByMultipleCriteria(params.getProviders(), params.getServices(), params.getServiceCategories(),
+                                params.getDescriptions(), params.getMinPrice(), params.getMaxPrice(), params.getIncludeDiscounts(),
+                                params.getMinDiscount(), params.getMaxDiscount(), params.getMinDuration(), params.getMaxDuration(),
+                                params.getServicePoints(), params.getWorkStations(), params.getEmployees(), params.getEmployeeTerms(),
+                                terms, params.getOffset(), params.getLimit())
+                );
+
+                utx.commit();
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get provider services for given term without filtering (eventually paginated)
+                providerServices = new ResourceList<>( providerServiceFacade.findByTerm(term, params.getOffset(), params.getLimit()) );
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.ProviderServiceResource.populateWithHATEOASLinks(providerServices, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(providerServices).build();
+        }
+
+        /**
+         * Method returns subset of Provider Service entities for given Term entity fetching them eagerly.
+         * The term id is passed through path param.
+         * They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Path("/eagerly")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getTermProviderServicesEagerly(@PathParam("termId") Long termId,
+                                                       @BeanParam ProviderServiceBeanParam params) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning provider services eagerly for given term using " +
+                    "TermResource.ProviderServiceResource.getTermProviderServicesEagerly(termId) method of REST API");
+
+            // find term entity for which to get associated provider services
+            Term term = termFacade.find(termId);
+            if (term == null)
+                throw new NotFoundException("Could not find term for id " + termId + ".");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<ProviderServiceWrapper> providerServices = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Term> terms = new ArrayList<>();
+                terms.add(term);
+
+                // get provider services eagerly for given term filtered by given query params
+
+                utx.begin();
+
+                providerServices = new ResourceList<>(
+                        ProviderServiceWrapper.wrap(
+                                providerServiceFacade.findByMultipleCriteriaEagerly(params.getProviders(), params.getServices(),
+                                        params.getServiceCategories(), params.getDescriptions(), params.getMinPrice(), params.getMaxPrice(),
+                                        params.getIncludeDiscounts(), params.getMinDiscount(), params.getMaxDiscount(), params.getMinDuration(),
+                                        params.getMaxDuration(), params.getServicePoints(), params.getWorkStations(), params.getEmployees(),
+                                        params.getEmployeeTerms(), terms, params.getOffset(), params.getLimit()
+                                )
+                        )
+                );
+
+                utx.commit();
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get provider services eagerly for given term without filtering (eventually paginated)
+                providerServices = new ResourceList<>( ProviderServiceWrapper.wrap(providerServiceFacade.findByTermEagerly(term, params.getOffset(), params.getLimit())) );
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.ProviderServiceResource.populateWithHATEOASLinks(providerServices, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(providerServices).build();
+        }
+
+        /**
+         * Method that counts Provider Service entities for given Term resource.
+         * The term id is passed through path param.
+         */
+        @GET
+        @Path("/count")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response countProviderServicesByTerm( @PathParam("termId") Long termId,
+                                                     @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning number of provider services for given term by executing " +
+                    "TermResource.ProviderServiceResource.countProviderServicesByTerm(termId) method of REST API");
+
+            // find term entity for which to count provider services
+            Term term = termFacade.find(termId);
+            if (term == null)
+                throw new NotFoundException("Could not find term for id " + termId + ".");
+
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(providerServiceFacade.countByTerm(term)), 200,
+                    "number of provider services for term with id " + term.getTermId());
+            return Response.status(Status.OK).entity(responseEntity).build();
+        }
     }
 
     public class ServicePointResource {
 
         public ServicePointResource() { }
 
-        // TODO
+        /**
+         * Method returns subset of Service Point entities for given Term entity.
+         * The term id is passed through path param.
+         * They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getTermServicePoints(@PathParam("termId") Long termId,
+                                             @BeanParam ServicePointBeanParam params) throws ForbiddenException, NotFoundException, BadRequestException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning service points for given term using " +
+                    "TermResource.ServicePointResource.getTermServicePoints(termId) method of REST API");
+
+            // find term entity for which to get associated service points
+            Term term = termFacade.find(termId);
+            if(term == null)
+                throw new NotFoundException("Could not find term for id " + termId + ".");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<ServicePoint> servicePoints = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Term> terms = new ArrayList<>();
+                terms.add(term);
+
+                // get service points for given term filtered by given query params
+
+                utx.begin();
+
+                if(params.getAddress() != null) {
+                    if(params.getCoordinatesSquare() != null || params.getCoordinatesCircle() != null)
+                        throw new BadRequestException("Query params cannot include address params and coordinate square params or coordinate circle params at the same time.");
+                    // only address params
+                    servicePoints = new ResourceList<>(
+                            servicePointFacade.findByMultipleCriteria(params.getProviders(), params.getServices(), params.getProviderServices(), params.getEmployees(),
+                                    params.getCorporations(), params.getIndustries(), params.getServiceCategories(), params.getAddress(), terms, params.getOffset(), params.getLimit())
+                    );
+
+                } else if(params.getCoordinatesSquare() != null) {
+                    if(params.getAddress() != null || params.getCoordinatesCircle() != null)
+                        throw new BadRequestException("Query params cannot include coordinates square params and address params or coordinates circle params at the same time.");
+                    // only coordinates square params
+                    servicePoints = new ResourceList<>(
+                            servicePointFacade.findByMultipleCriteria(params.getProviders(), params.getServices(), params.getProviderServices(), params.getEmployees(),
+                                    params.getCorporations(), params.getIndustries(), params.getServiceCategories(), params.getCoordinatesSquare(), terms, params.getOffset(), params.getLimit())
+                    );
+
+                } else if(params.getCoordinatesCircle() != null) {
+                    if(params.getAddress() != null || params.getCoordinatesSquare() != null)
+                        throw new BadRequestException("Query params cannot include coordinates circle params and address params or coordinates square params at the same time.");
+                    // only coordinates circle params
+                    servicePoints = new ResourceList<>(
+                            servicePointFacade.findByMultipleCriteria(params.getProviders(), params.getServices(), params.getProviderServices(), params.getEmployees(),
+                                    params.getCorporations(), params.getIndustries(), params.getServiceCategories(), params.getCoordinatesCircle(), terms, params.getOffset(), params.getLimit())
+                    );
+
+                } else {
+                    // no location params
+                    servicePoints = new ResourceList<>(
+                            servicePointFacade.findByMultipleCriteria(params.getProviders(), params.getServices(), params.getProviderServices(), params.getEmployees(),
+                                    params.getCorporations(), params.getIndustries(), params.getServiceCategories(), terms, params.getOffset(), params.getLimit())
+                    );
+                }
+
+                utx.commit();
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get service points for given term without filtering (eventually paginated)
+                servicePoints = new ResourceList<>( servicePointFacade.findByTerm(term, params.getOffset(), params.getLimit()) );
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.ServicePointResource.populateWithHATEOASLinks(servicePoints, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(servicePoints).build();
+        }
+
+        /**
+         * Method returns subset of Service Point entities for given Term entity fetching them eagerly.
+         * The term id is passed through path param.
+         * They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Path("/eagerly")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getTermServicePointsEagerly( @PathParam("termId") Long termId,
+                                                     @BeanParam ServicePointBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning service points eagerly for given term using " +
+                    "TermResource.ServicePointResource.getTermServicePointsEagerly(termId) method of REST API");
+
+            // find term entity for which to get associated service points
+            Term term = termFacade.find(termId);
+            if(term == null)
+                throw new NotFoundException("Could not find term for id " + termId + ".");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<ServicePointWrapper> servicePoints = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Term> terms = new ArrayList<>();
+                terms.add(term);
+
+                // get service points eagerly for given term filtered by given query params
+
+                utx.begin();
+
+                if(params.getAddress() != null) {
+                    if(params.getCoordinatesSquare() != null || params.getCoordinatesCircle() != null)
+                        throw new BadRequestException("Query params cannot include address params and coordinate square params or coordinate circle params at the same time.");
+                    // only address params
+                    servicePoints = new ResourceList<>(
+                            ServicePointWrapper.wrap(
+                                servicePointFacade.findByMultipleCriteriaEagerly(params.getProviders(), params.getServices(), params.getProviderServices(), params.getEmployees(),
+                                        params.getCorporations(), params.getIndustries(), params.getServiceCategories(), params.getAddress(), terms, params.getOffset(), params.getLimit())
+                            )
+                    );
+                } else if(params.getCoordinatesSquare() != null) {
+                    if(params.getAddress() != null || params.getCoordinatesCircle() != null)
+                        throw new BadRequestException("Query params cannot include coordinates square params and address params or coordinates circle params at the same time.");
+                    // only coordinates square params
+                    servicePoints = new ResourceList<>(
+                            ServicePointWrapper.wrap(
+                                servicePointFacade.findByMultipleCriteriaEagerly(params.getProviders(), params.getServices(), params.getProviderServices(), params.getEmployees(),
+                                        params.getCorporations(), params.getIndustries(), params.getServiceCategories(), params.getCoordinatesSquare(), terms, params.getOffset(), params.getLimit())
+                            )
+                    );
+                } else if(params.getCoordinatesCircle() != null) {
+                    if(params.getAddress() != null || params.getCoordinatesSquare() != null)
+                        throw new BadRequestException("Query params cannot include coordinates circle params and address params or coordinates square params at the same time.");
+                    // only coordinates circle params
+                    servicePoints = new ResourceList<>(
+                            ServicePointWrapper.wrap(
+                                servicePointFacade.findByMultipleCriteriaEagerly(params.getProviders(), params.getServices(), params.getProviderServices(), params.getEmployees(),
+                                        params.getCorporations(), params.getIndustries(), params.getServiceCategories(), params.getCoordinatesCircle(), terms, params.getOffset(), params.getLimit())
+                            )
+                    );
+                } else {
+                    // no location params
+                    servicePoints = new ResourceList<>(
+                            ServicePointWrapper.wrap(
+                                servicePointFacade.findByMultipleCriteriaEagerly(params.getProviders(), params.getServices(), params.getProviderServices(), params.getEmployees(),
+                                        params.getCorporations(), params.getIndustries(), params.getServiceCategories(), terms, params.getOffset(), params.getLimit())
+                            )
+                    );
+                }
+
+                utx.commit();
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get service points eagerly for given term without filtering (eventually paginated)
+                servicePoints = new ResourceList<>( ServicePointWrapper.wrap(servicePointFacade.findByTermEagerly(term, params.getOffset(), params.getLimit())) );
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.ServicePointResource.populateWithHATEOASLinks(servicePoints, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(servicePoints).build();
+        }
+
+        /**
+         * Method that counts Service Point entities for given Term resource.
+         * The term id is passed through path param.
+         */
+        @GET
+        @Path("/count")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response countServicePointsByTerm( @PathParam("termId") Long termId,
+                                                  @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning number of service points for given term by executing " +
+                    "TermResource.ServicePointResource.countServicePointsByTerm(termId) method of REST API");
+
+            // find term entity for which to count service points
+            Term term = termFacade.find(termId);
+            if (term == null)
+                throw new NotFoundException("Could not find term for id " + termId + ".");
+
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(servicePointFacade.countByTerm(term)), 200,
+                    "number of service points for term with id " + term.getTermId());
+            return Response.status(Status.OK).entity(responseEntity).build();
+        }
     }
 }

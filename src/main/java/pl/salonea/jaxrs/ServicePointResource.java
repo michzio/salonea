@@ -144,7 +144,7 @@ public class ServicePointResource {
                 // only address params
                 servicePoints = new ResourceList<>(
                         servicePointFacade.findByMultipleCriteria(params.getProviders(), params.getServices(), params.getProviderServices(), params.getEmployees(),
-                                params.getCorporations(), params.getIndustries(), params.getServiceCategories(), params.getAddress(), params.getOffset(), params.getLimit())
+                                params.getCorporations(), params.getIndustries(), params.getServiceCategories(), params.getAddress(), params.getTerms(), params.getOffset(), params.getLimit())
                 );
 
             } else if(params.getCoordinatesSquare() != null) {
@@ -153,7 +153,7 @@ public class ServicePointResource {
                 // only coordinates square params
                 servicePoints = new ResourceList<>(
                         servicePointFacade.findByMultipleCriteria(params.getProviders(), params.getServices(), params.getProviderServices(), params.getEmployees(),
-                                params.getCorporations(), params.getIndustries(), params.getServiceCategories(), params.getCoordinatesSquare(), params.getOffset(), params.getLimit())
+                                params.getCorporations(), params.getIndustries(), params.getServiceCategories(), params.getCoordinatesSquare(), params.getTerms(), params.getOffset(), params.getLimit())
                 );
 
             } else if(params.getCoordinatesCircle() != null) {
@@ -162,14 +162,14 @@ public class ServicePointResource {
                 // only coordinates circle params
                 servicePoints = new ResourceList<>(
                         servicePointFacade.findByMultipleCriteria(params.getProviders(), params.getServices(), params.getProviderServices(), params.getEmployees(),
-                                params.getCorporations(), params.getIndustries(), params.getServiceCategories(), params.getCoordinatesCircle(), params.getOffset(), params.getLimit())
+                                params.getCorporations(), params.getIndustries(), params.getServiceCategories(), params.getCoordinatesCircle(), params.getTerms(), params.getOffset(), params.getLimit())
                 );
 
             } else {
                 // no location params
                 servicePoints = new ResourceList<>(
                         servicePointFacade.findByMultipleCriteria(params.getProviders(), params.getServices(), params.getProviderServices(), params.getEmployees(),
-                                params.getCorporations(), params.getIndustries(), params.getServiceCategories(), params.getOffset(), params.getLimit())
+                                params.getCorporations(), params.getIndustries(), params.getServiceCategories(), params.getTerms(), params.getOffset(), params.getLimit())
                 );
             }
 
@@ -214,7 +214,7 @@ public class ServicePointResource {
                 servicePoints = new ResourceList<>(
                         ServicePointWrapper.wrap(
                                 servicePointFacade.findByMultipleCriteriaEagerly(params.getProviders(), params.getServices(), params.getProviderServices(), params.getEmployees(),
-                                        params.getCorporations(), params.getIndustries(), params.getServiceCategories(), params.getAddress(), params.getOffset(), params.getLimit())
+                                        params.getCorporations(), params.getIndustries(), params.getServiceCategories(), params.getAddress(), params.getTerms(), params.getOffset(), params.getLimit())
                         )
                 );
 
@@ -225,7 +225,7 @@ public class ServicePointResource {
                 servicePoints = new ResourceList<>(
                         ServicePointWrapper.wrap(
                                 servicePointFacade.findByMultipleCriteriaEagerly(params.getProviders(), params.getServices(), params.getProviderServices(), params.getEmployees(),
-                                        params.getCorporations(), params.getIndustries(), params.getServiceCategories(), params.getCoordinatesSquare(), params.getOffset(), params.getLimit())
+                                        params.getCorporations(), params.getIndustries(), params.getServiceCategories(), params.getCoordinatesSquare(), params.getTerms(), params.getOffset(), params.getLimit())
                         )
                 );
 
@@ -236,7 +236,7 @@ public class ServicePointResource {
                 servicePoints = new ResourceList<>(
                         ServicePointWrapper.wrap(
                                 servicePointFacade.findByMultipleCriteriaEagerly(params.getProviders(), params.getServices(), params.getProviderServices(), params.getEmployees(),
-                                        params.getCorporations(), params.getIndustries(), params.getServiceCategories(), params.getCoordinatesCircle(), params.getOffset(), params.getLimit())
+                                        params.getCorporations(), params.getIndustries(), params.getServiceCategories(), params.getCoordinatesCircle(), params.getTerms(), params.getOffset(), params.getLimit())
                         )
                 );
 
@@ -245,7 +245,7 @@ public class ServicePointResource {
                 servicePoints = new ResourceList<>(
                         ServicePointWrapper.wrap(
                                 servicePointFacade.findByMultipleCriteriaEagerly(params.getProviders(), params.getServices(), params.getProviderServices(), params.getEmployees(),
-                                        params.getCorporations(), params.getIndustries(), params.getServiceCategories(), params.getOffset(), params.getLimit())
+                                        params.getCorporations(), params.getIndustries(), params.getServiceCategories(), params.getTerms(), params.getOffset(), params.getLimit())
                         )
                 );
             }
@@ -255,7 +255,7 @@ public class ServicePointResource {
         } else {
             logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
 
-            // get all providers without filtering (eventually paginated)
+            // get all service points without filtering (eventually paginated)
             servicePoints = new ResourceList<>( ServicePointWrapper.wrap(servicePointFacade.findAllEagerly(params.getOffset(), params.getLimit())) );
 
         }

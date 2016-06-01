@@ -805,6 +805,40 @@ public class ServicePointFacade extends AbstractFacade<ServicePoint> implements 
     }
 
     @Override
+    public List<ServicePoint> findByTerm(Term term) {
+        return findByTerm(term, null, null);
+    }
+
+    @Override
+    public List<ServicePoint> findByTerm(Term term, Integer start, Integer limit) {
+
+        TypedQuery<ServicePoint> query = getEntityManager().createNamedQuery(ServicePoint.FIND_BY_TERM, ServicePoint.class);
+        query.setParameter("term", term);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
+    public List<ServicePoint> findByTermEagerly(Term term) {
+        return findByTermEagerly(term, null, null);
+    }
+
+    @Override
+    public List<ServicePoint> findByTermEagerly(Term term, Integer start, Integer limit) {
+
+        TypedQuery<ServicePoint> query = getEntityManager().createNamedQuery(ServicePoint.FIND_BY_TERM_EAGERLY, ServicePoint.class);
+        query.setParameter("term", term);
+        if(start != null && limit != null) {
+            query.setFirstResult(start);
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
+    }
+
+    @Override
     public Long countByProvider(Provider provider) {
 
         TypedQuery<Long> query = getEntityManager().createNamedQuery(ServicePoint.COUNT_BY_PROVIDER, Long.class);
@@ -853,6 +887,14 @@ public class ServicePointFacade extends AbstractFacade<ServicePoint> implements 
     }
 
     @Override
+    public Long countByTerm(Term term) {
+
+        TypedQuery<Long> query = getEntityManager().createNamedQuery(ServicePoint.COUNT_BY_TERM, Long.class);
+        query.setParameter("term", term);
+        return query.getSingleResult();
+    }
+
+    @Override
     public Integer deleteByProvider(Provider provider) {
 
         Query query = getEntityManager().createNamedQuery(ServicePoint.DELETE_BY_PROVIDER);
@@ -870,86 +912,86 @@ public class ServicePointFacade extends AbstractFacade<ServicePoint> implements 
     }
 
     @Override
-    public List<ServicePoint> findByMultipleCriteria(List<Provider> providers, List<Service> services, List<ProviderService> providerServices,  List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories) {
-        return findByMultipleCriteria(providers, services, providerServices, employees, corporations, industries, serviceCategories, null, null);
+    public List<ServicePoint> findByMultipleCriteria(List<Provider> providers, List<Service> services, List<ProviderService> providerServices,  List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, List<Term> terms) {
+        return findByMultipleCriteria(providers, services, providerServices, employees, corporations, industries, serviceCategories, terms, null, null);
     }
 
     @Override
-    public List<ServicePoint> findByMultipleCriteria(List<Provider> providers, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, Integer start, Integer limit) {
-        return findByMultipleCriteria(providers, services, providerServices, employees, corporations, industries, serviceCategories, null, null, null, false, start, limit);
+    public List<ServicePoint> findByMultipleCriteria(List<Provider> providers, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, List<Term> terms, Integer start, Integer limit) {
+        return findByMultipleCriteria(providers, services, providerServices, employees, corporations, industries, serviceCategories, null, null, null, terms, false, start, limit);
     }
 
     @Override
-    public List<ServicePoint> findByMultipleCriteria(List<Provider> providers, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, Address address) {
-        return findByMultipleCriteria(providers, services, providerServices, employees, corporations, industries, serviceCategories, address, null, null);
+    public List<ServicePoint> findByMultipleCriteria(List<Provider> providers, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, Address address, List<Term> terms) {
+        return findByMultipleCriteria(providers, services, providerServices, employees, corporations, industries, serviceCategories, address, terms,  null, null);
     }
 
     @Override
-    public List<ServicePoint> findByMultipleCriteria(List<Provider> providers, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, Address address, Integer start, Integer limit) {
-        return findByMultipleCriteria(providers, services, providerServices, employees, corporations, industries, serviceCategories, address, null, null, false, start, limit);
+    public List<ServicePoint> findByMultipleCriteria(List<Provider> providers, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, Address address, List<Term> terms, Integer start, Integer limit) {
+        return findByMultipleCriteria(providers, services, providerServices, employees, corporations, industries, serviceCategories, address, null, null, terms, false, start, limit);
     }
 
     @Override
-    public List<ServicePoint> findByMultipleCriteria(List<Provider> providers, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, CoordinatesSquare coordinatesSquare) {
-        return findByMultipleCriteria(providers, services, providerServices, employees, corporations, industries, serviceCategories, coordinatesSquare, null, null);
+    public List<ServicePoint> findByMultipleCriteria(List<Provider> providers, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, CoordinatesSquare coordinatesSquare, List<Term> terms) {
+        return findByMultipleCriteria(providers, services, providerServices, employees, corporations, industries, serviceCategories, coordinatesSquare, terms, null, null);
     }
 
     @Override
-    public List<ServicePoint> findByMultipleCriteria(List<Provider> providers, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, CoordinatesSquare coordinatesSquare, Integer start, Integer limit) {
-        return findByMultipleCriteria(providers, services, providerServices, employees, corporations, industries, serviceCategories, null, coordinatesSquare, null, false, start, limit);
+    public List<ServicePoint> findByMultipleCriteria(List<Provider> providers, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, CoordinatesSquare coordinatesSquare, List<Term> terms, Integer start, Integer limit) {
+        return findByMultipleCriteria(providers, services, providerServices, employees, corporations, industries, serviceCategories, null, coordinatesSquare, null, terms, false, start, limit);
     }
 
     @Override
-    public List<ServicePoint> findByMultipleCriteria(List<Provider> providers, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, CoordinatesCircle coordinatesCircle) {
-        return findByMultipleCriteria(providers, services, providerServices, employees, corporations, industries, serviceCategories, coordinatesCircle, null, null);
+    public List<ServicePoint> findByMultipleCriteria(List<Provider> providers, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, CoordinatesCircle coordinatesCircle, List<Term> terms) {
+        return findByMultipleCriteria(providers, services, providerServices, employees, corporations, industries, serviceCategories, coordinatesCircle, terms, null, null);
     }
 
     @Override
-    public List<ServicePoint> findByMultipleCriteria(List<Provider> providers, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, CoordinatesCircle coordinatesCircle, Integer start, Integer limit) {
-        return findByMultipleCriteria(providers, services, providerServices, employees, corporations, industries, serviceCategories, null, null, coordinatesCircle, false, start, limit);
+    public List<ServicePoint> findByMultipleCriteria(List<Provider> providers, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, CoordinatesCircle coordinatesCircle, List<Term> terms, Integer start, Integer limit) {
+        return findByMultipleCriteria(providers, services, providerServices, employees, corporations, industries, serviceCategories, null, null, coordinatesCircle, terms, false, start, limit);
     }
 
     @Override
-    public List<ServicePoint> findByMultipleCriteriaEagerly(List<Provider> providers, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories) {
-        return findByMultipleCriteriaEagerly(providers, services, providerServices, employees, corporations, industries, serviceCategories, null, null);
+    public List<ServicePoint> findByMultipleCriteriaEagerly(List<Provider> providers, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, List<Term> terms) {
+        return findByMultipleCriteriaEagerly(providers, services, providerServices, employees, corporations, industries, serviceCategories, terms, null, null);
     }
 
     @Override
-    public List<ServicePoint> findByMultipleCriteriaEagerly(List<Provider> providers, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, Integer start, Integer limit) {
-        return findByMultipleCriteria(providers, services, providerServices, employees, corporations, industries, serviceCategories, null, null, null, true, start, limit);
+    public List<ServicePoint> findByMultipleCriteriaEagerly(List<Provider> providers, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, List<Term> terms, Integer start, Integer limit) {
+        return findByMultipleCriteria(providers, services, providerServices, employees, corporations, industries, serviceCategories, null, null, null, terms, true, start, limit);
     }
 
     @Override
-    public List<ServicePoint> findByMultipleCriteriaEagerly(List<Provider> providers, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, Address address) {
-        return findByMultipleCriteriaEagerly(providers, services, providerServices, employees, corporations, industries, serviceCategories, address, null, null);
+    public List<ServicePoint> findByMultipleCriteriaEagerly(List<Provider> providers, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, Address address, List<Term> terms) {
+        return findByMultipleCriteriaEagerly(providers, services, providerServices, employees, corporations, industries, serviceCategories, address, terms, null, null);
     }
 
     @Override
-    public List<ServicePoint> findByMultipleCriteriaEagerly(List<Provider> providers, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, Address address, Integer start, Integer limit) {
-        return findByMultipleCriteria(providers, services, providerServices, employees, corporations, industries, serviceCategories, address, null, null, true, start, limit);
+    public List<ServicePoint> findByMultipleCriteriaEagerly(List<Provider> providers, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, Address address, List<Term> terms, Integer start, Integer limit) {
+        return findByMultipleCriteria(providers, services, providerServices, employees, corporations, industries, serviceCategories, address, null, null, terms, true, start, limit);
     }
 
     @Override
-    public List<ServicePoint> findByMultipleCriteriaEagerly(List<Provider> providers, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, CoordinatesSquare coordinatesSquare) {
-        return findByMultipleCriteriaEagerly(providers, services, providerServices, employees, corporations, industries, serviceCategories, coordinatesSquare, null, null);
+    public List<ServicePoint> findByMultipleCriteriaEagerly(List<Provider> providers, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, CoordinatesSquare coordinatesSquare, List<Term> terms) {
+        return findByMultipleCriteriaEagerly(providers, services, providerServices, employees, corporations, industries, serviceCategories, coordinatesSquare, terms, null, null);
     }
 
     @Override
-    public List<ServicePoint> findByMultipleCriteriaEagerly(List<Provider> providers, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, CoordinatesSquare coordinatesSquare, Integer start, Integer limit) {
-        return findByMultipleCriteria(providers, services, providerServices, employees, corporations, industries, serviceCategories, null, coordinatesSquare, null, true, start, limit);
+    public List<ServicePoint> findByMultipleCriteriaEagerly(List<Provider> providers, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, CoordinatesSquare coordinatesSquare, List<Term> terms, Integer start, Integer limit) {
+        return findByMultipleCriteria(providers, services, providerServices, employees, corporations, industries, serviceCategories, null, coordinatesSquare, null, terms, true, start, limit);
     }
 
     @Override
-    public List<ServicePoint> findByMultipleCriteriaEagerly(List<Provider> providers, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, CoordinatesCircle coordinatesCircle) {
-        return findByMultipleCriteriaEagerly(providers, services, providerServices, employees, corporations, industries, serviceCategories, coordinatesCircle, null, null);
+    public List<ServicePoint> findByMultipleCriteriaEagerly(List<Provider> providers, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, CoordinatesCircle coordinatesCircle, List<Term> terms) {
+        return findByMultipleCriteriaEagerly(providers, services, providerServices, employees, corporations, industries, serviceCategories, coordinatesCircle, terms, null, null);
     }
 
     @Override
-    public List<ServicePoint> findByMultipleCriteriaEagerly(List<Provider> providers, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, CoordinatesCircle coordinatesCircle, Integer start, Integer limit) {
-        return findByMultipleCriteria(providers, services, providerServices, employees, corporations, industries, serviceCategories, null, null, coordinatesCircle, true, start, limit);
+    public List<ServicePoint> findByMultipleCriteriaEagerly(List<Provider> providers, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, CoordinatesCircle coordinatesCircle, List<Term> terms, Integer start, Integer limit) {
+        return findByMultipleCriteria(providers, services, providerServices, employees, corporations, industries, serviceCategories, null, null, coordinatesCircle, terms, true, start, limit);
     }
 
-    private List<ServicePoint> findByMultipleCriteria(List<Provider> providers, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, Address address, CoordinatesSquare coordinatesSquare, CoordinatesCircle coordinatesCircle, Boolean eagerly, Integer start, Integer limit) {
+    private List<ServicePoint> findByMultipleCriteria(List<Provider> providers, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, Address address, CoordinatesSquare coordinatesSquare, CoordinatesCircle coordinatesCircle, List<Term> terms, Boolean eagerly, Integer start, Integer limit) {
 
         CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
         CriteriaQuery<ServicePoint> criteriaQuery = criteriaBuilder.createQuery(ServicePoint.class);
@@ -965,6 +1007,7 @@ public class ServicePointFacade extends AbstractFacade<ServicePoint> implements 
         Join<ProviderService, Service> service = null;
         Join<WorkStation, EmployeeTerm> employeeTerm = null;
         Join<EmployeeTerm, Employee> employee = null;
+        Join<EmployeeTerm, Term> term = null;
 
         // WHERE PREDICATES
         List<Predicate> predicates = new ArrayList<>();
@@ -1079,6 +1122,33 @@ public class ServicePointFacade extends AbstractFacade<ServicePoint> implements 
             Expression<Double> calculatedRadius = criteriaBuilder.sqrt(criteriaBuilder.sum(longitudeDifferenceSquared, latitudeDifferenceSquared));
 
             predicates.add( criteriaBuilder.lessThanOrEqualTo( calculatedRadius, coordinatesCircle.getRadius() ));
+        }
+
+        if(terms != null && terms.size() > 0) {
+
+            if(workStation == null) workStation = servicePoint.join(ServicePoint_.workStations);
+            if(employeeTerm == null) employeeTerm = workStation.join(WorkStation_.termsEmployeesWorkOn);
+            if(term == null) term = employeeTerm.join(EmployeeTerm_.term);
+
+            predicates.add( term.in(terms) );
+        }
+
+        /**
+         * ADDITIONAL (OPTIONAL) checking when searching by (provider)services and employees/terms at the same time
+         * to limit results only to those where given employees really can supply given provider services
+         */
+        // take into account that employees must supply given provider services when searching by (terms or employees) and (services or provider services)
+        // if( (employees != null && providerServices != null) || (employees != null && services != null)
+        //      || (terms != null && providerServices != null) || (terms != null && services != null)) {
+        if( (employees != null || terms != null) && (providerServices != null || services != null) ) {
+
+            if(workStation == null) workStation = servicePoint.join(ServicePoint_.workStations);
+            if(providerService == null) providerService = workStation.join(WorkStation_.providedServices);
+            if(employeeTerm == null) employeeTerm = workStation.join(WorkStation_.termsEmployeesWorkOn);
+            if(employee == null) employee = employeeTerm.join(EmployeeTerm_.employee);
+            // if(employeeProviderService == null) employeeProviderService = employee.join(Employee_.suppliedServices);
+
+            predicates.add( criteriaBuilder.isMember(providerService, (employee.get(Employee_.suppliedServices))) );
         }
 
         if(eagerly) {

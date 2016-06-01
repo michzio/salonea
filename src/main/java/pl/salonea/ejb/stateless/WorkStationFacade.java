@@ -922,10 +922,10 @@ public class WorkStationFacade extends AbstractFacade<WorkStation> implements Wo
             predicates.add( term.in(terms) );
         }
 
-        // take into account that employee must supply given provider services when searching by (term or employee) and services
-        // if( (employees != null && services != null) || (employees != null && providerServices != null)
-        //        || (services != null && period != null) || (providerServices != null && period != null)
-        //        || (terms != null && providerServices != null) || (terms != null && services != null)) {
+        // take into account that employees must supply given provider services when searching by (terms or employees) and (services or provider services)
+        // if( (employees != null && providerServices != null) || (employees != null && services != null)
+        //     || (period != null && providerServices != null) || (period != null && services != null)
+        //     || (terms != null && providerServices != null) || (terms != null && services != null)) {
         if( (employees != null || period != null || terms != null) && (providerServices != null || services != null) ) {
 
             if(providerService == null) providerService = workStation.join(WorkStation_.providedServices);

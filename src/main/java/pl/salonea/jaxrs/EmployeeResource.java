@@ -1677,7 +1677,7 @@ public class EmployeeResource {
                     // only address params
                     servicePoints = new ResourceList<>(
                             servicePointFacade.findByMultipleCriteria(params.getProviders(), params.getServices(), params.getProviderServices(), employees,
-                                    params.getCorporations(), params.getIndustries(), params.getServiceCategories(), params.getAddress(),
+                                    params.getCorporations(), params.getIndustries(), params.getServiceCategories(), params.getAddress(), params.getTerms(),
                                     params.getOffset(), params.getLimit())
                     );
 
@@ -1687,7 +1687,7 @@ public class EmployeeResource {
                     // only coordinates square params
                     servicePoints = new ResourceList<>(
                             servicePointFacade.findByMultipleCriteria(params.getProviders(), params.getServices(), params.getProviderServices(), employees,
-                                    params.getCorporations(), params.getIndustries(), params.getServiceCategories(), params.getCoordinatesSquare(),
+                                    params.getCorporations(), params.getIndustries(), params.getServiceCategories(), params.getCoordinatesSquare(), params.getTerms(),
                                     params.getOffset(), params.getLimit())
                     );
 
@@ -1697,7 +1697,7 @@ public class EmployeeResource {
                     // only coordinates circle params
                     servicePoints = new ResourceList<>(
                             servicePointFacade.findByMultipleCriteria(params.getProviders(), params.getServices(), params.getProviderServices(), employees,
-                                    params.getCorporations(), params.getIndustries(), params.getServiceCategories(), params.getCoordinatesCircle(),
+                                    params.getCorporations(), params.getIndustries(), params.getServiceCategories(), params.getCoordinatesCircle(), params.getTerms(),
                                     params.getOffset(), params.getLimit())
                     );
 
@@ -1705,7 +1705,8 @@ public class EmployeeResource {
                     // no location params
                     servicePoints = new ResourceList<>(
                             servicePointFacade.findByMultipleCriteria(params.getProviders(), params.getServices(), params.getProviderServices(), employees,
-                                    params.getCorporations(), params.getIndustries(), params.getServiceCategories(), params.getOffset(), params.getLimit())
+                                    params.getCorporations(), params.getIndustries(), params.getServiceCategories(), params.getTerms(),
+                                    params.getOffset(), params.getLimit())
                     );
                 }
 
@@ -1758,7 +1759,7 @@ public class EmployeeResource {
                     servicePoints = new ResourceList<>(
                             ServicePointWrapper.wrap(
                                     servicePointFacade.findByMultipleCriteriaEagerly(params.getProviders(), params.getServices(), params.getProviderServices(), employees,
-                                            params.getCorporations(), params.getIndustries(), params.getServiceCategories(), params.getAddress(),
+                                            params.getCorporations(), params.getIndustries(), params.getServiceCategories(), params.getAddress(), params.getTerms(),
                                             params.getOffset(), params.getLimit())
                             )
                     );
@@ -1769,7 +1770,7 @@ public class EmployeeResource {
                     servicePoints = new ResourceList<>(
                             ServicePointWrapper.wrap(
                                     servicePointFacade.findByMultipleCriteriaEagerly(params.getProviders(), params.getServices(), params.getProviderServices(), employees,
-                                            params.getCorporations(), params.getIndustries(), params.getServiceCategories(), params.getCoordinatesSquare(),
+                                            params.getCorporations(), params.getIndustries(), params.getServiceCategories(), params.getCoordinatesSquare(), params.getTerms(),
                                             params.getOffset(), params.getLimit())
                             )
                     );
@@ -1780,7 +1781,7 @@ public class EmployeeResource {
                     servicePoints = new ResourceList<>(
                             ServicePointWrapper.wrap(
                                     servicePointFacade.findByMultipleCriteriaEagerly(params.getProviders(), params.getServices(), params.getProviderServices(), employees,
-                                            params.getCorporations(), params.getIndustries(), params.getServiceCategories(), params.getCoordinatesCircle(),
+                                            params.getCorporations(), params.getIndustries(), params.getServiceCategories(), params.getCoordinatesCircle(), params.getTerms(),
                                             params.getOffset(), params.getLimit())
                             )
                     );
@@ -1789,7 +1790,8 @@ public class EmployeeResource {
                     servicePoints = new ResourceList<>(
                             ServicePointWrapper.wrap(
                                     servicePointFacade.findByMultipleCriteriaEagerly(params.getProviders(), params.getServices(), params.getProviderServices(), employees,
-                                            params.getCorporations(), params.getIndustries(), params.getServiceCategories(), params.getOffset(), params.getLimit())
+                                            params.getCorporations(), params.getIndustries(), params.getServiceCategories(), params.getTerms(),
+                                            params.getOffset(), params.getLimit())
                             )
                     );
                 }

@@ -99,33 +99,40 @@ public interface ServicePointFacadeInterface extends AbstractFacadeInterface<Ser
     List<ServicePoint> findByIndustryAndCoordinatesCircle(Industry industry, Float longitudeWGS84, Float latitudeWGS84, Double radius);
     List<ServicePoint> findByIndustryAndCoordinatesCircle(Industry industry, Float longitudeWGS84, Float latitudeWGS84, Double radius, Integer start, Integer limit);
 
+    // by term
+    List<ServicePoint> findByTerm(Term term);
+    List<ServicePoint> findByTerm(Term term, Integer start, Integer limit);
+    List<ServicePoint> findByTermEagerly(Term term);
+    List<ServicePoint> findByTermEagerly(Term term, Integer start, Integer limit);
+
     Long countByProvider(Provider provider);
     Long countByService(Service service);
     Long countByEmployee(Employee employee);
     Long countByProviderService(ProviderService providerService);
     Long countByCorporation(Corporation corporation);
     Long countByIndustry(Industry industry);
+    Long countByTerm(Term term);
     Integer deleteByProvider(Provider provider);
     Integer deleteById(ServicePointId servicePointId);
 
     // Criteria API query methods interface
-    List<ServicePoint> findByMultipleCriteria(List<Provider> providers, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories);
-    List<ServicePoint> findByMultipleCriteria(List<Provider> providers, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, Integer start, Integer limit);
-    List<ServicePoint> findByMultipleCriteria(List<Provider> providers, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, Address address);
-    List<ServicePoint> findByMultipleCriteria(List<Provider> providers, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, Address address, Integer start, Integer limit);
-    List<ServicePoint> findByMultipleCriteria(List<Provider> providers, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, CoordinatesSquare coordinatesSquare);
-    List<ServicePoint> findByMultipleCriteria(List<Provider> providers, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, CoordinatesSquare coordinatesSquare, Integer start, Integer limit);
-    List<ServicePoint> findByMultipleCriteria(List<Provider> providers, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, CoordinatesCircle coordinatesCircle);
-    List<ServicePoint> findByMultipleCriteria(List<Provider> providers, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, CoordinatesCircle coordinatesCircle, Integer start, Integer limit);
+    List<ServicePoint> findByMultipleCriteria(List<Provider> providers, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, List<Term> terms);
+    List<ServicePoint> findByMultipleCriteria(List<Provider> providers, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, List<Term> terms, Integer start, Integer limit);
+    List<ServicePoint> findByMultipleCriteria(List<Provider> providers, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, Address address, List<Term> terms);
+    List<ServicePoint> findByMultipleCriteria(List<Provider> providers, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, Address address, List<Term> terms, Integer start, Integer limit);
+    List<ServicePoint> findByMultipleCriteria(List<Provider> providers, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, CoordinatesSquare coordinatesSquare, List<Term> terms);
+    List<ServicePoint> findByMultipleCriteria(List<Provider> providers, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, CoordinatesSquare coordinatesSquare, List<Term> terms, Integer start, Integer limit);
+    List<ServicePoint> findByMultipleCriteria(List<Provider> providers, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, CoordinatesCircle coordinatesCircle, List<Term> terms);
+    List<ServicePoint> findByMultipleCriteria(List<Provider> providers, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, CoordinatesCircle coordinatesCircle, List<Term> terms, Integer start, Integer limit);
 
-    List<ServicePoint> findByMultipleCriteriaEagerly(List<Provider> providers, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories);
-    List<ServicePoint> findByMultipleCriteriaEagerly(List<Provider> providers, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, Integer start, Integer limit);
-    List<ServicePoint> findByMultipleCriteriaEagerly(List<Provider> providers, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, Address address);
-    List<ServicePoint> findByMultipleCriteriaEagerly(List<Provider> providers, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, Address address, Integer start, Integer limit);
-    List<ServicePoint> findByMultipleCriteriaEagerly(List<Provider> providers, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, CoordinatesSquare coordinatesSquare);
-    List<ServicePoint> findByMultipleCriteriaEagerly(List<Provider> providers, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, CoordinatesSquare coordinatesSquare, Integer start, Integer limit);
-    List<ServicePoint> findByMultipleCriteriaEagerly(List<Provider> providers, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, CoordinatesCircle coordinatesCircle);
-    List<ServicePoint> findByMultipleCriteriaEagerly(List<Provider> providers, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, CoordinatesCircle coordinatesCircle, Integer start, Integer limit);
+    List<ServicePoint> findByMultipleCriteriaEagerly(List<Provider> providers, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, List<Term> terms);
+    List<ServicePoint> findByMultipleCriteriaEagerly(List<Provider> providers, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, List<Term> terms, Integer start, Integer limit);
+    List<ServicePoint> findByMultipleCriteriaEagerly(List<Provider> providers, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, Address address, List<Term> terms);
+    List<ServicePoint> findByMultipleCriteriaEagerly(List<Provider> providers, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, Address address, List<Term> terms, Integer start, Integer limit);
+    List<ServicePoint> findByMultipleCriteriaEagerly(List<Provider> providers, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, CoordinatesSquare coordinatesSquare, List<Term> terms);
+    List<ServicePoint> findByMultipleCriteriaEagerly(List<Provider> providers, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, CoordinatesSquare coordinatesSquare, List<Term> terms, Integer start, Integer limit);
+    List<ServicePoint> findByMultipleCriteriaEagerly(List<Provider> providers, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, CoordinatesCircle coordinatesCircle, List<Term> terms);
+    List<ServicePoint> findByMultipleCriteriaEagerly(List<Provider> providers, List<Service> services, List<ProviderService> providerServices, List<Employee> employees, List<Corporation> corporations, List<Industry> industries, List<ServiceCategory> serviceCategories, CoordinatesCircle coordinatesCircle, List<Term> terms, Integer start, Integer limit);
 
     @javax.ejb.Local
     interface Local extends ServicePointFacadeInterface { }

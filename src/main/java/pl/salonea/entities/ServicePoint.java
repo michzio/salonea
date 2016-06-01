@@ -87,12 +87,15 @@ import java.util.Set;
                 "AND sp.longitudeWGS84 >= :min_longitude_wgs84 AND sp.longitudeWGS84 <= :max_longitude_wgs84 AND sp.latitudeWGS84 >= :min_latitude_wgs84 AND sp.latitudeWGS84 <= :max_latitude_wgs84"),
         @NamedQuery(name = ServicePoint.FIND_BY_INDUSTRY_AND_COORDINATES_CIRCLE, query = "SELECT sp FROM ServicePoint sp INNER JOIN sp.provider p WHERE :industry MEMBER OF p.industries " +
                 "AND SQRT((sp.longitudeWGS84 - :longitude_wgs84)*(sp.longitudeWGS84 - :longitude_wgs84) + (sp.latitudeWGS84 - :latitude_wgs84)*(sp.latitudeWGS84 - :latitude_wgs84)) <= :radius"),
+        @NamedQuery(name = ServicePoint.FIND_BY_TERM, query = "SELECT DISTINCT sp FROM ServicePoint sp INNER JOIN sp.workStations ws INNER JOIN ws.termsEmployeesWorkOn empl_term WHERE empl_term.term = :term"),
+        @NamedQuery(name = ServicePoint.FIND_BY_TERM_EAGERLY, query = "SELECT DISTINCT sp FROM ServicePoint sp INNER JOIN FETCH sp.workStations ws LEFT JOIN FETCH sp.photos ph LEFT JOIN FETCH sp.virtualTours vt INNER JOIN ws.termsEmployeesWorkOn empl_term WHERE empl_term.term = :term"),
         @NamedQuery(name = ServicePoint.COUNT_BY_PROVIDER, query = "SELECT COUNT(sp) FROM ServicePoint sp WHERE sp.provider = :provider"),
-        @NamedQuery(name = ServicePoint.COUNT_BY_SERVICE, query = "SELECT DISTINCT COUNT(sp) FROM ServicePoint sp INNER JOIN sp.workStations ws INNER JOIN ws.providedServices ps WHERE ps.service = :service"),
-        @NamedQuery(name = ServicePoint.COUNT_BY_EMPLOYEE, query = "SELECT DISTINCT COUNT(sp) FROM ServicePoint sp INNER JOIN sp.workStations ws INNER JOIN ws.termsEmployeesWorkOn term WHERE term.employee = :employee"),
-        @NamedQuery(name = ServicePoint.COUNT_BY_PROVIDER_SERVICE, query = "SELECT DISTINCT COUNT(sp) FROM ServicePoint sp INNER JOIN sp.workStations ws WHERE :provider_service MEMBER OF ws.providedServices"),
+        @NamedQuery(name = ServicePoint.COUNT_BY_SERVICE, query = "SELECT COUNT(DISTINCT sp) FROM ServicePoint sp INNER JOIN sp.workStations ws INNER JOIN ws.providedServices ps WHERE ps.service = :service"),
+        @NamedQuery(name = ServicePoint.COUNT_BY_EMPLOYEE, query = "SELECT COUNT(DISTINCT sp) FROM ServicePoint sp INNER JOIN sp.workStations ws INNER JOIN ws.termsEmployeesWorkOn term WHERE term.employee = :employee"),
+        @NamedQuery(name = ServicePoint.COUNT_BY_PROVIDER_SERVICE, query = "SELECT COUNT(DISTINCT sp) FROM ServicePoint sp INNER JOIN sp.workStations ws WHERE :provider_service MEMBER OF ws.providedServices"),
         @NamedQuery(name = ServicePoint.COUNT_BY_CORPORATION, query = "SELECT COUNT(sp) FROM ServicePoint sp INNER JOIN sp.provider p WHERE p.corporation = :corporation"),
         @NamedQuery(name = ServicePoint.COUNT_BY_INDUSTRY, query = "SELECT COUNT(sp) FROM ServicePoint sp INNER JOIN sp.provider p WHERE :industry MEMBER OF p.industries"),
+        @NamedQuery(name = ServicePoint.COUNT_BY_TERM, query = "SELECT COUNT(DISTINCT sp) FROM ServicePoint sp INNER JOIN sp.workStations ws INNER JOIN ws.termsEmployeesWorkOn empl_term WHERE empl_term.term = :term"),
         @NamedQuery(name = ServicePoint.DELETE_BY_PROVIDER, query = "DELETE FROM ServicePoint sp WHERE sp.provider = :provider"),
         @NamedQuery(name = ServicePoint.DELETE_BY_ID, query = "DELETE FROM ServicePoint sp WHERE sp.provider.userId = :userId AND sp.servicePointNumber = :servicePointNumber"),
 })
@@ -133,12 +136,16 @@ public class ServicePoint implements Serializable {
     public static final String FIND_BY_INDUSTRY_AND_ADDRESS = "ServicePoint.findByIndustryAndAddress";
     public static final String FIND_BY_INDUSTRY_AND_COORDINATES_SQUARE = "ServicePoint.findByIndustryAndCoordinatesSquare";
     public static final String FIND_BY_INDUSTRY_AND_COORDINATES_CIRCLE = "ServicePoint.findByIndustryAndCoordinatesCircle";
+    public static final String FIND_BY_TERM = "ServicePoint.findByTerm";
+    public static final String FIND_BY_TERM_EAGERLY = "ServicePoint.findByTermEagerly";
     public static final String COUNT_BY_PROVIDER = "ServicePoint.countByProvider";
     public static final String COUNT_BY_SERVICE = "ServicePoint.countByService";
     public static final String COUNT_BY_EMPLOYEE = "ServicePoint.countByEmployee";
     public static final String COUNT_BY_PROVIDER_SERVICE = "ServicePoint.countByProviderService";
     public static final String COUNT_BY_CORPORATION = "ServicePoint.countByCorporation";
     public static final String COUNT_BY_INDUSTRY = "ServicePoint.countByIndustry";
+    public static final String COUNT_BY_TERM = "ServicePoint.countByTerm";
+
     public static final String DELETE_BY_PROVIDER = "ServicePoint.deleteByProvider";
     public static final String DELETE_BY_ID = "ServicePoint.deleteById";
 

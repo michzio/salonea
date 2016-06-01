@@ -686,7 +686,7 @@ public class IndustryResource {
                     // only address params
                     servicePoints = new ResourceList<>(
                             servicePointFacade.findByMultipleCriteria(params.getProviders(), params.getServices(), params.getProviderServices(), params.getEmployees(),
-                                    params.getCorporations(), industries, params.getServiceCategories(), params.getAddress(),
+                                    params.getCorporations(), industries, params.getServiceCategories(), params.getAddress(), params.getTerms(),
                                     params.getOffset(), params.getLimit())
                     );
                 } else if (params.getCoordinatesSquare() != null) {
@@ -695,7 +695,7 @@ public class IndustryResource {
                     // only coordinates square params
                     servicePoints = new ResourceList<>(
                             servicePointFacade.findByMultipleCriteria(params.getProviders(), params.getServices(), params.getProviderServices(), params.getEmployees(),
-                                    params.getCorporations(), industries, params.getServiceCategories(), params.getCoordinatesSquare(),
+                                    params.getCorporations(), industries, params.getServiceCategories(), params.getCoordinatesSquare(), params.getTerms(),
                                     params.getOffset(), params.getLimit())
                     );
                 } else if (params.getCoordinatesCircle() != null) {
@@ -704,14 +704,15 @@ public class IndustryResource {
                     // only coordinates circle params
                     servicePoints = new ResourceList<>(
                             servicePointFacade.findByMultipleCriteria(params.getProviders(), params.getServices(), params.getProviderServices(), params.getEmployees(),
-                                    params.getCorporations(), industries, params.getServiceCategories(), params.getCoordinatesCircle(),
+                                    params.getCorporations(), industries, params.getServiceCategories(), params.getCoordinatesCircle(), params.getTerms(),
                                     params.getOffset(), params.getLimit())
                     );
                 } else {
                     // no location params
                     servicePoints = new ResourceList<>(
                             servicePointFacade.findByMultipleCriteria(params.getProviders(), params.getServices(), params.getProviderServices(), params.getEmployees(),
-                                    params.getCorporations(), industries, params.getServiceCategories(), params.getOffset(), params.getLimit())
+                                    params.getCorporations(), industries, params.getServiceCategories(), params.getTerms(),
+                                    params.getOffset(), params.getLimit())
                     );
                 }
             } else {
@@ -758,7 +759,7 @@ public class IndustryResource {
                     servicePoints = new ResourceList<>(
                             ServicePointWrapper.wrap(
                                     servicePointFacade.findByMultipleCriteriaEagerly(params.getProviders(), params.getServices(), params.getProviderServices(), params.getEmployees(),
-                                            params.getCorporations(), industries, params.getServiceCategories(), params.getAddress(),
+                                            params.getCorporations(), industries, params.getServiceCategories(), params.getAddress(), params.getTerms(),
                                             params.getOffset(), params.getLimit())
                             )
                     );
@@ -769,7 +770,7 @@ public class IndustryResource {
                     servicePoints = new ResourceList<>(
                             ServicePointWrapper.wrap(
                                     servicePointFacade.findByMultipleCriteriaEagerly(params.getProviders(), params.getServices(), params.getProviderServices(), params.getEmployees(),
-                                            params.getCorporations(), industries, params.getServiceCategories(), params.getCoordinatesSquare(),
+                                            params.getCorporations(), industries, params.getServiceCategories(), params.getCoordinatesSquare(), params.getTerms(),
                                             params.getOffset(), params.getLimit())
                             )
                     );
@@ -780,7 +781,7 @@ public class IndustryResource {
                     servicePoints = new ResourceList<>(
                             ServicePointWrapper.wrap(
                                     servicePointFacade.findByMultipleCriteriaEagerly(params.getProviders(), params.getServices(), params.getProviderServices(), params.getEmployees(),
-                                            params.getCorporations(), industries, params.getServiceCategories(), params.getCoordinatesCircle(),
+                                            params.getCorporations(), industries, params.getServiceCategories(), params.getCoordinatesCircle(), params.getTerms(),
                                             params.getOffset(), params.getLimit())
                             )
                     );
@@ -789,7 +790,8 @@ public class IndustryResource {
                     servicePoints = new ResourceList<>(
                             ServicePointWrapper.wrap(
                                     servicePointFacade.findByMultipleCriteriaEagerly(params.getProviders(), params.getServices(), params.getProviderServices(), params.getEmployees(),
-                                            params.getCorporations(), industries, params.getServiceCategories(), params.getOffset(), params.getLimit())
+                                            params.getCorporations(), industries, params.getServiceCategories(), params.getTerms(),
+                                            params.getOffset(), params.getLimit())
                             )
                     );
                 }

@@ -14,6 +14,8 @@ import pl.salonea.jaxrs.utils.ResourceList;
 import javax.ejb.EJBException;
 import javax.ejb.EJBTransactionRolledbackException;
 import javax.inject.Inject;
+import javax.transaction.*;
+import javax.transaction.NotSupportedException;
 import javax.ws.rs.*;
 
 import pl.salonea.jaxrs.utils.ResponseWrapper;
@@ -51,6 +53,9 @@ public class CorporationResource {
     private ServicePointPhotoFacade servicePointPhotoFacade;
     @Inject
     private VirtualTourFacade virtualTourFacade;
+
+    @Inject
+    private UserTransaction utx;
 
     /**
      * Method returns all Corporation resources
@@ -912,7 +917,8 @@ public class CorporationResource {
         @GET
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
         public Response getCorporationServicePoints( @PathParam("corporationId") Long corporationId,
-                                                     @BeanParam ServicePointBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException {
+                                                     @BeanParam ServicePointBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
 
             RESTToolkit.authorizeAccessToWebService(params);
             logger.log(Level.INFO, "returning subset of Service Point entities for given Corporation using " +
@@ -933,13 +939,15 @@ public class CorporationResource {
                 List<Corporation> corporations = new ArrayList<>();
                 corporations.add(corporation);
 
+                utx.begin();
+
                 if(params.getAddress() != null) {
                     if(params.getCoordinatesSquare() != null || params.getCoordinatesCircle() != null)
                         throw new BadRequestException("Query params cannot include address params and coordinates square params or coordinates circle params at the same time.");
                     // only address params
                     servicePoints = new ResourceList<>(
                             servicePointFacade.findByMultipleCriteria(params.getProviders(), params.getServices(), params.getProviderServices(), params.getEmployees(),
-                                    corporations, params.getIndustries(), params.getServiceCategories(), params.getAddress(),
+                                    corporations, params.getIndustries(), params.getServiceCategories(), params.getAddress(), params.getTerms(),
                                     params.getOffset(), params.getLimit())
                     );
                 } else if(params.getCoordinatesSquare() != null) {
@@ -948,7 +956,7 @@ public class CorporationResource {
                     // only coordinates square params
                     servicePoints = new ResourceList<>(
                             servicePointFacade.findByMultipleCriteria(params.getProviders(), params.getServices(), params.getProviderServices(), params.getEmployees(),
-                                    corporations, params.getIndustries(), params.getServiceCategories(), params.getCoordinatesSquare(),
+                                    corporations, params.getIndustries(), params.getServiceCategories(), params.getCoordinatesSquare(), params.getTerms(),
                                     params.getOffset(), params.getLimit())
                     );
                 } else if(params.getCoordinatesCircle() != null) {
@@ -957,16 +965,19 @@ public class CorporationResource {
                     // only coordinates circle params
                     servicePoints = new ResourceList<>(
                             servicePointFacade.findByMultipleCriteria(params.getProviders(), params.getServices(), params.getProviderServices(), params.getEmployees(),
-                                    corporations, params.getIndustries(), params.getServiceCategories(), params.getCoordinatesCircle(),
+                                    corporations, params.getIndustries(), params.getServiceCategories(), params.getCoordinatesCircle(), params.getTerms(),
                                     params.getOffset(), params.getLimit())
                     );
                 } else {
                     // no location params
                     servicePoints = new ResourceList<>(
                             servicePointFacade.findByMultipleCriteria(params.getProviders(), params.getServices(), params.getProviderServices(), params.getEmployees(),
-                                    corporations, params.getIndustries(), params.getServiceCategories(), params.getOffset(), params.getLimit())
+                                    corporations, params.getIndustries(), params.getServiceCategories(), params.getTerms(), params.getOffset(), params.getLimit())
                     );
                 }
+
+                utx.commit();
+
             } else {
                 logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
 
@@ -983,7 +994,8 @@ public class CorporationResource {
         @Path("/eagerly")
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
         public Response getCorporationServicePointsEagerly( @PathParam("corporationId") Long corporationId,
-                                                            @BeanParam ServicePointBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException {
+                                                            @BeanParam ServicePointBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
 
             RESTToolkit.authorizeAccessToWebService(params);
             logger.log(Level.INFO, "returning subset of Service Point entities for given Corporation eagerly using " +
@@ -1004,6 +1016,8 @@ public class CorporationResource {
                 List<Corporation> corporations = new ArrayList<>();
                 corporations.add(corporation);
 
+                utx.begin();
+
                 if(params.getAddress() != null) {
                     if(params.getCoordinatesSquare() != null || params.getCoordinatesCircle() != null)
                         throw new BadRequestException("Query params cannot include address params and coordinates square params or coordinates circle params at the same time.");
@@ -1011,7 +1025,7 @@ public class CorporationResource {
                     servicePoints = new ResourceList<>(
                             ServicePointWrapper.wrap(
                                 servicePointFacade.findByMultipleCriteriaEagerly(params.getProviders(), params.getServices(), params.getProviderServices(), params.getEmployees(),
-                                        corporations, params.getIndustries(), params.getServiceCategories(), params.getAddress(),
+                                        corporations, params.getIndustries(), params.getServiceCategories(), params.getAddress(), params.getTerms(),
                                         params.getOffset(), params.getLimit())
                             )
                     );
@@ -1022,7 +1036,7 @@ public class CorporationResource {
                     servicePoints = new ResourceList<>(
                             ServicePointWrapper.wrap(
                                 servicePointFacade.findByMultipleCriteriaEagerly(params.getProviders(), params.getServices(), params.getProviderServices(), params.getEmployees(),
-                                        corporations, params.getIndustries(), params.getServiceCategories(), params.getCoordinatesSquare(),
+                                        corporations, params.getIndustries(), params.getServiceCategories(), params.getCoordinatesSquare(), params.getTerms(),
                                         params.getOffset(), params.getLimit())
                             )
                     );
@@ -1033,7 +1047,7 @@ public class CorporationResource {
                     servicePoints = new ResourceList<>(
                             ServicePointWrapper.wrap(
                                 servicePointFacade.findByMultipleCriteriaEagerly(params.getProviders(), params.getServices(), params.getProviderServices(), params.getEmployees(),
-                                        corporations, params.getIndustries(), params.getServiceCategories(), params.getCoordinatesCircle(),
+                                        corporations, params.getIndustries(), params.getServiceCategories(), params.getCoordinatesCircle(), params.getTerms(),
                                         params.getOffset(), params.getLimit())
                             )
                     );
@@ -1042,10 +1056,12 @@ public class CorporationResource {
                     servicePoints = new ResourceList<>(
                             ServicePointWrapper.wrap(
                                 servicePointFacade.findByMultipleCriteriaEagerly(params.getProviders(), params.getServices(), params.getProviderServices(), params.getEmployees(),
-                                        corporations, params.getIndustries(), params.getServiceCategories(), params.getOffset(), params.getLimit())
+                                        corporations, params.getIndustries(), params.getServiceCategories(), params.getTerms(), params.getOffset(), params.getLimit())
                             )
                     );
                 }
+
+                utx.commit();
 
             } else {
                 logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
