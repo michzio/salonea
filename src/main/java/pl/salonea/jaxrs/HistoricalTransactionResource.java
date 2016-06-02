@@ -1,19 +1,29 @@
 package pl.salonea.jaxrs;
 
+import pl.salonea.ejb.stateless.EmployeeFacade;
 import pl.salonea.ejb.stateless.HistoricalTransactionFacade;
 import pl.salonea.entities.Employee;
 import pl.salonea.entities.HistoricalTransaction;
 import pl.salonea.jaxrs.bean_params.GenericBeanParam;
 import pl.salonea.jaxrs.bean_params.HistoricalTransactionBeanParam;
+import pl.salonea.jaxrs.exceptions.ForbiddenException;
+import pl.salonea.jaxrs.utils.RESTToolkit;
 import pl.salonea.jaxrs.utils.ResourceList;
 import pl.salonea.jaxrs.utils.hateoas.Link;
 import pl.salonea.jaxrs.wrappers.HistoricalTransactionWrapper;
 
 import javax.inject.Inject;
-import javax.transaction.UserTransaction;
+import javax.transaction.*;
+import javax.ws.rs.BeanParam;
+import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 import java.lang.reflect.Method;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -29,6 +39,55 @@ public class HistoricalTransactionResource {
 
     @Inject
     private HistoricalTransactionFacade historicalTransactionFacade;
+    @Inject
+    private EmployeeFacade employeeFacade;
+
+    /**
+     * Method returns all Historical Transaction entities.
+     * They can be additionally filtered and paginated by @QueryParams
+     */
+    @GET
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getHistoricalTransactions(@BeanParam HistoricalTransactionBeanParam params) throws ForbiddenException,
+    /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning all Historical Transactions by executing HistoricalTransactionResource.getHistoricalTransactions() method of REST API");
+
+        Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+        ResourceList<HistoricalTransaction> historicalTransactions = null;
+
+        if(noOfParams > 0) {
+            logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+            utx.begin();
+
+            // get historical transactions filtered by criteria provided in query params
+            historicalTransactions = new ResourceList<>(
+                    historicalTransactionFacade.findByMultipleCriteria(params.getClients(), params.getProviders(), params.getServices(),
+                            params.getServicePoints(), params.getWorkStations(), params.getEmployees(), params.getProviderServices(),
+                            params.getTransactionTimePeriod(), params.getBookedTimePeriod(), params.getTerms(), params.getPriceRange(),
+                            params.getCurrencyCodes(), params.getPaymentMethods(), params.getPaid(), params.getCompletionStatuses(),
+                            params.getClientRatingRange(), params.getClientComments(), params.getProviderRatingRange(), params.getProviderDementis(),
+                            params.getOffset(), params.getLimit())
+            );
+
+            utx.commit();
+
+        } else {
+            logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+            // get all historical transactions without filtering (eventually paginated)
+            historicalTransactions = new ResourceList<>( historicalTransactionFacade.findAll(params.getOffset(), params.getLimit())  );
+        }
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        HistoricalTransactionResource.populateWithHATEOASLinks(historicalTransactions, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(historicalTransactions).build();
+    }
+
 
     // TODO get HistoricalTransactions CRUD methods and other
 
