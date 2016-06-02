@@ -86,6 +86,49 @@ public class TransactionResource {
         return Response.status(Status.OK).entity(transactions).build();
     }
 
+    @GET
+    @Path("/eagerly")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getTransactionsEagerly( @BeanParam TransactionBeanParam params ) throws ForbiddenException,
+    /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning all Transactions eagerly by executing TransactionResource.getTransactionsEagerly() method of REST API");
+
+        Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+        ResourceList<TransactionWrapper> transactions = null;
+
+        if (noOfParams > 0) {
+            logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+            utx.begin();
+
+            // get transactions eagerly filtered by criteria provided in query params
+            transactions = new ResourceList<>(
+                    TransactionWrapper.wrap(
+                            transactionFacade.findByMultipleCriteriaEagerly(params.getClients(), params.getProviders(), params.getServices(),
+                                    params.getServicePoints(), params.getWorkStations(), params.getEmployees(), params.getProviderServices(),
+                                    params.getTransactionTimePeriod(), params.getBookedTimePeriod(), params.getTerms(), params.getPriceRange(),
+                                    params.getCurrencyCodes(), params.getPaymentMethods(), params.getPaid(), params.getOffset(), params.getLimit())
+                    )
+            );
+
+            utx.commit();
+
+        } else {
+            logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+            // get all transactions eagerly without filtering (eventually paginated)
+            transactions = new ResourceList<>(TransactionWrapper.wrap(transactionFacade.findAllEagerly(params.getOffset(), params.getLimit())));
+        }
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        TransactionResource.populateWithHATEOASLinks(transactions, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(transactions).build();
+    }
+
     // TODO get Transactions CRUD methods and other
 
     /**

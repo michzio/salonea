@@ -88,6 +88,50 @@ public class HistoricalTransactionResource {
         return Response.status(Status.OK).entity(historicalTransactions).build();
     }
 
+    @GET
+    @Path("/eagerly")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getHistoricalTransactionsEagerly( HistoricalTransactionBeanParam params ) throws ForbiddenException,
+    /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning all Historical Transactions eagerly by executing HistoricalTransactionResource.getHistoricalTransactionsEagerly() method of REST API");
+
+        Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+        ResourceList<HistoricalTransactionWrapper> historicalTransactions = null;
+
+        if(noOfParams > 0) {
+            logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+            utx.begin();
+
+            // get historical transactions eagerly filtered by criteria provided in query params
+            historicalTransactions = new ResourceList<>(
+                    HistoricalTransactionWrapper.wrap(
+                            historicalTransactionFacade.findByMultipleCriteriaEagerly(params.getClients(), params.getProviders(), params.getServices(),
+                                    params.getServicePoints(), params.getWorkStations(), params.getEmployees(), params.getProviderServices(),
+                                    params.getTransactionTimePeriod(), params.getBookedTimePeriod(), params.getTerms(), params.getPriceRange(),
+                                    params.getCurrencyCodes(), params.getPaymentMethods(), params.getPaid(), params.getCompletionStatuses(),
+                                    params.getClientRatingRange(), params.getClientComments(), params.getProviderRatingRange(), params.getProviderDementis(),
+                                    params.getOffset(), params.getLimit())
+                    )
+            );
+
+            utx.commit();
+
+        } else {
+            logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+            // get all historical transactions eagerly without filtering (eventually paginated)
+            historicalTransactions = new ResourceList<>( HistoricalTransactionWrapper.wrap(historicalTransactionFacade.findAllEagerly(params.getOffset(), params.getLimit())) );
+        }
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        HistoricalTransactionResource.populateWithHATEOASLinks(historicalTransactions, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(historicalTransactions).build();
+    }
 
     // TODO get HistoricalTransactions CRUD methods and other
 
