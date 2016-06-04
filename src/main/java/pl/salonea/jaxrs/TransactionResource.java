@@ -4,9 +4,12 @@ import pl.salonea.ejb.stateless.EmployeeFacade;
 import pl.salonea.ejb.stateless.TransactionFacade;
 import pl.salonea.entities.Employee;
 import pl.salonea.entities.Transaction;
+import pl.salonea.entities.idclass.TransactionId;
 import pl.salonea.jaxrs.bean_params.GenericBeanParam;
 import pl.salonea.jaxrs.bean_params.TransactionBeanParam;
+import pl.salonea.jaxrs.exceptions.*;
 import pl.salonea.jaxrs.exceptions.ForbiddenException;
+import pl.salonea.jaxrs.exceptions.NotFoundException;
 import pl.salonea.jaxrs.utils.RESTToolkit;
 import pl.salonea.jaxrs.utils.ResourceList;
 import pl.salonea.jaxrs.utils.hateoas.Link;
@@ -14,10 +17,8 @@ import pl.salonea.jaxrs.wrappers.TransactionWrapper;
 
 import javax.inject.Inject;
 import javax.transaction.*;
-import javax.ws.rs.BeanParam;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
+import javax.transaction.NotSupportedException;
+import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
@@ -127,6 +128,29 @@ public class TransactionResource {
         TransactionResource.populateWithHATEOASLinks(transactions, params.getUriInfo(), params.getOffset(), params.getLimit());
 
         return Response.status(Status.OK).entity(transactions).build();
+    }
+
+    /**
+     *  Method matches specific Transaction resource by composite identifier and returns its instance.
+     */
+    @GET
+    @Path("/{clientId: \\d+}+{transactionNumber: \\d+}")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getTransaction( @PathParam("clientId") Long clientId,
+                                    @PathParam("transactionNumber") Integer transactionNumber,
+                                    @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning given Transaction by executing TransactionResource.getTransaction(clientId, transactionNumber) method of REST API");
+
+        Transaction foundTransaction = transactionFacade.find(new TransactionId(clientId, transactionNumber));
+        if(foundTransaction == null)
+            throw new NotFoundException("Could not find transaction for id (" + clientId + "," + transactionNumber + ").");
+
+        // adding hypermedia links to transaction resource
+        TransactionResource.populateWithHATEOASLinks(foundTransaction, params.getUriInfo());
+
+        return Response.status(Status.OK).entity(foundTransaction).build();
     }
 
     // TODO get Transactions CRUD methods and other

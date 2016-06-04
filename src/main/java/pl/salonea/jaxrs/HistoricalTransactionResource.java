@@ -4,9 +4,12 @@ import pl.salonea.ejb.stateless.EmployeeFacade;
 import pl.salonea.ejb.stateless.HistoricalTransactionFacade;
 import pl.salonea.entities.Employee;
 import pl.salonea.entities.HistoricalTransaction;
+import pl.salonea.entities.idclass.TransactionId;
 import pl.salonea.jaxrs.bean_params.GenericBeanParam;
 import pl.salonea.jaxrs.bean_params.HistoricalTransactionBeanParam;
+import pl.salonea.jaxrs.exceptions.*;
 import pl.salonea.jaxrs.exceptions.ForbiddenException;
+import pl.salonea.jaxrs.exceptions.NotFoundException;
 import pl.salonea.jaxrs.utils.RESTToolkit;
 import pl.salonea.jaxrs.utils.ResourceList;
 import pl.salonea.jaxrs.utils.hateoas.Link;
@@ -14,10 +17,8 @@ import pl.salonea.jaxrs.wrappers.HistoricalTransactionWrapper;
 
 import javax.inject.Inject;
 import javax.transaction.*;
-import javax.ws.rs.BeanParam;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
+import javax.transaction.NotSupportedException;
+import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
@@ -91,7 +92,7 @@ public class HistoricalTransactionResource {
     @GET
     @Path("/eagerly")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getHistoricalTransactionsEagerly( HistoricalTransactionBeanParam params ) throws ForbiddenException,
+    public Response getHistoricalTransactionsEagerly( @BeanParam HistoricalTransactionBeanParam params ) throws ForbiddenException,
     /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
 
         RESTToolkit.authorizeAccessToWebService(params);
@@ -131,6 +132,29 @@ public class HistoricalTransactionResource {
         HistoricalTransactionResource.populateWithHATEOASLinks(historicalTransactions, params.getUriInfo(), params.getOffset(), params.getLimit());
 
         return Response.status(Status.OK).entity(historicalTransactions).build();
+    }
+
+    /**
+     *   Method matches specific Historical Transaction resource by composite identifier and returns its instance.
+     */
+    @GET
+    @Path("/{clientId: \\d+}+{transactionNumber: \\d+}")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getHistoricalTransaction( @PathParam("clientId") Long clientId,
+                                              @PathParam("transactionNumber") Integer transactionNumber,
+                                              @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning given Historical Transaction by executing HistoricalTransactionResource.getHistoricalTransaction(clientId, transactionNumber) method of REST API");
+
+        HistoricalTransaction foundHistoricalTransaction = historicalTransactionFacade.find(new TransactionId(clientId, transactionNumber));
+        if(foundHistoricalTransaction == null)
+            throw new NotFoundException("Could not find historical transaction for id (" + clientId + "," + transactionNumber + ").");
+
+        // adding hypermedia links to historical transaction resource
+        HistoricalTransactionResource.populateWithHATEOASLinks(foundHistoricalTransaction, params.getUriInfo());
+
+        return Response.status(Status.OK).entity(foundHistoricalTransaction).build();
     }
 
     // TODO get HistoricalTransactions CRUD methods and other
