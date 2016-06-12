@@ -11,12 +11,11 @@ import pl.salonea.jaxrs.utils.hateoas.Link;
 
 import javax.persistence.*;
 import javax.validation.constraints.*;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlElementWrapper;
-import javax.xml.bind.annotation.XmlTransient;
-import java.util.Date;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import javax.xml.bind.annotation.*;
+import java.util.*;
+
+@XmlAccessorType(XmlAccessType.PROPERTY)
+@XmlType(propOrder = {"client", "transactionNumber", "price", "priceCurrencyCode", "transactionTime", "bookedTime", "paid", "providerService", "provider", "service", "servicePoint", "workStation", "paymentMethod", "term", "employeeIds", "links"})
 
 @MappedSuperclass
 @IdClass(TransactionId.class)
@@ -45,6 +44,9 @@ public abstract class AbstractTransaction {
     private Term term;
 
     private Set<Employee> employees;
+
+    // list of employee ids (JPA transient)
+    private List<Long> employeeIds;
 
     // HATEOAS support for RESTFul web service in JAX-RS
     private LinkedHashSet<Link> links = new LinkedHashSet<>();
@@ -260,6 +262,17 @@ public abstract class AbstractTransaction {
 
     public void setEmployees(Set<Employee> employees) {
         this.employees = employees;
+    }
+
+    @Transient
+    @XmlElementWrapper(name = "employees")
+    @XmlElement(name = "employee")
+    public List<Long> getEmployeeIds() {
+        return employeeIds;
+    }
+
+    public void setEmployeeIds(List<Long> employeeIds) {
+        this.employeeIds = employeeIds;
     }
 
     @Override

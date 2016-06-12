@@ -2,6 +2,7 @@ package pl.salonea.entities;
 
 import pl.salonea.enums.CurrencyCode;
 import pl.salonea.enums.TransactionCompletionStatus;
+import pl.salonea.jaxrs.utils.hateoas.Link;
 import pl.salonea.mapped_superclasses.AbstractTransaction;
 
 import javax.persistence.*;
@@ -9,16 +10,14 @@ import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Past;
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlType;
+import javax.xml.bind.annotation.*;
 import java.io.Serializable;
 import java.util.Date;
+import java.util.LinkedHashSet;
 
 @XmlRootElement(name = "historical_transaction")
 @XmlAccessorType(XmlAccessType.PROPERTY)
-@XmlType(propOrder = {"client", "transactionNumber", "price", "priceCurrencyCode", "transactionTime", "bookedTime", "paid", "providerService", "provider", "service", "servicePoint", "workStation", "paymentMethod", "term", "completionStatus", "clientComment", "clientRating", "providerDementi", "providerRating", "links"})
+@XmlType(propOrder = {"completionStatus", "clientComment", "clientRating", "providerDementi", "providerRating"})
 
 @Entity
 @Table(name = "historical_transaction")
@@ -101,6 +100,11 @@ import java.util.Date;
         @NamedQuery(name = HistoricalTransaction.COUNT_BY_SERVICE_POINT, query = "SELECT COUNT(tx) FROM HistoricalTransaction tx WHERE tx.servicePoint = :service_point"),
         @NamedQuery(name = HistoricalTransaction.COUNT_BY_TERM, query = "SELECT COUNT(tx) FROM HistoricalTransaction tx WHERE tx.term = :term"),
         @NamedQuery(name = HistoricalTransaction.DELETE_BY_CLIENT, query = "DELETE FROM HistoricalTransaction tx WHERE tx.client = :client"),
+        @NamedQuery(name = HistoricalTransaction.DELETE_BY_ID, query = "DELETE FROM HistoricalTransaction tx WHERE tx.client.clientId = :clientId AND tx.transactionNumber = :transaction_number"),
+})
+@NamedNativeQueries({
+        @NamedNativeQuery(name = HistoricalTransaction.DELETE_EMPLOYEES_ASSOCIATIONS_BY_TRANSACTION, query = "DELETE FROM historical_transaction_executed_by WHERE client_id = :clientId AND transaction_no = :transaction_number"),
+        @NamedNativeQuery(name = HistoricalTransaction.DELETE_EMPLOYEES_ASSOCIATIONS_BY_CLIENT, query = "DELETE FROM historical_transaction_executed_by WHERE client_id = :clientId"),
 })
 public class HistoricalTransaction extends AbstractTransaction implements Serializable {
 
@@ -166,6 +170,10 @@ public class HistoricalTransaction extends AbstractTransaction implements Serial
     public static final String COUNT_BY_SERVICE_POINT = "HistoricalTransaction.countByServicePoint";
     public static final String COUNT_BY_TERM = "HistoricalTransaction.countByTerm";
     public static final String DELETE_BY_CLIENT = "HistoricalTransaction.deleteByClient";
+    public static final String DELETE_BY_ID = "HistoricalTransaction.deleteById";
+    public static final String DELETE_EMPLOYEES_ASSOCIATIONS_BY_TRANSACTION = "HistoricalTransaction.deleteEmployeesAssociationsByTransaction";
+    public static final String DELETE_EMPLOYEES_ASSOCIATIONS_BY_CLIENT = "HistoricalTransaction.deleteEmployeesAssociationsByClient";
+
 
     /* additional attributes */
 

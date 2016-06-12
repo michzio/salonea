@@ -3,7 +3,9 @@ package pl.salonea.jaxrs;
 import pl.salonea.ejb.stateless.*;
 import pl.salonea.embeddables.Address;
 import pl.salonea.entities.*;
+import pl.salonea.entities.Transaction;
 import pl.salonea.entities.idclass.CreditCardId;
+import pl.salonea.entities.idclass.TransactionId;
 import pl.salonea.enums.ClientType;
 import pl.salonea.enums.CreditCardType;
 import pl.salonea.enums.Gender;
@@ -17,14 +19,13 @@ import pl.salonea.jaxrs.utils.RESTToolkit;
 import pl.salonea.jaxrs.utils.ResourceList;
 import pl.salonea.jaxrs.utils.ResponseWrapper;
 import pl.salonea.jaxrs.utils.hateoas.Link;
-import pl.salonea.jaxrs.wrappers.ClientWrapper;
-import pl.salonea.jaxrs.wrappers.EmployeeWrapper;
-import pl.salonea.jaxrs.wrappers.ProviderWrapper;
+import pl.salonea.jaxrs.wrappers.*;
 
 import javax.ejb.EJBException;
 import javax.ejb.EJBTransactionRolledbackException;
 import javax.inject.Inject;
 import javax.transaction.*;
+import javax.transaction.NotSupportedException;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -61,6 +62,14 @@ public class ClientResource {
     private EmployeeRatingFacade employeeRatingFacade;
     @Inject
     private CreditCardFacade creditCardFacade;
+    @Inject
+    private TransactionFacade transactionFacade;
+    @Inject
+    private HistoricalTransactionFacade historicalTransactionFacade;
+    @Inject
+    private TransactionEmployeeRelationshipManager transactionEmployeeRelationshipManager;
+    @Inject
+    private HistoricalTransactionEmployeeRelationshipManager historicalTransactionEmployeeRelationshipManager;
 
     /**
      * Method returns all Client resources
@@ -710,6 +719,12 @@ public class ClientResource {
     @Path("/{clientId: \\d+}/credit-cards")
     public CreditCardResource getCreditCardResource() { return new CreditCardResource(); }
 
+    @Path("/{clientId: \\d+}/transactions")
+    public TransactionResource getTransactionResource() { return new TransactionResource(); }
+
+    @Path("/{clientId: \\d+}/historical-transactions")
+    public HistoricalTransactionResource getHistoricalTransactionResource() { return new HistoricalTransactionResource(); }
+
     /**
      * This method enables to populate list of resources and each individual resource with hypermedia links
      */
@@ -816,8 +831,14 @@ public class ClientResource {
 
         ClientResource.populateWithHATEOASLinks(clientWrapper.getClient(), uriInfo);
 
-        //clientWrapper.getCreditCards()
+        for(CreditCard creditCard : clientWrapper.getCreditCards())
+            pl.salonea.jaxrs.CreditCardResource.populateWithHATEOASLinks(creditCard, uriInfo);
 
+        for(EmployeeRating employeeRating : clientWrapper.getEmployeeRatings())
+            pl.salonea.jaxrs.EmployeeRatingResource.populateWithHATEOASLinks(employeeRating, uriInfo);
+
+        for(ProviderRating providerRating : clientWrapper.getProviderRatings())
+            pl.salonea.jaxrs.ProviderRatingResource.populateWithHATEOASLinks(providerRating, uriInfo);
     }
 
     /**
@@ -974,7 +995,7 @@ public class ClientResource {
                     .rel("rated-providers").build());
 
             // rated-providers eagerly
-            Method providersEagerlyMethod = ProviderResource.class.getMethod("getClientRatedProvidersEagerly", Long.class, ProviderBeanParam.class);
+            Method providersEagerlyMethod = ClientResource.ProviderResource.class.getMethod("getClientRatedProvidersEagerly", Long.class, ProviderBeanParam.class);
             client.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
                     .path(ClientResource.class)
                     .path(providersMethod)
@@ -993,7 +1014,7 @@ public class ClientResource {
                     .rel("rated-employees").build());
 
             // rated-employees eagerly
-            Method employeesEagerlyMethod = EmployeeResource.class.getMethod("getClientRatedEmployeesEagerly", Long.class, EmployeeBeanParam.class);
+            Method employeesEagerlyMethod = ClientResource.EmployeeResource.class.getMethod("getClientRatedEmployeesEagerly", Long.class, EmployeeBeanParam.class);
             client.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
                     .path(ClientResource.class)
                     .path(employeesMethod)
@@ -1011,10 +1032,122 @@ public class ClientResource {
                     .build())
                     .rel("credit-cards").build());
 
+            // credit-cards count
+            Method countCreditCardsByClientMethod = ClientResource.CreditCardResource.class.getMethod("countCreditCardsByClient", Long.class, GenericBeanParam.class);
+            client.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ClientResource.class)
+                    .path(creditCardsMethod)
+                    .path(countCreditCardsByClientMethod)
+                    .resolveTemplate("clientId", client.getClientId().toString())
+                    .build())
+                    .rel("credit-cards-count").build());
+
+            // credit-cards typed
+            client.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ClientResource.class)
+                    .path(creditCardsMethod)
+                    .path("typed")
+                    .resolveTemplate("clientId", client.getClientId().toString())
+                    .build())
+                    .rel("credit-cards-typed").build());
+
+            // credit-cards expired
+            Method creditCardsThatExpiredMethod = ClientResource.CreditCardResource.class.getMethod("getClientCreditCardsThatExpired", Long.class, PaginationBeanParam.class);
+            client.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ClientResource.class)
+                    .path(creditCardsMethod)
+                    .path(creditCardsThatExpiredMethod)
+                    .resolveTemplate("clientId", client.getClientId().toString())
+                    .build())
+                    .rel("credit-cards-expired").build());
+
+            // credit-cards not-expired
+            Method creditCardsThatNotExpiredMethod = ClientResource.CreditCardResource.class.getMethod("getClientCreditCardsThatNotExpired", Long.class, PaginationBeanParam.class);
+            client.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ClientResource.class)
+                    .path(creditCardsMethod)
+                    .path(creditCardsThatNotExpiredMethod)
+                    .resolveTemplate("clientId", client.getClientId().toString())
+                    .build())
+                    .rel("credit-cards-not-expired").build());
+
+            // credit-cards expiring-after
+            client.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ClientResource.class)
+                    .path(creditCardsMethod)
+                    .path("expiring-after")
+                    .resolveTemplate("clientId", client.getClientId().toString())
+                    .build())
+                    .rel("credit-cards-expiring-after").build());
+
+            // credit-cards expiring-before
+            client.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ClientResource.class)
+                    .path(creditCardsMethod)
+                    .path("expiring-before")
+                    .resolveTemplate("clientId", client.getClientId().toString())
+                    .build())
+                    .rel("credit-cards-expiring-before").build());
+
+            // credit-cards expiring-between
+            Method creditCardsExpiringBetweenMethod = ClientResource.CreditCardResource.class.getMethod("getClientCreditCardsExpiringBetween", Long.class, DateBetweenBeanParam.class);
+            client.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ClientResource.class)
+                    .path(creditCardsMethod)
+                    .path(creditCardsExpiringBetweenMethod)
+                    .resolveTemplate("clientId", client.getClientId().toString())
+                    .build())
+                    .rel("credit-cards-expiring-between").build());
+
+            // transactions
+
+            // transactions eagerly
+
+            // transactions count
+
+            // transactions by-transaction-time
+
+            // transactions by-booked-time
+
+            // transactions paid
+
+            // transactions unpaid
+
+            // transactions by-price
+
+            // transactions by-currency
+
+            // historical-transactions
+
+            // historical-transactions eagerly
+
+            // historical-transactions count
+
+            // historical-transactions by-transaction-time
+
+            // historical-transactions by-booked-time
+
+            // historical-transactions paid
+
+            // historical-transactions unpaid
+
+            // historical-transactions by-price
+
+            // historical-transactions by-currency
+
+            // historical-transactions by-status
+
+            // historical-transactions by-client-rating
+
+            // historical-transactions by-client-comment
+
+            // historical-transactions by-provider-rating
+
+            // historical-transactions by-provider-dementi
+
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
         }
-
     }
 
     public class ProviderRatingResource {
@@ -2238,5 +2371,696 @@ public class ClientResource {
 
             return Response.status(Status.OK).entity(responseEntity).build();
         }
+    }
+
+    public class TransactionResource {
+
+        public TransactionResource() { }
+
+        /**
+         * Method returns subset of Transaction entities for given Client
+         * The client id is passed through path param.
+         * They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getClientTransactions(@PathParam("clientId") Long clientId,
+                                              @BeanParam TransactionBeanParam params) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning subset of Transaction entities for given Client using ClientResource.TransactionResource.getClientTransactions(clientId) method of REST API");
+
+            // find client entity for which to get associated transactions
+            Client client = clientFacade.find(clientId);
+            if(client == null)
+                throw new NotFoundException("Could not find client for id " + clientId + ".");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<Transaction> transactions = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Client> clients = new ArrayList<>();
+                clients.add(client);
+
+                // get transaction entities for given client filtered by given query params
+                utx.begin();
+
+                transactions = new ResourceList<>(
+                        transactionFacade.findByMultipleCriteria(clients, params.getProviders(), params.getServices(),
+                                params.getServicePoints(), params.getWorkStations(), params.getEmployees(), params.getProviderServices(),
+                                params.getTransactionTimePeriod(), params.getBookedTimePeriod(), params.getTerms(), params.getPriceRange(),
+                                params.getCurrencyCodes(), params.getPaymentMethods(), params.getPaid(), params.getOffset(), params.getLimit())
+                );
+
+                utx.commit();
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get transaction entities for given client without filtering (eventually paginated)
+                transactions = new ResourceList<>( transactionFacade.findByClient(client, params.getOffset(), params.getLimit()) );
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.TransactionResource.populateWithHATEOASLinks(transactions, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(transactions).build();
+        }
+
+        @GET
+        @Path("/eagerly")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getClientTransactionsEagerly(@PathParam("clientId") Long clientId,
+                                                     @BeanParam TransactionBeanParam params) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning subset of Transaction entities for given Client eagerly using ClientResource.TransactionResource.getClientTransactionsEagerly(clientId) method of REST API");
+
+            // find client entity for which to get associated transactions
+            Client client = clientFacade.find(clientId);
+            if(client == null)
+                throw new NotFoundException("Could not find client for id " + clientId + ".");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<TransactionWrapper> transactions = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Client> clients = new ArrayList<>();
+                clients.add(client);
+
+                // get transaction entities eagerly for given client filtered by given query params
+                utx.begin();
+
+                transactions = new ResourceList<>(
+                        TransactionWrapper.wrap(
+                                transactionFacade.findByMultipleCriteriaEagerly(clients, params.getProviders(), params.getServices(),
+                                        params.getServicePoints(), params.getWorkStations(), params.getEmployees(), params.getProviderServices(),
+                                        params.getTransactionTimePeriod(), params.getBookedTimePeriod(), params.getTerms(), params.getPriceRange(),
+                                        params.getCurrencyCodes(), params.getPaymentMethods(), params.getPaid(), params.getOffset(), params.getLimit())
+                        )
+                );
+
+                utx.commit();
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get transaction entities eagerly for given client without filtering (eventually paginated)
+                transactions = new ResourceList<>( TransactionWrapper.wrap(transactionFacade.findByClientEagerly(client, params.getOffset(), params.getLimit())) );
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.TransactionResource.populateWithHATEOASLinks(transactions, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(transactions).build();
+        }
+
+        /**
+         * Method matches specific Transaction resource by composite identifier and returns its instance.
+         */
+        @GET
+        @Path("/{transactionNumber: \\d+}")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getTransaction( @PathParam("clientId") Long clientId,
+                                        @PathParam("transactionNumber") Integer transactionNumber,
+                                        @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning given Transaction by executing ClientResource.TransactionResource.getTransaction(clientId, transactionNumber) method of REST API");
+
+            Transaction foundTransaction = transactionFacade.find(new TransactionId(clientId, transactionNumber));
+            if(foundTransaction == null)
+                throw new NotFoundException("Could not find transaction for id (" + clientId + "," + transactionNumber + ").");
+
+            // adding hypermedia links to transaction resource
+            pl.salonea.jaxrs.TransactionResource.populateWithHATEOASLinks(foundTransaction, params.getUriInfo());
+
+            return Response.status(Status.OK).entity(foundTransaction).build();
+        }
+
+        /**
+         * Method matches specific Transaction resource by composite identifier and returns its instance fetching it eagerly
+         */
+        @GET
+        @Path("/{transactionNumber: \\d+}/eagerly")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getTransactionEagerly( @PathParam("clientId") Long clientId,
+                                               @PathParam("transactionNumber") Integer transactionNumber,
+                                               @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning given Transaction eagerly by executing ClientResource.TransactionResource.getTransactionEagerly(clientId, transactionNumber) method of REST API");
+
+            Transaction foundTransaction = transactionFacade.findByIdEagerly(new TransactionId(clientId, transactionNumber));
+            if(foundTransaction == null)
+                throw new NotFoundException("Could not find transaction for id (" + clientId + "," + transactionNumber + ").");
+
+            // wrapping Transaction into TransactionWrapper in order to marshall eagerly fetched associated collection of entities
+            TransactionWrapper wrappedTransaction = new TransactionWrapper(foundTransaction);
+
+            // adding hypermedia links to wrapped transaction resource
+            pl.salonea.jaxrs.TransactionResource.populateWithHATEOASLinks(wrappedTransaction, params.getUriInfo());
+
+            return Response.status(Status.OK).entity(wrappedTransaction).build();
+        }
+
+        /**
+         *  Method that takes Transaction as XML or JSON and creates its new instance in database
+         */
+        @POST
+        @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response createTransaction( @PathParam("clientId") Long clientId,
+                                           Transaction transaction,
+                                           @BeanParam GenericBeanParam params ) throws ForbiddenException, UnprocessableEntityException, InternalServerErrorException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "creating new Transaction by executing ClientResource.TransactionResource.createTransaction(transaction) method of REST API");
+
+            Transaction createdTransaction = null;
+            URI locationURI = null;
+
+            try {
+                // persist new resource in database
+                createdTransaction = transactionFacade.createForClient(clientId, transaction);
+
+                // populate created resource with hypermedia links
+                pl.salonea.jaxrs.TransactionResource.populateWithHATEOASLinks(createdTransaction, params.getUriInfo());
+
+                // construct link to newly created resource to return in HTTP Header
+                String txClientId = String.valueOf(createdTransaction.getClient().getClientId());
+                String transactionNumber = String.valueOf(createdTransaction.getTransactionNumber());
+
+                Method transactionsMethod = ClientResource.class.getMethod("getTransactionResource");
+                locationURI = params.getUriInfo().getBaseUriBuilder()
+                        .path(ClientResource.class)
+                        .path(transactionsMethod)
+                        .path(transactionNumber)
+                        .resolveTemplate("clientId", txClientId)
+                        .build();
+
+            } catch (EJBTransactionRolledbackException ex) {
+                ExceptionHandler.handleEJBTransactionRolledbackException(ex);
+            } catch (EJBException ex) {
+                ExceptionHandler.handleEJBException(ex);
+            } catch (NoSuchMethodException ex) {
+                ex.printStackTrace();
+            } catch (Exception ex) {
+                throw new InternalServerErrorException(ExceptionHandler.ENTITY_CREATION_ERROR_MESSAGE);
+            }
+
+            return Response.created(locationURI).entity(createdTransaction).build();
+        }
+
+        /**
+         * Method that takes updated Transaction as XML or JSON and its composite ID as path params.
+         * It updates Transaction in database for provided composite ID.
+         */
+        @PUT
+        @Path("/{transactionNumber : \\d+}")
+        @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response updateTransaction( @PathParam("clientId") Long clientId,
+                                           @PathParam("transactionNumber")  Integer transactionNumber,
+                                           Transaction transaction,
+                                           @BeanParam GenericBeanParam params ) throws ForbiddenException, UnprocessableEntityException, InternalServerErrorException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "updating existing Transaction by executing ClientResource.TransactionResource.updateTransaction(transaction) method of REST API");
+
+            // create composite ID based on path params
+            TransactionId transactionId = new TransactionId(clientId, transactionNumber);
+
+            Transaction updatedTransaction = null;
+            try {
+                // reflect updated resource object in database
+                updatedTransaction = transactionFacade.update(transactionId, transaction);
+                // populate created resource with hypermedia links
+                pl.salonea.jaxrs.TransactionResource.populateWithHATEOASLinks(updatedTransaction, params.getUriInfo());
+
+            } catch (EJBTransactionRolledbackException ex) {
+                ExceptionHandler.handleEJBTransactionRolledbackException(ex);
+            } catch (EJBException ex) {
+                ExceptionHandler.handleEJBException(ex);
+            } catch (Exception ex) {
+                throw new InternalServerErrorException(ExceptionHandler.ENTITY_UPDATE_ERROR_MESSAGE);
+            }
+
+            return Response.status(Status.OK).entity(updatedTransaction).build();
+        }
+
+        /**
+         * Method that removes subset of Transaction entities for given Client from database.
+         * The client id is passed through path param.
+         */
+        @DELETE
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response removeClientTransactions(@PathParam("clientId") Long clientId,
+                                                 @BeanParam GenericBeanParam params) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "removing subset of Transaction entities for given Client by executing ClientResource.TransactionResource.removeClientTransactions(clientId) method of REST API");
+
+            // find client entity for which to remove transactions
+            Client client = clientFacade.find(clientId);
+            if(client == null)
+                throw new NotFoundException("Could not find client for id " + clientId + ".");
+
+            utx.begin();
+
+            // remove associations between transactions and employees for given client from database
+            transactionEmployeeRelationshipManager.removeEmployeesFromTransactionsByClient(client.getClientId());
+
+            // remove transactions for given client from database
+            Integer noOfDeleted = transactionFacade.deleteByClient(client);
+
+            utx.commit();
+
+            // create response returning number of deleted entities
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(noOfDeleted), 200, "number of deleted transactions for client with id " + clientId);
+
+            return Response.status(Status.OK).entity(responseEntity).build();
+        }
+
+        /**
+         * Method that removes Transaction entity from database for given ID.
+         * The transaction composite id is passed through path param.
+         */
+        @DELETE
+        @Path("/{transactionNumber : \\d+}")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response removeTransaction(@PathParam("clientId") Long clientId,
+                                          @PathParam("transactionNumber") Integer transactionNumber,
+                                          @BeanParam GenericBeanParam params) throws ForbiddenException, NotFoundException, InternalServerErrorException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "removing given Transaction by executing ClientResource.TransactionResource.removeTransaction(clientId, transactionNumber) method of REST API");
+
+            utx.begin();
+
+            // remove associations between transaction and employees from database
+            transactionEmployeeRelationshipManager.removeAllEmployeesFromTransaction(new TransactionId(clientId, transactionNumber));
+
+            // remove transaction entity from database
+            Integer noOfDeleted = transactionFacade.deleteById(new TransactionId(clientId, transactionNumber));
+
+            utx.commit();
+
+            if (noOfDeleted == 0)
+                throw new NotFoundException("Could not find transaction to delete for id (" + clientId + "," + transactionNumber + ").");
+            else if (noOfDeleted != 1)
+                throw new InternalServerErrorException("Some error occurred while trying to delete transaction with id (" + clientId + "," + transactionNumber + ").");
+
+            return Response.status(Status.NO_CONTENT).build();
+        }
+
+        /**
+         * Additional methods returning subset of resources based on given criteria
+         * you can also achieve similar results by applying @QueryParams to generic method
+         * returning all resources in order to filter and limit them
+         */
+
+        /**
+         * Method that counts Transaction entities for given Client resource
+         * The client id is passed through path param.
+         */
+        @GET
+        @Path("/count")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response countTransactionsByClient(@PathParam("clientId") Long clientId,
+                                                  @BeanParam GenericBeanParam params) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning number of transactions for given client by executing ClientResource.TransactionResource.countTransactionsByClient(clientId) method of REST API");
+
+            // find client entity for which to count transactions
+            Client client = clientFacade.find(clientId);
+            if (client == null)
+                throw new NotFoundException("Could not find client for id " + clientId + ".");
+
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(transactionFacade.countByClient(client)), 200, "number of transactions for client with id " + client.getClientId());
+            return Response.status(Status.OK).entity(responseEntity).build();
+        }
+
+
+        // TODO
+    }
+
+    public class HistoricalTransactionResource {
+
+        public HistoricalTransactionResource() { }
+
+        /**
+         * Method returns subset of Historical Transaction entities for given Client
+         * The client id is passed through path param.
+         * They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getClientHistoricalTransactions(@PathParam("clientId") Long clientId,
+                                                        @BeanParam HistoricalTransactionBeanParam params) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning subset of Historical Transaction entities for given Client using ClientResource.HistoricalTransactionResource.getClientHistoricalTransactions(clientId) method of REST API");
+
+            // find client entity for which to get associated historical transactions
+            Client client = clientFacade.find(clientId);
+            if(client == null)
+                throw new NotFoundException("Could not find client for id " + clientId + ".");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<HistoricalTransaction> historicalTransactions = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Client> clients = new ArrayList<>();
+                clients.add(client);
+
+                // get historical transaction entities for given client filtered by given query params
+                utx.begin();
+
+                historicalTransactions = new ResourceList<>(
+                        historicalTransactionFacade.findByMultipleCriteria(clients, params.getProviders(), params.getServices(),
+                                params.getServicePoints(), params.getWorkStations(), params.getEmployees(), params.getProviderServices(),
+                                params.getTransactionTimePeriod(), params.getBookedTimePeriod(), params.getTerms(), params.getPriceRange(),
+                                params.getCurrencyCodes(), params.getPaymentMethods(), params.getPaid(), params.getCompletionStatuses(),
+                                params.getClientRatingRange(), params.getClientComments(), params.getProviderRatingRange(), params.getProviderDementis(),
+                                params.getOffset(), params.getLimit())
+                );
+
+                utx.commit();
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get historical transaction entities for given client without filtering (eventually paginated)
+                historicalTransactions = new ResourceList<>( historicalTransactionFacade.findByClient(client, params.getOffset(), params.getLimit()) );
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.HistoricalTransactionResource.populateWithHATEOASLinks(historicalTransactions, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(historicalTransactions).build();
+        }
+
+        @GET
+        @Path("/eagerly")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getClientHistoricalTransactionsEagerly(@PathParam("clientId") Long clientId,
+                                                               @BeanParam HistoricalTransactionBeanParam params) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning subset of Historical Transaction entities for given Client eagerly using ClientResource.HistoricalTransactionResource.getClientHistoricalTransactionsEagerly(clientId) method of REST API");
+
+            // find client entity for which to get associated historical transactions
+            Client client = clientFacade.find(clientId);
+            if(client == null)
+                throw new NotFoundException("Could not find client for id " + clientId + ".");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<HistoricalTransactionWrapper> historicalTransactions = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Client> clients = new ArrayList<>();
+                clients.add(client);
+
+                // get historical transaction entities eagerly for given client filtered by given query params
+                utx.begin();
+
+                historicalTransactions = new ResourceList<>(
+                        HistoricalTransactionWrapper.wrap(
+                                historicalTransactionFacade.findByMultipleCriteriaEagerly(clients, params.getProviders(), params.getServices(),
+                                        params.getServicePoints(), params.getWorkStations(), params.getEmployees(), params.getProviderServices(),
+                                        params.getTransactionTimePeriod(), params.getBookedTimePeriod(), params.getTerms(), params.getPriceRange(),
+                                        params.getCurrencyCodes(), params.getPaymentMethods(), params.getPaid(), params.getCompletionStatuses(),
+                                        params.getClientRatingRange(), params.getClientComments(), params.getProviderRatingRange(), params.getProviderDementis(),
+                                        params.getOffset(), params.getLimit())
+                        )
+                );
+
+                utx.commit();
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get historical transaction entities eagerly for given client without filtering (eventually paginated)
+                historicalTransactions = new ResourceList<>( HistoricalTransactionWrapper.wrap(historicalTransactionFacade.findByClientEagerly(client, params.getOffset(), params.getLimit())) );
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.HistoricalTransactionResource.populateWithHATEOASLinks(historicalTransactions, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(historicalTransactions).build();
+        }
+
+        /**
+         * Method matches specific Historical Transaction resource by composite identifier and returns its instance.
+         */
+        @GET
+        @Path("/{transactionNumber: \\d+}")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getHistoricalTransaction( @PathParam("clientId") Long clientId,
+                                                  @PathParam("transactionNumber") Integer transactionNumber,
+                                                  @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning given Historical Transaction by executing ClientResource.HistoricalTransactionResource.getHistoricalTransaction(clientId, transactionNumber) method of REST API");
+
+            HistoricalTransaction foundHistoricalTransaction = historicalTransactionFacade.find(new TransactionId(clientId, transactionNumber));
+            if(foundHistoricalTransaction == null)
+                throw new NotFoundException("Could not find historical transaction for id (" + clientId + "," + transactionNumber + ").");
+
+            // adding hypermedia links to historical transaction resource
+            pl.salonea.jaxrs.HistoricalTransactionResource.populateWithHATEOASLinks(foundHistoricalTransaction, params.getUriInfo());
+
+            return Response.status(Status.OK).entity(foundHistoricalTransaction).build();
+        }
+
+        /**
+         * Method matches specific Historical Transaction resource by composite identifier and returns its instance fetching it eagerly
+         */
+        @GET
+        @Path("/{transactionNumber: \\d+}/eagerly")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getHistoricalTransactionEagerly( @PathParam("clientId") Long clientId,
+                                                         @PathParam("transactionNumber") Integer transactionNumber,
+                                                         @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning given Historical Transaction eagerly by executing ClientResource.HistoricalTransactionResource.getHistoricalTransactionEagerly(clientId, transactionNumber) method of REST API");
+
+            HistoricalTransaction foundHistoricalTransaction = historicalTransactionFacade.findByIdEagerly(new TransactionId(clientId, transactionNumber));
+            if(foundHistoricalTransaction == null)
+                throw new NotFoundException("Could not find historical transaction for id (" + clientId + "," + transactionNumber + ").");
+
+            // wrapping HistoricalTransaction into HistoricalTransactionWrapper in order to marshall eagerly fetched associated collection of entities
+            HistoricalTransactionWrapper wrappedHistoricalTransaction = new HistoricalTransactionWrapper(foundHistoricalTransaction);
+
+            // adding hypermedia links to wrapped historical transaction resource
+            pl.salonea.jaxrs.HistoricalTransactionResource.populateWithHATEOASLinks(wrappedHistoricalTransaction, params.getUriInfo());
+
+            return Response.status(Status.OK).entity(wrappedHistoricalTransaction).build();
+        }
+
+        /**
+         * Method that takes Historical Transaction as XML or JSON and creates its new instance in database
+         */
+        @POST
+        @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response createHistoricalTransaction( @PathParam("clientId") Long clientId,
+                                                     HistoricalTransaction historicalTransaction,
+                                                     @BeanParam GenericBeanParam params ) throws ForbiddenException, UnprocessableEntityException, InternalServerErrorException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "creating new Historical Transaction by executing ClientResource.HistoricalTransactionResource.createHistoricalTransaction(historicalTransaction) method of REST API");
+
+            HistoricalTransaction createdHistoricalTransaction = null;
+            URI locationURI = null;
+
+            try {
+                // persist new resource in database
+                createdHistoricalTransaction = historicalTransactionFacade.createForClient(clientId, historicalTransaction);
+
+                // populate created resource with hypermedia links
+                pl.salonea.jaxrs.HistoricalTransactionResource.populateWithHATEOASLinks(createdHistoricalTransaction, params.getUriInfo());
+
+                // construct link to newly created resource to return in HTTP Header
+                String txClientId = String.valueOf(createdHistoricalTransaction.getClient().getClientId());
+                String transactionNumber = String.valueOf(createdHistoricalTransaction.getTransactionNumber());
+
+                Method historicalTransactionsMethod = ClientResource.class.getMethod("getHistoricalTransactionResource");
+                locationURI = params.getUriInfo().getBaseUriBuilder()
+                        .path(ClientResource.class)
+                        .path(historicalTransactionsMethod)
+                        .path(transactionNumber)
+                        .resolveTemplate("clientId", txClientId)
+                        .build();
+
+
+            } catch (EJBTransactionRolledbackException ex) {
+                ExceptionHandler.handleEJBTransactionRolledbackException(ex);
+            } catch (EJBException ex) {
+                ExceptionHandler.handleEJBException(ex);
+            } catch (NoSuchMethodException ex) {
+                ex.printStackTrace();
+            } catch (Exception ex) {
+                throw new InternalServerErrorException(ExceptionHandler.ENTITY_CREATION_ERROR_MESSAGE);
+            }
+
+            return Response.created(locationURI).entity(createdHistoricalTransaction).build();
+        }
+
+        /**
+         * Method that takes updated Historical Transaction as XML or JSON and its composite ID as path params.
+         *  It updates Historical Transaction in database for provided composite ID.
+         */
+        @PUT
+        @Path("/{transactionNumber : \\d+}")
+        @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response updateHistoricalTransaction( @PathParam("clientId") Long clientId,
+                                                     @PathParam("transactionNumber")  Integer transactionNumber,
+                                                     HistoricalTransaction historicalTransaction,
+                                                     @BeanParam GenericBeanParam params ) throws ForbiddenException, UnprocessableEntityException, InternalServerErrorException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "updating existing Historical Transaction by executing ClientResource.HistoricalTransactionResource.updateHistoricalTransaction(historicalTransaction) method of REST API");
+
+            // create composite ID based on path params
+            TransactionId transactionId = new TransactionId(clientId, transactionNumber);
+
+            HistoricalTransaction updatedHistoricalTransaction = null;
+            try {
+                // reflect updated resource object in database
+                updatedHistoricalTransaction = historicalTransactionFacade.update(transactionId, historicalTransaction);
+                // populate created resource with hypermedia links
+                pl.salonea.jaxrs.HistoricalTransactionResource.populateWithHATEOASLinks(updatedHistoricalTransaction, params.getUriInfo());
+
+            } catch (EJBTransactionRolledbackException ex) {
+                ExceptionHandler.handleEJBTransactionRolledbackException(ex);
+            } catch (EJBException ex) {
+                ExceptionHandler.handleEJBException(ex);
+            } catch (Exception ex) {
+                throw new InternalServerErrorException(ExceptionHandler.ENTITY_UPDATE_ERROR_MESSAGE);
+            }
+
+            return Response.status(Status.OK).entity(updatedHistoricalTransaction).build();
+        }
+
+        /**
+         * Method that removes subset of Historical Transaction entities for given Client from database.
+         * The client id is passed through path param.
+         */
+        @DELETE
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response removeClientHistoricalTransactions(@PathParam("clientId") Long clientId,
+                                                           @BeanParam GenericBeanParam params) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "removing subset of Historical Transaction entities for given Client by executing ClientResource.HistoricalTransactionResource.removeClientHistoricalTransactions(clientId) method of REST API");
+
+            // find client entity for which to remove historical transactions
+            Client client = clientFacade.find(clientId);
+            if(client == null)
+                throw new NotFoundException("Could not find client for id " + clientId + ".");
+
+            utx.begin();
+
+            // remove associations between historical transactions and employees for given client from database
+            historicalTransactionEmployeeRelationshipManager.removeEmployeesFromHistoricalTransactionsByClient(client.getClientId());
+
+            // remove historical transactions for given client from database
+            Integer noOfDeleted = historicalTransactionFacade.deleteByClient(client);
+
+            utx.commit();
+
+            // create response returning number of deleted entities
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(noOfDeleted), 200, "number of deleted historical transactions for client with id " + clientId);
+
+            return Response.status(Status.OK).entity(responseEntity).build();
+        }
+
+        /**
+         * Method that removes Historical Transaction entity from database for given ID.
+         * The historical transaction composite id is passed through path param.
+         */
+        @DELETE
+        @Path("/{transactionNumber : \\d+}")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response removeHistoricalTransaction(@PathParam("clientId") Long clientId,
+                                                    @PathParam("transactionNumber") Integer transactionNumber,
+                                                    @BeanParam GenericBeanParam params) throws ForbiddenException, NotFoundException, InternalServerErrorException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "removing given Historical Transaction by executing ClientResource.HistoricalTransactionResource.removeHistoricalTransaction(clientId, transactionNumber) method of REST API");
+
+            utx.begin();
+
+            // remove associations between historical transaction and employees from database
+            historicalTransactionEmployeeRelationshipManager.removeAllEmployeesFromHistoricalTransaction(new TransactionId(clientId, transactionNumber));
+
+            // remove historical transaction entity from database
+            Integer noOfDeleted = historicalTransactionFacade.deleteById(new TransactionId(clientId, transactionNumber));
+
+            utx.commit();
+
+            if (noOfDeleted == 0)
+                throw new NotFoundException("Could not find historical transaction to delete for id (" + clientId + "," + transactionNumber + ").");
+            else if (noOfDeleted != 1)
+                throw new InternalServerErrorException("Some error occurred while trying to delete historical transaction with id (" + clientId + "," + transactionNumber + ").");
+
+            return Response.status(Status.NO_CONTENT).build();
+        }
+
+        /**
+         * Additional methods returning subset of resources based on given criteria
+         * you can also achieve similar results by applying @QueryParams to generic method
+         * returning all resources in order to filter and limit them
+         */
+
+        /**
+         * Method that counts Historical Transaction entities for given Client resource
+         * The client id is passed through path param.
+         */
+        @GET
+        @Path("/count")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response countHistoricalTransactionsByClient(@PathParam("clientId") Long clientId,
+                                                            @BeanParam GenericBeanParam params) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning number of historical transactions for given client by executing ClientResource.HistoricalTransactionResource.countHistoricalTransactionsByClient(clientId) method of REST API");
+
+            // find client entity for which to count historical transactions
+            Client client = clientFacade.find(clientId);
+            if (client == null)
+                throw new NotFoundException("Could not find client for id " + clientId + ".");
+
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(historicalTransactionFacade.countByClient(client)), 200, "number of historical transactions for client with id " + client.getClientId());
+            return Response.status(Status.OK).entity(responseEntity).build();
+        }
+
+
+        // TODO
     }
 }

@@ -43,6 +43,64 @@ public class TransactionResource {
     @Inject
     private EmployeeFacade employeeFacade;
 
+    @Inject
+    private ClientResource clientResource;
+
+    /**
+     * Alternative methods to access Transaction resource
+     */
+    @GET
+    @Path("/{clientId: \\d+}+{transactionNumber: \\d+}")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getTransaction( @PathParam("clientId") Long clientId,
+                                    @PathParam("transactionNumber") Integer transactionNumber,
+                                    @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+        return clientResource.getTransactionResource().getTransaction(clientId, transactionNumber, params);
+    }
+
+    @GET
+    @Path("/{clientId: \\d+}+{transactionNumber: \\d+}/eagerly")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getTransactionEagerly( @PathParam("clientId") Long clientId,
+                                           @PathParam("transactionNumber") Integer transactionNumber,
+                                           @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+        return clientResource.getTransactionResource().getTransactionEagerly(clientId, transactionNumber, params);
+    }
+
+    @POST
+    @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response createTransaction(Transaction transaction,
+                                      @BeanParam GenericBeanParam params) throws ForbiddenException, UnprocessableEntityException, InternalServerErrorException {
+
+        return clientResource.getTransactionResource().createTransaction(transaction.getClient().getClientId(), transaction, params);
+    }
+
+    @PUT
+    @Path("/{clientId: \\d+}+{transactionNumber: \\d+}")
+    @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response updateTransaction( @PathParam("clientId") Long clientId,
+                                       @PathParam("transactionNumber")  Integer transactionNumber,
+                                       Transaction transaction,
+                                       @BeanParam GenericBeanParam params ) throws ForbiddenException, UnprocessableEntityException, InternalServerErrorException {
+
+        return clientResource.getTransactionResource().updateTransaction(clientId, transactionNumber, transaction, params);
+    }
+
+    @DELETE
+    @Path("/{clientId: \\d+}+{transactionNumber: \\d+}")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response removeTransaction( @PathParam("clientId") Long clientId,
+                                       @PathParam("transactionNumber")  Integer transactionNumber,
+                                       @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException, InternalServerErrorException,
+    /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+        return clientResource.getTransactionResource().removeTransaction(clientId, transactionNumber, params);
+    }
+
     /**
      * Method returns all Transaction entities.
      * They can be additionally filtered and paginated by @QueryParams
@@ -130,30 +188,7 @@ public class TransactionResource {
         return Response.status(Status.OK).entity(transactions).build();
     }
 
-    /**
-     *  Method matches specific Transaction resource by composite identifier and returns its instance.
-     */
-    @GET
-    @Path("/{clientId: \\d+}+{transactionNumber: \\d+}")
-    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getTransaction( @PathParam("clientId") Long clientId,
-                                    @PathParam("transactionNumber") Integer transactionNumber,
-                                    @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
-
-        RESTToolkit.authorizeAccessToWebService(params);
-        logger.log(Level.INFO, "returning given Transaction by executing TransactionResource.getTransaction(clientId, transactionNumber) method of REST API");
-
-        Transaction foundTransaction = transactionFacade.find(new TransactionId(clientId, transactionNumber));
-        if(foundTransaction == null)
-            throw new NotFoundException("Could not find transaction for id (" + clientId + "," + transactionNumber + ").");
-
-        // adding hypermedia links to transaction resource
-        TransactionResource.populateWithHATEOASLinks(foundTransaction, params.getUriInfo());
-
-        return Response.status(Status.OK).entity(foundTransaction).build();
-    }
-
-    // TODO get Transactions CRUD methods and other
+    // TODO additional methods, COUNT method
 
     /**
      * related subresources (through relationships)

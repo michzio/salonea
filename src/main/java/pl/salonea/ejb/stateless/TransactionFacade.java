@@ -2,7 +2,10 @@ package pl.salonea.ejb.stateless;
 
 import pl.salonea.ejb.interfaces.TransactionFacadeInterface;
 import pl.salonea.entities.*;
+import pl.salonea.entities.idclass.ProviderServiceId;
+import pl.salonea.entities.idclass.ServicePointId;
 import pl.salonea.entities.idclass.TransactionId;
+import pl.salonea.entities.idclass.WorkStationId;
 import pl.salonea.enums.CurrencyCode;
 import pl.salonea.utils.Period;
 import pl.salonea.utils.PriceRange;
@@ -12,8 +15,10 @@ import javax.ejb.Stateless;
 import javax.inject.Inject;
 import javax.persistence.*;
 import javax.persistence.criteria.*;
+import javax.ws.rs.QueryParam;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 /**
@@ -34,6 +39,147 @@ public class TransactionFacade extends AbstractFacade<Transaction>
 
     public TransactionFacade() {
         super(Transaction.class);
+    }
+
+    @Override
+    public Transaction createForClient(Long clientId, Transaction transaction) {
+
+        Client foundClient = getEntityManager().find(Client.class, clientId);
+        transaction.setClient(foundClient);
+
+        // fetch and set entities based on detached ids
+        ProviderServiceId providerServiceId = new ProviderServiceId(transaction.getProviderService().getProvider().getUserId(),
+                                                                    transaction.getProviderService().getService().getServiceId());
+        ProviderService providerService = getEntityManager().find(ProviderService.class, providerServiceId);
+        ServicePointId servicePointId = new ServicePointId(transaction.getServicePoint().getProvider().getUserId(),
+                                                           transaction.getServicePoint().getServicePointNumber());
+        ServicePoint servicePoint = getEntityManager().find(ServicePoint.class, servicePointId);
+        WorkStationId workStationId = new WorkStationId(transaction.getWorkStation().getServicePoint().getProvider().getUserId(),
+                                                        transaction.getWorkStation().getServicePoint().getServicePointNumber(),
+                                                        transaction.getWorkStation().getWorkStationNumber());
+        WorkStation workStation = getEntityManager().find(WorkStation.class, workStationId);
+        PaymentMethod paymentMethod = getEntityManager().find(PaymentMethod.class, transaction.getPaymentMethod().getId());
+        Term term = getEntityManager().find(Term.class, transaction.getTerm().getTermId());
+
+        // ... and set ...
+        transaction.setProviderService(providerService);
+        transaction.setServicePoint(servicePoint);
+        transaction.setWorkStation(workStation);
+        transaction.setPaymentMethod(paymentMethod);
+        transaction.setTerm(term);
+
+        // ... and set employees ...
+        if(transaction.getEmployeeIds() != null && transaction.getEmployeeIds().size() > 0) {
+            transaction.setEmployees(new LinkedHashSet<>());
+
+            for (Long employeeId : transaction.getEmployeeIds()) {
+                Employee employee = getEntityManager().find(Employee.class, employeeId);
+                transaction.getEmployees().add(employee);
+            }
+        }
+
+        return create(transaction);
+    }
+
+    @Override
+    public Transaction update(TransactionId transactionId, Transaction transaction) {
+
+        return update(transactionId, transaction, true);
+    }
+
+    @Override
+    public Transaction update(TransactionId transactionId, Transaction transaction, Boolean retainTransientFields) {
+
+        Client foundClient = getEntityManager().find(Client.class, transactionId.getClient());
+        transaction.setClient(foundClient);
+        transaction.setTransactionNumber(transactionId.getTransactionNumber());
+
+        Transaction currentTransaction = null;
+
+        if(retainTransientFields) {
+            // keep current collection attributes of resource (and other marked @XmlTransient)
+            currentTransaction = findByIdEagerly(transactionId);
+            if (currentTransaction != null) {
+                transaction.setEmployees(currentTransaction.getEmployees());
+            }
+        }
+
+        // fetch and set entities based on detached ids
+        ProviderServiceId providerServiceId = new ProviderServiceId(transaction.getProviderService().getProvider().getUserId(),
+                                                                    transaction.getProviderService().getService().getServiceId());
+        ProviderService providerService = null;
+        if(currentTransaction != null
+                && currentTransaction.getProviderService().getProvider().getUserId() == providerServiceId.getProvider()
+                && currentTransaction.getProviderService().getService().getServiceId() == providerServiceId.getService() ) {
+            // if the same provider service is already set on current transaction
+            providerService = currentTransaction.getProviderService();
+        } else {
+            providerService = getEntityManager().find(ProviderService.class, providerServiceId);
+        }
+
+        ServicePointId servicePointId = new ServicePointId(transaction.getServicePoint().getProvider().getUserId(),
+                                                           transaction.getServicePoint().getServicePointNumber());
+        ServicePoint servicePoint = null;
+        if(currentTransaction != null
+                && currentTransaction.getServicePoint().getProvider().getUserId() == servicePointId.getProvider()
+                && currentTransaction.getServicePoint().getServicePointNumber() == servicePointId.getServicePointNumber()) {
+            // if the same service point is already set on current transaction
+            servicePoint = currentTransaction.getServicePoint();
+        } else {
+            servicePoint = getEntityManager().find(ServicePoint.class, servicePointId);
+        }
+
+        WorkStationId workStationId = new WorkStationId(transaction.getWorkStation().getServicePoint().getProvider().getUserId(),
+                                                        transaction.getWorkStation().getServicePoint().getServicePointNumber(),
+                                                        transaction.getWorkStation().getWorkStationNumber());
+
+        WorkStation workStation = null;
+        if(currentTransaction != null
+                && currentTransaction.getWorkStation().getServicePoint().getProvider().getUserId() == workStationId.getServicePoint().getProvider()
+                && currentTransaction.getWorkStation().getServicePoint().getServicePointNumber() == workStationId.getServicePoint().getServicePointNumber()
+                && currentTransaction.getWorkStation().getWorkStationNumber() == workStationId.getWorkStationNumber()) {
+            // if the same work station is already set on current transaction
+            workStation = currentTransaction.getWorkStation();
+        } else {
+            workStation = getEntityManager().find(WorkStation.class, workStationId);
+        }
+
+        PaymentMethod paymentMethod = null;
+        if(currentTransaction != null
+                && currentTransaction.getPaymentMethod().getId() == transaction.getPaymentMethod().getId()) {
+            // if the same payment method is already set on current transaction
+            paymentMethod = currentTransaction.getPaymentMethod();
+        } else {
+            paymentMethod = getEntityManager().find(PaymentMethod.class, transaction.getPaymentMethod().getId());
+        }
+
+        Term term = null;
+        if(currentTransaction != null
+                && currentTransaction.getTerm().getTermId() == transaction.getTerm().getTermId()) {
+            // if the same term is already set on current transaction
+            term = currentTransaction.getTerm();
+        } else {
+            term = getEntityManager().find(Term.class, transaction.getTerm().getTermId());
+        }
+
+        // ... and set ...
+        transaction.setProviderService(providerService);
+        transaction.setServicePoint(servicePoint);
+        transaction.setWorkStation(workStation);
+        transaction.setPaymentMethod(paymentMethod);
+        transaction.setTerm(term);
+
+        // ... and set employees ...
+        if(transaction.getEmployeeIds() != null && transaction.getEmployeeIds().size() > 0) {
+            transaction.setEmployees(new LinkedHashSet<>());
+
+            for (Long employeeId : transaction.getEmployeeIds()) {
+                Employee employee = getEntityManager().find(Employee.class, employeeId);
+                transaction.getEmployees().add(employee);
+            }
+        }
+
+        return update(transaction);
     }
 
     @Override
@@ -823,6 +969,7 @@ public class TransactionFacade extends AbstractFacade<Transaction>
 
         // INNER JOIN-s
         Join<Transaction, Client> client = null;
+        Join<Transaction, Employee> employee = null;
 
         // WHERE PREDICATES
         List<Predicate> predicates = new ArrayList<>();
@@ -861,12 +1008,9 @@ public class TransactionFacade extends AbstractFacade<Transaction>
 
         if(employees != null && employees.size() > 0) {
 
-            List<Predicate> orPredicates = new ArrayList<>();
-            for(Employee employee : employees) {
-                orPredicates.add( criteriaBuilder.isMember(employee, transaction.get(Transaction_.employees)) );
-            }
+            if(employee == null) employee = transaction.join(Transaction_.employees);
 
-            predicates.add( criteriaBuilder.or(orPredicates.toArray(new Predicate[]{})) );
+            predicates.add( employee.in(employees) );
         }
 
         if(transactionTimePeriod != null) {
@@ -922,7 +1066,11 @@ public class TransactionFacade extends AbstractFacade<Transaction>
         }
 
         if(eagerly) {
-            transaction.fetch("employees", JoinType.LEFT);
+            if(employee != null) {
+                transaction.fetch("employees", JoinType.INNER);
+            } else {
+                transaction.fetch("employees", JoinType.LEFT);
+            }
         }
 
         // WHERE predicate1 AND predicate2 AND ... AND predicateN
@@ -1013,6 +1161,15 @@ public class TransactionFacade extends AbstractFacade<Transaction>
 
         Query query = getEntityManager().createNamedQuery(Transaction.DELETE_BY_CLIENT);
         query.setParameter("client", client);
+        return query.executeUpdate();
+    }
+
+    @Override
+    public Integer deleteById(TransactionId transactionId) {
+
+        Query query = getEntityManager().createNamedQuery(Transaction.DELETE_BY_ID);
+        query.setParameter("clientId", transactionId.getClient());
+        query.setParameter("transaction_number", transactionId.getTransactionNumber());
         return query.executeUpdate();
     }
 }

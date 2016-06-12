@@ -2,21 +2,19 @@ package pl.salonea.entities;
 
 import pl.salonea.constraints.BookedTimeInFuture;
 import pl.salonea.enums.CurrencyCode;
+import pl.salonea.jaxrs.utils.hateoas.Link;
 import pl.salonea.mapped_superclasses.AbstractTransaction;
 
 import javax.persistence.*;
 import javax.validation.constraints.Future;
 import javax.validation.constraints.NotNull;
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlType;
+import javax.xml.bind.annotation.*;
 import java.io.Serializable;
 import java.util.Date;
+import java.util.LinkedHashSet;
 
 @XmlRootElement(name = "transaction")
 @XmlAccessorType(XmlAccessType.PROPERTY)
-@XmlType(propOrder = {"client", "transactionNumber", "price", "priceCurrencyCode", "transactionTime", "bookedTime", "paid", "providerService", "provider", "service", "servicePoint", "workStation", "paymentMethod", "term", "links"})
 
 @Entity
 @Table(name = "transaction")
@@ -80,7 +78,14 @@ import java.util.Date;
         @NamedQuery(name = Transaction.COUNT_BY_SERVICE_POINT, query = "SELECT COUNT(tx) FROM Transaction tx WHERE tx.servicePoint = :service_point"),
         @NamedQuery(name = Transaction.COUNT_BY_TERM, query = "SELECT COUNT(tx) FROM Transaction tx WHERE tx.term = :term"),
         @NamedQuery(name = Transaction.DELETE_BY_CLIENT, query = "DELETE FROM Transaction tx WHERE tx.client = :client"),
+        @NamedQuery(name = Transaction.DELETE_BY_ID, query = "DELETE FROM Transaction tx WHERE tx.client.clientId = :clientId AND tx.transactionNumber = :transaction_number"),
 })
+@NamedNativeQueries({
+        @NamedNativeQuery(name = Transaction.DELETE_EMPLOYEES_ASSOCIATIONS_BY_TRANSACTION, query = "DELETE FROM transaction_executed_by WHERE client_id = :clientId AND transaction_no = :transaction_number"),
+        @NamedNativeQuery(name = Transaction.DELETE_EMPLOYEES_ASSOCIATIONS_BY_CLIENT, query = "DELETE FROM transaction_executed_by WHERE client_id = :clientId"),
+})
+
+
 public class Transaction extends AbstractTransaction implements Serializable {
 
     public static final String FIND_ALL_EAGERLY = "Transaction.findAllEagerly";
@@ -135,6 +140,9 @@ public class Transaction extends AbstractTransaction implements Serializable {
     public static final String COUNT_BY_SERVICE_POINT = "Transaction.countByServicePoint";
     public static final String COUNT_BY_TERM = "Transaction.countByTerm";
     public static final String DELETE_BY_CLIENT = "Transaction.deleteByClient";
+    public static final String DELETE_BY_ID = "Transaction.deleteById";
+    public static final String DELETE_EMPLOYEES_ASSOCIATIONS_BY_TRANSACTION = "Transaction.deleteEmployeesAssociationsByTransaction";
+    public static final String DELETE_EMPLOYEES_ASSOCIATIONS_BY_CLIENT = "Transaction.deleteEmployeesAssociationsByClient";
 
     public Transaction() {
     }

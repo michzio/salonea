@@ -2,7 +2,10 @@ package pl.salonea.ejb.stateless;
 
 import pl.salonea.ejb.interfaces.HistoricalTransactionFacadeInterface;
 import pl.salonea.entities.*;
+import pl.salonea.entities.idclass.ProviderServiceId;
+import pl.salonea.entities.idclass.ServicePointId;
 import pl.salonea.entities.idclass.TransactionId;
+import pl.salonea.entities.idclass.WorkStationId;
 import pl.salonea.enums.CurrencyCode;
 import pl.salonea.enums.TransactionCompletionStatus;
 import pl.salonea.utils.Period;
@@ -14,8 +17,10 @@ import javax.ejb.Stateless;
 import javax.inject.Inject;
 import javax.persistence.*;
 import javax.persistence.criteria.*;
+import javax.ws.rs.QueryParam;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 /**
@@ -36,6 +41,147 @@ public class HistoricalTransactionFacade extends AbstractFacade<HistoricalTransa
 
     public HistoricalTransactionFacade() {
         super(HistoricalTransaction.class);
+    }
+
+    @Override
+    public HistoricalTransaction createForClient(Long clientId, HistoricalTransaction historicalTransaction) {
+
+        Client foundClient = getEntityManager().find(Client.class, clientId);
+        historicalTransaction.setClient(foundClient);
+
+        // fetch and set entities based on detached ids
+        ProviderServiceId providerServiceId = new ProviderServiceId(historicalTransaction.getProviderService().getProvider().getUserId(),
+                                                                    historicalTransaction.getProviderService().getService().getServiceId());
+        ProviderService providerService = getEntityManager().find(ProviderService.class, providerServiceId);
+        ServicePointId servicePointId = new ServicePointId(historicalTransaction.getServicePoint().getProvider().getUserId(),
+                                                           historicalTransaction.getServicePoint().getServicePointNumber());
+        ServicePoint servicePoint = getEntityManager().find(ServicePoint.class, servicePointId);
+        WorkStationId workStationId = new WorkStationId(historicalTransaction.getWorkStation().getServicePoint().getProvider().getUserId(),
+                                                        historicalTransaction.getWorkStation().getServicePoint().getServicePointNumber(),
+                                                        historicalTransaction.getWorkStation().getWorkStationNumber());
+        WorkStation workStation = getEntityManager().find(WorkStation.class, workStationId);
+        PaymentMethod paymentMethod = getEntityManager().find(PaymentMethod.class, historicalTransaction.getPaymentMethod().getId());
+        Term term = getEntityManager().find(Term.class, historicalTransaction.getTerm().getTermId());
+
+        // ... and set ...
+        historicalTransaction.setProviderService(providerService);
+        historicalTransaction.setServicePoint(servicePoint);
+        historicalTransaction.setWorkStation(workStation);
+        historicalTransaction.setPaymentMethod(paymentMethod);
+        historicalTransaction.setTerm(term);
+
+        // ... and set employees ...
+        if(historicalTransaction.getEmployeeIds() != null && historicalTransaction.getEmployeeIds().size() > 0) {
+            historicalTransaction.setEmployees(new LinkedHashSet<>());
+
+            for (Long employeeId : historicalTransaction.getEmployeeIds()) {
+                Employee employee = getEntityManager().find(Employee.class, employeeId);
+                historicalTransaction.getEmployees().add(employee);
+            }
+        }
+
+
+        return create(historicalTransaction);
+    }
+
+    @Override
+    public HistoricalTransaction update(TransactionId transactionId, HistoricalTransaction historicalTransaction) {
+
+        return update(transactionId, historicalTransaction, true);
+    }
+
+    @Override
+    public HistoricalTransaction update(TransactionId transactionId, HistoricalTransaction historicalTransaction, Boolean retainTransientFields) {
+
+        Client foundClient = getEntityManager().find(Client.class, transactionId.getClient());
+        historicalTransaction.setClient(foundClient);
+        historicalTransaction.setTransactionNumber(transactionId.getTransactionNumber());
+
+        HistoricalTransaction currentHistoricalTransaction = null;
+
+        if(retainTransientFields) {
+            // keep current collection attributes of resource (and other marked @XmlTransient)
+            currentHistoricalTransaction = findByIdEagerly(transactionId);
+            if(currentHistoricalTransaction != null) {
+                historicalTransaction.setEmployees(currentHistoricalTransaction.getEmployees());
+            }
+        }
+
+        // fetch and set entities based on detached ids
+        ProviderServiceId providerServiceId = new ProviderServiceId(historicalTransaction.getProviderService().getProvider().getUserId(),
+                                                                    historicalTransaction.getProviderService().getService().getServiceId());
+        ProviderService providerService = null;
+        if(currentHistoricalTransaction != null
+                && currentHistoricalTransaction.getProviderService().getProvider().getUserId() == providerServiceId.getProvider()
+                && currentHistoricalTransaction.getProviderService().getService().getServiceId() == providerServiceId.getService() ) {
+            // if the same provider service is already set on current historical transaction
+            providerService = currentHistoricalTransaction.getProviderService();
+        } else {
+            providerService = getEntityManager().find(ProviderService.class, providerServiceId);
+        }
+
+        ServicePointId servicePointId = new ServicePointId(historicalTransaction.getServicePoint().getProvider().getUserId(),
+                                                           historicalTransaction.getServicePoint().getServicePointNumber());
+        ServicePoint servicePoint = null;
+        if(currentHistoricalTransaction != null
+                && currentHistoricalTransaction.getServicePoint().getProvider().getUserId() == servicePointId.getProvider()
+                && currentHistoricalTransaction.getServicePoint().getServicePointNumber() == servicePointId.getServicePointNumber()) {
+            // if the same service point is already set on current historical transaction
+            servicePoint = currentHistoricalTransaction.getServicePoint();
+        } else {
+            servicePoint = getEntityManager().find(ServicePoint.class, servicePointId);
+        }
+
+        WorkStationId workStationId = new WorkStationId(historicalTransaction.getWorkStation().getServicePoint().getProvider().getUserId(),
+                                                        historicalTransaction.getWorkStation().getServicePoint().getServicePointNumber(),
+                                                        historicalTransaction.getWorkStation().getWorkStationNumber());
+        WorkStation workStation = null;
+        if(currentHistoricalTransaction != null
+                && currentHistoricalTransaction.getWorkStation().getServicePoint().getProvider().getUserId() == workStationId.getServicePoint().getProvider()
+                && currentHistoricalTransaction.getWorkStation().getServicePoint().getServicePointNumber() == workStationId.getServicePoint().getServicePointNumber()
+                && currentHistoricalTransaction.getWorkStation().getWorkStationNumber() == workStationId.getWorkStationNumber()) {
+            // if the same work station is already set on current historical transaction
+            workStation = currentHistoricalTransaction.getWorkStation();
+        } else {
+            workStation = getEntityManager().find(WorkStation.class, workStationId);
+        }
+
+        PaymentMethod paymentMethod = null;
+        if(currentHistoricalTransaction != null
+                && currentHistoricalTransaction.getPaymentMethod().getId() == historicalTransaction.getPaymentMethod().getId()) {
+            // if the same payment method is already set on current historical transaction
+            paymentMethod = currentHistoricalTransaction.getPaymentMethod();
+        } else {
+            paymentMethod = getEntityManager().find(PaymentMethod.class, historicalTransaction.getPaymentMethod().getId());
+        }
+
+        Term term = null;
+        if(currentHistoricalTransaction != null
+                && currentHistoricalTransaction.getTerm().getTermId() == historicalTransaction.getTerm().getTermId()) {
+            // if the same term is already set on current historical transaction
+            term = currentHistoricalTransaction.getTerm();
+        } else {
+            term = getEntityManager().find(Term.class, historicalTransaction.getTerm().getTermId());
+        }
+
+        // ... and set ...
+        historicalTransaction.setProviderService(providerService);
+        historicalTransaction.setServicePoint(servicePoint);
+        historicalTransaction.setWorkStation(workStation);
+        historicalTransaction.setPaymentMethod(paymentMethod);
+        historicalTransaction.setTerm(term);
+
+        // ... and set employees ...
+        if(historicalTransaction.getEmployeeIds() != null && historicalTransaction.getEmployeeIds().size() > 0) {
+            historicalTransaction.setEmployees(new LinkedHashSet<>());
+
+            for (Long employeeId : historicalTransaction.getEmployeeIds()) {
+                Employee employee = getEntityManager().find(Employee.class, employeeId);
+                historicalTransaction.getEmployees().add(employee);
+            }
+        }
+
+        return update(historicalTransaction);
     }
 
     @Override
@@ -1012,6 +1158,7 @@ public class HistoricalTransactionFacade extends AbstractFacade<HistoricalTransa
 
         // INNER JOIN-s
         Join<HistoricalTransaction, Client> client = null;
+        Join<HistoricalTransaction, Employee> employee = null;
 
         // WHERE PREDICATES
         List<Predicate> predicates = new ArrayList<>();
@@ -1050,12 +1197,9 @@ public class HistoricalTransactionFacade extends AbstractFacade<HistoricalTransa
 
         if(employees != null && employees.size() > 0) {
 
-            List<Predicate> orPredicates = new ArrayList<>();
-            for(Employee employee : employees) {
-                orPredicates.add( criteriaBuilder.isMember(employee, historicalTransaction.get(HistoricalTransaction_.employees)) );
-            }
+            if(employee == null) employee = historicalTransaction.join(Transaction_.employees);
 
-            predicates.add( criteriaBuilder.or(orPredicates.toArray(new Predicate[]{})) );
+            predicates.add( employee.in(employees) );
         }
 
         if(transactionTimePeriod != null) {
@@ -1158,7 +1302,11 @@ public class HistoricalTransactionFacade extends AbstractFacade<HistoricalTransa
         }
 
         if(eagerly) {
-            historicalTransaction.fetch("employees", JoinType.LEFT);
+            if(employee != null) {
+                historicalTransaction.fetch("employees", JoinType.INNER);
+            } else {
+                historicalTransaction.fetch("employees", JoinType.LEFT);
+            }
         }
 
         // WHERE predicate1 AND predicate2 AND ... AND predicateN
@@ -1249,6 +1397,15 @@ public class HistoricalTransactionFacade extends AbstractFacade<HistoricalTransa
 
         Query query = getEntityManager().createNamedQuery(HistoricalTransaction.DELETE_BY_CLIENT);
         query.setParameter("client", client);
+        return query.executeUpdate();
+    }
+
+    @Override
+    public Integer deleteById(TransactionId transactionId) {
+
+        Query query = getEntityManager().createNamedQuery(HistoricalTransaction.DELETE_BY_ID);
+        query.setParameter("clientId", transactionId.getClient());
+        query.setParameter("transaction_number", transactionId.getTransactionNumber());
         return query.executeUpdate();
     }
 }

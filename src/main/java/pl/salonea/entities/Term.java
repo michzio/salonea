@@ -17,7 +17,7 @@ import java.util.Set;
 
 @XmlRootElement(name = "term")
 @XmlAccessorType(XmlAccessType.PROPERTY)
-@XmlType(propOrder = {"termId", "openingTime", "closingTime"})
+@XmlType(propOrder = {"termId", "openingTime", "closingTime", "links"})
 
 @Entity
 @Table(name = "term",

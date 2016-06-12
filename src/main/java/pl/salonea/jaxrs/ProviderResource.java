@@ -1554,7 +1554,7 @@ public class ProviderResource {
         public Response removeProviderServicePoints(@PathParam("userId") Long userId,
                                                     @BeanParam GenericBeanParam params) throws ForbiddenException, NotFoundException {
 
-            if (params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            RESTToolkit.authorizeAccessToWebService(params);
             logger.log(Level.INFO, "removing subset of Service Point entities for given Provider by executing ProviderResource.ServicePointResource.removeProviderServicePoints(userId) method of REST API");
 
             // find provider entity for which to remove service points
@@ -1562,7 +1562,7 @@ public class ProviderResource {
             if (provider == null)
                 throw new NotFoundException("Could not find provider for id " + userId + ".");
 
-            // remove all specified entities from database
+            // remove service points for given provider from database
             Integer noOfDeleted = servicePointFacade.deleteByProvider(provider);
 
             // create response returning number of deleted entities
@@ -1582,7 +1582,7 @@ public class ProviderResource {
                                            @PathParam("servicePointNumber") Integer servicePointNumber,
                                            @BeanParam GenericBeanParam params) throws ForbiddenException, NotFoundException, InternalServerErrorException {
 
-            if (params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
+            RESTToolkit.authorizeAccessToWebService(params);
             logger.log(Level.INFO, "removing given Service Point by executing ProviderResource.ServicePointResource.removeServicePoint(userId, servicePointNumber) method of REST API");
 
             // remove entity from database
@@ -1612,8 +1612,8 @@ public class ProviderResource {
         public Response countServicePointsByProvider(@PathParam("userId") Long userId,
                                                      @BeanParam GenericBeanParam params) throws ForbiddenException, NotFoundException {
 
-            if (params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
-            logger.log(Level.INFO, "returning number of service points for given provider by executing ProviderResource.ServicePointResource.countServicePointsByProvider() method of REST API");
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning number of service points for given provider by executing ProviderResource.ServicePointResource.countServicePointsByProvider(providerId) method of REST API");
 
             // find provider entity for which to count service points
             Provider provider = providerFacade.find(userId);

@@ -15,6 +15,9 @@ import java.util.List;
 public interface TransactionFacadeInterface extends AbstractFacadeInterface<Transaction> {
 
     // concrete interface
+    Transaction createForClient(Long clientId, Transaction transaction);
+    Transaction update(TransactionId transactionId, Transaction transaction);
+    Transaction update(TransactionId transactionId, Transaction transaction, Boolean retainTransientFields);
     List<Transaction> findAllEagerly();
     List<Transaction> findAllEagerly(Integer start, Integer limit);
     Transaction findByIdEagerly(TransactionId transactionId);
@@ -150,6 +153,7 @@ public interface TransactionFacadeInterface extends AbstractFacadeInterface<Tran
     Long countByTerm(Term term);
 
     Integer deleteByClient(Client client);
+    Integer deleteById(TransactionId transactionId);
 
     @javax.ejb.Local
     interface Local extends TransactionFacadeInterface { }

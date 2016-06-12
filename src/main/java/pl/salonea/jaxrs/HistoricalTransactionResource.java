@@ -43,6 +43,64 @@ public class HistoricalTransactionResource {
     @Inject
     private EmployeeFacade employeeFacade;
 
+    @Inject
+    private ClientResource clientResource;
+
+    /**
+     *  Alternative methods to access Historical Transaction resource
+     */
+    @GET
+    @Path("/{clientId: \\d+}+{transactionNumber: \\d+}")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getHistoricalTransaction( @PathParam("clientId") Long clientId,
+                                              @PathParam("transactionNumber") Integer transactionNumber,
+                                              @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+        return clientResource.getHistoricalTransactionResource().getHistoricalTransaction(clientId, transactionNumber, params);
+    }
+
+    @GET
+    @Path("/{clientId: \\d+}+{transactionNumber: \\d+}/eagerly")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getHistoricalTransactionEagerly( @PathParam("clientId") Long clientId,
+                                                     @PathParam("transactionNumber") Integer transactionNumber,
+                                                     @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+        return clientResource.getHistoricalTransactionResource().getHistoricalTransactionEagerly(clientId, transactionNumber, params);
+    }
+
+    @POST
+    @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response createHistoricalTransaction(HistoricalTransaction historicalTransaction,
+                                                @BeanParam GenericBeanParam params) throws ForbiddenException, UnprocessableEntityException, InternalServerErrorException {
+
+        return clientResource.getHistoricalTransactionResource().createHistoricalTransaction(historicalTransaction.getClient().getClientId(), historicalTransaction, params);
+    }
+
+    @PUT
+    @Path("/{clientId: \\d+}+{transactionNumber: \\d+}")
+    @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response updateHistoricalTransaction( @PathParam("clientId") Long clientId,
+                                                 @PathParam("transactionNumber")  Integer transactionNumber,
+                                                 HistoricalTransaction historicalTransaction,
+                                                 @BeanParam GenericBeanParam params ) throws ForbiddenException, UnprocessableEntityException, InternalServerErrorException {
+
+        return clientResource.getHistoricalTransactionResource().updateHistoricalTransaction(clientId, transactionNumber, historicalTransaction, params);
+    }
+
+    @DELETE
+    @Path("/{clientId: \\d+}+{transactionNumber: \\d+}")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response removeHistoricalTransaction( @PathParam("clientId") Long clientId,
+                                                 @PathParam("transactionNumber")  Integer transactionNumber,
+                                                 @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException, InternalServerErrorException,
+    /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+        return clientResource.getHistoricalTransactionResource().removeHistoricalTransaction(clientId, transactionNumber, params);
+    }
+
     /**
      * Method returns all Historical Transaction entities.
      * They can be additionally filtered and paginated by @QueryParams
@@ -134,30 +192,7 @@ public class HistoricalTransactionResource {
         return Response.status(Status.OK).entity(historicalTransactions).build();
     }
 
-    /**
-     *   Method matches specific Historical Transaction resource by composite identifier and returns its instance.
-     */
-    @GET
-    @Path("/{clientId: \\d+}+{transactionNumber: \\d+}")
-    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getHistoricalTransaction( @PathParam("clientId") Long clientId,
-                                              @PathParam("transactionNumber") Integer transactionNumber,
-                                              @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
-
-        RESTToolkit.authorizeAccessToWebService(params);
-        logger.log(Level.INFO, "returning given Historical Transaction by executing HistoricalTransactionResource.getHistoricalTransaction(clientId, transactionNumber) method of REST API");
-
-        HistoricalTransaction foundHistoricalTransaction = historicalTransactionFacade.find(new TransactionId(clientId, transactionNumber));
-        if(foundHistoricalTransaction == null)
-            throw new NotFoundException("Could not find historical transaction for id (" + clientId + "," + transactionNumber + ").");
-
-        // adding hypermedia links to historical transaction resource
-        HistoricalTransactionResource.populateWithHATEOASLinks(foundHistoricalTransaction, params.getUriInfo());
-
-        return Response.status(Status.OK).entity(foundHistoricalTransaction).build();
-    }
-
-    // TODO get HistoricalTransactions CRUD methods and other
+    // TODO additional methods, COUNT method
 
     /**
      * related subresources (through relationships)
