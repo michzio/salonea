@@ -4,7 +4,7 @@ import pl.salonea.ejb.stateless.CreditCardFacade;
 import pl.salonea.entities.CreditCard;
 import pl.salonea.enums.CreditCardType;
 import pl.salonea.jaxrs.bean_params.CreditCardBeanParam;
-import pl.salonea.jaxrs.bean_params.DateBetweenBeanParam;
+import pl.salonea.jaxrs.bean_params.DateRangeBeanParam;
 import pl.salonea.jaxrs.bean_params.GenericBeanParam;
 import pl.salonea.jaxrs.bean_params.PaginationBeanParam;
 import pl.salonea.jaxrs.exceptions.ForbiddenException;
@@ -225,7 +225,7 @@ public class CreditCardResource {
     @GET
     @Path("/expiring-between")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getCreditCardsExpiringBetween( @BeanParam DateBetweenBeanParam params ) throws ForbiddenException, BadRequestException {
+    public Response getCreditCardsExpiringBetween( @BeanParam DateRangeBeanParam params ) throws ForbiddenException, BadRequestException {
 
         RESTToolkit.authorizeAccessToWebService(params);
         logger.log(Level.INFO, "returning credit cards expiring between given start and end date using " +
@@ -312,7 +312,7 @@ public class CreditCardResource {
     @DELETE
     @Path("/expiring-between")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response removeCreditCardsExpiringBetween( @BeanParam DateBetweenBeanParam params ) throws ForbiddenException, BadRequestException {
+    public Response removeCreditCardsExpiringBetween( @BeanParam DateRangeBeanParam params ) throws ForbiddenException, BadRequestException {
 
         RESTToolkit.authorizeAccessToWebService(params);
         logger.log(Level.INFO, "removing subset of Credit Card entities expiring between given start and end dates " +
@@ -442,7 +442,7 @@ public class CreditCardResource {
                     .rel("credit-cards-expiring-before").build());
 
             // expiring-between
-            Method expiringBetweenMethod = CreditCardResource.class.getMethod("getCreditCardsExpiringBetween", DateBetweenBeanParam.class);
+            Method expiringBetweenMethod = CreditCardResource.class.getMethod("getCreditCardsExpiringBetween", DateRangeBeanParam.class);
             creditCards.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
                     .path(CreditCardResource.class)
                     .path(expiringBetweenMethod)

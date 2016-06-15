@@ -463,7 +463,7 @@ public class ProviderServiceResource {
                             .rel("work-stations-count").build());
 
             // work-stations by-term
-            Method workStationsByTermMethod = ProviderServiceResource.WorkStationResource.class.getMethod("getProviderServiceWorkStationsByTerm", Long.class, Integer.class, DateBetweenBeanParam.class);
+            Method workStationsByTermMethod = ProviderServiceResource.WorkStationResource.class.getMethod("getProviderServiceWorkStationsByTerm", Long.class, Integer.class, DateRangeBeanParam.class);
             providerService.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
                             .path(ProviderServiceResource.class)
                             .path(workStationsMethod)
@@ -474,7 +474,7 @@ public class ProviderServiceResource {
                             .rel("work-stations-by-term").build());
 
             // work-stations by-term-strict
-            Method workStationsByTermStrictMethod = ProviderServiceResource.WorkStationResource.class.getMethod("getProviderServiceWorkStationsByTermStrict", Long.class, Integer.class, DateBetweenBeanParam.class);
+            Method workStationsByTermStrictMethod = ProviderServiceResource.WorkStationResource.class.getMethod("getProviderServiceWorkStationsByTermStrict", Long.class, Integer.class, DateRangeBeanParam.class);
             providerService.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
                     .path(ProviderServiceResource.class)
                     .path(workStationsMethod)
@@ -1069,7 +1069,7 @@ public class ProviderServiceResource {
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
         public Response getProviderServiceWorkStationsByTerm( @PathParam("providerId") Long providerId,
                                                               @PathParam("serviceId") Integer serviceId,
-                                                              @BeanParam DateBetweenBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException,
+                                                              @BeanParam DateRangeBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException,
         /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
 
             RESTToolkit.authorizeAccessToWebService(params);
@@ -1109,7 +1109,7 @@ public class ProviderServiceResource {
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
         public Response getProviderServiceWorkStationsByTermStrict( @PathParam("providerId") Long providerId,
                                                                     @PathParam("serviceId") Integer serviceId,
-                                                                    @BeanParam DateBetweenBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException,
+                                                                    @BeanParam DateRangeBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException,
         /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
 
             RESTToolkit.authorizeAccessToWebService(params);

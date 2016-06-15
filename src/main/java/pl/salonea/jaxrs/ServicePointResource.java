@@ -613,7 +613,7 @@ public class ServicePointResource {
                     .rel("employees-count").build());
 
             // employees by-term
-            Method employeesByTermMethod = ServicePointResource.EmployeeResource.class.getMethod("getServicePointEmployeesByTerm", Long.class, Integer.class, DateBetweenBeanParam.class);
+            Method employeesByTermMethod = ServicePointResource.EmployeeResource.class.getMethod("getServicePointEmployeesByTerm", Long.class, Integer.class, DateRangeBeanParam.class);
             servicePoint.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
                     .path(ServicePointResource.class)
                     .path(employeesMethod)
@@ -624,7 +624,7 @@ public class ServicePointResource {
                     .rel("employees-by-term").build());
 
             // employees by-term-strict
-            Method employeesByTermStrictMethod = ServicePointResource.EmployeeResource.class.getMethod("getServicePointEmployeesByTermStrict", Long.class, Integer.class, DateBetweenBeanParam.class);
+            Method employeesByTermStrictMethod = ServicePointResource.EmployeeResource.class.getMethod("getServicePointEmployeesByTermStrict", Long.class, Integer.class, DateRangeBeanParam.class);
             servicePoint.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
                     .path(ServicePointResource.class)
                     .path(employeesMethod)
@@ -799,7 +799,7 @@ public class ServicePointResource {
                     .rel("work-stations-typed (alternative)").build());
 
             // work-stations by-term
-            Method workStationsByTermMethod = ProviderResource.ServicePointResource.WorkStationResource.class.getMethod("getServicePointWorkStationsByTerm", Long.class, Integer.class, DateBetweenBeanParam.class);
+            Method workStationsByTermMethod = ProviderResource.ServicePointResource.WorkStationResource.class.getMethod("getServicePointWorkStationsByTerm", Long.class, Integer.class, DateRangeBeanParam.class);
             servicePoint.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
                     .path(ProviderResource.class)
                     .path(servicePointsMethod)
@@ -811,7 +811,7 @@ public class ServicePointResource {
                     .rel("work-stations-by-term").build());
 
             // work-stations by-term (alternative)
-            Method workStationsByTermAlternativeMethod = ServicePointResource.WorkStationResource.class.getMethod("getServicePointWorkStationsByTerm", Long.class, Integer.class, DateBetweenBeanParam.class);
+            Method workStationsByTermAlternativeMethod = ServicePointResource.WorkStationResource.class.getMethod("getServicePointWorkStationsByTerm", Long.class, Integer.class, DateRangeBeanParam.class);
             servicePoint.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
                     .path(ServicePointResource.class)
                     .path(workStationsAlternativeMethod)
@@ -822,7 +822,7 @@ public class ServicePointResource {
                     .rel("work-stations-by-term (alternative)").build());
 
             // work-stations by-term-strict
-            Method workStationsByTermStrictMethod = ProviderResource.ServicePointResource.WorkStationResource.class.getMethod("getServicePointWorkStationsByTermStrict", Long.class, Integer.class, DateBetweenBeanParam.class);
+            Method workStationsByTermStrictMethod = ProviderResource.ServicePointResource.WorkStationResource.class.getMethod("getServicePointWorkStationsByTermStrict", Long.class, Integer.class, DateRangeBeanParam.class);
             servicePoint.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
                     .path(ProviderResource.class)
                     .path(servicePointsMethod)
@@ -834,7 +834,7 @@ public class ServicePointResource {
                     .rel("work-stations-by-term-strict").build());
 
             // work-stations by-term-strict (alternative)
-            Method workStationsByTermStrictAlternativeMethod = ServicePointResource.WorkStationResource.class.getMethod("getServicePointWorkStationsByTermStrict", Long.class, Integer.class, DateBetweenBeanParam.class);
+            Method workStationsByTermStrictAlternativeMethod = ServicePointResource.WorkStationResource.class.getMethod("getServicePointWorkStationsByTermStrict", Long.class, Integer.class, DateRangeBeanParam.class);
             servicePoint.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
                     .path(ServicePointResource.class)
                     .path(workStationsAlternativeMethod)
@@ -1513,7 +1513,7 @@ public class ServicePointResource {
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
         public Response getServicePointEmployeesByTerm( @PathParam("providerId") Long providerId,
                                                         @PathParam("servicePointNumber") Integer servicePointNumber,
-                                                        @BeanParam DateBetweenBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException,
+                                                        @BeanParam DateRangeBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException,
           /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
 
             RESTToolkit.authorizeAccessToWebService(params);
@@ -1553,7 +1553,7 @@ public class ServicePointResource {
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
         public Response getServicePointEmployeesByTermStrict( @PathParam("providerId") Long providerId,
                                                               @PathParam("servicePointNumber") Integer servicePointNumber,
-                                                              @BeanParam DateBetweenBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException,
+                                                              @BeanParam DateRangeBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException,
         /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
 
             RESTToolkit.authorizeAccessToWebService(params);
@@ -1981,7 +1981,7 @@ public class ServicePointResource {
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
         public Response getServicePointWorkStationsByTerm( @PathParam("providerId") Long providerId,
                                                            @PathParam("servicePointNumber") Integer servicePointNumber,
-                                                           @BeanParam DateBetweenBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException,
+                                                           @BeanParam DateRangeBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException,
         /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
 
             return providerResource.getServicePointResource()
@@ -1993,7 +1993,7 @@ public class ServicePointResource {
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
         public Response getServicePointWorkStationsByTermStrict( @PathParam("providerId") Long providerId,
                                                                  @PathParam("servicePointNumber") Integer servicePointNumber,
-                                                                 @BeanParam DateBetweenBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException,
+                                                                 @BeanParam DateRangeBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException,
         /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
 
             return providerResource.getServicePointResource()

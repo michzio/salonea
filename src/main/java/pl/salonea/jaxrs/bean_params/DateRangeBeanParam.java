@@ -11,7 +11,7 @@ import javax.ws.rs.core.UriInfo;
 /**
  * Created by michzio on 02/09/2015.
  */
-public class DateBetweenBeanParam extends PaginationBeanParam {
+public class DateRangeBeanParam extends PaginationBeanParam {
 
     private @QueryParam("startDate") RESTDateTime startDate;
     private @QueryParam("endDate") RESTDateTime endDate;

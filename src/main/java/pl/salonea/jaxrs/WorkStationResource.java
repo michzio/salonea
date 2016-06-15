@@ -262,7 +262,7 @@ public class WorkStationResource {
     @GET
     @Path("/by-term")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getWorkStationsByTerm( @BeanParam DateBetweenBeanParam params ) throws ForbiddenException, BadRequestException {
+    public Response getWorkStationsByTerm( @BeanParam DateRangeBeanParam params ) throws ForbiddenException, BadRequestException {
 
         RESTToolkit.authorizeAccessToWebService(params);
         logger.log(Level.INFO, "returning work stations for given term (startDate, endDate) using " +
@@ -288,7 +288,7 @@ public class WorkStationResource {
     @GET
     @Path("/by-term-strict")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getWorkStationsByTermStrict( @BeanParam DateBetweenBeanParam params ) throws ForbiddenException, BadRequestException {
+    public Response getWorkStationsByTermStrict( @BeanParam DateRangeBeanParam params ) throws ForbiddenException, BadRequestException {
 
         RESTToolkit.authorizeAccessToWebService(params);
         logger.log(Level.INFO, "returning work stations for given term strict (startDate, endDate) using " +
@@ -359,7 +359,7 @@ public class WorkStationResource {
                     .rel("typed").build() );
 
             // by-term
-            Method workStationsByTermMethod = WorkStationResource.class.getMethod("getWorkStationsByTerm", DateBetweenBeanParam.class);
+            Method workStationsByTermMethod = WorkStationResource.class.getMethod("getWorkStationsByTerm", DateRangeBeanParam.class);
             workStations.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
                     .path(WorkStationResource.class)
                     .path(workStationsByTermMethod)
@@ -367,7 +367,7 @@ public class WorkStationResource {
                     .rel("by-term").build() );
 
             // by-term-strict
-            Method workStationsByTermStrictMethod = WorkStationResource.class.getMethod("getWorkStationsByTermStrict", DateBetweenBeanParam.class);
+            Method workStationsByTermStrictMethod = WorkStationResource.class.getMethod("getWorkStationsByTermStrict", DateRangeBeanParam.class);
             workStations.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
                     .path(WorkStationResource.class)
                     .path(workStationsByTermStrictMethod)
@@ -609,7 +609,7 @@ public class WorkStationResource {
                     .rel("employees-count").build());
 
             // employees by-term
-            Method employeesByTermMethod = WorkStationResource.EmployeeResource.class.getMethod("getWorkStationEmployeesByTerm", Long.class, Integer.class, Integer.class, DateBetweenBeanParam.class);
+            Method employeesByTermMethod = WorkStationResource.EmployeeResource.class.getMethod("getWorkStationEmployeesByTerm", Long.class, Integer.class, Integer.class, DateRangeBeanParam.class);
             workStation.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
                     .path(WorkStationResource.class)
                     .path(employeesMethod)
@@ -621,7 +621,7 @@ public class WorkStationResource {
                     .rel("employees-by-term").build());
 
             // employees by-term-strict
-            Method employeesByTermStrictMethod = WorkStationResource.EmployeeResource.class.getMethod("getWorkStationEmployeesByTermStrict", Long.class, Integer.class, Integer.class, DateBetweenBeanParam.class);;
+            Method employeesByTermStrictMethod = WorkStationResource.EmployeeResource.class.getMethod("getWorkStationEmployeesByTermStrict", Long.class, Integer.class, Integer.class, DateRangeBeanParam.class);;
             workStation.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
                     .path(WorkStationResource.class)
                     .path(employeesMethod)
@@ -989,7 +989,7 @@ public class WorkStationResource {
         public Response getWorkStationEmployeesByTerm( @PathParam("providerId") Long providerId,
                                                        @PathParam("servicePointNumber") Integer servicePointNumber,
                                                        @PathParam("workStationNumber") Integer workStationNumber,
-                                                       @BeanParam DateBetweenBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException,
+                                                       @BeanParam DateRangeBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException,
         /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
 
             RESTToolkit.authorizeAccessToWebService(params);
@@ -1030,7 +1030,7 @@ public class WorkStationResource {
         public Response getWorkStationEmployeesByTermStrict( @PathParam("providerId") Long providerId,
                                                              @PathParam("servicePointNumber") Integer servicePointNumber,
                                                              @PathParam("workStationNumber") Integer workStationNumber,
-                                                             @BeanParam DateBetweenBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException,
+                                                             @BeanParam DateRangeBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException,
         /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
 
             RESTToolkit.authorizeAccessToWebService(params);

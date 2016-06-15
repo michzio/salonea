@@ -320,7 +320,7 @@ public class TermResource {
     @GET
     @Path("/by-term")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getTermsByTerm(@BeanParam DateBetweenBeanParam params) throws ForbiddenException, BadRequestException {
+    public Response getTermsByTerm(@BeanParam DateRangeBeanParam params) throws ForbiddenException, BadRequestException {
 
         RESTToolkit.authorizeAccessToWebService(params);
         logger.log(Level.INFO, "returning terms for given term (startDate, endDate) using " +
@@ -346,7 +346,7 @@ public class TermResource {
     @GET
     @Path("/by-term-strict")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getTermsByTermStrict(@BeanParam DateBetweenBeanParam params) throws ForbiddenException, BadRequestException {
+    public Response getTermsByTermStrict(@BeanParam DateRangeBeanParam params) throws ForbiddenException, BadRequestException {
 
         RESTToolkit.authorizeAccessToWebService(params);
         logger.log(Level.INFO, "returning terms for given term strict (startDate, endDate) using " +
@@ -522,7 +522,7 @@ public class TermResource {
             // get subset of resources hypermedia links
 
             // by-term
-            Method byTermMethod = TermResource.class.getMethod("getTermsByTerm", DateBetweenBeanParam.class);
+            Method byTermMethod = TermResource.class.getMethod("getTermsByTerm", DateRangeBeanParam.class);
             terms.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
                     .path(TermResource.class)
                     .path(byTermMethod)
@@ -530,7 +530,7 @@ public class TermResource {
                     .rel("by-term").build() );
 
             // by-term-strict
-            Method byTermStrictMethod = TermResource.class.getMethod("getTermsByTermStrict", DateBetweenBeanParam.class);
+            Method byTermStrictMethod = TermResource.class.getMethod("getTermsByTermStrict", DateRangeBeanParam.class);
             terms.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
                     .path(TermResource.class)
                     .path(byTermStrictMethod)

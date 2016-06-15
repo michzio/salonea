@@ -344,7 +344,7 @@ public class NaturalPersonResource {
     @GET
     @Path("/born-between")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getNaturalPersonsBornBetween( @BeanParam DateBetweenBeanParam params ) throws ForbiddenException, BadRequestException {
+    public Response getNaturalPersonsBornBetween( @BeanParam DateRangeBeanParam params ) throws ForbiddenException, BadRequestException {
 
         if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
         logger.log(Level.INFO, "returning natural persons born between given start and end date using NaturalPersonResource.getNaturalPersonsBornBetween() method of REST API");
@@ -565,7 +565,7 @@ public class NaturalPersonResource {
             naturalPersons.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder().path(NaturalPersonResource.class).path("born-before").build()).rel("born-before").build());
 
             // born-between
-            Method bornBetweenMethod = NaturalPersonResource.class.getMethod("getNaturalPersonsBornBetween", DateBetweenBeanParam.class);
+            Method bornBetweenMethod = NaturalPersonResource.class.getMethod("getNaturalPersonsBornBetween", DateRangeBeanParam.class);
             naturalPersons.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder().path(NaturalPersonResource.class).path(bornBetweenMethod).build()).rel("born-between").build());
 
             // older-than

@@ -230,7 +230,7 @@ public class UserAccountResource {
     @GET
     @Path("/created-between")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getUserAccountsCreatedBetween(@BeanParam DateBetweenBeanParam params) throws ForbiddenException, BadRequestException {
+    public Response getUserAccountsCreatedBetween(@BeanParam DateRangeBeanParam params) throws ForbiddenException, BadRequestException {
 
         if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
         logger.log(Level.INFO, "returning subset of user accounts created between given start and end date using UserAccountResource.getUserAccountsCreatedBetween() method of REST API");
@@ -361,7 +361,7 @@ public class UserAccountResource {
     @GET
     @Path("/last-logged-between")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getUserAccountsLastLoggedBetween(@BeanParam DateBetweenBeanParam params) throws ForbiddenException, BadRequestException {
+    public Response getUserAccountsLastLoggedBetween(@BeanParam DateRangeBeanParam params) throws ForbiddenException, BadRequestException {
 
         if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
         logger.log(Level.INFO, "returning subset of user accounts last logged between given start and end time using UserAccountResource.getUserAccountsLastLoggedBetween() method of REST API");
@@ -392,7 +392,7 @@ public class UserAccountResource {
     @GET
     @Path("/last-failed-login-between")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getUserAccountsLastFailedLoginBetween(@BeanParam DateBetweenBeanParam params) throws ForbiddenException, BadRequestException {
+    public Response getUserAccountsLastFailedLoginBetween(@BeanParam DateRangeBeanParam params) throws ForbiddenException, BadRequestException {
 
         if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
         logger.log(Level.INFO, "returning subset of user accounts last failed logged between given start and end time using UserAccountResource.getUserAccountsLastFailedLoginBetween() method of REST API");
@@ -495,7 +495,7 @@ public class UserAccountResource {
 
             // get subset of resources hypermedia links
             // created-between
-            Method createdBetweenMethod = UserAccountResource.class.getMethod("getUserAccountsCreatedBetween", DateBetweenBeanParam.class);
+            Method createdBetweenMethod = UserAccountResource.class.getMethod("getUserAccountsCreatedBetween", DateRangeBeanParam.class);
             userAccounts.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder().path(UserAccountResource.class).path(createdBetweenMethod).build()).rel("created-between").build());
 
             // not-activated
@@ -516,11 +516,11 @@ public class UserAccountResource {
             userAccounts.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder().path(UserAccountResource.class).path("account-type").build()).rel("account-type").build());
 
             // last-logged-between
-            Method lastLoggedBetweenMethod = UserAccountResource.class.getMethod("getUserAccountsLastLoggedBetween", DateBetweenBeanParam.class);
+            Method lastLoggedBetweenMethod = UserAccountResource.class.getMethod("getUserAccountsLastLoggedBetween", DateRangeBeanParam.class);
             userAccounts.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder().path(UserAccountResource.class).path(lastLoggedBetweenMethod).build()).rel("last-logged-between").build());
 
             // last-failed-login-between
-            Method lastFailedLoginBetweenMethod = UserAccountResource.class.getMethod("getUserAccountsLastFailedLoginBetween", DateBetweenBeanParam.class);
+            Method lastFailedLoginBetweenMethod = UserAccountResource.class.getMethod("getUserAccountsLastFailedLoginBetween", DateRangeBeanParam.class);
             userAccounts.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder().path(UserAccountResource.class).path(lastFailedLoginBetweenMethod).build()).rel("last-failed-login-between").build());
 
             // activate-all

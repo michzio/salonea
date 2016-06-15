@@ -6,9 +6,7 @@ import pl.salonea.entities.*;
 import pl.salonea.entities.Transaction;
 import pl.salonea.entities.idclass.CreditCardId;
 import pl.salonea.entities.idclass.TransactionId;
-import pl.salonea.enums.ClientType;
-import pl.salonea.enums.CreditCardType;
-import pl.salonea.enums.Gender;
+import pl.salonea.enums.*;
 import pl.salonea.jaxrs.bean_params.*;
 import pl.salonea.jaxrs.exceptions.*;
 import pl.salonea.jaxrs.exceptions.ForbiddenException;
@@ -505,7 +503,7 @@ public class ClientResource {
     @GET
     @Path("/born-between")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getClientsBornBetween( @BeanParam DateBetweenBeanParam params ) throws ForbiddenException, BadRequestException {
+    public Response getClientsBornBetween( @BeanParam DateRangeBeanParam params ) throws ForbiddenException, BadRequestException {
 
         if(params.getAuthToken() == null) throw new ForbiddenException("Unauthorized access to web service.");
         logger.log(Level.INFO, "returning clients born between given start and end date using ClientResource.getClientsBornBetween() method of REST API");
@@ -784,7 +782,7 @@ public class ClientResource {
             clients.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(ClientResource.class).path("born-before").build()).rel("born-before").build() );
 
             // born-between
-            Method bornBetweenMethod = ClientResource.class.getMethod("getClientsBornBetween", DateBetweenBeanParam.class);
+            Method bornBetweenMethod = ClientResource.class.getMethod("getClientsBornBetween", DateRangeBeanParam.class);
             clients.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(ClientResource.class).path(bornBetweenMethod).build()).rel("born-between").build() );
 
             // older-than
@@ -1090,7 +1088,7 @@ public class ClientResource {
                     .rel("credit-cards-expiring-before").build());
 
             // credit-cards expiring-between
-            Method creditCardsExpiringBetweenMethod = ClientResource.CreditCardResource.class.getMethod("getClientCreditCardsExpiringBetween", Long.class, DateBetweenBeanParam.class);
+            Method creditCardsExpiringBetweenMethod = ClientResource.CreditCardResource.class.getMethod("getClientCreditCardsExpiringBetween", Long.class, DateRangeBeanParam.class);
             client.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
                     .path(ClientResource.class)
                     .path(creditCardsMethod)
@@ -2176,7 +2174,7 @@ public class ClientResource {
         @Path("/expiring-between")
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
         public Response getClientCreditCardsExpiringBetween( @PathParam("clientId") Long clientId,
-                                                             @BeanParam DateBetweenBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException {
+                                                             @BeanParam DateRangeBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException {
 
             RESTToolkit.authorizeAccessToWebService(params);
             logger.log(Level.INFO, "returning credit cards for given client expiring between given start and end date using " +
@@ -2284,7 +2282,7 @@ public class ClientResource {
         @Path("/expiring-between")
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
         public Response removeClientCreditCardsExpiringBetween( @PathParam("clientId") Long clientId,
-                                                                @BeanParam DateBetweenBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException {
+                                                                @BeanParam DateRangeBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException {
 
             RESTToolkit.authorizeAccessToWebService(params);
             logger.log(Level.INFO, "removing subset of Credit Card entities for given Client expiring between given start and end dates " +
@@ -2712,8 +2710,211 @@ public class ClientResource {
             return Response.status(Status.OK).entity(responseEntity).build();
         }
 
+        /**
+         * Method returns subset of Transaction entities for given Client entity
+         * and transaction time. The client id is passed through path param.
+         * Transaction time range (start and end dates) is passed through query params.  i
+         */
+        @GET
+        @Path("/by-transaction-time")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getClientTransactionsByTransactionTime( @PathParam("clientId") Long clientId,
+                                                                @BeanParam DateRangeBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException {
 
-        // TODO
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning transactions for given client and transaction time (startDate, endDate) using " +
+                    "ClientResource.TransactionResource.getClientTransactionsByTransactionTime(clientId, transactionTime) method of REST API");
+
+            RESTToolkit.validateDateRange(params); // i.e. startDate and endDate
+
+            // find client entity for which to get associated transactions
+            Client client = clientFacade.find(clientId);
+            if(client == null)
+                throw new NotFoundException("Could not find client for id " + clientId + ".");
+
+            // find transactions by given criteria (client, transaction time)
+            ResourceList<Transaction> transactions = new ResourceList<>(
+                    transactionFacade.findByClientAndTransactionTime(client, params.getStartDate(), params.getEndDate(),
+                            params.getOffset(), params.getLimit())
+            );
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.TransactionResource.populateWithHATEOASLinks(transactions, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(transactions).build();
+        }
+
+        /**
+         * Method returns subset of Transaction entities for given Client entity
+         * and booked time. The client id is passed through path param.
+         * Booked time range (start and end dates) is passed through query params.
+         */
+        @GET
+        @Path("/by-booked-time")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getClientTransactionsByBookedTime( @PathParam("clientId") Long clientId,
+                                                           @BeanParam DateRangeBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning transactions for given client and booked time (startDate, endDate) using " +
+                    "ClientResource.TransactionResource.getClientTransactionsByBookedTime(clientId, bookedTime) method of REST API");
+
+            RESTToolkit.validateDateRange(params); // i.e. startDate and endDate
+
+            // find client entity for which to get associated transactions
+            Client client = clientFacade.find(clientId);
+            if(client == null)
+                throw new NotFoundException("Could not find client for id " + clientId + ".");
+
+            // find transactions by given criteria (client, booked time)
+            ResourceList<Transaction> transactions = new ResourceList<>(
+                    transactionFacade.findByClientAndBookedTime(client, params.getStartDate(), params.getEndDate(),
+                            params.getOffset(), params.getLimit())
+            );
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.TransactionResource.populateWithHATEOASLinks(transactions, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(transactions).build();
+        }
+
+        /**
+         * Method returns subset of Transaction entities for given Client entity
+         * that have been already paid. The client id is passed through path param.
+         */
+        @GET
+        @Path("/paid")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getClientTransactionsPaid( @PathParam("clientId") Long clientId,
+                                                   @BeanParam PaginationBeanParam params ) throws ForbiddenException, NotFoundException  {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning paid transactions for given client using " +
+                    "ClientResource.TransactionResource.getClientTransactionsPaid(clientId) method of REST API");
+
+            // find client entity for which to get associated transactions
+            Client client = clientFacade.find(clientId);
+            if(client == null)
+                throw new NotFoundException("Could not find client for id " + clientId + ".");
+
+            // find transactions by given criteria (client, paid)
+            ResourceList<Transaction> transactions = new ResourceList<>(
+                    transactionFacade.findByClientOnlyPaid(client, params.getOffset(), params.getLimit())
+            );
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.TransactionResource.populateWithHATEOASLinks(transactions, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(transactions).build();
+        }
+
+        /**
+         * Method returns subset of Transaction entities for given Client entity
+         * that haven't been paid yet. The client id is passed through path param.
+         */
+        @GET
+        @Path("/unpaid")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getClientTransactionsUnpaid( @PathParam("clientId") Long clientId,
+                                                     @BeanParam PaginationBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning unpaid transactions for given client using " +
+                    "ClientResource.TransactionResource.getClientTransactionsUnpaid(clientId) method of REST API");
+
+            // find client entity for which to get associated transactions
+            Client client = clientFacade.find(clientId);
+            if(client == null)
+                throw new NotFoundException("Could not find client for id " + clientId + ".");
+
+            // find transactions by given criteria (client, unpaid)
+            ResourceList<Transaction> transactions = new ResourceList<>(
+                    transactionFacade.findByClientOnlyUnpaid(client, params.getOffset(), params.getLimit())
+            );
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.TransactionResource.populateWithHATEOASLinks(transactions, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(transactions).build();
+        }
+
+        /**
+         * Method returns subset of Transaction entities for given Client entity
+         * and price range (and optionally currency code).
+         * The client id is passed through path param.
+         * The price range (and optionally currency code) are passed through query params.
+         */
+        @GET
+        @Path("/by-price")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getClientTransactionsByPrice( @PathParam("clientId") Long clientId,
+                                                      @BeanParam PriceRangeBeanParam params,
+                                                      @QueryParam("currency") CurrencyCode currencyCode ) throws ForbiddenException, NotFoundException, BadRequestException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning transactions for given client, price range (minPrice, maxPrice) and optionally currency code using " +
+                    "ClientResource.TransactionResource.getClientTransactionsByPrice(clientId, priceRange, currencyCode) method of REST API");
+
+            RESTToolkit.validatePriceRange(params); // i.e. minPrice and maxPrice
+
+            // find client entity for which to get associated transactions
+            Client client = clientFacade.find(clientId);
+            if(client == null)
+                throw new NotFoundException("Could not find client for id " + clientId + ".");
+
+            ResourceList<Transaction> transactions = null;
+
+            if(currencyCode != null) {
+                // find transactions by given criteria (client, price, currency code)
+                transactions = new ResourceList<>(
+                        transactionFacade.findByClientAndPriceRangeAndCurrencyCode(client, params.getMinPrice(), params.getMaxPrice(),
+                                currencyCode, params.getOffset(), params.getLimit())
+                );
+            } else {
+                // find transactions by given criteria (client, price)
+                transactions = new ResourceList<>(
+                        transactionFacade.findByClientAndPriceRange(client, params.getMinPrice(), params.getMaxPrice(),
+                                params.getOffset(), params.getLimit())
+                );
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.TransactionResource.populateWithHATEOASLinks(transactions, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(transactions).build();
+        }
+
+        /**
+         * Method returns subset of Transaction entities for given Client entity
+         * and currency code. The client id is passed through path param.
+         * The currency code is also passed through path param.
+         */
+        @GET
+        @Path("/by-currency/{currencyCode : \\S+}")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getClientTransactionsByCurrency( @PathParam("clientId") Long clientId,
+                                                         @PathParam("currencyCode") CurrencyCode currencyCode,
+                                                         @BeanParam PaginationBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning transactions for given client and currency code using " +
+                    "ClientResource.TransactionResource.getClientTransactionsByCurrency(clientId, currencyCode) method of REST API");
+
+            // find client entity for which to get associated transactions
+            Client client = clientFacade.find(clientId);
+            if(client == null)
+                throw new NotFoundException("Could not find client for id " + clientId + ".");
+
+            // find transactions by given criteria (client, currency code)
+            ResourceList<Transaction> transactions = new ResourceList<>(
+                    transactionFacade.findByClientAndCurrencyCode(client, currencyCode, params.getOffset(), params.getLimit())
+            );
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.TransactionResource.populateWithHATEOASLinks(transactions, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(transactions).build();
+        }
     }
 
     public class HistoricalTransactionResource {
@@ -3060,7 +3261,382 @@ public class ClientResource {
             return Response.status(Status.OK).entity(responseEntity).build();
         }
 
+        /**
+         * Method returns subset of Historical Transaction entities for given Client entity
+         * and transaction time. The client id is passed through path param.
+         * Transaction time range (start and end dates) is passed through query params.
+         */
+        @GET
+        @Path("/by-transaction-time")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getClientHistoricalTransactionsByTransactionTime( @PathParam("clientId") Long clientId,
+                                                                          @BeanParam DateRangeBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException {
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning historical transactions for given client and transaction time (startDate, endDate) using " +
+                    "ClientResource.HistoricalTransactionResource.getClientHistoricalTransactionsByTransactionTime(clientId, transactionTime) method of REST API");
 
-        // TODO
+            RESTToolkit.validateDateRange(params); // i.e. startDate and endDate
+
+            // find client entity for which to get associated historical transactions
+            Client client = clientFacade.find(clientId);
+            if(client == null)
+                throw new NotFoundException("Could not find client for id " + clientId + ".");
+
+            // find historical transactions by given criteria (client, transaction time)
+            ResourceList<HistoricalTransaction> historicalTransactions = new ResourceList<>(
+                    historicalTransactionFacade.findByClientAndTransactionTime(client, params.getStartDate(), params.getEndDate(),
+                            params.getOffset(), params.getLimit())
+            );
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.HistoricalTransactionResource.populateWithHATEOASLinks(historicalTransactions, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(historicalTransactions).build();
+        }
+
+        /**
+         * Method returns subset of Historical Transaction entities for given Client entity
+         * and booked time. The client id is passed through path param.
+         * Booked time range (start and end dates) is passed through query params.
+         */
+        @GET
+        @Path("/by-booked-time")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getClientHistoricalTransactionsByBookedTime( @PathParam("clientId") Long clientId,
+                                                                     @BeanParam DateRangeBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning historical transactions for given client and booked time (startDate, endDate) using " +
+                    "ClientResource.HistoricalTransactionResource.getClientHistoricalTransactionsByBookedTime(clientId, bookedTime) method of REST API");
+
+            RESTToolkit.validateDateRange(params); // i.e. startDate and endDate
+
+            // find client entity for which to get associated historical transactions
+            Client client = clientFacade.find(clientId);
+            if(client == null)
+                throw new NotFoundException("Could not find client for id " + clientId + ".");
+
+            // find historical transactions by given criteria (client, booked time)
+            ResourceList<HistoricalTransaction> historicalTransactions = new ResourceList<>(
+                    historicalTransactionFacade.findByClientAndBookedTime(client, params.getStartDate(), params.getEndDate(),
+                            params.getOffset(), params.getLimit())
+            );
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.HistoricalTransactionResource.populateWithHATEOASLinks(historicalTransactions, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(historicalTransactions).build();
+        }
+
+        /**
+         * Method returns subset of Historical Transaction entities for given Client entity
+         * that have been already paid. The client id is passed through path param.
+         */
+        @GET
+        @Path("/paid")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getClientHistoricalTransactionsPaid( @PathParam("clientId") Long clientId,
+                                                             @BeanParam PaginationBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning paid historical transactions for given client using " +
+                    "ClientResource.HistoricalTransactionResource.getClientHistoricalTransactionsPaid(clientId) method of REST API");
+
+            // find client entity for which to get associated historical transactions
+            Client client = clientFacade.find(clientId);
+            if(client == null)
+                throw new NotFoundException("Could not find client for id " + clientId + ".");
+
+            // find historical transactions by given criteria (client, paid)
+            ResourceList<HistoricalTransaction> historicalTransactions = new ResourceList<>(
+                    historicalTransactionFacade.findByClientOnlyPaid(client, params.getOffset(), params.getLimit())
+            );
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.HistoricalTransactionResource.populateWithHATEOASLinks(historicalTransactions, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(historicalTransactions).build();
+        }
+
+        /**
+         * Method returns subset of Historical Transaction entities for given Client entity
+         * that haven't been paid yet. The client id is passed through path param.
+         */
+        @GET
+        @Path("/unpaid")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getClientHistoricalTransactionsUnpaid( @PathParam("clientId") Long clientId,
+                                                               @BeanParam PaginationBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning unpaid historical transactions for given client using " +
+                    "ClientResource.HistoricalTransactionResource.getClientHistoricalTransactionsUnpaid(clientId) method of REST API");
+
+            // find client entity for which to get associated historical transactions
+            Client client = clientFacade.find(clientId);
+            if(client == null)
+                throw new NotFoundException("Could not find client for id " + clientId + ".");
+
+            // find historical transactions by given criteria (client, unpaid)
+            ResourceList<HistoricalTransaction> historicalTransactions = new ResourceList<>(
+                    historicalTransactionFacade.findByClientOnlyUnpaid(client, params.getOffset(), params.getLimit())
+            );
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.HistoricalTransactionResource.populateWithHATEOASLinks(historicalTransactions, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(historicalTransactions).build();
+        }
+
+        /**
+         * Method returns subset of Historical Transaction entities for given Client entity
+         * and price range (and optionally currency code).
+         * The client id is passed through path param.
+         * The price range (and optionally currency code) are passed through query params.
+         */
+        @GET
+        @Path("/by-price")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getClientHistoricalTransactionsByPrice( @PathParam("clientId") Long clientId,
+                                                                @BeanParam PriceRangeBeanParam params,
+                                                                @QueryParam("currency") CurrencyCode currencyCode ) throws ForbiddenException, NotFoundException, BadRequestException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning historical transactions for given client, price range (minPrice, maxPrice) and optionally currency code using " +
+                    "ClientResource.HistoricalTransactionResource.getClientHistoricalTransactionsByPrice(clientId, priceRange, currencyCode) method of REST API");
+
+            RESTToolkit.validatePriceRange(params); // i.e. minPrice and maxPrice
+
+            // find client entity for which to get associated historical transactions
+            Client client = clientFacade.find(clientId);
+            if(client == null)
+                throw new NotFoundException("Could not find client for id " + clientId + ".");
+
+            ResourceList<HistoricalTransaction> historicalTransactions = null;
+
+            if(currencyCode != null) {
+                // find historical transactions by given criteria (client, price, currency code)
+                historicalTransactions = new ResourceList<>(
+                        historicalTransactionFacade.findByClientAndPriceRangeAndCurrencyCode(client, params.getMinPrice(), params.getMaxPrice(),
+                                currencyCode, params.getOffset(), params.getLimit())
+                );
+            } else {
+                // find historical transactions by given criteria (client, price)
+                historicalTransactions = new ResourceList<>(
+                        historicalTransactionFacade.findByClientAndPriceRange(client, params.getMinPrice(), params.getMaxPrice(),
+                                params.getOffset(), params.getLimit())
+                );
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.HistoricalTransactionResource.populateWithHATEOASLinks(historicalTransactions, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(historicalTransactions).build();
+        }
+
+        /**
+         * Method returns subset of Historical Transaction entities for given Client entity
+         * and currency code. The client id is passed through path param.
+         * The currency code is also passed through path param.
+         */
+        @GET
+        @Path("/by-currency/{currencyCode : \\S+}")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getClientHistoricalTransactionsByCurrency( @PathParam("clientId") Long clientId,
+                                                                   @PathParam("currencyCode") CurrencyCode currencyCode,
+                                                                   @BeanParam PaginationBeanParam params ) throws ForbiddenException, NotFoundException {
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning historical transactions for given client and currency code using " +
+                    "ClientResource.HistoricalTransactionResource.getClientHistoricalTransactionsByCurrency(clientId, currencyCode) method of REST API");
+
+            // find client entity for which to get associated historical transactions
+            Client client = clientFacade.find(clientId);
+            if(client == null)
+                throw new NotFoundException("Could not find client for id " + clientId + ".");
+
+            // find historical transactions by given criteria (client, currency code)
+            ResourceList<HistoricalTransaction> historicalTransactions = new ResourceList<>(
+                    historicalTransactionFacade.findByClientAndCurrencyCode(client, currencyCode, params.getOffset(), params.getLimit())
+            );
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.HistoricalTransactionResource.populateWithHATEOASLinks(historicalTransactions, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(historicalTransactions).build();
+        }
+
+        /**
+         * Method returns subset of Historical Transaction entities for given Client entity
+         * and completion status. The client id is passed through path param.
+         * The completion status is also passed through path param.
+         */
+        @GET
+        @Path("/by-completion-status/{completionStatus : \\S+}")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getClientHistoricalTransactionsByCompletionStatus( @PathParam("clientId") Long clientId,
+                                                                           @PathParam("completionStatus") TransactionCompletionStatus completionStatus,
+                                                                           @BeanParam PaginationBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning historical transactions for given client and completion status using " +
+                    "ClientResource.HistoricalTransactionResource.getClientHistoricalTransactionsByCompletionStatus(clientId, completionStatus) method of REST API");
+
+            // find client entity for which to get associated historical transactions
+            Client client = clientFacade.find(clientId);
+            if(client == null)
+                throw new NotFoundException("Could not find client for id " + clientId + ".");
+
+            // find historical transactions by given criteria (client, completion status)
+            ResourceList<HistoricalTransaction> historicalTransactions = new ResourceList<>(
+                    historicalTransactionFacade.findByClientAndCompletionStatus(client, completionStatus, params.getOffset(), params.getLimit())
+            );
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.HistoricalTransactionResource.populateWithHATEOASLinks(historicalTransactions, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(historicalTransactions).build();
+        }
+
+        /**
+         * Method returns subset of Historical Transaction entities for given Client entity
+         * and client rating range (minRating, maxRating). The client id is passed through path param.
+         * The client rating range is passed through query params.
+         */
+        @GET
+        @Path("/by-client-rating")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getClientHistoricalTransactionsByClientRating( @PathParam("clientId") Long clientId,
+                                                                       @BeanParam RatingBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning historical transactions for given client and client rating range (minRating, maxRating) using " +
+                    "ClientResource.HistoricalTransactionResource.getClientHistoricalTransactionsByClientRating(clientId, clientRatingRange) method of REST API");
+
+            if(params.getExactRating() != null) {
+                params.setMinRating(params.getExactRating());
+                params.setMaxRating(params.getExactRating());
+            }
+
+            // check client rating params correctness
+            if(params.getMinRating() == null || params.getMaxRating() == null)
+                throw new BadRequestException("Min rating and max rating (optionally exact rating) cannot be null.");
+
+            if(params.getMaxRating() < params.getMinRating())
+                throw new BadRequestException("Max rating cannot be less than min rating.");
+
+            // find client entity for which to get associated historical transactions
+            Client client = clientFacade.find(clientId);
+            if(client == null)
+                throw new NotFoundException("Could not find client for id " + clientId + ".");
+
+            // find historical transactions by given criteria (client, client rating)
+            ResourceList<HistoricalTransaction> historicalTransactions = new ResourceList<>(
+                    historicalTransactionFacade.findByClientAndClientRatingRange(client, params.getMinRating(), params.getMaxRating(),
+                            params.getOffset(), params.getLimit())
+            );
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.HistoricalTransactionResource.populateWithHATEOASLinks(historicalTransactions, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(historicalTransactions).build();
+        }
+
+        /**
+         * Method returns subset of Historical Transaction entities for given Client entity
+         * and client comment. The client id is passed through path param.
+         * The client comment is also passed through path param.
+         */
+        @GET
+        @Path("/by-client-comment/{clientComment : \\S+}")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getClientHistoricalTransactionsByClientComment( @PathParam("clientId") Long clientId,
+                                                                        @PathParam("clientComment") String clientComment,
+                                                                        @BeanParam PaginationBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning historical transactions for given client and client comment using " +
+                    "ClientResource.HistoricalTransactionResource.getClientHistoricalTransactionsByClientComment(clientId, clientComment) method of REST API");
+
+            // find client entity for which to get associated historical transactions
+            Client client = clientFacade.find(clientId);
+            if(client == null)
+                throw new NotFoundException("Could not find client for id " + clientId + ".");
+
+            // find historical transactions by given criteria (client, client comment)
+            ResourceList<HistoricalTransaction> historicalTransactions = new ResourceList<>(
+                    historicalTransactionFacade.findByClientAndClientComment(client, clientComment, params.getOffset(), params.getLimit())
+            );
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.HistoricalTransactionResource.populateWithHATEOASLinks(historicalTransactions, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(historicalTransactions).build();
+        }
+
+        @GET
+        @Path("/by-provider-rating")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getClientHistoricalTransactionsByProviderRating( @PathParam("clientId") Long clientId,
+                                                                         @BeanParam RatingBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning historical transactions for given client and provider rating range (minRating, maxRating) using " +
+                    "ClientResource.HistoricalTransactionResource.getClientHistoricalTransactionsByProviderRating(clientId, providerRatingRange) method of REST API");
+
+            if(params.getExactRating() != null) {
+                params.setMinRating(params.getExactRating());
+                params.setMaxRating(params.getExactRating());
+            }
+
+            // check provider rating params correctness
+            if(params.getMinRating() == null || params.getMaxRating() == null)
+                throw new BadRequestException("Min rating and max rating (optionally exact rating) cannot be null.");
+
+            if(params.getMaxRating() < params.getMinRating())
+                throw new BadRequestException("Max rating cannot be less than min rating.");
+
+            // find client entity for which to get associated historical transactions
+            Client client = clientFacade.find(clientId);
+            if(client == null)
+                throw new NotFoundException("Could not find client for id " + clientId + ".");
+
+            // find historical transactions by given criteria (client, provider rating)
+            ResourceList<HistoricalTransaction> historicalTransactions = new ResourceList<>(
+                    historicalTransactionFacade.findByClientAndProviderRatingRange(client, params.getMinRating(), params.getMaxRating(),
+                            params.getOffset(), params.getLimit())
+            );
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.HistoricalTransactionResource.populateWithHATEOASLinks(historicalTransactions, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(historicalTransactions).build();
+        }
+
+        @GET
+        @Path("/by-provider-dementi/{providerDementi : \\S+}")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getClientHistoricalTransactionsByProviderDementi( @PathParam("clientId") Long clientId,
+                                                                          @PathParam("providerDementi") String providerDementi,
+                                                                          @BeanParam PaginationBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning historical transactions for given client and provider dementi using " +
+                    "ClientResource.HistoricalTransactionResource.getClientHistoricalTransactionsByProviderDementi(clientId, providerDementi) method of REST API");
+
+            // find client entity for which to get associated historical transactions
+            Client client = clientFacade.find(clientId);
+            if(client == null)
+                throw new NotFoundException("Could not find client for id " + clientId + ".");
+
+            // find historical transactions by given criteria (client, provider dementi)
+            ResourceList<HistoricalTransaction> historicalTransactions = new ResourceList<>(
+                   historicalTransactionFacade.findByClientAndProviderDementi(client, providerDementi, params.getOffset(), params.getLimit())
+            );
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.HistoricalTransactionResource.populateWithHATEOASLinks(historicalTransactions, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(historicalTransactions).build();
+        }
     }
 }

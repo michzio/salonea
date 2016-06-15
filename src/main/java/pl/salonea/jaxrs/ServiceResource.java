@@ -741,7 +741,7 @@ public class ServiceResource {
                     .rel("work-stations-count").build());
 
             // work-stations by-term
-            Method workStationsByTermMethod = ServiceResource.WorkStationResource.class.getMethod("getServiceWorkStationsByTerm", Integer.class, DateBetweenBeanParam.class);
+            Method workStationsByTermMethod = ServiceResource.WorkStationResource.class.getMethod("getServiceWorkStationsByTerm", Integer.class, DateRangeBeanParam.class);
             service.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
                     .path(ServiceResource.class)
                     .path(workStationsMethod)
@@ -751,7 +751,7 @@ public class ServiceResource {
                     .rel("work-stations-by-term").build());
 
             // work-stations by-term-strict
-            Method workStationsByTermStrictMethod = ServiceResource.WorkStationResource.class.getMethod("getServiceWorkStationsByTermStrict", Integer.class, DateBetweenBeanParam.class);
+            Method workStationsByTermStrictMethod = ServiceResource.WorkStationResource.class.getMethod("getServiceWorkStationsByTermStrict", Integer.class, DateRangeBeanParam.class);
             service.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
                     .path(ServiceResource.class)
                     .path(workStationsMethod)
@@ -1861,7 +1861,7 @@ public class ServiceResource {
         @Path("/by-term")
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
         public Response getServiceWorkStationsByTerm(@PathParam("serviceId") Integer serviceId,
-                                                     @BeanParam DateBetweenBeanParam params) throws ForbiddenException, NotFoundException, BadRequestException {
+                                                     @BeanParam DateRangeBeanParam params) throws ForbiddenException, NotFoundException, BadRequestException {
 
             RESTToolkit.authorizeAccessToWebService(params);
             logger.log(Level.INFO, "returning work stations for given service and term (startDate, endDate) using " +
@@ -1895,7 +1895,7 @@ public class ServiceResource {
         @Path("/by-term-strict")
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
         public Response getServiceWorkStationsByTermStrict(@PathParam("serviceId") Integer serviceId,
-                                                           @BeanParam DateBetweenBeanParam params) throws ForbiddenException, NotFoundException, BadRequestException {
+                                                           @BeanParam DateRangeBeanParam params) throws ForbiddenException, NotFoundException, BadRequestException {
 
             RESTToolkit.authorizeAccessToWebService(params);
             logger.log(Level.INFO, "returning work stations for given service and term strict (startDate, endDate) using " +

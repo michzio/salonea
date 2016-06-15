@@ -2131,7 +2131,7 @@ public class ProviderResource {
             @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
             public Response getServicePointWorkStationsByTerm( @PathParam("userId") Long providerId,
                                                                @PathParam("servicePointNumber") Integer servicePointNumber,
-                                                               @BeanParam DateBetweenBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException,
+                                                               @BeanParam DateRangeBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException,
             /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
 
                 RESTToolkit.authorizeAccessToWebService(params);
@@ -2171,7 +2171,7 @@ public class ProviderResource {
             @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
             public Response getServicePointWorkStationsByTermStrict( @PathParam("userId") Long providerId,
                                                                      @PathParam("servicePointNumber") Integer servicePointNumber,
-                                                                     @BeanParam DateBetweenBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException,
+                                                                     @BeanParam DateRangeBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException,
             /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
 
                 RESTToolkit.authorizeAccessToWebService(params);

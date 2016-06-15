@@ -260,7 +260,7 @@ public class EmployeeTermResource {
     @GET
     @Path("/by-term")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getEmployeeTermsByTerm( @BeanParam DateBetweenBeanParam params ) throws ForbiddenException, BadRequestException {
+    public Response getEmployeeTermsByTerm( @BeanParam DateRangeBeanParam params ) throws ForbiddenException, BadRequestException {
 
         RESTToolkit.authorizeAccessToWebService(params);
         logger.log(Level.INFO, "returning employee terms for given term (startDate, endDate) using " +
@@ -286,7 +286,7 @@ public class EmployeeTermResource {
     @GET
     @Path("/by-term-strict")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getEmployeeTermsByTermStrict( @BeanParam DateBetweenBeanParam params ) throws ForbiddenException, BadRequestException {
+    public Response getEmployeeTermsByTermStrict( @BeanParam DateRangeBeanParam params ) throws ForbiddenException, BadRequestException {
 
         RESTToolkit.authorizeAccessToWebService(params);
         logger.log(Level.INFO, "returning employee terms for given term strict (startDate, endDate) using " +
@@ -449,7 +449,7 @@ public class EmployeeTermResource {
             // get subset of resources hypermedia links
 
             // by-term
-            Method byTermMethod = EmployeeTermResource.class.getMethod("getEmployeeTermsByTerm", DateBetweenBeanParam.class);
+            Method byTermMethod = EmployeeTermResource.class.getMethod("getEmployeeTermsByTerm", DateRangeBeanParam.class);
             employeeTerms.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
                     .path(EmployeeTermResource.class)
                     .path(byTermMethod)
@@ -457,7 +457,7 @@ public class EmployeeTermResource {
                     .rel("by-term").build() );
 
             // by-term-strict
-            Method byTermStrictMethod = EmployeeTermResource.class.getMethod("getEmployeeTermsByTermStrict", DateBetweenBeanParam.class);
+            Method byTermStrictMethod = EmployeeTermResource.class.getMethod("getEmployeeTermsByTermStrict", DateRangeBeanParam.class);
             employeeTerms.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
                     .path(EmployeeTermResource.class)
                     .path(byTermStrictMethod)

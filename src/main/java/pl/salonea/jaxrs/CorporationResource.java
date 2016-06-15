@@ -441,7 +441,7 @@ public class CorporationResource {
     @GET
     @Path("/opened-between")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getCorporationsOpenedBetween( @BeanParam DateBetweenBeanParam params ) throws ForbiddenException, BadRequestException {
+    public Response getCorporationsOpenedBetween( @BeanParam DateRangeBeanParam params ) throws ForbiddenException, BadRequestException {
 
         RESTToolkit.authorizeAccessToWebService(params);
         logger.log(Level.INFO, "returning corporations opened between given start and end date using CorporationResource.getCorporationsOpenedBetween(dates) method of REST API");

@@ -786,7 +786,7 @@ public class EmployeeResource {
                     .rel("work-stations-count").build());
 
             // work-stations by-term
-            Method workStationsByTermMethod = EmployeeResource.WorkStationResource.class.getMethod("getEmployeeWorkStationsByTerm", Long.class, DateBetweenBeanParam.class);
+            Method workStationsByTermMethod = EmployeeResource.WorkStationResource.class.getMethod("getEmployeeWorkStationsByTerm", Long.class, DateRangeBeanParam.class);
             employee.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
                     .path(EmployeeResource.class)
                     .path(workStationsMethod)
@@ -796,7 +796,7 @@ public class EmployeeResource {
                     .rel("work-stations-by-term").build());
 
             // work-stations by-term-strict
-            Method workStationsByTermStrictMethod = EmployeeResource.WorkStationResource.class.getMethod("getEmployeeWorkStationsByTermStrict", Long.class, DateBetweenBeanParam.class);
+            Method workStationsByTermStrictMethod = EmployeeResource.WorkStationResource.class.getMethod("getEmployeeWorkStationsByTermStrict", Long.class, DateRangeBeanParam.class);
             employee.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
                     .path(EmployeeResource.class)
                     .path(workStationsMethod)
@@ -2090,7 +2090,7 @@ public class EmployeeResource {
         @Path("/by-term")
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
         public Response getEmployeeWorkStationsByTerm( @PathParam("userId") Long userId,
-                                                       @BeanParam DateBetweenBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException {
+                                                       @BeanParam DateRangeBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException {
 
             RESTToolkit.authorizeAccessToWebService(params);
             logger.log(Level.INFO, "returning work stations for given employee and term (startDate, endDate) using " +
@@ -2124,7 +2124,7 @@ public class EmployeeResource {
         @Path("/by-term-strict")
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
         public Response getEmployeeWorkStationsByTermStrict( @PathParam("userId") Long userId,
-                                                             @BeanParam DateBetweenBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException {
+                                                             @BeanParam DateRangeBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException {
 
             RESTToolkit.authorizeAccessToWebService(params);
             logger.log(Level.INFO, "returning work stations for given employee and term strict (startDate, endDate) using " +

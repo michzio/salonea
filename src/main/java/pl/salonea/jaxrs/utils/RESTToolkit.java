@@ -38,7 +38,7 @@ public class RESTToolkit {
         return collection != null && collection.size() > 0;
     }
 
-    public static void validateDateRange(DateBetweenBeanParam params) throws BadRequestException {
+    public static void validateDateRange(DateRangeBeanParam params) throws BadRequestException {
 
         // check correctness of date query params
         if(params.getStartDate() == null || params.getEndDate() == null)

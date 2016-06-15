@@ -15,7 +15,7 @@ import java.util.List;
 /**
  * Created by michzio on 18/03/2016.
  */
-public class TermBeanParam extends DateBetweenBeanParam { // incl. PaginationBeanParam
+public class TermBeanParam extends DateRangeBeanParam { // incl. PaginationBeanParam
 
     private @QueryParam("servicePointId") List<ServicePointId> servicePointIds; // {providerId}+{servicePointNumber} composite PK
     private @QueryParam("workStationId") List<WorkStationId> workStationIds; // {providerId}+{servicePointNumber}+{workStationNumber} composite PK

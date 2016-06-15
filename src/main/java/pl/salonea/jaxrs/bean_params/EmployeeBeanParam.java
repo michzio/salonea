@@ -16,7 +16,7 @@ import java.util.List;
 /**
  * Created by michzio on 05/11/2015.
  */
-public class EmployeeBeanParam extends DateBetweenBeanParam { // incl. PaginationBeanParam
+public class EmployeeBeanParam extends DateRangeBeanParam { // incl. PaginationBeanParam
 
     private @QueryParam("description") List<String> descriptions;
     private @QueryParam("jobPosition") List<String> jobPositions;
