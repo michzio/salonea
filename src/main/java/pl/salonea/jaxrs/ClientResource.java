@@ -1098,50 +1098,227 @@ public class ClientResource {
                     .rel("credit-cards-expiring-between").build());
 
             // transactions
+            Method transactionsMethod = ClientResource.class.getMethod("getTransactionResource");
+            client.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ClientResource.class)
+                    .path(transactionsMethod)
+                    .resolveTemplate("clientId", client.getClientId().toString())
+                    .build())
+                    .rel("transactions").build());
 
             // transactions eagerly
+            Method transactionsEagerlyMethod = ClientResource.TransactionResource.class.getMethod("getClientTransactionsEagerly", Long.class, TransactionBeanParam.class);
+            client.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ClientResource.class)
+                    .path(transactionsMethod)
+                    .path(transactionsEagerlyMethod)
+                    .resolveTemplate("clientId", client.getClientId().toString())
+                    .build())
+                    .rel("transactions-eagerly").build());
 
             // transactions count
+            Method countTransactionsByClientMethod = ClientResource.TransactionResource.class.getMethod("countTransactionsByClient", Long.class, GenericBeanParam.class);
+            client.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ClientResource.class)
+                    .path(transactionsMethod)
+                    .path(countTransactionsByClientMethod)
+                    .resolveTemplate("clientId", client.getClientId().toString())
+                    .build())
+                    .rel("transactions-count").build());
 
             // transactions by-transaction-time
+            Method transactionsByTransactionTimeMethod = ClientResource.TransactionResource.class.getMethod("getClientTransactionsByTransactionTime", Long.class, DateRangeBeanParam.class);
+            client.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ClientResource.class)
+                    .path(transactionsMethod)
+                    .path(transactionsByTransactionTimeMethod)
+                    .resolveTemplate("clientId", client.getClientId().toString())
+                    .build())
+                    .rel("transactions-by-transaction-time").build());
 
             // transactions by-booked-time
+            Method transactionsByBookedTimeMethod = ClientResource.TransactionResource.class.getMethod("getClientTransactionsByBookedTime", Long.class, DateRangeBeanParam.class);
+            client.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ClientResource.class)
+                    .path(transactionsMethod)
+                    .path(transactionsByBookedTimeMethod)
+                    .resolveTemplate("clientId", client.getClientId().toString())
+                    .build())
+                    .rel("transactions-by-booked-time").build());
 
             // transactions paid
+            Method transactionsPaidMethod = ClientResource.TransactionResource.class.getMethod("getClientTransactionsPaid", Long.class, PaginationBeanParam.class);
+            client.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ClientResource.class)
+                    .path(transactionsMethod)
+                    .path(transactionsPaidMethod)
+                    .resolveTemplate("clientId", client.getClientId().toString())
+                    .build())
+                    .rel("transactions-paid").build());
 
             // transactions unpaid
+            Method transactionsUnpaidMethod = ClientResource.TransactionResource.class.getMethod("getClientTransactionsUnpaid", Long.class, PaginationBeanParam.class);
+            client.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ClientResource.class)
+                    .path(transactionsMethod)
+                    .path(transactionsUnpaidMethod)
+                    .resolveTemplate("clientId", client.getClientId().toString())
+                    .build())
+                    .rel("transactions-unpaid").build());
 
             // transactions by-price
+            Method transactionsByPriceMethod = ClientResource.TransactionResource.class.getMethod("getClientTransactionsByPrice", Long.class, PriceRangeBeanParam.class, CurrencyCode.class);
+            client.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ClientResource.class)
+                    .path(transactionsMethod)
+                    .path(transactionsByPriceMethod)
+                    .resolveTemplate("clientId", client.getClientId().toString())
+                    .build())
+                    .rel("transactions-by-price").build());
 
             // transactions by-currency
+            client.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ClientResource.class)
+                    .path(transactionsMethod)
+                    .path("by-currency")
+                    .resolveTemplate("clientId", client.getClientId().toString())
+                    .build())
+                    .rel("transactions-by-currency").build());
 
             // historical-transactions
+            Method historicalTransactionsMethod = ClientResource.class.getMethod("getHistoricalTransactionResource");
+            client.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ClientResource.class)
+                    .path(historicalTransactionsMethod)
+                    .resolveTemplate("clientId", client.getClientId().toString())
+                    .build())
+                    .rel("historical-transactions").build());
 
             // historical-transactions eagerly
+            Method historicalTransactionsEagerlyMethod = ClientResource.HistoricalTransactionResource.class.getMethod("getClientHistoricalTransactionsEagerly", Long.class, HistoricalTransactionBeanParam.class);
+            client.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ClientResource.class)
+                    .path(historicalTransactionsMethod)
+                    .path(historicalTransactionsEagerlyMethod)
+                    .resolveTemplate("clientId", client.getClientId().toString())
+                    .build())
+                    .rel("historical-transactions-eagerly").build());
 
             // historical-transactions count
+            Method countHistoricalTransactionsByClientMethod = ClientResource.HistoricalTransactionResource.class.getMethod("countHistoricalTransactionsByClient", Long.class, GenericBeanParam.class);
+            client.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ClientResource.class)
+                    .path(historicalTransactionsMethod)
+                    .path(countHistoricalTransactionsByClientMethod)
+                    .resolveTemplate("clientId", client.getClientId().toString())
+                    .build())
+                    .rel("historical-transactions-count").build());
 
             // historical-transactions by-transaction-time
+            Method historicalTransactionsByTransactionTimeMethod = ClientResource.HistoricalTransactionResource.class.getMethod("getClientHistoricalTransactionsByTransactionTime", Long.class, DateRangeBeanParam.class);
+            client.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ClientResource.class)
+                    .path(historicalTransactionsMethod)
+                    .path(historicalTransactionsByTransactionTimeMethod)
+                    .resolveTemplate("clientId", client.getClientId().toString())
+                    .build())
+                    .rel("historical-transactions-by-transaction-time").build());
 
             // historical-transactions by-booked-time
+            Method historicalTransactionsByBookedTimeMethod = ClientResource.HistoricalTransactionResource.class.getMethod("getClientHistoricalTransactionsByBookedTime", Long.class, DateRangeBeanParam.class);
+            client.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ClientResource.class)
+                    .path(historicalTransactionsMethod)
+                    .path(historicalTransactionsByBookedTimeMethod)
+                    .resolveTemplate("clientId", client.getClientId().toString())
+                    .build())
+                    .rel("historical-transactions-by-booked-time").build());
 
             // historical-transactions paid
+            Method historicalTransactionsPaidMethod = ClientResource.HistoricalTransactionResource.class.getMethod("getClientHistoricalTransactionsPaid", Long.class, PaginationBeanParam.class);
+            client.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ClientResource.class)
+                    .path(historicalTransactionsMethod)
+                    .path(historicalTransactionsPaidMethod)
+                    .resolveTemplate("clientId", client.getClientId().toString())
+                    .build())
+                    .rel("historical-transactions-paid").build());
 
             // historical-transactions unpaid
+            Method historicalTransactionsUnpaidMethod = ClientResource.HistoricalTransactionResource.class.getMethod("getClientHistoricalTransactionsUnpaid", Long.class, PaginationBeanParam.class);
+            client.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ClientResource.class)
+                    .path(historicalTransactionsMethod)
+                    .path(historicalTransactionsUnpaidMethod)
+                    .resolveTemplate("clientId", client.getClientId().toString())
+                    .build())
+                    .rel("historical-transactions-unpaid").build());
 
             // historical-transactions by-price
+            Method historicalTransactionsByPriceMethod = ClientResource.HistoricalTransactionResource.class.getMethod("getClientHistoricalTransactionsByPrice", Long.class, PriceRangeBeanParam.class, CurrencyCode.class);
+            client.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ClientResource.class)
+                    .path(historicalTransactionsMethod)
+                    .path(historicalTransactionsByPriceMethod)
+                    .resolveTemplate("clientId", client.getClientId().toString())
+                    .build())
+                    .rel("historical-transactions-by-price").build());
 
             // historical-transactions by-currency
+            client.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ClientResource.class)
+                    .path(historicalTransactionsMethod)
+                    .path("by-currency")
+                    .resolveTemplate("clientId", client.getClientId().toString())
+                    .build())
+                    .rel("historical-transactions-by-currency").build());
 
-            // historical-transactions by-status
+            // historical-transactions by-completion-status
+            client.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ClientResource.class)
+                    .path(historicalTransactionsMethod)
+                    .path("by-completion-status")
+                    .resolveTemplate("clientId", client.getClientId().toString())
+                    .build())
+                    .rel("historical-transactions-by-completion-status").build());
 
             // historical-transactions by-client-rating
+            Method historicalTransactionsByClientRatingMethod = ClientResource.HistoricalTransactionResource.class.getMethod("getClientHistoricalTransactionsByClientRating", Long.class, RatingBeanParam.class);
+            client.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ClientResource.class)
+                    .path(historicalTransactionsMethod)
+                    .path(historicalTransactionsByClientRatingMethod)
+                    .resolveTemplate("clientId", client.getClientId().toString())
+                    .build())
+                    .rel("historical-transactions-by-client-rating").build());
 
             // historical-transactions by-client-comment
+            client.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ClientResource.class)
+                    .path(historicalTransactionsMethod)
+                    .path("by-client-comment")
+                    .resolveTemplate("clientId", client.getClientId().toString())
+                    .build())
+                    .rel("historical-transactions-by-client-comment").build());
 
             // historical-transactions by-provider-rating
+            Method historicalTransactionsByProviderRatingMethod = ClientResource.HistoricalTransactionResource.class.getMethod("getClientHistoricalTransactionsByProviderRating", Long.class, RatingBeanParam.class);
+            client.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ClientResource.class)
+                    .path(historicalTransactionsMethod)
+                    .path(historicalTransactionsByProviderRatingMethod)
+                    .resolveTemplate("clientId", client.getClientId().toString())
+                    .build())
+                    .rel("historical-transactions-by-provider-rating").build());
 
             // historical-transactions by-provider-dementi
+            client.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ClientResource.class)
+                    .path(historicalTransactionsMethod)
+                    .path("by-provider-dementi")
+                    .resolveTemplate("clientId", client.getClientId().toString())
+                    .build())
+                    .rel("historical-transactions-by-provider-dementi").build());
 
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
