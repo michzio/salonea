@@ -2,16 +2,17 @@ package pl.salonea.jaxrs;
 
 import pl.salonea.ejb.stateless.EmployeeFacade;
 import pl.salonea.ejb.stateless.HistoricalTransactionFacade;
-import pl.salonea.entities.Employee;
-import pl.salonea.entities.HistoricalTransaction;
+import pl.salonea.entities.*;
 import pl.salonea.entities.idclass.TransactionId;
-import pl.salonea.jaxrs.bean_params.GenericBeanParam;
-import pl.salonea.jaxrs.bean_params.HistoricalTransactionBeanParam;
+import pl.salonea.enums.CurrencyCode;
+import pl.salonea.jaxrs.bean_params.*;
 import pl.salonea.jaxrs.exceptions.*;
+import pl.salonea.jaxrs.exceptions.BadRequestException;
 import pl.salonea.jaxrs.exceptions.ForbiddenException;
 import pl.salonea.jaxrs.exceptions.NotFoundException;
 import pl.salonea.jaxrs.utils.RESTToolkit;
 import pl.salonea.jaxrs.utils.ResourceList;
+import pl.salonea.jaxrs.utils.ResponseWrapper;
 import pl.salonea.jaxrs.utils.hateoas.Link;
 import pl.salonea.jaxrs.wrappers.HistoricalTransactionWrapper;
 
@@ -192,7 +193,186 @@ public class HistoricalTransactionResource {
         return Response.status(Status.OK).entity(historicalTransactions).build();
     }
 
-    // TODO additional methods, COUNT method
+    /**
+     * Additional methods returning a subset of resources based on given criteria
+     * you can achieve similar results by applying @QueryParams to generic method
+     * returning all resources in order to filter and limit them
+     */
+
+    /**
+     * Method returns number of Historical Transaction entities in database
+     */
+    @GET
+    @Path("/count")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response countHistoricalTransactions( @BeanParam GenericBeanParam params ) throws ForbiddenException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning number of historical transactions by executing HistoricalTransactionResource.countHistoricalTransactions() method of REST API");
+
+        ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(historicalTransactionFacade.count()), 200, "number of historical transactions");
+        return Response.status(Status.OK).entity(responseEntity).build();
+    }
+
+    /**
+     *  Method returns subset of Historical Transaction entities for transaction time in given date range (startDate, endDate).
+     */
+    @GET
+    @Path("/by-transaction-time")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getHistoricalTransactionsByTransactionTime( @BeanParam DateRangeBeanParam params ) throws ForbiddenException, BadRequestException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning historical transactions for given transaction time (startDate, endDate) using " +
+                "HistoricalTransactionResource.getHistoricalTransactionsByTransactionTime(transactionTime) method of REST API");
+
+        RESTToolkit.validateDateRange(params); // i.e. startDate and endDate
+
+        // find historical transactions for given date range (startDate, endDate) of transaction time
+        ResourceList<HistoricalTransaction> historicalTransactions = new ResourceList<>(
+                historicalTransactionFacade.findByTransactionTime(params.getStartDate(), params.getEndDate(), params.getOffset(), params.getLimit())
+        );
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        HistoricalTransactionResource.populateWithHATEOASLinks(historicalTransactions, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(historicalTransactions).build();
+    }
+
+    /**
+     * Method returns subset of Historical Transaction entities for booked time in given date range (startDate, endDate).
+     */
+    @GET
+    @Path("/by-booked-time")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getHistoricalTransactionsByBookedTime( @BeanParam DateRangeBeanParam params ) throws ForbiddenException, BadRequestException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning historical transactions for given booked time (startDate, endDate) using " +
+                "HistoricalTransactionResource.getHistoricalTransactionsByBookedTime(bookedTime) method of REST API");
+
+        RESTToolkit.validateDateRange(params); // i.e. startDate and endDate
+
+        // find historical transactions for given date range (startDate, endDate) of booked time
+        ResourceList<HistoricalTransaction> historicalTransactions = new ResourceList<>(
+                historicalTransactionFacade.findByBookedTime(params.getStartDate(), params.getEndDate(), params.getOffset(), params.getLimit())
+        );
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        HistoricalTransactionResource.populateWithHATEOASLinks(historicalTransactions, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(historicalTransactions).build();
+    }
+
+    /**
+     * Method returns subset of Historical Transaction entities that have already been paid.
+     */
+    @GET
+    @Path("/paid")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getHistoricalTransactionsPaid( @BeanParam PaginationBeanParam params ) throws ForbiddenException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning paid historical transactions using HistoricalTransactionResource.getHistoricalTransactionsPaid() method of REST API");
+
+        // find paid historical transactions
+        ResourceList<HistoricalTransaction> historicalTransactions = new ResourceList<>(
+                historicalTransactionFacade.findOnlyPaid(params.getOffset(), params.getLimit())
+        );
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        HistoricalTransactionResource.populateWithHATEOASLinks(historicalTransactions, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(historicalTransactions).build();
+    }
+
+    /**
+     * Method returns subset of Historical Transaction entities that haven't been paid yet.
+     */
+    @GET
+    @Path("/unpaid")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getHistoricalTransactionsUnpaid( @BeanParam PaginationBeanParam params ) throws ForbiddenException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning unpaid historical transactions using HistoricalTransactionResource.getHistoricalTransactionsUnpaid() method of REST API");
+
+        // find unpaid historical transactions
+        ResourceList<HistoricalTransaction> historicalTransactions = new ResourceList<>(
+                historicalTransactionFacade.findOnlyUnpaid(params.getOffset(), params.getLimit())
+        );
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        HistoricalTransactionResource.populateWithHATEOASLinks(historicalTransactions, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(historicalTransactions).build();
+    }
+
+    /**
+     * Method returns subset of Historical Transaction entities for given price
+     * range (and optionally currency code).
+     * The price range (and optionally currency code) are passed through query params.
+     */
+    @GET
+    @Path("/by-price")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getHistoricalTransactionsByPrice( @BeanParam PriceRangeBeanParam params,
+                                                      @QueryParam("currency") CurrencyCode currencyCode ) throws ForbiddenException, BadRequestException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning historical transactions for given price range (minPrice, maxPrice) and optionally currency code using " +
+                "HistoricalTransactionResource.getHistoricalTransactionsByPrice(priceRange, currencyCode) method of REST API");
+
+        RESTToolkit.validatePriceRange(params); // i.e. minPrice and maxPrice
+
+        ResourceList<HistoricalTransaction> historicalTransactions = null;
+
+        if(currencyCode != null) {
+            // find historical transactions by given criteria (price, currency code)
+            historicalTransactions = new ResourceList<>(
+                    historicalTransactionFacade.findByPriceRangeAndCurrencyCode(params.getMinPrice(), params.getMaxPrice(),
+                            currencyCode, params.getOffset(), params.getLimit())
+            );
+        } else {
+            // find historical transactions by given criteria (price)
+            historicalTransactions = new ResourceList<>(
+                    historicalTransactionFacade.findByPriceRange(params.getMinPrice(), params.getMaxPrice(),
+                            params.getOffset(), params.getLimit())
+            );
+        }
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        HistoricalTransactionResource.populateWithHATEOASLinks(historicalTransactions, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(historicalTransactions).build();
+    }
+
+    /**
+     * Method returns subset of Historical Transaction entities for given currency code.
+     * The currency code is passed through path param.
+     */
+    @GET
+    @Path("/by-currency/{currencyCode : \\S+}")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getHistoricalTransactionsByCurrency( @PathParam("currencyCode") CurrencyCode currencyCode,
+                                                         @BeanParam PaginationBeanParam params ) throws ForbiddenException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning historical transactions for given currency code using " +
+                "HistoricalTransactionResource.getHistoricalTransactionsByCurrency(currencyCode) method of REST API");
+
+        // find historical transactions by currency code
+        ResourceList<HistoricalTransaction> historicalTransactions = new ResourceList<>(
+                historicalTransactionFacade.findByCurrencyCode(currencyCode, params.getOffset(), params.getLimit())
+        );
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        HistoricalTransactionResource.populateWithHATEOASLinks(historicalTransactions, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(historicalTransactions).build();
+    }
+
+    // TODO additional methods
 
     /**
      * related subresources (through relationships)
@@ -220,6 +400,28 @@ public class HistoricalTransactionResource {
             historicalTransactions.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(HistoricalTransactionResource.class).path(historicalTransactionsEagerlyMethod).build()).rel("historical-transactions-eagerly").build() );
 
             // get subset of resources hypermedia links
+
+            // by-transaction-time
+
+            // by-booked-time
+
+            // paid
+
+            // unpaid
+
+            // by-price
+
+            // by-currency
+
+            // by-completion-status
+
+            // by-client-rating
+
+            // by-client-comment
+
+            // by-provider-rating
+
+            // by-provider-dementi
 
             // TODO
 
@@ -263,6 +465,8 @@ public class HistoricalTransactionResource {
                     .build())
                     .rel("self").build());
 
+            // TODO self alternative
+
             // collection link with pattern: http://localhost:port/app/rest/{resources}
             historicalTransaction.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
                     .path(HistoricalTransactionResource.class)
@@ -278,6 +482,8 @@ public class HistoricalTransactionResource {
                     .resolveTemplate("transactionNumber", historicalTransaction.getTransactionNumber().toString())
                     .build())
                     .rel("historical-transaction-eagerly").build());
+
+            // TODO self eagerly alternative
 
             // associated collections links with pattern: http://localhost:port/app/rest/{resources}/{id1}+{id2}/{relationship}
 

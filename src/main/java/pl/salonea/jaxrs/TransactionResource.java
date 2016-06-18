@@ -5,13 +5,15 @@ import pl.salonea.ejb.stateless.TransactionFacade;
 import pl.salonea.entities.Employee;
 import pl.salonea.entities.Transaction;
 import pl.salonea.entities.idclass.TransactionId;
-import pl.salonea.jaxrs.bean_params.GenericBeanParam;
-import pl.salonea.jaxrs.bean_params.TransactionBeanParam;
+import pl.salonea.enums.CurrencyCode;
+import pl.salonea.jaxrs.bean_params.*;
 import pl.salonea.jaxrs.exceptions.*;
+import pl.salonea.jaxrs.exceptions.BadRequestException;
 import pl.salonea.jaxrs.exceptions.ForbiddenException;
 import pl.salonea.jaxrs.exceptions.NotFoundException;
 import pl.salonea.jaxrs.utils.RESTToolkit;
 import pl.salonea.jaxrs.utils.ResourceList;
+import pl.salonea.jaxrs.utils.ResponseWrapper;
 import pl.salonea.jaxrs.utils.hateoas.Link;
 import pl.salonea.jaxrs.wrappers.TransactionWrapper;
 
@@ -52,9 +54,9 @@ public class TransactionResource {
     @GET
     @Path("/{clientId: \\d+}+{transactionNumber: \\d+}")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getTransaction( @PathParam("clientId") Long clientId,
-                                    @PathParam("transactionNumber") Integer transactionNumber,
-                                    @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+    public Response getTransaction(@PathParam("clientId") Long clientId,
+                                   @PathParam("transactionNumber") Integer transactionNumber,
+                                   @BeanParam GenericBeanParam params) throws ForbiddenException, NotFoundException {
 
         return clientResource.getTransactionResource().getTransaction(clientId, transactionNumber, params);
     }
@@ -62,9 +64,9 @@ public class TransactionResource {
     @GET
     @Path("/{clientId: \\d+}+{transactionNumber: \\d+}/eagerly")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getTransactionEagerly( @PathParam("clientId") Long clientId,
-                                           @PathParam("transactionNumber") Integer transactionNumber,
-                                           @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+    public Response getTransactionEagerly(@PathParam("clientId") Long clientId,
+                                          @PathParam("transactionNumber") Integer transactionNumber,
+                                          @BeanParam GenericBeanParam params) throws ForbiddenException, NotFoundException {
 
         return clientResource.getTransactionResource().getTransactionEagerly(clientId, transactionNumber, params);
     }
@@ -82,10 +84,10 @@ public class TransactionResource {
     @Path("/{clientId: \\d+}+{transactionNumber: \\d+}")
     @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response updateTransaction( @PathParam("clientId") Long clientId,
-                                       @PathParam("transactionNumber")  Integer transactionNumber,
-                                       Transaction transaction,
-                                       @BeanParam GenericBeanParam params ) throws ForbiddenException, UnprocessableEntityException, InternalServerErrorException {
+    public Response updateTransaction(@PathParam("clientId") Long clientId,
+                                      @PathParam("transactionNumber") Integer transactionNumber,
+                                      Transaction transaction,
+                                      @BeanParam GenericBeanParam params) throws ForbiddenException, UnprocessableEntityException, InternalServerErrorException {
 
         return clientResource.getTransactionResource().updateTransaction(clientId, transactionNumber, transaction, params);
     }
@@ -93,9 +95,9 @@ public class TransactionResource {
     @DELETE
     @Path("/{clientId: \\d+}+{transactionNumber: \\d+}")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response removeTransaction( @PathParam("clientId") Long clientId,
-                                       @PathParam("transactionNumber")  Integer transactionNumber,
-                                       @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException, InternalServerErrorException,
+    public Response removeTransaction(@PathParam("clientId") Long clientId,
+                                      @PathParam("transactionNumber") Integer transactionNumber,
+                                      @BeanParam GenericBeanParam params) throws ForbiddenException, NotFoundException, InternalServerErrorException,
     /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
 
         return clientResource.getTransactionResource().removeTransaction(clientId, transactionNumber, params);
@@ -117,7 +119,7 @@ public class TransactionResource {
 
         ResourceList<Transaction> transactions = null;
 
-        if(noOfParams > 0) {
+        if (noOfParams > 0) {
             logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
 
             utx.begin();
@@ -136,7 +138,7 @@ public class TransactionResource {
             logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
 
             // get all transactions without filtering (eventually paginated)
-            transactions = new ResourceList<>( transactionFacade.findAll(params.getOffset(), params.getLimit()) );
+            transactions = new ResourceList<>(transactionFacade.findAll(params.getOffset(), params.getLimit()));
         }
 
         // result resources need to be populated with hypermedia links to enable resource discovery
@@ -148,7 +150,7 @@ public class TransactionResource {
     @GET
     @Path("/eagerly")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getTransactionsEagerly( @BeanParam TransactionBeanParam params ) throws ForbiddenException,
+    public Response getTransactionsEagerly(@BeanParam TransactionBeanParam params) throws ForbiddenException,
     /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
 
         RESTToolkit.authorizeAccessToWebService(params);
@@ -188,7 +190,184 @@ public class TransactionResource {
         return Response.status(Status.OK).entity(transactions).build();
     }
 
-    // TODO additional methods, COUNT method
+    /**
+     * Additional methods returning a subset of resources based on given criteria
+     * you can achieve similar results by applying @QueryParams to generic method
+     * returning all resources in order to filter and limit them
+     */
+
+    /**
+     * Method returns number of Transaction entities in database
+     */
+    @GET
+    @Path("/count")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response countTransactions(@BeanParam GenericBeanParam params) throws ForbiddenException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning number of transactions by executing TransactionResource.countTransactions() method of REST API");
+
+        ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(transactionFacade.count()), 200, "number of transactions");
+        return Response.status(Status.OK).entity(responseEntity).build();
+    }
+
+    /**
+     * Method returns subset of Transaction entities for transaction time in given date range (startDate, endDate).
+     */
+    @GET
+    @Path("/by-transaction-time")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getTransactionsByTransactionTime(@BeanParam DateRangeBeanParam params) throws ForbiddenException, BadRequestException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning transactions for given transaction time (startDate, endDate) using " +
+                "TransactionResource.getTransactionsByTransactionTime(transactionTime) method of REST API");
+
+        RESTToolkit.validateDateRange(params); // i.e. startDate and endDate
+
+        // find transactions for given date range (startDate, endDate) of transaction time
+        ResourceList<Transaction> transactions = new ResourceList<>(
+                transactionFacade.findByTransactionTime(params.getStartDate(), params.getEndDate(), params.getOffset(), params.getLimit())
+        );
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        TransactionResource.populateWithHATEOASLinks(transactions, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(transactions).build();
+    }
+
+    /**
+     * Method returns subset of Transaction entities for booked time in given date range (startDate, endDate).
+     */
+    @GET
+    @Path("/by-booked-time")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getTransactionsByBookedTime( @BeanParam DateRangeBeanParam params ) throws ForbiddenException, BadRequestException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning transactions for given booked time (startDate, endDate) using " +
+                "TransactionResource.getTransactionsByBookedTime(bookedTime) method of REST API");
+
+        RESTToolkit.validateDateRange(params); // i.e. startDate and endDate
+
+        // find transactions for given date range (startDate, endDate) of booked time
+        ResourceList<Transaction> transactions = new ResourceList<>(
+                transactionFacade.findByBookedTime(params.getStartDate(), params.getEndDate(), params.getOffset(), params.getLimit())
+        );
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        TransactionResource.populateWithHATEOASLinks(transactions, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(transactions).build();
+    }
+
+    /**
+     * Method returns subset of Transaction entities that have already been paid.
+     */
+    @GET
+    @Path("/paid")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getTransactionsPaid( @BeanParam PaginationBeanParam params ) throws ForbiddenException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning paid transactions using TransactionResource.getTransactionsPaid() method of REST API");
+
+        // find paid transactions
+        ResourceList<Transaction> transactions = new ResourceList<>(
+                transactionFacade.findOnlyPaid(params.getOffset(), params.getLimit())
+        );
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        TransactionResource.populateWithHATEOASLinks(transactions, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(transactions).build();
+    }
+
+    /**
+     * Method returns subset of Transaction entities that haven't been paid yet.
+     */
+    @GET
+    @Path("/unpaid")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getTransactionsUnpaid( @BeanParam PaginationBeanParam params ) throws ForbiddenException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning unpaid transactions using TransactionResource.getTransactionsUnpaid() method of REST API");
+
+        // find unpaid transactions
+        ResourceList<Transaction> transactions = new ResourceList<>(
+                transactionFacade.findOnlyUnpaid(params.getOffset(), params.getLimit())
+        );
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        TransactionResource.populateWithHATEOASLinks(transactions, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(transactions).build();
+    }
+
+    /**
+     * Method returns subset of Transaction entities for given price
+     * range (and optionally currency code).
+     * The price range (and optionally currency code) are passed through query params.
+     */
+    @GET
+    @Path("/by-price")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getTransactionsByPrice( @BeanParam PriceRangeBeanParam params,
+                                            @QueryParam("currency") CurrencyCode currencyCode ) throws ForbiddenException, BadRequestException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning transactions for given price range (minPrice, maxPrice) and optionally currency code using " +
+                "TransactionResource.getTransactionsByPrice(priceRange, currencyCode) method of REST API");
+
+        RESTToolkit.validatePriceRange(params); // i.e. minPrice and maxPrice
+
+        ResourceList<Transaction> transactions = null;
+
+        if(currencyCode != null) {
+            // find transactions by given criteria (price, currency code)
+            transactions = new ResourceList<>(
+                    transactionFacade.findByPriceRangeAndCurrencyCode(params.getMinPrice(), params.getMaxPrice(),
+                            currencyCode, params.getOffset(), params.getLimit())
+            );
+        } else {
+            // find transactions by given criteria (price)
+            transactions = new ResourceList<>(
+                    transactionFacade.findByPriceRange(params.getMinPrice(), params.getMaxPrice(),
+                            params.getOffset(), params.getLimit())
+            );
+        }
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        TransactionResource.populateWithHATEOASLinks(transactions, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(transactions).build();
+    }
+
+    /**
+     * Method returns subset of Transaction entities for given currency code.
+     * The currency code is passed through path param.
+     */
+    @GET
+    @Path("/by-currency/{currencyCode : \\S+}")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getTransactionsByCurrency( @PathParam("currencyCode") CurrencyCode currencyCode,
+                                               @BeanParam PaginationBeanParam params ) throws ForbiddenException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning transactions for given currency code using " +
+                "TransactionResource.getTransactionsByCurrency(currencyCode) method of REST API");
+
+        // find transactions by currency code
+        ResourceList<Transaction> transactions = new ResourceList<>(
+                transactionFacade.findByCurrencyCode(currencyCode, params.getOffset(), params.getLimit())
+        );
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        TransactionResource.populateWithHATEOASLinks(transactions, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(transactions).build();
+    }
 
     /**
      * related subresources (through relationships)
@@ -216,6 +395,18 @@ public class TransactionResource {
             transactions.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(TransactionResource.class).path(transactionsEagerlyMethod).build()).rel("transactions-eagerly").build() );
 
             // get subset of resources hypermedia links
+
+            // by-transaction-time
+
+            // by-booked-time
+
+            // paid
+
+            // unpaid
+
+            // by-price
+
+            // by-currency
 
             // TODO
 
@@ -259,6 +450,8 @@ public class TransactionResource {
                     .build())
                     .rel("self").build());
 
+            // TODO self alternative
+
             // collection link with pattern: http://localhost:port/app/rest/{resources}
             transaction.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
                     .path(TransactionResource.class)
@@ -274,6 +467,8 @@ public class TransactionResource {
                     .resolveTemplate("transactionNumber", transaction.getTransactionNumber().toString())
                     .build())
                     .rel("transaction-eagerly").build());
+
+            // TODO self eagerly alternative
 
             // associated collections links with pattern: http://localhost:port/app/rest/{resources}/{id1}+{id2}/{relationship}
 

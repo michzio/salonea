@@ -2957,7 +2957,7 @@ public class ClientResource {
 
         /**
          * Method returns subset of Transaction entities for given Client entity
-         * that have been already paid. The client id is passed through path param.
+         * that have already been paid. The client id is passed through path param.
          */
         @GET
         @Path("/paid")
