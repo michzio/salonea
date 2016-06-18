@@ -3750,6 +3750,11 @@ public class ClientResource {
             return Response.status(Status.OK).entity(historicalTransactions).build();
         }
 
+        /**
+         * Method returns subset of Historical Transaction entities for given Client entity
+         * and provider rating range (minRating, maxRating). The client id is passed through path param.
+         * The provider rating range is passed through query params.
+         */
         @GET
         @Path("/by-provider-rating")
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
@@ -3789,6 +3794,11 @@ public class ClientResource {
             return Response.status(Status.OK).entity(historicalTransactions).build();
         }
 
+        /**
+         * Method returns subset of Historical Transaction entities for given Client entity
+         * and provider dementi. The client id is passed through path param.
+         * The provider dementi is also passed through path param.
+         */
         @GET
         @Path("/by-provider-dementi/{providerDementi : \\S+}")
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})

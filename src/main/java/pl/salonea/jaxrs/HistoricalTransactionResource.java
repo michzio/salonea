@@ -5,6 +5,7 @@ import pl.salonea.ejb.stateless.HistoricalTransactionFacade;
 import pl.salonea.entities.*;
 import pl.salonea.entities.idclass.TransactionId;
 import pl.salonea.enums.CurrencyCode;
+import pl.salonea.enums.TransactionCompletionStatus;
 import pl.salonea.jaxrs.bean_params.*;
 import pl.salonea.jaxrs.exceptions.*;
 import pl.salonea.jaxrs.exceptions.BadRequestException;
@@ -372,7 +373,154 @@ public class HistoricalTransactionResource {
         return Response.status(Status.OK).entity(historicalTransactions).build();
     }
 
-    // TODO additional methods
+    /**
+     * Method returns subset of Historical Transaction entities for given completion status.
+     * The completion status is passed through path param.
+     */
+    @GET
+    @Path("/by-completion-status/{completionStatus : \\S+}")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getHistoricalTransactionsByCompletionStatus( @PathParam("completionStatus") TransactionCompletionStatus completionStatus,
+                                                                 @BeanParam PaginationBeanParam params ) throws ForbiddenException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning historical transactions for given completion status using " +
+                "HistoricalTransactionResource.getHistoricalTransactionsByCompletionStatus(completionStatus) method of REST API");
+
+        // find historical transactions by completion status
+        ResourceList<HistoricalTransaction> historicalTransactions = new ResourceList<>(
+                historicalTransactionFacade.findByCompletionStatus(completionStatus, params.getOffset(), params.getLimit())
+        );
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        HistoricalTransactionResource.populateWithHATEOASLinks(historicalTransactions, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(historicalTransactions).build();
+    }
+
+    /**
+     * Method returns subset of Historical Transaction entities for given client rating range (minRating, maxRating).
+     * The client rating range is passed through query params.
+     */
+    @GET
+    @Path("/by-client-rating")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getHistoricalTransactionsByClientRating( @BeanParam RatingBeanParam params ) throws ForbiddenException, BadRequestException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning historical transactions for given client rating range (minRating, maxRating) using " +
+                "HistoricalTransactionResource.getHistoricalTransactionsByClientRating(clientRatingRange) method of REST API");
+
+        if(params.getExactRating() != null) {
+            params.setMinRating(params.getExactRating());
+            params.setMaxRating(params.getExactRating());
+        }
+
+        // check client rating params correctness
+        if(params.getMinRating() == null || params.getMaxRating() == null)
+            throw new BadRequestException("Min rating and max rating (optionally exact rating) cannot be null.");
+
+        if(params.getMaxRating() < params.getMinRating())
+            throw new BadRequestException("Max rating cannot be less than min rating.");
+
+        // find historical transactions by client rating range
+        ResourceList<HistoricalTransaction> historicalTransactions = new ResourceList<>(
+                historicalTransactionFacade.findByClientRatingRange(params.getMinRating(), params.getMaxRating(),
+                        params.getOffset(), params.getLimit())
+        );
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        HistoricalTransactionResource.populateWithHATEOASLinks(historicalTransactions, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(historicalTransactions).build();
+    }
+
+    /**
+     * Method returns subset of Historical Transaction entities for given client comment.
+     * The client comment is passed through path param.
+     */
+    @GET
+    @Path("/by-client-comment/{clientComment : \\S+}")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getHistoricalTransactionsByClientComment( @PathParam("clientComment") String clientComment,
+                                                              @BeanParam PaginationBeanParam params ) throws ForbiddenException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning historical transactions for given client comment using " +
+                "HistoricalTransactionResource.getHistoricalTransactionsByClientComment(clientComment) method of REST API");
+
+        // find historical transactions by client comment
+        ResourceList<HistoricalTransaction> historicalTransactions = new ResourceList<>(
+                historicalTransactionFacade.findByClientComment(clientComment, params.getOffset(), params.getLimit())
+        );
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        HistoricalTransactionResource.populateWithHATEOASLinks(historicalTransactions, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(historicalTransactions).build();
+    }
+
+    /**
+     * Method returns subset of Historical Transaction entities for given provider rating range (minRating, maxRating).
+     * The provider rating range is passed through query params.
+     */
+    @GET
+    @Path("/by-provider-rating")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getHistoricalTransactionsByProviderRating( @BeanParam RatingBeanParam params ) throws ForbiddenException, BadRequestException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning historical transactions for given provider rating range (minRating, maxRating) using " +
+                "HistoricalTransactionResource.getHistoricalTransactionsByProviderRating(providerRatingRange) method of REST API");
+
+        if(params.getExactRating() != null) {
+            params.setMinRating(params.getExactRating());
+            params.setMaxRating(params.getExactRating());
+        }
+
+        // check provider rating params correctness
+        if(params.getMinRating() == null || params.getMaxRating() == null)
+            throw new BadRequestException("Min rating and max rating (optionally exact rating) cannot be null.");
+
+        if(params.getMaxRating() < params.getMinRating())
+            throw new BadRequestException("Max rating cannot be less than min rating.");
+
+        // find historical transactions by provider rating range
+        ResourceList<HistoricalTransaction> historicalTransactions = new ResourceList<>(
+                historicalTransactionFacade.findByProviderRatingRange(params.getMinRating(), params.getMaxRating(),
+                        params.getOffset(), params.getLimit())
+        );
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        HistoricalTransactionResource.populateWithHATEOASLinks(historicalTransactions, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(historicalTransactions).build();
+    }
+
+    /**
+     * Method returns subset of Historical Transaction entities for given provider dementi.
+     * The provider dementi is passed through path param.
+     */
+    @GET
+    @Path("/by-provider-dementi/{providerDementi : \\S+}")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getHistoricalTransactionsByProviderDementi( @PathParam("providerDementi") String providerDementi,
+                                                                @BeanParam PaginationBeanParam params ) throws ForbiddenException {
+
+        RESTToolkit.authorizeAccessToWebService(params);
+        logger.log(Level.INFO, "returning historical transactions for given provider dementi using " +
+                "HistoricalTransactionResource.getHistoricalTransactionsByProviderDementi(providerDementi) method of REST API");
+
+        // find historical transactions by provider dementi
+        ResourceList<HistoricalTransaction> historicalTransactions = new ResourceList<>(
+                historicalTransactionFacade.findByProviderDementi(providerDementi, params.getOffset(), params.getLimit())
+        );
+
+        // result resources need to be populated with hypermedia links to enable resource discovery
+        HistoricalTransactionResource.populateWithHATEOASLinks(historicalTransactions, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+        return Response.status(Status.OK).entity(historicalTransactions).build();
+    }
 
     /**
      * related subresources (through relationships)
