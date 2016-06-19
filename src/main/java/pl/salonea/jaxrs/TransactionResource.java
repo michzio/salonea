@@ -395,20 +395,28 @@ public class TransactionResource {
             transactions.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(TransactionResource.class).path(transactionsEagerlyMethod).build()).rel("transactions-eagerly").build() );
 
             // get subset of resources hypermedia links
-
             // by-transaction-time
+            Method byTransactionTimeMethod = TransactionResource.class.getMethod("getTransactionsByTransactionTime", DateRangeBeanParam.class);
+            transactions.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(TransactionResource.class).path(byTransactionTimeMethod).build()).rel("by-transaction-time").build() );
 
             // by-booked-time
+            Method byBookedTimeMethod = TransactionResource.class.getMethod("getTransactionsByBookedTime", DateRangeBeanParam.class);
+            transactions.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(TransactionResource.class).path(byBookedTimeMethod).build()).rel("by-booked-time").build() );
 
             // paid
+            Method paidMethod = TransactionResource.class.getMethod("getTransactionsPaid", PaginationBeanParam.class);
+            transactions.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(TransactionResource.class).path(paidMethod).build()).rel("paid").build() );
 
             // unpaid
+            Method unpaidMethod = TransactionResource.class.getMethod("getTransactionsUnpaid", PaginationBeanParam.class);
+            transactions.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(TransactionResource.class).path(unpaidMethod).build()).rel("unpaid").build() );
 
             // by-price
+            Method byPriceMethod = TransactionResource.class.getMethod("getTransactionsByPrice", PriceRangeBeanParam.class, CurrencyCode.class);
+            transactions.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(TransactionResource.class).path(byPriceMethod).build()).rel("by-price").build() );
 
             // by-currency
-
-            // TODO
+            transactions.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(TransactionResource.class).path("by-currency").build()).rel("by-currency").build() );
 
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
@@ -440,7 +448,18 @@ public class TransactionResource {
     public static void populateWithHATEOASLinks(Transaction transaction, UriInfo uriInfo) {
 
         try {
-            // self link with pattern: http://localhost:port/app/rest/{resources}/{id1}+{id2}
+
+            // self link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/{sub-id}
+            Method transactionsMethod = ClientResource.class.getMethod("getTransactionResource");
+            transaction.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ClientResource.class)
+                    .path(transactionsMethod)
+                    .path(transaction.getTransactionNumber().toString())
+                    .resolveTemplate("clientId", transaction.getClient().getClientId().toString())
+                    .build())
+                    .rel("self").build());
+
+            // self alternative link with pattern: http://localhost:port/app/rest/{resources}/{id}+{sub-id}
             Method transactionMethod = TransactionResource.class.getMethod("getTransaction", Long.class, Integer.class, GenericBeanParam.class);
             transaction.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
                     .path(TransactionResource.class)
@@ -448,9 +467,7 @@ public class TransactionResource {
                     .resolveTemplate("clientId", transaction.getClient().getClientId().toString())
                     .resolveTemplate("transactionNumber", transaction.getTransactionNumber().toString())
                     .build())
-                    .rel("self").build());
-
-            // TODO self alternative
+                    .rel("self (alternative)").build());
 
             // collection link with pattern: http://localhost:port/app/rest/{resources}
             transaction.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
@@ -458,17 +475,26 @@ public class TransactionResource {
                     .build())
                     .rel("transactions").build() );
 
-            // self eagerly link with pattern: http://localhost:port/app/rest/{resources}/{id1}+{id2}/eagerly
-            Method transactionEagerlyMethod = TransactionResource.class.getMethod("getTransactionEagerly", Long.class, Integer.class, GenericBeanParam.class);
+            // self eagerly link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/{sub-id}/eagerly
+            Method transactionEagerlyMethod = ClientResource.TransactionResource.class.getMethod("getTransactionEagerly", Long.class, Integer.class, GenericBeanParam.class);
             transaction.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
-                    .path(TransactionResource.class)
+                    .path(ClientResource.class)
+                    .path(transactionsMethod)
                     .path(transactionEagerlyMethod)
                     .resolveTemplate("clientId", transaction.getClient().getClientId().toString())
                     .resolveTemplate("transactionNumber", transaction.getTransactionNumber().toString())
                     .build())
                     .rel("transaction-eagerly").build());
 
-            // TODO self eagerly alternative
+            // self eagerly alternative link with pattern: http://localhost:port/app/rest/{resources}/{id}+{sub-id}/eagerly
+            Method transactionEagerlyAlternativeMethod = TransactionResource.class.getMethod("getTransactionEagerly", Long.class, Integer.class, GenericBeanParam.class);
+            transaction.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(TransactionResource.class)
+                    .path(transactionEagerlyAlternativeMethod)
+                    .resolveTemplate("clientId", transaction.getClient().getClientId().toString())
+                    .resolveTemplate("transactionNumber", transaction.getTransactionNumber().toString())
+                    .build())
+                    .rel("transaction-eagerly (alternative)").build());
 
             // associated collections links with pattern: http://localhost:port/app/rest/{resources}/{id1}+{id2}/{relationship}
 

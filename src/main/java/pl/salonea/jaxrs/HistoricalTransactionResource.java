@@ -548,30 +548,45 @@ public class HistoricalTransactionResource {
             historicalTransactions.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(HistoricalTransactionResource.class).path(historicalTransactionsEagerlyMethod).build()).rel("historical-transactions-eagerly").build() );
 
             // get subset of resources hypermedia links
-
             // by-transaction-time
+            Method byTransactionTimeMethod = HistoricalTransactionResource.class.getMethod("getHistoricalTransactionsByTransactionTime", DateRangeBeanParam.class);
+            historicalTransactions.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(HistoricalTransactionResource.class).path(byTransactionTimeMethod).build()).rel("by-transaction-time").build() );
 
             // by-booked-time
+            Method byBookedTimeMethod = HistoricalTransactionResource.class.getMethod("getHistoricalTransactionsByBookedTime", DateRangeBeanParam.class);
+            historicalTransactions.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(HistoricalTransactionResource.class).path(byBookedTimeMethod).build()).rel("by-booked-time").build() );
 
             // paid
+            Method paidMethod = HistoricalTransactionResource.class.getMethod("getHistoricalTransactionsPaid", PaginationBeanParam.class);
+            historicalTransactions.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(HistoricalTransactionResource.class).path(paidMethod).build()).rel("paid").build() );
 
             // unpaid
+            Method unpaidMethod = HistoricalTransactionResource.class.getMethod("getHistoricalTransactionsUnpaid", PaginationBeanParam.class);
+            historicalTransactions.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(HistoricalTransactionResource.class).path(unpaidMethod).build()).rel("unpaid").build() );
 
             // by-price
+            Method byPriceMethod = HistoricalTransactionResource.class.getMethod("getHistoricalTransactionsByPrice", PriceRangeBeanParam.class, CurrencyCode.class);
+            historicalTransactions.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(HistoricalTransactionResource.class).path(byPriceMethod).build()).rel("by-price").build() );
 
             // by-currency
+            historicalTransactions.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(HistoricalTransactionResource.class).path("by-currency").build()).rel("by-currency").build() );
 
             // by-completion-status
+            historicalTransactions.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(HistoricalTransactionResource.class).path("by-completion-status").build()).rel("by-completion-status").build() );
 
             // by-client-rating
+            Method byClientRatingMethod = HistoricalTransactionResource.class.getMethod("getHistoricalTransactionsByClientRating", RatingBeanParam.class);
+            historicalTransactions.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(HistoricalTransactionResource.class).path(byClientRatingMethod).build()).rel("by-client-rating").build() );
 
             // by-client-comment
+            historicalTransactions.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(HistoricalTransactionResource.class).path("by-client-comment").build()).rel("by-client-comment").build() );
 
             // by-provider-rating
+            Method byProviderRatingMethod = HistoricalTransactionResource.class.getMethod("getHistoricalTransactionsByProviderRating", RatingBeanParam.class);
+            historicalTransactions.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(HistoricalTransactionResource.class).path(byProviderRatingMethod).build()).rel("by-provider-rating").build() );
 
             // by-provider-dementi
-
-            // TODO
+            historicalTransactions.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(HistoricalTransactionResource.class).path("by-provider-dementi").build()).rel("by-provider-dementi").build() );
 
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
@@ -603,7 +618,18 @@ public class HistoricalTransactionResource {
     public static void populateWithHATEOASLinks(HistoricalTransaction historicalTransaction, UriInfo uriInfo) {
 
         try {
-            // self link with pattern: http://localhost:port/app/rest/{resources}/{id1}+{id2}
+
+            // self link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/{sub-id}
+            Method historicalTransactionsMethod = ClientResource.class.getMethod("getHistoricalTransactionResource");
+            historicalTransaction.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ClientResource.class)
+                    .path(historicalTransactionsMethod)
+                    .path(historicalTransaction.getTransactionNumber().toString())
+                    .resolveTemplate("clientId", historicalTransaction.getClient().getClientId().toString())
+                    .build())
+                    .rel("self").build());
+
+            // self alternative link with pattern: http://localhost:port/app/rest/{resources}/{id}+{sub-id}
             Method historicalTransactionMethod = HistoricalTransactionResource.class.getMethod("getHistoricalTransaction", Long.class, Integer.class, GenericBeanParam.class);
             historicalTransaction.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
                     .path(HistoricalTransactionResource.class)
@@ -611,9 +637,7 @@ public class HistoricalTransactionResource {
                     .resolveTemplate("clientId", historicalTransaction.getClient().getClientId().toString())
                     .resolveTemplate("transactionNumber", historicalTransaction.getTransactionNumber().toString())
                     .build())
-                    .rel("self").build());
-
-            // TODO self alternative
+                    .rel("self (alternative)").build());
 
             // collection link with pattern: http://localhost:port/app/rest/{resources}
             historicalTransaction.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
@@ -621,17 +645,26 @@ public class HistoricalTransactionResource {
                     .build())
                     .rel("historical-transactions").build() );
 
-            // self eagerly link with pattern: http://localhost:port/app/rest/{resources}/{id1}+{id2}/eagerly
-            Method historicalTransactionEagerlyMethod = HistoricalTransactionResource.class.getMethod("getHistoricalTransactionEagerly", Long.class, Integer.class, GenericBeanParam.class);
+            // self eagerly link with pattern: http://localhost:port/app/rest/{resources}/{id}/{subresources}/{sub-id}/eagerly
+            Method historicalTransactionEagerlyMethod = ClientResource.HistoricalTransactionResource.class.getMethod("getHistoricalTransactionEagerly", Long.class, Integer.class, GenericBeanParam.class);
             historicalTransaction.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
-                    .path(HistoricalTransactionResource.class)
+                    .path(ClientResource.class)
+                    .path(historicalTransactionsMethod)
                     .path(historicalTransactionEagerlyMethod)
                     .resolveTemplate("clientId", historicalTransaction.getClient().getClientId().toString())
                     .resolveTemplate("transactionNumber", historicalTransaction.getTransactionNumber().toString())
                     .build())
                     .rel("historical-transaction-eagerly").build());
 
-            // TODO self eagerly alternative
+            // self eagerly alternative link with pattern: http://localhost:port/app/rest/{resources}/{id}+{sub-id}/eagerly
+            Method historicalTransactionEagerlyAlternativeMethod = HistoricalTransactionResource.class.getMethod("getHistoricalTransactionEagerly", Long.class, Integer.class, GenericBeanParam.class);
+            historicalTransaction.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(HistoricalTransactionResource.class)
+                    .path(historicalTransactionEagerlyAlternativeMethod)
+                    .resolveTemplate("clientId", historicalTransaction.getClient().getClientId().toString())
+                    .resolveTemplate("transactionNumber", historicalTransaction.getTransactionNumber().toString())
+                    .build())
+                    .rel("historical-transaction-eagerly (alternative)").build());
 
             // associated collections links with pattern: http://localhost:port/app/rest/{resources}/{id1}+{id2}/{relationship}
 
