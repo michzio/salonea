@@ -577,7 +577,7 @@ public class EmployeeFacade extends AbstractFacade<Employee> implements Employee
                 orDescriptionPredicates.add( criteriaBuilder.like(employee.get(descriptionAttr), "%" + description + "%") );
             }
 
-            predicates.add( criteriaBuilder.or(orDescriptionPredicates.toArray(new Predicate[] {})) );
+            predicates.add( criteriaBuilder.or(orDescriptionPredicates.toArray(new Predicate[]{})) );
         }
 
         if(jobPositions != null && jobPositions.size() > 0) {
@@ -809,7 +809,7 @@ public class EmployeeFacade extends AbstractFacade<Employee> implements Employee
         criteriaQuery.where(predicates.toArray(new Predicate[] { }));
         if(groupedBy) {
             // HAVING predicate1 AND predicate2 AND ... AND predicateN
-            criteriaQuery.having(havingPredicates.toArray(new Predicate[] {}));
+            criteriaQuery.having(havingPredicates.toArray(new Predicate[]{}));
         }
 
 

@@ -4,7 +4,6 @@ import pl.salonea.ejb.stateless.EmployeeFacade;
 import pl.salonea.ejb.stateless.TransactionFacade;
 import pl.salonea.entities.Employee;
 import pl.salonea.entities.Transaction;
-import pl.salonea.entities.idclass.TransactionId;
 import pl.salonea.enums.CurrencyCode;
 import pl.salonea.jaxrs.bean_params.*;
 import pl.salonea.jaxrs.exceptions.*;
@@ -15,6 +14,7 @@ import pl.salonea.jaxrs.utils.RESTToolkit;
 import pl.salonea.jaxrs.utils.ResourceList;
 import pl.salonea.jaxrs.utils.ResponseWrapper;
 import pl.salonea.jaxrs.utils.hateoas.Link;
+import pl.salonea.jaxrs.wrappers.EmployeeWrapper;
 import pl.salonea.jaxrs.wrappers.TransactionWrapper;
 
 import javax.inject.Inject;
@@ -26,6 +26,8 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -372,7 +374,8 @@ public class TransactionResource {
     /**
      * related subresources (through relationships)
      */
-    // TODO impl all related subresources
+
+    // none
 
     /**
      * This method enables to populate list of resources and each individual resource on list with hypermedia links
@@ -496,18 +499,8 @@ public class TransactionResource {
                     .build())
                     .rel("transaction-eagerly (alternative)").build());
 
-            // associated collections links with pattern: http://localhost:port/app/rest/{resources}/{id1}+{id2}/{relationship}
-
-            /**
-             * Employees executing current Transaction resource
-             */
-            // employees
-
-            // employees eagerly
-
-            // employees count
-
-            // TODO
+            // associated collections links with pattern: http://localhost:port/app/rest/{resources}/{id}+{sub-id}/{relationship}
+            // none
 
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
