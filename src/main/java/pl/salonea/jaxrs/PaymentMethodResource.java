@@ -1,14 +1,12 @@
 package pl.salonea.jaxrs;
 
+import pl.salonea.ejb.stateless.HistoricalTransactionFacade;
 import pl.salonea.ejb.stateless.PaymentMethodFacade;
 import pl.salonea.ejb.stateless.ProviderFacade;
-import pl.salonea.entities.Industry;
-import pl.salonea.entities.PaymentMethod;
-import pl.salonea.entities.Provider;
-import pl.salonea.jaxrs.bean_params.GenericBeanParam;
-import pl.salonea.jaxrs.bean_params.PaginationBeanParam;
-import pl.salonea.jaxrs.bean_params.PaymentMethodBeanParam;
-import pl.salonea.jaxrs.bean_params.ProviderBeanParam;
+import pl.salonea.ejb.stateless.TransactionFacade;
+import pl.salonea.entities.*;
+import pl.salonea.entities.Transaction;
+import pl.salonea.jaxrs.bean_params.*;
 import pl.salonea.jaxrs.exceptions.ExceptionHandler;
 import pl.salonea.jaxrs.exceptions.NotFoundException;
 import pl.salonea.jaxrs.exceptions.ForbiddenException;
@@ -17,12 +15,16 @@ import pl.salonea.jaxrs.utils.RESTToolkit;
 import pl.salonea.jaxrs.utils.ResourceList;
 import pl.salonea.jaxrs.utils.ResponseWrapper;
 import pl.salonea.jaxrs.utils.hateoas.Link;
+import pl.salonea.jaxrs.wrappers.HistoricalTransactionWrapper;
 import pl.salonea.jaxrs.wrappers.PaymentMethodWrapper;
 import pl.salonea.jaxrs.wrappers.ProviderWrapper;
+import pl.salonea.jaxrs.wrappers.TransactionWrapper;
 
 import javax.ejb.EJBException;
 import javax.ejb.EJBTransactionRolledbackException;
 import javax.inject.Inject;
+import javax.transaction.*;
+import javax.transaction.NotSupportedException;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriInfo;
@@ -44,9 +46,16 @@ public class PaymentMethodResource {
     private static final Logger logger = Logger.getLogger(PaymentMethodResource.class.getName());
 
     @Inject
+    private UserTransaction utx;
+
+    @Inject
     private PaymentMethodFacade paymentMethodFacade;
     @Inject
     private ProviderFacade providerFacade;
+    @Inject
+    private TransactionFacade transactionFacade;
+    @Inject
+    private HistoricalTransactionFacade historicalTransactionFacade;
 
     /**
      * Method returns all Payment Method resources
@@ -401,9 +410,12 @@ public class PaymentMethodResource {
     public ProviderResource getProviderResource() {
         return new ProviderResource();
     }
+    @Path("/{paymentMethodId: \\d+}/transactions")
+    public TransactionResource getTransactionResource() { return new TransactionResource(); }
+    @Path("/{paymentMethodId: \\d+}/historical-transactions")
+    public HistoricalTransactionResource getHistoricalTransactionResource() { return new HistoricalTransactionResource(); }
 
     // helper methods e.g. to populate resources/resource lists with HATEOAS links
-
     /**
      * This method enables to populate list of resources and each individual resource on list with hypermedia links
      */
@@ -456,7 +468,6 @@ public class PaymentMethodResource {
                 PaymentMethodResource.populateWithHATEOASLinks( (PaymentMethodWrapper) object, uriInfo);
             }
         }
-
     }
 
     /**
@@ -500,6 +511,9 @@ public class PaymentMethodResource {
 
             // associated collections links with pattern: http://localhost:port/app/rest/{resources}/{id}/{relationship}
 
+            /**
+             * Providers associated with current Term resource
+             */
             // providers
             Method providersMethod = PaymentMethodResource.class.getMethod("getProviderResource");
             paymentMethod.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
@@ -518,6 +532,24 @@ public class PaymentMethodResource {
                     .resolveTemplate("paymentMethodId", paymentMethod.getId().toString())
                     .build())
                     .rel("providers-eagerly").build());
+
+            /**
+             * Transactions associated with current Term resource
+             */
+            // transactions
+
+            // transactions eagerly
+
+            // transactions count
+
+            /**
+             * Historical Transactions associated with current Term resource
+             */
+            // historical-transactions
+
+            // historical-transactions eagerly
+
+            // historical-transactions count
 
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
@@ -619,6 +651,296 @@ public class PaymentMethodResource {
             pl.salonea.jaxrs.ProviderResource.populateWithHATEOASLinks(providers, params.getUriInfo(), params.getOffset(), params.getLimit());
 
             return Response.status(Status.OK).entity(providers).build();
+        }
+    }
+
+    public class TransactionResource {
+
+        public TransactionResource() { }
+
+        /**
+         * Method returns subset of Transaction entities for given Payment Method entity.
+         * The payment method id is passed through path param.
+         * They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getPaymentMethodTransactions( @PathParam("paymentMethodId") Integer paymentMethodId,
+                                                      @BeanParam TransactionBeanParam params ) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning transactions for given payment method using " +
+                    "PaymentMethodResource.TransactionResource.getPaymentMethodTransactions(paymentMethodId) method of REST API");
+
+            // find payment method entity for which to get associated transactions
+            PaymentMethod paymentMethod = paymentMethodFacade.find(paymentMethodId);
+            if(paymentMethod == null)
+                throw new NotFoundException("Could not find payment method for id " + paymentMethodId + ".");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<Transaction> transactions = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<PaymentMethod> paymentMethods = new ArrayList<>();
+                paymentMethods.add(paymentMethod);
+
+                // get transactions for given payment method filtered by given query params
+
+                utx.begin();
+
+                transactions = new ResourceList<>(
+                        transactionFacade.findByMultipleCriteria(params.getClients(), params.getProviders(), params.getServices(), params.getServicePoints(),
+                                params.getWorkStations(), params.getEmployees(), params.getProviderServices(), params.getTransactionTimePeriod(),
+                                params.getBookedTimePeriod(), params.getTerms(), params.getPriceRange(), params.getCurrencyCodes(), paymentMethods,
+                                params.getPaid(), params.getOffset(), params.getLimit())
+                );
+
+                utx.commit();
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get transactions for given payment method without filtering (eventually paginated)
+                transactions = new ResourceList<>( transactionFacade.findByPaymentMethod(paymentMethod, params.getOffset(), params.getLimit()) );
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.TransactionResource.populateWithHATEOASLinks(transactions, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(transactions).build();
+        }
+
+        /**
+         * Method returns subset of Transaction entities for given Payment Method fetching them eagerly.
+         * The payment method id is passed through path param.
+         * They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Path("/eagerly")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getPaymentMethodTransactionsEagerly( @PathParam("paymentMethodId") Integer paymentMethodId,
+                                                             @BeanParam TransactionBeanParam params ) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning transactions eagerly for given payment method using " +
+                    "PaymentMethodResource.TransactionResource.getPaymentMethodTransactionsEagerly(paymentMethodId) method of REST API");
+
+            // find payment method entity for which to get associated transactions
+            PaymentMethod paymentMethod = paymentMethodFacade.find(paymentMethodId);
+            if(paymentMethod == null)
+                throw new NotFoundException("Could not find payment method for id " + paymentMethodId + ".");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<TransactionWrapper> transactions = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<PaymentMethod> paymentMethods = new ArrayList<>();
+                paymentMethods.add(paymentMethod);
+
+                // get transactions eagerly for given payment method filtered by given query params
+
+                utx.begin();
+
+                transactions = new ResourceList<>(
+                        TransactionWrapper.wrap(
+                                transactionFacade.findByMultipleCriteriaEagerly(params.getClients(), params.getProviders(), params.getServices(),
+                                        params.getServicePoints(), params.getWorkStations(), params.getEmployees(), params.getProviderServices(),
+                                        params.getTransactionTimePeriod(), params.getBookedTimePeriod(), params.getTerms(), params.getPriceRange(),
+                                        params.getCurrencyCodes(), paymentMethods, params.getPaid(), params.getOffset(), params.getLimit())
+                        )
+                );
+
+                utx.commit();
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get transactions eagerly for given payment method without filtering (eventually paginated)
+                transactions = new ResourceList<>( TransactionWrapper.wrap(transactionFacade.findByPaymentMethodEagerly(paymentMethod, params.getOffset(), params.getLimit())) );
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.TransactionResource.populateWithHATEOASLinks(transactions, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(transactions).build();
+        }
+
+        /**
+         * Method that counts Transaction entities for given Payment Method resource.
+         * The payment method id is passed through path param.
+         */
+        @GET
+        @Path("/count")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response countTransactionsByPaymentMethod( @PathParam("paymentMethodId") Integer paymentMethodId,
+                                                          @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning number of transactions for given payment method by executing " +
+                    "PaymentMethodResource.TransactionResource.countTransactionsByPaymentMethod(paymentMethodId) method of REST API");
+
+            // find payment method entity for which to count transactions
+            PaymentMethod paymentMethod = paymentMethodFacade.find(paymentMethodId);
+            if(paymentMethod == null)
+                throw new NotFoundException("Could not find payment method for id " + paymentMethodId + ".");
+
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(transactionFacade.countByPaymentMethod(paymentMethod)), 200,
+                    "number of transactions for payment method with id " + paymentMethod.getId());
+            return Response.status(Status.OK).entity(responseEntity).build();
+        }
+    }
+
+    public class HistoricalTransactionResource {
+
+        public HistoricalTransactionResource() { }
+
+        /**
+         * Method returns subset of Historical Transaction entities for given Payment Method entity.
+         * The payment method id is passed through path param.
+         * They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getPaymentMethodHistoricalTransactions( @PathParam("paymentMethodId") Integer paymentMethodId,
+                                                                @BeanParam HistoricalTransactionBeanParam params ) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning historical transactions for given payment method using " +
+                    "PaymentMethodResource.HistoricalTransactionResource.getPaymentMethodHistoricalTransactions(paymentMethodId) method of REST API");
+
+            // find payment method entity for which to get associated historical transactions
+            PaymentMethod paymentMethod = paymentMethodFacade.find(paymentMethodId);
+            if(paymentMethod == null)
+                throw new NotFoundException("Could not find payment method for id " + paymentMethodId + ".");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<HistoricalTransaction> historicalTransactions = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<PaymentMethod> paymentMethods = new ArrayList<>();
+                paymentMethods.add(paymentMethod);
+
+                // get historical transactions for given payment method filtered by given query params
+
+                utx.begin();
+
+                historicalTransactions = new ResourceList<>(
+                        historicalTransactionFacade.findByMultipleCriteria(params.getClients(), params.getProviders(), params.getServices(), params.getServicePoints(),
+                                params.getWorkStations(), params.getEmployees(), params.getProviderServices(), params.getTransactionTimePeriod(),
+                                params.getBookedTimePeriod(), params.getTerms(), params.getPriceRange(), params.getCurrencyCodes(), paymentMethods,
+                                params.getPaid(), params.getCompletionStatuses(), params.getClientRatingRange(), params.getClientComments(),
+                                params.getProviderRatingRange(), params.getProviderDementis(), params.getOffset(), params.getLimit())
+                );
+
+                utx.commit();
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get historical transactions for given payment method without filtering (eventually paginated)
+                historicalTransactions = new ResourceList<>(historicalTransactionFacade.findByPaymentMethod(paymentMethod, params.getOffset(), params.getLimit()));
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.HistoricalTransactionResource.populateWithHATEOASLinks(historicalTransactions, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(historicalTransactions).build();
+        }
+
+        /**
+         * Method returns subset of Historical Transaction entities for given Payment Method fetching them eagerly.
+         * The payment method id is passed through path param.
+         * They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Path("/eagerly")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getPaymentMethodHistoricalTransactionsEagerly( @PathParam("paymentMethodId") Integer paymentMethodId,
+                                                                       @BeanParam HistoricalTransactionBeanParam params ) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning historical transactions eagerly for given payment method using " +
+                    "PaymentMethodResource.HistoricalTransactionResource.getPaymentMethodHistoricalTransactionsEagerly(paymentMethodId) method of REST API");
+
+            // find payment method entity for which to get associated historical transactions
+            PaymentMethod paymentMethod = paymentMethodFacade.find(paymentMethodId);
+            if(paymentMethod == null)
+                throw new NotFoundException("Could not find payment method for id " + paymentMethodId + ".");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<HistoricalTransactionWrapper> historicalTransactions = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<PaymentMethod> paymentMethods = new ArrayList<>();
+                paymentMethods.add(paymentMethod);
+
+                // get historical transactions eagerly for given payment method filtered by given query params
+
+                utx.begin();
+
+                historicalTransactions = new ResourceList<>(
+                        HistoricalTransactionWrapper.wrap(
+                                historicalTransactionFacade.findByMultipleCriteriaEagerly(params.getClients(), params.getProviders(), params.getServices(), params.getServicePoints(),
+                                        params.getWorkStations(), params.getEmployees(), params.getProviderServices(), params.getTransactionTimePeriod(),
+                                        params.getBookedTimePeriod(), params.getTerms(), params.getPriceRange(), params.getCurrencyCodes(), paymentMethods,
+                                        params.getPaid(), params.getCompletionStatuses(), params.getClientRatingRange(), params.getClientComments(),
+                                        params.getProviderRatingRange(), params.getProviderDementis(), params.getOffset(), params.getLimit())
+                        )
+                );
+
+                utx.commit();
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get historical transactions eagerly for given payment method without filtering (eventually paginated)
+                historicalTransactions = new ResourceList<>(HistoricalTransactionWrapper.wrap(historicalTransactionFacade.findByPaymentMethodEagerly(paymentMethod, params.getOffset(), params.getLimit())));
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.HistoricalTransactionResource.populateWithHATEOASLinks(historicalTransactions, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(historicalTransactions).build();
+        }
+
+        /**
+         * Method that counts Historical Transaction entities for given Payment Method resource.
+         * The payment method id is passed through path param.
+         */
+        @GET
+        @Path("/count")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response countHistoricalTransactionsByPaymentMethod( @PathParam("paymentMethodId") Integer paymentMethodId,
+                                                                    @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning number of historical transactions for given payment method by executing " +
+                    "PaymentMethodResource.HistoricalTransactionResource.countHistoricalTransactionsByPaymentMethod(paymentMethodId) method of REST API");
+
+            // find payment method entity for which to count historical transactions
+            PaymentMethod paymentMethod = paymentMethodFacade.find(paymentMethodId);
+            if(paymentMethod == null)
+                throw new NotFoundException("Could not find payment method for id " + paymentMethodId + ".");
+
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(historicalTransactionFacade.countByPaymentMethod(paymentMethod)), 200,
+                    "number of historical transactions for payment method with id " + paymentMethod.getId());
+            return Response.status(Status.OK).entity(responseEntity).build();
         }
     }
 }
