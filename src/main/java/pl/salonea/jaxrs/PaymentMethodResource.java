@@ -534,22 +534,68 @@ public class PaymentMethodResource {
                     .rel("providers-eagerly").build());
 
             /**
-             * Transactions associated with current Term resource
+             * Transactions associated with current Payment Method resource
              */
             // transactions
+            Method transactionsMethod = PaymentMethodResource.class.getMethod("getTransactionResource");
+            paymentMethod.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(PaymentMethodResource.class)
+                    .path(transactionsMethod)
+                    .resolveTemplate("paymentMethodId", paymentMethod.getId().toString())
+                    .build())
+                    .rel("transactions").build());
 
             // transactions eagerly
+            Method transactionsEagerlyMethod = PaymentMethodResource.TransactionResource.class.getMethod("getPaymentMethodTransactionsEagerly", Integer.class, TransactionBeanParam.class);
+            paymentMethod.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(PaymentMethodResource.class)
+                    .path(transactionsMethod)
+                    .path(transactionsEagerlyMethod)
+                    .resolveTemplate("paymentMethodId", paymentMethod.getId().toString())
+                    .build())
+                    .rel("transactions-eagerly").build());
 
             // transactions count
+            Method countTransactionsByPaymentMethod = PaymentMethodResource.TransactionResource.class.getMethod("countTransactionsByPaymentMethod", Integer.class, GenericBeanParam.class);
+            paymentMethod.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(PaymentMethodResource.class)
+                    .path(transactionsMethod)
+                    .path(countTransactionsByPaymentMethod)
+                    .resolveTemplate("paymentMethodId", paymentMethod.getId().toString())
+                    .build())
+                    .rel("transactions-count").build());
 
             /**
-             * Historical Transactions associated with current Term resource
+             * Historical Transactions associated with current Payment Method resource
              */
             // historical-transactions
+            Method historicalTransactionsMethod = PaymentMethodResource.class.getMethod("getHistoricalTransactionResource");
+            paymentMethod.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(PaymentMethodResource.class)
+                    .path(historicalTransactionsMethod)
+                    .resolveTemplate("paymentMethodId", paymentMethod.getId().toString())
+                    .build())
+                    .rel("historical-transactions").build());
 
             // historical-transactions eagerly
+            Method historicalTransactionsEagerlyMethod = PaymentMethodResource.HistoricalTransactionResource.class.getMethod("getPaymentMethodHistoricalTransactionsEagerly", Integer.class, HistoricalTransactionBeanParam.class);
+            paymentMethod.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(PaymentMethodResource.class)
+                    .path(historicalTransactionsMethod)
+                    .path(historicalTransactionsEagerlyMethod)
+                    .resolveTemplate("paymentMethodId", paymentMethod.getId().toString())
+                    .build())
+                    .rel("historical-transactions-eagerly").build());
 
             // historical-transactions count
+            Method countHistoricalTransactionsByPaymentMethod = PaymentMethodResource.HistoricalTransactionResource.class.getMethod("countHistoricalTransactionsByPaymentMethod", Integer.class, GenericBeanParam.class);
+            paymentMethod.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(PaymentMethodResource.class)
+                    .path(historicalTransactionsMethod)
+                    .path(countHistoricalTransactionsByPaymentMethod)
+                    .resolveTemplate("paymentMethodId", paymentMethod.getId().toString())
+                    .build())
+                    .rel("historical-transactions-count").build());
 
         } catch (NoSuchMethodException e) {
             e.printStackTrace();

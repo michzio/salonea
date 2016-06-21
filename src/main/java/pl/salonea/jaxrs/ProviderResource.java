@@ -3,6 +3,7 @@ package pl.salonea.jaxrs;
 import pl.salonea.ejb.stateless.*;
 import pl.salonea.embeddables.Address;
 import pl.salonea.entities.*;
+import pl.salonea.entities.Transaction;
 import pl.salonea.entities.idclass.ProviderServiceId;
 import pl.salonea.entities.idclass.ServicePointId;
 import pl.salonea.entities.idclass.WorkStationId;
@@ -79,6 +80,10 @@ public class ProviderResource {
     private ServicePointPhotoFacade servicePointPhotoFacade;
     @Inject
     private VirtualTourFacade virtualTourFacade;
+    @Inject
+    private TransactionFacade transactionFacade;
+    @Inject
+    private HistoricalTransactionFacade historicalTransactionFacade;
 
     /**
      * Method returns all Provider resources
@@ -448,40 +453,36 @@ public class ProviderResource {
     public IndustryResource getIndustryResource() {
         return new IndustryResource();
     }
-
     @Path("/{userId: \\d+}/payment-methods")
     public PaymentMethodResource getPaymentMethodResource() {
         return new PaymentMethodResource();
     }
-
     @Path("/{userId: \\d+}/service-points")
     public ServicePointResource getServicePointResource() {
         return new ServicePointResource();
     }
-
     @Path("/{userId: \\d+}/provider-services")
     public ProviderServiceResource getProviderServiceResource() {
         return new ProviderServiceResource();
     }
-
     @Path("/{userId: \\d+}/provider-ratings")
     public ProviderRatingResource getProviderRatingResource() {
         return new ProviderRatingResource();
     }
-
     @Path("/{userId: \\d+}/rating-clients")
     public ClientResource getClientResource() { return new ClientResource(); }
-
     @Path("/{userId: \\d+}/service-point-photos")
     public ServicePointPhotoResource getServicePointPhotoResource()  {
         return new ServicePointPhotoResource();
     }
-
     @Path("/{userId: \\d+}/virtual-tours")
     public VirtualTourResource getVirtualTourResource() { return new VirtualTourResource(); }
-
     @Path("/{userId: \\d+}/services")
     public ServiceResource getServiceResource() { return new ServiceResource(); }
+    @Path("/{userId: \\d+}/transactions")
+    public TransactionResource getTransactionResource() { return new TransactionResource(); }
+    @Path("/{userId: \\d+}/historical-transactions")
+    public HistoricalTransactionResource getHistoricalTransactionResource() { return new HistoricalTransactionResource(); }
 
     // helper methods e.g. to populate resources/resource lists with HATEOAS links
 
@@ -980,6 +981,70 @@ public class ProviderResource {
                     .resolveTemplate("userId", provider.getUserId().toString())
                     .build())
                     .rel("services-count").build());
+
+            /**
+             * Transactions associated with current Provider resource
+             */
+            // transactions
+            Method transactionsMethod = ProviderResource.class.getMethod("getTransactionResource");
+            provider.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ProviderResource.class)
+                    .path(transactionsMethod)
+                    .resolveTemplate("userId", provider.getUserId().toString())
+                    .build())
+                    .rel("transactions").build() );
+
+            // transactions eagerly
+            Method transactionsEagerlyMethod = ProviderResource.TransactionResource.class.getMethod("getProviderTransactionsEagerly", Long.class, TransactionBeanParam.class);
+            provider.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ProviderResource.class)
+                    .path(transactionsMethod)
+                    .path(transactionsEagerlyMethod)
+                    .resolveTemplate("userId", provider.getUserId().toString())
+                    .build())
+                    .rel("transactions-eagerly").build() );
+
+            // transactions count
+            Method countTransactionsByProviderMethod = ProviderResource.TransactionResource.class.getMethod("countTransactionsByProvider", Long.class, GenericBeanParam.class);
+            provider.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ProviderResource.class)
+                    .path(transactionsMethod)
+                    .path(countTransactionsByProviderMethod)
+                    .resolveTemplate("userId", provider.getUserId().toString())
+                    .build())
+                    .rel("transactions-count").build() );
+
+            /**
+             * Historical Transactions associated with current Provider resource
+             */
+            // historical-transactions
+            Method historicalTransactionsMethod = ProviderResource.class.getMethod("getHistoricalTransactionResource");
+            provider.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ProviderResource.class)
+                    .path(historicalTransactionsMethod)
+                    .resolveTemplate("userId", provider.getUserId().toString())
+                    .build())
+                    .rel("historical-transactions").build());
+
+            // historical-transactions eagerly
+            Method historicalTransactionsEagerlyMethod = ProviderResource.HistoricalTransactionResource.class.getMethod("getProviderHistoricalTransactionsEagerly", Long.class, HistoricalTransactionBeanParam.class);
+            provider.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ProviderResource.class)
+                    .path(historicalTransactionsMethod)
+                    .path(historicalTransactionsEagerlyMethod)
+                    .resolveTemplate("userId", provider.getUserId().toString())
+                    .build())
+                    .rel("historical-transactions-eagerly").build());
+
+            // historical-transactions count
+            Method countHistoricalTransactionsByProviderMethod = ProviderResource.HistoricalTransactionResource.class.getMethod("countHistoricalTransactionsByProvider", Long.class, GenericBeanParam.class);
+            provider.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ProviderResource.class)
+                    .path(historicalTransactionsMethod)
+                    .path(countHistoricalTransactionsByProviderMethod)
+                    .resolveTemplate("userId", provider.getUserId().toString())
+                    .build())
+                    .rel("historical-transactions-count").build());
 
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
@@ -3653,5 +3718,296 @@ public class ProviderResource {
                     "number of services for provider with id " + provider.getUserId());
             return Response.status(Status.OK).entity(responseEntity).build();
         }
+    }
+
+    public class TransactionResource {
+
+        public TransactionResource() { }
+
+        /**
+         * Method returns subset of Transaction entities for given Provider entity.
+         * The provider id is passed through path param.
+         * They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getProviderTransactions( @PathParam("userId") Long providerId,
+                                                 @BeanParam TransactionBeanParam params ) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning transactions for given provider using " +
+                    "ProviderResource.TransactionResource.getProviderTransactions(providerId) method of REST API");
+
+            // find provider entity for which to get associated transactions
+            Provider provider = providerFacade.find(providerId);
+            if(provider == null)
+                throw new NotFoundException("Could not find provider for id " + providerId + ".");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<Transaction> transactions = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Provider> providers = new ArrayList<>();
+                providers.add(provider);
+
+                // get transactions for given provider filtered by given query params
+
+                utx.begin();
+
+                transactions = new ResourceList<>(
+                        transactionFacade.findByMultipleCriteria(params.getClients(), providers, params.getServices(), params.getServicePoints(),
+                                params.getWorkStations(), params.getEmployees(), params.getProviderServices(), params.getTransactionTimePeriod(),
+                                params.getBookedTimePeriod(), params.getTerms(), params.getPriceRange(), params.getCurrencyCodes(), params.getPaymentMethods(),
+                                params.getPaid(), params.getOffset(), params.getLimit())
+                );
+
+                utx.commit();
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get transactions for given provider without filtering (eventually paginated)
+                transactions = new ResourceList<>( transactionFacade.findByProvider(provider, params.getOffset(), params.getLimit()) );
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.TransactionResource.populateWithHATEOASLinks(transactions, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(transactions).build();
+        }
+
+        /**
+         * Method returns subset of Transaction entities for given Provider fetching them eagerly.
+         * The provider id is passed through path param.
+         * They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Path("/eagerly")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getProviderTransactionsEagerly( @PathParam("userId") Long providerId,
+                                                        @BeanParam TransactionBeanParam params ) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning transactions eagerly for given provider using " +
+                    "ProviderResource.TransactionResource.getProviderTransactionsEagerly(providerId) method of REST API");
+
+            // find provider entity for which to get associated transactions
+            Provider provider = providerFacade.find(providerId);
+            if(provider == null)
+                throw new NotFoundException("Could not find provider for id " + providerId + ".");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<TransactionWrapper> transactions = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Provider> providers = new ArrayList<>();
+                providers.add(provider);
+
+                // get transactions eagerly for given provider filtered by given query params
+
+                utx.begin();
+
+                transactions = new ResourceList<>(
+                        TransactionWrapper.wrap(
+                                transactionFacade.findByMultipleCriteriaEagerly(params.getClients(), providers, params.getServices(),
+                                        params.getServicePoints(), params.getWorkStations(), params.getEmployees(), params.getProviderServices(),
+                                        params.getTransactionTimePeriod(), params.getBookedTimePeriod(), params.getTerms(), params.getPriceRange(),
+                                        params.getCurrencyCodes(), params.getPaymentMethods(), params.getPaid(), params.getOffset(), params.getLimit())
+                        )
+                );
+
+                utx.commit();
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get transactions eagerly for given provider without filtering (eventually paginated)
+                transactions = new ResourceList<>( TransactionWrapper.wrap(transactionFacade.findByProviderEagerly(provider, params.getOffset(), params.getLimit())) );
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.TransactionResource.populateWithHATEOASLinks(transactions, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(transactions).build();
+        }
+
+        /**
+         * Method that counts Transaction entities for given Provider resource.
+         * The provider id is passed through path param.
+         */
+        @GET
+        @Path("/count")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response countTransactionsByProvider( @PathParam("userId") Long providerId,
+                                                     @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning number of transactions for given provider by executing " +
+                    "ProviderResource.TransactionResource.countTransactionsByProvider(providerId) method of REST API");
+
+            // find provider entity for which to count transactions
+            Provider provider = providerFacade.find(providerId);
+            if(provider == null)
+                throw new NotFoundException("Could not find provider for id " + providerId + ".");
+
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(transactionFacade.countByProvider(provider)), 200,
+                    "number of transactions for provider with id " + provider.getUserId());
+            return Response.status(Status.OK).entity(responseEntity).build();
+        }
+    }
+
+    public class HistoricalTransactionResource {
+
+        public HistoricalTransactionResource() { }
+
+        /**
+         * Method returns subset of Historical Transaction entities for given Provider entity.
+         * The provider id is passed through path param.
+         * They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getProviderHistoricalTransactions( @PathParam("userId") Long providerId,
+                                                           @BeanParam HistoricalTransactionBeanParam params ) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning historical transactions for given provider using " +
+                    "ProviderResource.HistoricalTransactionResource.getProviderHistoricalTransactions(providerId) method of REST API");
+
+            // find provider entity for which to get associated historical transactions
+            Provider provider = providerFacade.find(providerId);
+            if(provider == null)
+                throw new NotFoundException("Could not find provider for id " + providerId + ".");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<HistoricalTransaction> historicalTransactions = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Provider> providers = new ArrayList<>();
+                providers.add(provider);
+
+                // get historical transactions for given provider filtered by given query params
+
+                utx.begin();
+
+                historicalTransactions = new ResourceList<>(
+                        historicalTransactionFacade.findByMultipleCriteria(params.getClients(), providers, params.getServices(), params.getServicePoints(),
+                                params.getWorkStations(), params.getEmployees(), params.getProviderServices(), params.getTransactionTimePeriod(),
+                                params.getBookedTimePeriod(), params.getTerms(), params.getPriceRange(), params.getCurrencyCodes(), params.getPaymentMethods(),
+                                params.getPaid(), params.getCompletionStatuses(), params.getClientRatingRange(), params.getClientComments(),
+                                params.getProviderRatingRange(), params.getProviderDementis(), params.getOffset(), params.getLimit())
+                );
+
+                utx.commit();
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get historical transactions for given provider without filtering (eventually paginated)
+                historicalTransactions = new ResourceList<>(historicalTransactionFacade.findByProvider(provider, params.getOffset(), params.getLimit()));
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.HistoricalTransactionResource.populateWithHATEOASLinks(historicalTransactions, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(historicalTransactions).build();
+        }
+
+        /**
+         * Method returns subset of Historical Transaction entities for given Provider fetching them eagerly.
+         * The provider id is passed through path param.
+         * They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Path("/eagerly")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getProviderHistoricalTransactionsEagerly( @PathParam("userId") Long providerId,
+                                                                  @BeanParam HistoricalTransactionBeanParam params ) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning historical transactions eagerly for given provider using " +
+                    "ProviderResource.HistoricalTransactionResource.getProviderHistoricalTransactionsEagerly(providerId) method of REST API");
+
+            // find provider entity for which to get associated historical transactions
+            Provider provider = providerFacade.find(providerId);
+            if(provider == null)
+                throw new NotFoundException("Could not find provider for id " + providerId + ".");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<HistoricalTransactionWrapper> historicalTransactions = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Provider> providers = new ArrayList<>();
+                providers.add(provider);
+
+                // get historical transactions eagerly for given provider filtered by given query params
+
+                utx.begin();
+
+                historicalTransactions = new ResourceList<>(
+                        HistoricalTransactionWrapper.wrap(
+                                historicalTransactionFacade.findByMultipleCriteriaEagerly(params.getClients(), providers, params.getServices(), params.getServicePoints(),
+                                        params.getWorkStations(), params.getEmployees(), params.getProviderServices(), params.getTransactionTimePeriod(),
+                                        params.getBookedTimePeriod(), params.getTerms(), params.getPriceRange(), params.getCurrencyCodes(), params.getPaymentMethods(),
+                                        params.getPaid(), params.getCompletionStatuses(), params.getClientRatingRange(), params.getClientComments(),
+                                        params.getProviderRatingRange(), params.getProviderDementis(), params.getOffset(), params.getLimit())
+                        )
+                );
+
+                utx.commit();
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get historical transactions eagerly for given provider without filtering (eventually paginated)
+                historicalTransactions = new ResourceList<>(HistoricalTransactionWrapper.wrap(historicalTransactionFacade.findByProviderEagerly(provider, params.getOffset(), params.getLimit())));
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.HistoricalTransactionResource.populateWithHATEOASLinks(historicalTransactions, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(historicalTransactions).build();
+        }
+
+        /**
+         * Method that counts Historical Transaction entities for given Provider resource.
+         * The provider id is passed through path param.
+         */
+        @GET
+        @Path("/count")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response countHistoricalTransactionsByProvider( @PathParam("userId") Long providerId,
+                                                               @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning number of historical transactions for given provider by executing " +
+                    "ProviderResource.HistoricalTransactionResource.countHistoricalTransactionsByProvider(providerId) method of REST API");
+
+            // find provider entity for which to count historical transactions
+            Provider provider = providerFacade.find(providerId);
+            if(provider == null)
+                throw new NotFoundException("Could not find provider for id " + providerId + ".");
+
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(historicalTransactionFacade.countByProvider(provider)), 200,
+                    "number of historical transactions for provider with id " + provider.getUserId());
+            return Response.status(Status.OK).entity(responseEntity).build();
+        }
+
     }
 }
