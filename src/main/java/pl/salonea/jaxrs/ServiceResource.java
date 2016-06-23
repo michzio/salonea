@@ -2,6 +2,7 @@ package pl.salonea.jaxrs;
 
 import pl.salonea.ejb.stateless.*;
 import pl.salonea.entities.*;
+import pl.salonea.entities.Transaction;
 import pl.salonea.jaxrs.bean_params.*;
 import pl.salonea.jaxrs.exceptions.*;
 import pl.salonea.jaxrs.exceptions.BadRequestException;
@@ -57,6 +58,10 @@ public class ServiceResource {
     private EmployeeTermFacade employeeTermFacade;
     @Inject
     private TermFacade termFacade;
+    @Inject
+    private TransactionFacade transactionFacade;
+    @Inject
+    private HistoricalTransactionFacade historicalTransactionFacade;
 
     /**
      * Method returns all Service resources
@@ -413,32 +418,30 @@ public class ServiceResource {
     public ProviderResource getProviderResource() {
         return new ProviderResource();
     }
-
     @Path("/{serviceId : \\d+}/provider-services")
     public ProviderServiceResource getProviderServiceResource() {
         return new ProviderServiceResource();
     }
-
     @Path("/{serviceId : \\d+}/service-points")
     public ServicePointResource getServicePointResource() {
         return new ServicePointResource();
     }
-
     @Path("/{serviceId : \\d+}/work-stations")
     public WorkStationResource getWorkStationResource() {
         return new WorkStationResource();
     }
-
     @Path("/{serviceId : \\d+}/employees")
     public EmployeeResource getEmployeeResource() {
         return new EmployeeResource();
     }
-
     @Path("/{serviceId : \\d+}/employee-terms")
     public EmployeeTermResource getEmployeeTermResource() { return new EmployeeTermResource(); }
-
     @Path("/{serviceId : \\d+}/terms")
     public TermResource getTermResource() { return new TermResource(); }
+    @Path("/{serviceId : \\d+}/transactions")
+    public TransactionResource getTransactionResource() { return new TransactionResource(); }
+    @Path("/{serviceId : \\d+}/historical-transactions")
+    public HistoricalTransactionResource getHistoricalTransactionResource() { return new HistoricalTransactionResource(); }
 
     // helper methods e.g. to populate resources/resource lists with HATEOAS links
 
@@ -846,6 +849,70 @@ public class ServiceResource {
                     .resolveTemplate("serviceId", service.getServiceId().toString())
                     .build())
                     .rel("terms-count").build() );
+
+            /**
+             * Transactions associated with current Service resource
+             */
+            // transactions
+            Method transactionsMethod = ServiceResource.class.getMethod("getTransactionResource");
+            service.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ServiceResource.class)
+                    .path(transactionsMethod)
+                    .resolveTemplate("serviceId", service.getServiceId().toString())
+                    .build())
+                    .rel("transactions").build() );
+
+            // transactions eagerly
+            Method transactionsEagerlyMethod = ServiceResource.TransactionResource.class.getMethod("getServiceTransactionsEagerly", Integer.class, TransactionBeanParam.class);
+            service.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ServiceResource.class)
+                    .path(transactionsMethod)
+                    .path(transactionsEagerlyMethod)
+                    .resolveTemplate("serviceId", service.getServiceId().toString())
+                    .build())
+                    .rel("transactions-eagerly").build() );
+
+            // transactions count
+            Method countTransactionsByServiceMethod = ServiceResource.TransactionResource.class.getMethod("countTransactionsByService", Integer.class, GenericBeanParam.class);
+            service.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ServiceResource.class)
+                    .path(transactionsMethod)
+                    .path(countTransactionsByServiceMethod)
+                    .resolveTemplate("serviceId", service.getServiceId().toString())
+                    .build())
+                    .rel("transactions-count").build() );
+
+            /**
+             * Historical Transactions associated with current Service resource
+             */
+            // historical-transactions
+            Method historicalTransactionsMethod = ServiceResource.class.getMethod("getHistoricalTransactionResource");
+            service.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ServiceResource.class)
+                    .path(historicalTransactionsMethod)
+                    .resolveTemplate("serviceId", service.getServiceId().toString())
+                    .build())
+                    .rel("historical-transactions").build());
+
+            // historical-transactions eagerly
+            Method historicalTransactionsEagerlyMethod = ServiceResource.HistoricalTransactionResource.class.getMethod("getServiceHistoricalTransactionsEagerly", Integer.class, HistoricalTransactionBeanParam.class);
+            service.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ServiceResource.class)
+                    .path(historicalTransactionsMethod)
+                    .path(historicalTransactionsEagerlyMethod)
+                    .resolveTemplate("serviceId", service.getServiceId().toString())
+                    .build())
+                    .rel("historical-transactions-eagerly").build());
+
+            // historical-transactions count
+            Method countHistoricalTransactionsByServiceMethod = ServiceResource.HistoricalTransactionResource.class.getMethod("countHistoricalTransactionsByService", Integer.class, GenericBeanParam.class);
+            service.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ServiceResource.class)
+                    .path(historicalTransactionsMethod)
+                    .path(countHistoricalTransactionsByServiceMethod)
+                    .resolveTemplate("serviceId", service.getServiceId().toString())
+                    .build())
+                    .rel("historical-transactions-count").build());
 
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
@@ -2143,6 +2210,297 @@ public class ServiceResource {
 
             ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(termFacade.countByService(service)), 200,
                     "number of terms for service with id " + service.getServiceId() );
+            return Response.status(Status.OK).entity(responseEntity).build();
+        }
+    }
+
+    public class TransactionResource {
+
+        public TransactionResource() { }
+
+        /**
+         * Method returns subset of Transaction entities for given Service entity.
+         * The service id is passed through path param.
+         * They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getServiceTransactions( @PathParam("serviceId") Integer serviceId,
+                                                @BeanParam TransactionBeanParam params ) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning transactions for given service using " +
+                    "ServiceResource.TransactionResource.getServiceTransactions(serviceId) method of REST API");
+
+            // find service entity for which to get associated transactions
+            Service service = serviceFacade.find(serviceId);
+            if(service == null)
+                throw new NotFoundException("Could not find service for id " + serviceId + ".");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<Transaction> transactions = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Service> services = new ArrayList<>();
+                services.add(service);
+
+                // get transactions for given service filtered by given query params
+
+                utx.begin();
+
+                transactions = new ResourceList<>(
+                        transactionFacade.findByMultipleCriteria(params.getClients(), params.getProviders(), services, params.getServicePoints(),
+                                params.getWorkStations(), params.getEmployees(), params.getProviderServices(), params.getTransactionTimePeriod(),
+                                params.getBookedTimePeriod(), params.getTerms(), params.getPriceRange(), params.getCurrencyCodes(), params.getPaymentMethods(),
+                                params.getPaid(), params.getOffset(), params.getLimit())
+                );
+
+                utx.commit();
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get transactions for given service without filtering (eventually paginated)
+                transactions = new ResourceList<>( transactionFacade.findByService(service, params.getOffset(), params.getLimit()) );
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.TransactionResource.populateWithHATEOASLinks(transactions, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(transactions).build();
+        }
+
+        /**
+         * Method returns subset of Transaction entities for given Service fetching them eagerly.
+         * The service id is passed through path param.
+         * They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Path("/eagerly")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getServiceTransactionsEagerly( @PathParam("serviceId") Integer serviceId,
+                                                       @BeanParam TransactionBeanParam params ) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning transactions eagerly for given service using " +
+                    "ServiceResource.TransactionResource.getServiceTransactionsEagerly(serviceId) method of REST API");
+
+            // find service entity for which to get associated transactions
+            Service service = serviceFacade.find(serviceId);
+            if(service == null)
+                throw new NotFoundException("Could not find service for id " + serviceId + ".");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<TransactionWrapper> transactions = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Service> services = new ArrayList<>();
+                services.add(service);
+
+                // get transactions eagerly for given service filtered by given query params
+
+                utx.begin();
+
+                transactions = new ResourceList<>(
+                        TransactionWrapper.wrap(
+                                transactionFacade.findByMultipleCriteriaEagerly(params.getClients(), params.getProviders(), services,
+                                        params.getServicePoints(), params.getWorkStations(), params.getEmployees(), params.getProviderServices(),
+                                        params.getTransactionTimePeriod(), params.getBookedTimePeriod(), params.getTerms(), params.getPriceRange(),
+                                        params.getCurrencyCodes(), params.getPaymentMethods(), params.getPaid(), params.getOffset(), params.getLimit())
+                        )
+                );
+
+                utx.commit();
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get transactions eagerly for given service without filtering (eventually paginated)
+                transactions = new ResourceList<>( TransactionWrapper.wrap(transactionFacade.findByServiceEagerly(service, params.getOffset(), params.getLimit())) );
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.TransactionResource.populateWithHATEOASLinks(transactions, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(transactions).build();
+        }
+
+        /**
+         * Method that counts Transaction entities for given Service resource.
+         * The service id is passed through path param.
+         */
+        @GET
+        @Path("/count")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response countTransactionsByService( @PathParam("serviceId") Integer serviceId,
+                                                    @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning number of transactions for given service by executing " +
+                    "ServiceResource.TransactionResource.countTransactionsByService(serviceId) method of REST API");
+
+            // find service entity for which to count transactions
+            Service service = serviceFacade.find(serviceId);
+            if(service == null)
+                throw new NotFoundException("Could not find service for id " + serviceId + ".");
+
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(transactionFacade.countByService(service)), 200,
+                    "number of transactions for service with id " + service.getServiceId());
+            return Response.status(Status.OK).entity(responseEntity).build();
+        }
+    }
+
+    public class HistoricalTransactionResource {
+
+        public HistoricalTransactionResource() {}
+
+        /**
+         * Method returns subset of Historical Transaction entities for given Service entity.
+         * The service id is passed through path param.
+         * They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getServiceHistoricalTransactions( @PathParam("serviceId") Integer serviceId,
+                                                          @BeanParam HistoricalTransactionBeanParam params ) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning historical transactions for given service using " +
+                    "ServiceResource.HistoricalTransactionResource.getServiceHistoricalTransactions(serviceId) method of REST API");
+
+            // find service entity for which to get associated historical transactions
+            Service service = serviceFacade.find(serviceId);
+            if(service == null)
+                throw new NotFoundException("Could not find service for id " + serviceId + ".");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<HistoricalTransaction> historicalTransactions = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Service> services = new ArrayList<>();
+                services.add(service);
+
+                // get historical transactions for given service filtered by given query params
+
+                utx.begin();
+
+                historicalTransactions = new ResourceList<>(
+                        historicalTransactionFacade.findByMultipleCriteria(params.getClients(), params.getProviders(), services, params.getServicePoints(),
+                                params.getWorkStations(), params.getEmployees(), params.getProviderServices(), params.getTransactionTimePeriod(),
+                                params.getBookedTimePeriod(), params.getTerms(), params.getPriceRange(), params.getCurrencyCodes(), params.getPaymentMethods(),
+                                params.getPaid(), params.getCompletionStatuses(), params.getClientRatingRange(), params.getClientComments(),
+                                params.getProviderRatingRange(), params.getProviderDementis(), params.getOffset(), params.getLimit())
+                );
+
+                utx.commit();
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get historical transactions for given service without filtering (eventually paginated)
+                historicalTransactions = new ResourceList<>(historicalTransactionFacade.findByService(service, params.getOffset(), params.getLimit()));
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.HistoricalTransactionResource.populateWithHATEOASLinks(historicalTransactions, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(historicalTransactions).build();
+        }
+
+        /**
+         * Method returns subset of Historical Transaction entities for given Service fetching them eagerly.
+         * The service id is passed through path param.
+         * They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Path("/eagerly")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getServiceHistoricalTransactionsEagerly( @PathParam("serviceId") Integer serviceId,
+                                                                 @BeanParam HistoricalTransactionBeanParam params ) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning historical transactions eagerly for given service using " +
+                    "ServiceResource.HistoricalTransactionResource.getServiceHistoricalTransactionsEagerly(serviceId) method of REST API");
+
+            // find service entity for which to get associated historical transactions
+            Service service = serviceFacade.find(serviceId);
+            if(service == null)
+                throw new NotFoundException("Could not find service for id " + serviceId + ".");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<HistoricalTransactionWrapper> historicalTransactions = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<Service> services = new ArrayList<>();
+                services.add(service);
+
+                // get historical transactions eagerly for given service filtered by given query params
+
+                utx.begin();
+
+                historicalTransactions = new ResourceList<>(
+                        HistoricalTransactionWrapper.wrap(
+                                historicalTransactionFacade.findByMultipleCriteriaEagerly(params.getClients(), params.getProviders(), services, params.getServicePoints(),
+                                        params.getWorkStations(), params.getEmployees(), params.getProviderServices(), params.getTransactionTimePeriod(),
+                                        params.getBookedTimePeriod(), params.getTerms(), params.getPriceRange(), params.getCurrencyCodes(), params.getPaymentMethods(),
+                                        params.getPaid(), params.getCompletionStatuses(), params.getClientRatingRange(), params.getClientComments(),
+                                        params.getProviderRatingRange(), params.getProviderDementis(), params.getOffset(), params.getLimit())
+                        )
+                );
+
+                utx.commit();
+
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get historical transactions eagerly for given service without filtering (eventually paginated)
+                historicalTransactions = new ResourceList<>(HistoricalTransactionWrapper.wrap(historicalTransactionFacade.findByServiceEagerly(service, params.getOffset(), params.getLimit())));
+
+            }
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.HistoricalTransactionResource.populateWithHATEOASLinks(historicalTransactions, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(historicalTransactions).build();
+        }
+
+        /**
+         * Method that counts Historical Transaction entities for given Service resource.
+         * The service id is passed through path param.
+         */
+        @GET
+        @Path("/count")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response countHistoricalTransactionsByService( @PathParam("serviceId") Integer serviceId,
+                                                              @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning number of historical transactions for given service by executing " +
+                    "ServiceResource.HistoricalTransactionResource.countHistoricalTransactionsByService(serviceId) method of REST API");
+
+            // find service entity for which to count historical transactions
+            Service service = serviceFacade.find(serviceId);
+            if(service == null)
+                throw new NotFoundException("Could not find service for id " + serviceId + ".");
+
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(historicalTransactionFacade.countByService(service)), 200,
+                    "number of historical transactions for service with id " + service.getServiceId());
             return Response.status(Status.OK).entity(responseEntity).build();
         }
     }
