@@ -3,6 +3,7 @@ package pl.salonea.jaxrs;
 import pl.salonea.ejb.stateless.*;
 import pl.salonea.entities.*;
 
+import pl.salonea.entities.Transaction;
 import pl.salonea.entities.idclass.WorkStationId;
 import pl.salonea.enums.WorkStationType;
 import pl.salonea.jaxrs.bean_params.*;
@@ -53,6 +54,10 @@ public class WorkStationResource {
     private EmployeeTermFacade employeeTermFacade;
     @Inject
     private TermFacade termFacade;
+    @Inject
+    private TransactionFacade transactionFacade;
+    @Inject
+    private HistoricalTransactionFacade historicalTransactionFacade;
 
     @Inject
     private ProviderResource providerResource;
@@ -63,10 +68,10 @@ public class WorkStationResource {
     @GET
     @Path("/{providerId: \\d+}+{servicePointNumber: \\d+}+{workStationNumber: \\d+}")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getWorkStation( @PathParam("providerId") Long providerId,
-                                    @PathParam("servicePointNumber") Integer servicePointNumber,
-                                    @PathParam("workStationNumber") Integer workStationNumber,
-                                    @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+    public Response getWorkStation(@PathParam("providerId") Long providerId,
+                                   @PathParam("servicePointNumber") Integer servicePointNumber,
+                                   @PathParam("workStationNumber") Integer workStationNumber,
+                                   @BeanParam GenericBeanParam params) throws ForbiddenException, NotFoundException {
 
         return providerResource.getServicePointResource().getWorkStationResource().getWorkStation(providerId, servicePointNumber, workStationNumber, params);
     }
@@ -74,10 +79,10 @@ public class WorkStationResource {
     @GET
     @Path("/{providerId: \\d+}+{servicePointNumber: \\d+}+{workStationNumber: \\d+}/eagerly")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getWorkStationEagerly( @PathParam("providerId") Long providerId,
-                                           @PathParam("servicePointNumber") Integer servicePointNumber,
-                                           @PathParam("workStationNumber") Integer workStationNumber,
-                                           @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException {
+    public Response getWorkStationEagerly(@PathParam("providerId") Long providerId,
+                                          @PathParam("servicePointNumber") Integer servicePointNumber,
+                                          @PathParam("workStationNumber") Integer workStationNumber,
+                                          @BeanParam GenericBeanParam params) throws ForbiddenException, NotFoundException {
 
         return providerResource.getServicePointResource().getWorkStationResource().getWorkStationEagerly(providerId, servicePointNumber, workStationNumber, params);
     }
@@ -85,8 +90,8 @@ public class WorkStationResource {
     @POST
     @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response createWorkStation( WorkStation workStation,
-                                       @BeanParam GenericBeanParam params ) throws ForbiddenException, UnprocessableEntityException, InternalServerErrorException {
+    public Response createWorkStation(WorkStation workStation,
+                                      @BeanParam GenericBeanParam params) throws ForbiddenException, UnprocessableEntityException, InternalServerErrorException {
 
         return providerResource.getServicePointResource()
                 .getWorkStationResource().createWorkStation(workStation.getServicePoint().getProvider().getUserId(),
@@ -98,11 +103,11 @@ public class WorkStationResource {
     @Path("/{providerId: \\d+}+{servicePointNumber: \\d+}+{workStationNumber: \\d+}")
     @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response updateWorkStation( @PathParam("providerId") Long providerId,
-                                       @PathParam("servicePointNumber") Integer servicePointNumber,
-                                       @PathParam("workStationNumber") Integer workStationNumber,
-                                       WorkStation workStation,
-                                       @BeanParam GenericBeanParam params ) throws ForbiddenException, UnprocessableEntityException, InternalServerErrorException {
+    public Response updateWorkStation(@PathParam("providerId") Long providerId,
+                                      @PathParam("servicePointNumber") Integer servicePointNumber,
+                                      @PathParam("workStationNumber") Integer workStationNumber,
+                                      WorkStation workStation,
+                                      @BeanParam GenericBeanParam params) throws ForbiddenException, UnprocessableEntityException, InternalServerErrorException {
 
         return providerResource.getServicePointResource()
                 .getWorkStationResource().updateWorkStation(providerId, servicePointNumber, workStationNumber, workStation, params);
@@ -111,10 +116,10 @@ public class WorkStationResource {
     @DELETE
     @Path("/{providerId: \\d+}+{servicePointNumber: \\d+}+{workStationNumber: \\d+}")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response removeWorkStation( @PathParam("providerId") Long providerId,
-                                       @PathParam("servicePointNumber") Integer servicePointNumber,
-                                       @PathParam("workStationNumber") Integer workStationNumber,
-                                       @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException, InternalServerErrorException {
+    public Response removeWorkStation(@PathParam("providerId") Long providerId,
+                                      @PathParam("servicePointNumber") Integer servicePointNumber,
+                                      @PathParam("workStationNumber") Integer workStationNumber,
+                                      @BeanParam GenericBeanParam params) throws ForbiddenException, NotFoundException, InternalServerErrorException {
 
         return providerResource.getServicePointResource()
                 .getWorkStationResource().removeWorkStation(providerId, servicePointNumber, workStationNumber, params);
@@ -126,7 +131,7 @@ public class WorkStationResource {
      */
     @GET
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getWorkStations( @BeanParam WorkStationBeanParam params ) throws ForbiddenException,
+    public Response getWorkStations(@BeanParam WorkStationBeanParam params) throws ForbiddenException,
     /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
 
         RESTToolkit.authorizeAccessToWebService(params);
@@ -136,7 +141,7 @@ public class WorkStationResource {
 
         ResourceList<WorkStation> workStations = null;
 
-        if(noOfParams > 0) {
+        if (noOfParams > 0) {
             logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
 
             utx.begin();
@@ -154,7 +159,7 @@ public class WorkStationResource {
             logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
 
             // get all work stations without filtering (eventually paginated)
-            workStations = new ResourceList<>( workStationFacade.findAll(params.getOffset(), params.getLimit()) );
+            workStations = new ResourceList<>(workStationFacade.findAll(params.getOffset(), params.getLimit()));
         }
 
         // result resources need to be populated with hypermedia links to enable resource discovery
@@ -166,7 +171,7 @@ public class WorkStationResource {
     @GET
     @Path("/eagerly")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getWorkStationsEagerly( @BeanParam WorkStationBeanParam params ) throws ForbiddenException,
+    public Response getWorkStationsEagerly(@BeanParam WorkStationBeanParam params) throws ForbiddenException,
     /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
 
         RESTToolkit.authorizeAccessToWebService(params);
@@ -176,7 +181,7 @@ public class WorkStationResource {
 
         ResourceList<WorkStationWrapper> workStations = null;
 
-        if(noOfParams > 0) {
+        if (noOfParams > 0) {
             logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
 
             utx.begin();
@@ -196,7 +201,7 @@ public class WorkStationResource {
             logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
 
             // get all work stations eagerly without filtering (eventually paginated)
-            workStations = new ResourceList<>( WorkStationWrapper.wrap(workStationFacade.findAllEagerly(params.getOffset(), params.getLimit())) );
+            workStations = new ResourceList<>(WorkStationWrapper.wrap(workStationFacade.findAllEagerly(params.getOffset(), params.getLimit())));
         }
 
         // result resources need to be populated with hypermedia links to enable resource discovery
@@ -218,7 +223,7 @@ public class WorkStationResource {
     @GET
     @Path("/count")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response countWorkStations( @BeanParam GenericBeanParam params ) throws ForbiddenException {
+    public Response countWorkStations(@BeanParam GenericBeanParam params) throws ForbiddenException {
 
         RESTToolkit.authorizeAccessToWebService(params);
         logger.log(Level.INFO, "returning number of work stations by executing WorkStationResource.countWorkStations() method of REST API");
@@ -234,14 +239,14 @@ public class WorkStationResource {
     @GET
     @Path("/typed/{type: \\S+}")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getWorkStationsByType( @PathParam("type") WorkStationType type,
-                                           @BeanParam PaginationBeanParam params ) throws ForbiddenException, BadRequestException {
+    public Response getWorkStationsByType(@PathParam("type") WorkStationType type,
+                                          @BeanParam PaginationBeanParam params) throws ForbiddenException, BadRequestException {
 
         RESTToolkit.authorizeAccessToWebService(params);
         logger.log(Level.INFO, "returning work stations for given work station type using " +
                 "WorkStationResource.getWorkStationsByType(type) method of REST API");
 
-        if(type == null)
+        if (type == null)
             throw new BadRequestException("Work station type param cannot be null.");
 
         // find work stations by given criteria (work station type)
@@ -256,13 +261,13 @@ public class WorkStationResource {
     }
 
     /**
-     *  Method returns subset of Work Station entities for given Term's data range.
-     *  Term start and end dates are passed through query params.
+     * Method returns subset of Work Station entities for given Term's data range.
+     * Term start and end dates are passed through query params.
      */
     @GET
     @Path("/by-term")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getWorkStationsByTerm( @BeanParam DateRangeBeanParam params ) throws ForbiddenException, BadRequestException {
+    public Response getWorkStationsByTerm(@BeanParam DateRangeBeanParam params) throws ForbiddenException, BadRequestException {
 
         RESTToolkit.authorizeAccessToWebService(params);
         logger.log(Level.INFO, "returning work stations for given term (startDate, endDate) using " +
@@ -282,13 +287,13 @@ public class WorkStationResource {
     }
 
     /**
-     *  Method returns subset of Work Station entities for given Term's data range (strict).
-     *  Term (strict) start and end dates are passed through query params.
+     * Method returns subset of Work Station entities for given Term's data range (strict).
+     * Term (strict) start and end dates are passed through query params.
      */
     @GET
     @Path("/by-term-strict")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getWorkStationsByTermStrict( @BeanParam DateRangeBeanParam params ) throws ForbiddenException, BadRequestException {
+    public Response getWorkStationsByTermStrict(@BeanParam DateRangeBeanParam params) throws ForbiddenException, BadRequestException {
 
         RESTToolkit.authorizeAccessToWebService(params);
         logger.log(Level.INFO, "returning work stations for given term strict (startDate, endDate) using " +
@@ -311,19 +316,39 @@ public class WorkStationResource {
      * related subresources (through relationships)
      */
     @Path("/{providerId: \\d+}+{servicePointNumber: \\d+}+{workStationNumber: \\d+}/employees")
-    public EmployeeResource getEmployeeResource() { return new EmployeeResource(); }
+    public EmployeeResource getEmployeeResource() {
+        return new EmployeeResource();
+    }
 
     @Path("/{providerId: \\d+}+{servicePointNumber: \\d+}+{workStationNumber: \\d+}/services")
-    public ServiceResource getServiceResource() { return new ServiceResource(); }
+    public ServiceResource getServiceResource() {
+        return new ServiceResource();
+    }
 
     @Path("/{providerId: \\d+}+{servicePointNumber: \\d+}+{workStationNumber: \\d+}/provider-services")
-    public ProviderServiceResource getProviderServiceResource() { return new ProviderServiceResource(); }
+    public ProviderServiceResource getProviderServiceResource() {
+        return new ProviderServiceResource();
+    }
 
     @Path("/{providerId: \\d+}+{servicePointNumber: \\d+}+{workStationNumber: \\d+}/employee-terms")
-    public EmployeeTermResource getEmployeeTermResource() { return new EmployeeTermResource(); }
+    public EmployeeTermResource getEmployeeTermResource() {
+        return new EmployeeTermResource();
+    }
 
     @Path("/{providerId: \\d+}+{servicePointNumber: \\d+}+{workStationNumber: \\d+}/terms")
-    public TermResource getTermResource() { return new TermResource(); }
+    public TermResource getTermResource() {
+        return new TermResource();
+    }
+
+    @Path("/{providerId: \\d+}+{servicePointNumber: \\d+}+{workStationNumber: \\d+}/transactions")
+    public TransactionResource getTransactionResource() {
+        return new TransactionResource();
+    }
+
+    @Path("/{providerId: \\d+}+{servicePointNumber: \\d+}+{workStationNumber: \\d+}/historical-transactions")
+    public HistoricalTransactionResource getHistoricalTransactionResource() {
+        return new HistoricalTransactionResource();
+    }
 
     /**
      * This method enables to populate list of resources and each individual resource on list with hypermedia links
@@ -336,53 +361,53 @@ public class WorkStationResource {
         try {
             // count resources hypermedia link
             Method countMethod = WorkStationResource.class.getMethod("countWorkStations", GenericBeanParam.class);
-            workStations.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(WorkStationResource.class).path(countMethod).build()).rel("count").build() );
+            workStations.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder().path(WorkStationResource.class).path(countMethod).build()).rel("count").build());
 
             // get all resources hypermedia link
-            workStations.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder().path(WorkStationResource.class).build()).rel("work-stations").build() );
+            workStations.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder().path(WorkStationResource.class).build()).rel("work-stations").build());
 
             // get all resources eagerly hypermedia link
             Method workStationsEagerlyMethod = WorkStationResource.class.getMethod("getWorkStationsEagerly", WorkStationBeanParam.class);
-            workStations.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+            workStations.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
                     .path(WorkStationResource.class)
                     .path(workStationsEagerlyMethod)
                     .build())
-                    .rel("work-stations-eagerly").build() );
+                    .rel("work-stations-eagerly").build());
 
             // get subset of resources hypermedia links
 
             // typed
-            workStations.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+            workStations.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
                     .path(WorkStationResource.class)
                     .path("typed")
                     .build())
-                    .rel("typed").build() );
+                    .rel("typed").build());
 
             // by-term
             Method workStationsByTermMethod = WorkStationResource.class.getMethod("getWorkStationsByTerm", DateRangeBeanParam.class);
-            workStations.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+            workStations.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
                     .path(WorkStationResource.class)
                     .path(workStationsByTermMethod)
                     .build())
-                    .rel("by-term").build() );
+                    .rel("by-term").build());
 
             // by-term-strict
             Method workStationsByTermStrictMethod = WorkStationResource.class.getMethod("getWorkStationsByTermStrict", DateRangeBeanParam.class);
-            workStations.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+            workStations.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
                     .path(WorkStationResource.class)
                     .path(workStationsByTermStrictMethod)
                     .build())
-                    .rel("by-term-strict").build() );
+                    .rel("by-term-strict").build());
 
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
         }
 
-        for(Object object : workStations.getResources()) {
-            if(object instanceof WorkStation) {
-                WorkStationResource.populateWithHATEOASLinks( (WorkStation) object, uriInfo);
-            } else if(object instanceof WorkStationWrapper) {
-                WorkStationResource.populateWithHATEOASLinks( (WorkStationWrapper) object, uriInfo);
+        for (Object object : workStations.getResources()) {
+            if (object instanceof WorkStation) {
+                WorkStationResource.populateWithHATEOASLinks((WorkStation) object, uriInfo);
+            } else if (object instanceof WorkStationWrapper) {
+                WorkStationResource.populateWithHATEOASLinks((WorkStationWrapper) object, uriInfo);
             }
         }
     }
@@ -394,11 +419,11 @@ public class WorkStationResource {
 
         WorkStationResource.populateWithHATEOASLinks(workStationWrapper.getWorkStation(), uriInfo);
 
-      for(EmployeeTerm employeeTerm : workStationWrapper.getTermsEmployeesWorkOn())
-          pl.salonea.jaxrs.EmployeeTermResource.populateWithHATEOASLinks(employeeTerm, uriInfo);
+        for (EmployeeTerm employeeTerm : workStationWrapper.getTermsEmployeesWorkOn())
+            pl.salonea.jaxrs.EmployeeTermResource.populateWithHATEOASLinks(employeeTerm, uriInfo);
 
-      for(ProviderService providerService : workStationWrapper.getProvidedServices())
-          pl.salonea.jaxrs.ProviderServiceResource.populateWithHATEOASLinks(providerService, uriInfo);
+        for (ProviderService providerService : workStationWrapper.getProvidedServices())
+            pl.salonea.jaxrs.ProviderServiceResource.populateWithHATEOASLinks(providerService, uriInfo);
     }
 
     /**
@@ -471,37 +496,37 @@ public class WorkStationResource {
             // provider-services
             Method providerServicesMethod = WorkStationResource.class.getMethod("getProviderServiceResource");
             workStation.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
-                        .path(WorkStationResource.class)
-                        .path(providerServicesMethod)
-                        .resolveTemplate("providerId", workStation.getServicePoint().getProvider().getUserId().toString())
-                        .resolveTemplate("servicePointNumber", workStation.getServicePoint().getServicePointNumber().toString())
-                        .resolveTemplate("workStationNumber", workStation.getWorkStationNumber().toString())
-                        .build())
-                        .rel("provider-services").build());
+                    .path(WorkStationResource.class)
+                    .path(providerServicesMethod)
+                    .resolveTemplate("providerId", workStation.getServicePoint().getProvider().getUserId().toString())
+                    .resolveTemplate("servicePointNumber", workStation.getServicePoint().getServicePointNumber().toString())
+                    .resolveTemplate("workStationNumber", workStation.getWorkStationNumber().toString())
+                    .build())
+                    .rel("provider-services").build());
 
             // provider-services eagerly
             Method providerServicesEagerlyMethod = WorkStationResource.ProviderServiceResource.class.getMethod("getWorkStationProviderServicesEagerly", Long.class, Integer.class, Integer.class, ProviderServiceBeanParam.class);
             workStation.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
-                        .path(WorkStationResource.class)
-                        .path(providerServicesMethod)
-                        .path(providerServicesEagerlyMethod)
-                        .resolveTemplate("providerId", workStation.getServicePoint().getProvider().getUserId().toString())
-                        .resolveTemplate("servicePointNumber", workStation.getServicePoint().getServicePointNumber().toString())
-                        .resolveTemplate("workStationNumber", workStation.getWorkStationNumber().toString())
-                        .build())
-                        .rel("provider-services-eagerly").build());
+                    .path(WorkStationResource.class)
+                    .path(providerServicesMethod)
+                    .path(providerServicesEagerlyMethod)
+                    .resolveTemplate("providerId", workStation.getServicePoint().getProvider().getUserId().toString())
+                    .resolveTemplate("servicePointNumber", workStation.getServicePoint().getServicePointNumber().toString())
+                    .resolveTemplate("workStationNumber", workStation.getWorkStationNumber().toString())
+                    .build())
+                    .rel("provider-services-eagerly").build());
 
             // provider-services count
             Method countProviderServicesByWorkStationMethod = WorkStationResource.ProviderServiceResource.class.getMethod("countProviderServicesByWorkStation", Long.class, Integer.class, Integer.class, GenericBeanParam.class);
             workStation.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
-                        .path(WorkStationResource.class)
-                        .path(providerServicesMethod)
-                        .path(countProviderServicesByWorkStationMethod)
-                        .resolveTemplate("providerId", workStation.getServicePoint().getProvider().getUserId().toString())
-                        .resolveTemplate("servicePointNumber", workStation.getServicePoint().getServicePointNumber().toString())
-                        .resolveTemplate("workStationNumber", workStation.getWorkStationNumber().toString())
-                        .build())
-                        .rel("provider-services-count").build());
+                    .path(WorkStationResource.class)
+                    .path(providerServicesMethod)
+                    .path(countProviderServicesByWorkStationMethod)
+                    .resolveTemplate("providerId", workStation.getServicePoint().getProvider().getUserId().toString())
+                    .resolveTemplate("servicePointNumber", workStation.getServicePoint().getServicePointNumber().toString())
+                    .resolveTemplate("workStationNumber", workStation.getWorkStationNumber().toString())
+                    .build())
+                    .rel("provider-services-count").build());
 
             /**
              * Employee Terms (EmployeeTerm entity) associated with current Work Station resource
@@ -509,18 +534,18 @@ public class WorkStationResource {
 
             // employee-terms
             Method employeeTermsMethod = WorkStationResource.class.getMethod("getEmployeeTermResource");
-            workStation.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+            workStation.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
                     .path(WorkStationResource.class)
                     .path(employeeTermsMethod)
                     .resolveTemplate("providerId", workStation.getServicePoint().getProvider().getUserId().toString())
                     .resolveTemplate("servicePointNumber", workStation.getServicePoint().getServicePointNumber().toString())
                     .resolveTemplate("workStationNumber", workStation.getWorkStationNumber().toString())
                     .build())
-                    .rel("employee-terms").build() );
+                    .rel("employee-terms").build());
 
             // employee-terms count
             Method countEmployeeTermsByWorkStationMethod = WorkStationResource.EmployeeTermResource.class.getMethod("countEmployeeTermsByWorkStation", Long.class, Integer.class, Integer.class, GenericBeanParam.class);
-            workStation.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+            workStation.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
                     .path(WorkStationResource.class)
                     .path(employeeTermsMethod)
                     .path(countEmployeeTermsByWorkStationMethod)
@@ -528,7 +553,7 @@ public class WorkStationResource {
                     .resolveTemplate("servicePointNumber", workStation.getServicePoint().getServicePointNumber().toString())
                     .resolveTemplate("workStationNumber", workStation.getWorkStationNumber().toString())
                     .build())
-                    .rel("employee-terms-count").build() );
+                    .rel("employee-terms-count").build());
 
             /**
              * Terms of executing any provider services on current Work Station resource
@@ -536,18 +561,18 @@ public class WorkStationResource {
 
             // terms
             Method termsMethod = WorkStationResource.class.getMethod("getTermResource");
-            workStation.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+            workStation.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
                     .path(WorkStationResource.class)
                     .path(termsMethod)
                     .resolveTemplate("providerId", workStation.getServicePoint().getProvider().getUserId().toString())
                     .resolveTemplate("servicePointNumber", workStation.getServicePoint().getServicePointNumber().toString())
                     .resolveTemplate("workStationNumber", workStation.getWorkStationNumber().toString())
                     .build())
-                    .rel("terms").build() );
+                    .rel("terms").build());
 
             // terms eagerly
             Method termsEagerlyMethod = WorkStationResource.TermResource.class.getMethod("getWorkStationTermsEagerly", Long.class, Integer.class, Integer.class, TermBeanParam.class);
-            workStation.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+            workStation.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
                     .path(WorkStationResource.class)
                     .path(termsMethod)
                     .path(termsEagerlyMethod)
@@ -555,11 +580,11 @@ public class WorkStationResource {
                     .resolveTemplate("servicePointNumber", workStation.getServicePoint().getServicePointNumber().toString())
                     .resolveTemplate("workStationNumber", workStation.getWorkStationNumber().toString())
                     .build())
-                    .rel("terms-eagerly").build() );
+                    .rel("terms-eagerly").build());
 
             // terms count
             Method countTermsByWorkStationMethod = WorkStationResource.TermResource.class.getMethod("countTermsByWorkStation", Long.class, Integer.class, Integer.class, GenericBeanParam.class);
-            workStation.getLinks().add( Link.fromUri(uriInfo.getBaseUriBuilder()
+            workStation.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
                     .path(WorkStationResource.class)
                     .path(termsMethod)
                     .path(countTermsByWorkStationMethod)
@@ -567,7 +592,7 @@ public class WorkStationResource {
                     .resolveTemplate("servicePointNumber", workStation.getServicePoint().getServicePointNumber().toString())
                     .resolveTemplate("workStationNumber", workStation.getWorkStationNumber().toString())
                     .build())
-                    .rel("terms-count").build() );
+                    .rel("terms-count").build());
 
             /**
              * Employees working on current Work Station resource
@@ -621,7 +646,8 @@ public class WorkStationResource {
                     .rel("employees-by-term").build());
 
             // employees by-term-strict
-            Method employeesByTermStrictMethod = WorkStationResource.EmployeeResource.class.getMethod("getWorkStationEmployeesByTermStrict", Long.class, Integer.class, Integer.class, DateRangeBeanParam.class);;
+            Method employeesByTermStrictMethod = WorkStationResource.EmployeeResource.class.getMethod("getWorkStationEmployeesByTermStrict", Long.class, Integer.class, Integer.class, DateRangeBeanParam.class);
+            ;
             workStation.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
                     .path(WorkStationResource.class)
                     .path(employeesMethod)
@@ -671,6 +697,82 @@ public class WorkStationResource {
                     .build())
                     .rel("services-count").build());
 
+            /**
+             * Transactions associated with current Work Station resource
+             */
+            // transactions
+            Method transactionsMethod = WorkStationResource.class.getMethod("getTransactionResource");
+            workStation.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(WorkStationResource.class)
+                    .path(transactionsMethod)
+                    .resolveTemplate("providerId", workStation.getServicePoint().getProvider().getUserId().toString())
+                    .resolveTemplate("servicePointNumber", workStation.getServicePoint().getServicePointNumber().toString())
+                    .resolveTemplate("workStationNumber", workStation.getWorkStationNumber().toString())
+                    .build())
+                    .rel("transactions").build());
+
+            // transactions eagerly
+            Method transactionsEagerlyMethod = WorkStationResource.TransactionResource.class.getMethod("getWorkStationTransactionsEagerly", Long.class, Integer.class, Integer.class, TransactionBeanParam.class);
+            workStation.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(WorkStationResource.class)
+                    .path(transactionsMethod)
+                    .path(transactionsEagerlyMethod)
+                    .resolveTemplate("providerId", workStation.getServicePoint().getProvider().getUserId().toString())
+                    .resolveTemplate("servicePointNumber", workStation.getServicePoint().getServicePointNumber().toString())
+                    .resolveTemplate("workStationNumber", workStation.getWorkStationNumber().toString())
+                    .build())
+                    .rel("transactions-eagerly").build());
+
+            // transactions count
+            Method countTransactionsByWorkStationMethod = WorkStationResource.TransactionResource.class.getMethod("countTransactionsByWorkStation", Long.class, Integer.class, Integer.class, GenericBeanParam.class);
+            workStation.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(WorkStationResource.class)
+                    .path(transactionsMethod)
+                    .path(countTransactionsByWorkStationMethod)
+                    .resolveTemplate("providerId", workStation.getServicePoint().getProvider().getUserId().toString())
+                    .resolveTemplate("servicePointNumber", workStation.getServicePoint().getServicePointNumber().toString())
+                    .resolveTemplate("workStationNumber", workStation.getWorkStationNumber().toString())
+                    .build())
+                    .rel("transactions-count").build());
+
+            /**
+             * Historical Transactions associated with current Work Station resource
+             */
+            // historical-transactions
+            Method historicalTransactionsMethod = WorkStationResource.class.getMethod("getHistoricalTransactionResource");
+            workStation.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(WorkStationResource.class)
+                    .path(historicalTransactionsMethod)
+                    .resolveTemplate("providerId", workStation.getServicePoint().getProvider().getUserId().toString())
+                    .resolveTemplate("servicePointNumber", workStation.getServicePoint().getServicePointNumber().toString())
+                    .resolveTemplate("workStationNumber", workStation.getWorkStationNumber().toString())
+                    .build())
+                    .rel("historical-transactions").build());
+
+            // historical-transactions eagerly
+            Method historicalTransactionsEagerlyMethod = WorkStationResource.HistoricalTransactionResource.class.getMethod("getWorkStationHistoricalTransactionsEagerly", Long.class, Integer.class, Integer.class, HistoricalTransactionBeanParam.class);
+            workStation.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(WorkStationResource.class)
+                    .path(historicalTransactionsMethod)
+                    .path(historicalTransactionsEagerlyMethod)
+                    .resolveTemplate("providerId", workStation.getServicePoint().getProvider().getUserId().toString())
+                    .resolveTemplate("servicePointNumber", workStation.getServicePoint().getServicePointNumber().toString())
+                    .resolveTemplate("workStationNumber", workStation.getWorkStationNumber().toString())
+                    .build())
+                    .rel("historical-transactions-eagerly").build());
+
+            // historical-transactions count
+            Method countHistoricalTransactionsByWorkStationMethod = WorkStationResource.HistoricalTransactionResource.class.getMethod("countHistoricalTransactionsByWorkStation", Long.class, Integer.class, Integer.class, GenericBeanParam.class);
+            workStation.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(WorkStationResource.class)
+                    .path(historicalTransactionsMethod)
+                    .path(countHistoricalTransactionsByWorkStationMethod)
+                    .resolveTemplate("providerId", workStation.getServicePoint().getProvider().getUserId().toString())
+                    .resolveTemplate("servicePointNumber", workStation.getServicePoint().getServicePointNumber().toString())
+                    .resolveTemplate("workStationNumber", workStation.getWorkStationNumber().toString())
+                    .build())
+                    .rel("historical-transactions-count").build());
+
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
         }
@@ -678,7 +780,8 @@ public class WorkStationResource {
 
     public class ProviderServiceResource {
 
-        public ProviderServiceResource() { }
+        public ProviderServiceResource() {
+        }
 
         /**
          * Method returns subset of Provider Service entities for given Work Station.
@@ -688,10 +791,10 @@ public class WorkStationResource {
          */
         @GET
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-        public Response getWorkStationProviderServices( @PathParam("providerId") Long providerId,
-                                                        @PathParam("servicePointNumber") Integer servicePointNumber,
-                                                        @PathParam("workStationNumber") Integer workStationNumber,
-                                                        @BeanParam ProviderServiceBeanParam params ) throws ForbiddenException, NotFoundException,
+        public Response getWorkStationProviderServices(@PathParam("providerId") Long providerId,
+                                                       @PathParam("servicePointNumber") Integer servicePointNumber,
+                                                       @PathParam("workStationNumber") Integer workStationNumber,
+                                                       @BeanParam ProviderServiceBeanParam params) throws ForbiddenException, NotFoundException,
         /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
 
             RESTToolkit.authorizeAccessToWebService(params);
@@ -701,15 +804,15 @@ public class WorkStationResource {
             utx.begin();
 
             // find work station entity for which to get associated provider services
-            WorkStation workStation = workStationFacade.find( new WorkStationId(providerId, servicePointNumber, workStationNumber) );
-            if(workStation == null)
+            WorkStation workStation = workStationFacade.find(new WorkStationId(providerId, servicePointNumber, workStationNumber));
+            if (workStation == null)
                 throw new NotFoundException("Could not find work station for id (" + providerId + "," + servicePointNumber + "," + workStationNumber + ").");
 
             Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
 
             ResourceList<ProviderService> providerServices = null;
 
-            if(noOfParams > 0) {
+            if (noOfParams > 0) {
                 logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
 
                 List<WorkStation> workStations = new ArrayList<>();
@@ -727,7 +830,7 @@ public class WorkStationResource {
                 logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
 
                 // get provider services for given work station without filtering (eventually paginated)
-                providerServices = new ResourceList<>( providerServiceFacade.findByWorkStation(workStation, params.getOffset(), params.getLimit()) );
+                providerServices = new ResourceList<>(providerServiceFacade.findByWorkStation(workStation, params.getOffset(), params.getLimit()));
             }
 
             utx.commit();
@@ -741,10 +844,10 @@ public class WorkStationResource {
         @GET
         @Path("/eagerly")
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-        public Response getWorkStationProviderServicesEagerly( @PathParam("providerId") Long providerId,
-                                                               @PathParam("servicePointNumber") Integer servicePointNumber,
-                                                               @PathParam("workStationNumber") Integer workStationNumber,
-                                                               @BeanParam ProviderServiceBeanParam params ) throws ForbiddenException, NotFoundException,
+        public Response getWorkStationProviderServicesEagerly(@PathParam("providerId") Long providerId,
+                                                              @PathParam("servicePointNumber") Integer servicePointNumber,
+                                                              @PathParam("workStationNumber") Integer workStationNumber,
+                                                              @BeanParam ProviderServiceBeanParam params) throws ForbiddenException, NotFoundException,
         /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
 
             RESTToolkit.authorizeAccessToWebService(params);
@@ -754,15 +857,15 @@ public class WorkStationResource {
             utx.begin();
 
             // find work station entity for which to get associated provider services
-            WorkStation workStation = workStationFacade.find( new WorkStationId(providerId, servicePointNumber, workStationNumber) );
-            if(workStation == null)
+            WorkStation workStation = workStationFacade.find(new WorkStationId(providerId, servicePointNumber, workStationNumber));
+            if (workStation == null)
                 throw new NotFoundException("Could not find work station for id (" + providerId + "," + servicePointNumber + "," + workStationNumber + ").");
 
             Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
 
             ResourceList<ProviderServiceWrapper> providerServices = null;
 
-            if(noOfParams > 0) {
+            if (noOfParams > 0) {
                 logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
 
                 List<WorkStation> workStations = new ArrayList<>();
@@ -782,7 +885,7 @@ public class WorkStationResource {
                 logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
 
                 // get provider services eagerly for given work station without filtering (eventually paginated)
-                providerServices = new ResourceList<>( ProviderServiceWrapper.wrap(providerServiceFacade.findByWorkStationEagerly(workStation, params.getOffset(), params.getLimit())) );
+                providerServices = new ResourceList<>(ProviderServiceWrapper.wrap(providerServiceFacade.findByWorkStationEagerly(workStation, params.getOffset(), params.getLimit())));
             }
 
             utx.commit();
@@ -801,10 +904,10 @@ public class WorkStationResource {
         @GET
         @Path("/count")
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-        public Response countProviderServicesByWorkStation( @PathParam("providerId") Long providerId,
-                                                            @PathParam("servicePointNumber") Integer servicePointNumber,
-                                                            @PathParam("workStationNumber") Integer workStationNumber,
-                                                            @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException,
+        public Response countProviderServicesByWorkStation(@PathParam("providerId") Long providerId,
+                                                           @PathParam("servicePointNumber") Integer servicePointNumber,
+                                                           @PathParam("workStationNumber") Integer workStationNumber,
+                                                           @BeanParam GenericBeanParam params) throws ForbiddenException, NotFoundException,
         /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
 
             RESTToolkit.authorizeAccessToWebService(params);
@@ -814,8 +917,8 @@ public class WorkStationResource {
             utx.begin();
 
             // find work station entity for which to count provider services
-            WorkStation workStation = workStationFacade.find( new WorkStationId(providerId, servicePointNumber, workStationNumber) );
-            if(workStation == null)
+            WorkStation workStation = workStationFacade.find(new WorkStationId(providerId, servicePointNumber, workStationNumber));
+            if (workStation == null)
                 throw new NotFoundException("Could not find work station for id (" + providerId + "," + servicePointNumber + "," + workStationNumber + ").");
 
             ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(providerServiceFacade.countByWorkStation(workStation)),
@@ -829,7 +932,8 @@ public class WorkStationResource {
 
     public class EmployeeResource {
 
-        public EmployeeResource() { }
+        public EmployeeResource() {
+        }
 
         /**
          * Method returns subset of Employee entities for given Work Station entity.
@@ -838,10 +942,10 @@ public class WorkStationResource {
          */
         @GET
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-        public Response getWorkStationEmployees( @PathParam("providerId") Long providerId,
-                                                 @PathParam("servicePointNumber") Integer servicePointNumber,
-                                                 @PathParam("workStationNumber") Integer workStationNumber,
-                                                 @BeanParam EmployeeBeanParam params ) throws ForbiddenException, NotFoundException,
+        public Response getWorkStationEmployees(@PathParam("providerId") Long providerId,
+                                                @PathParam("servicePointNumber") Integer servicePointNumber,
+                                                @PathParam("workStationNumber") Integer workStationNumber,
+                                                @BeanParam EmployeeBeanParam params) throws ForbiddenException, NotFoundException,
         /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
 
             RESTToolkit.authorizeAccessToWebService(params);
@@ -851,15 +955,15 @@ public class WorkStationResource {
             utx.begin();
 
             // find work station entity for which to get associated employees
-            WorkStation workStation = workStationFacade.find( new WorkStationId(providerId, servicePointNumber, workStationNumber) );
-            if(workStation == null)
+            WorkStation workStation = workStationFacade.find(new WorkStationId(providerId, servicePointNumber, workStationNumber));
+            if (workStation == null)
                 throw new NotFoundException("Could not find work station for id (" + providerId + "," + servicePointNumber + "," + workStationNumber + ").");
 
             Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
 
             ResourceList<Employee> employees = null;
 
-            if(noOfParams > 0) {
+            if (noOfParams > 0) {
                 logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
 
                 List<WorkStation> workStations = new ArrayList<>();
@@ -869,14 +973,14 @@ public class WorkStationResource {
                 employees = new ResourceList<>(
                         employeeFacade.findByMultipleCriteria(params.getDescriptions(), params.getJobPositions(), params.getSkills(),
                                 params.getEducations(), params.getServices(), params.getProviderServices(), params.getServicePoints(),
-                                workStations, params.getPeriod(), params.getStrictTerm(),  params.getTerms(), params.getRated(),
+                                workStations, params.getPeriod(), params.getStrictTerm(), params.getTerms(), params.getRated(),
                                 params.getMinAvgRating(), params.getMaxAvgRating(), params.getRatingClients(), params.getOffset(), params.getLimit())
                 );
             } else {
                 logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
 
                 // get employees for given work station without filtering (eventually paginated)
-                employees = new ResourceList<>( employeeFacade.findByWorkStation(workStation, params.getOffset(), params.getLimit()) );
+                employees = new ResourceList<>(employeeFacade.findByWorkStation(workStation, params.getOffset(), params.getLimit()));
             }
 
             utx.commit();
@@ -895,10 +999,10 @@ public class WorkStationResource {
         @GET
         @Path("/eagerly")
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-        public Response getWorkStationEmployeesEagerly( @PathParam("providerId") Long providerId,
-                                                        @PathParam("servicePointNumber") Integer servicePointNumber,
-                                                        @PathParam("workStationNumber") Integer workStationNumber,
-                                                        @BeanParam EmployeeBeanParam params ) throws ForbiddenException, NotFoundException,
+        public Response getWorkStationEmployeesEagerly(@PathParam("providerId") Long providerId,
+                                                       @PathParam("servicePointNumber") Integer servicePointNumber,
+                                                       @PathParam("workStationNumber") Integer workStationNumber,
+                                                       @BeanParam EmployeeBeanParam params) throws ForbiddenException, NotFoundException,
         /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
 
             RESTToolkit.authorizeAccessToWebService(params);
@@ -908,15 +1012,15 @@ public class WorkStationResource {
             utx.begin();
 
             // find work station entity for which to get associated employees
-            WorkStation workStation = workStationFacade.find( new WorkStationId(providerId, servicePointNumber, workStationNumber) );
-            if(workStation == null)
+            WorkStation workStation = workStationFacade.find(new WorkStationId(providerId, servicePointNumber, workStationNumber));
+            if (workStation == null)
                 throw new NotFoundException("Could not find work station for id (" + providerId + "," + servicePointNumber + "," + workStationNumber + ").");
 
             Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
 
             ResourceList<EmployeeWrapper> employees = null;
 
-            if(noOfParams > 0) {
+            if (noOfParams > 0) {
                 logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
 
                 List<WorkStation> workStations = new ArrayList<>();
@@ -927,7 +1031,7 @@ public class WorkStationResource {
                         EmployeeWrapper.wrap(
                                 employeeFacade.findByMultipleCriteriaEagerly(params.getDescriptions(), params.getJobPositions(), params.getSkills(),
                                         params.getEducations(), params.getServices(), params.getProviderServices(), params.getServicePoints(),
-                                        workStations, params.getPeriod(), params.getStrictTerm(),  params.getTerms(), params.getRated(),
+                                        workStations, params.getPeriod(), params.getStrictTerm(), params.getTerms(), params.getRated(),
                                         params.getMinAvgRating(), params.getMaxAvgRating(), params.getRatingClients(), params.getOffset(), params.getLimit())
                         )
                 );
@@ -935,7 +1039,7 @@ public class WorkStationResource {
                 logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
 
                 // get employees eagerly for given work station without filtering (eventually paginated)
-                employees = new ResourceList<>( EmployeeWrapper.wrap(employeeFacade.findByWorkStationEagerly(workStation, params.getOffset(), params.getLimit())) );
+                employees = new ResourceList<>(EmployeeWrapper.wrap(employeeFacade.findByWorkStationEagerly(workStation, params.getOffset(), params.getLimit())));
             }
 
             utx.commit();
@@ -953,10 +1057,10 @@ public class WorkStationResource {
         @GET
         @Path("/count")
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-        public Response countEmployeesByWorkStation( @PathParam("providerId") Long providerId,
-                                                     @PathParam("servicePointNumber") Integer servicePointNumber,
-                                                     @PathParam("workStationNumber") Integer workStationNumber,
-                                                     @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException,
+        public Response countEmployeesByWorkStation(@PathParam("providerId") Long providerId,
+                                                    @PathParam("servicePointNumber") Integer servicePointNumber,
+                                                    @PathParam("workStationNumber") Integer workStationNumber,
+                                                    @BeanParam GenericBeanParam params) throws ForbiddenException, NotFoundException,
         /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
 
             RESTToolkit.authorizeAccessToWebService(params);
@@ -966,8 +1070,8 @@ public class WorkStationResource {
             utx.begin();
 
             // find work station entity for which to count employees
-            WorkStation workStation = workStationFacade.find( new WorkStationId(providerId, servicePointNumber, workStationNumber) );
-            if(workStation == null)
+            WorkStation workStation = workStationFacade.find(new WorkStationId(providerId, servicePointNumber, workStationNumber));
+            if (workStation == null)
                 throw new NotFoundException("Could not find work station for id (" + providerId + "," + servicePointNumber + "," + workStationNumber + ").");
 
             ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(employeeFacade.countByWorkStation(workStation)), 200,
@@ -986,10 +1090,10 @@ public class WorkStationResource {
         @GET
         @Path("/by-term")
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-        public Response getWorkStationEmployeesByTerm( @PathParam("providerId") Long providerId,
-                                                       @PathParam("servicePointNumber") Integer servicePointNumber,
-                                                       @PathParam("workStationNumber") Integer workStationNumber,
-                                                       @BeanParam DateRangeBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException,
+        public Response getWorkStationEmployeesByTerm(@PathParam("providerId") Long providerId,
+                                                      @PathParam("servicePointNumber") Integer servicePointNumber,
+                                                      @PathParam("workStationNumber") Integer workStationNumber,
+                                                      @BeanParam DateRangeBeanParam params) throws ForbiddenException, NotFoundException, BadRequestException,
         /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
 
             RESTToolkit.authorizeAccessToWebService(params);
@@ -1001,12 +1105,12 @@ public class WorkStationResource {
             utx.begin();
 
             // find work station entity for which to get associated employees
-            WorkStation workStation = workStationFacade.find( new WorkStationId(providerId, servicePointNumber, workStationNumber) );
-            if(workStation == null)
+            WorkStation workStation = workStationFacade.find(new WorkStationId(providerId, servicePointNumber, workStationNumber));
+            if (workStation == null)
                 throw new NotFoundException("Could not find work station for id (" + providerId + "," + servicePointNumber + "," + workStationNumber + ").");
 
             // find employees by given criteria (work station, term)
-            ResourceList<Employee> employees =  new ResourceList<>(
+            ResourceList<Employee> employees = new ResourceList<>(
                     employeeFacade.findByWorkStationAndTerm(workStation, params.getStartDate(), params.getEndDate(),
                             params.getOffset(), params.getLimit())
             );
@@ -1027,10 +1131,10 @@ public class WorkStationResource {
         @GET
         @Path("/by-term-strict")
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-        public Response getWorkStationEmployeesByTermStrict( @PathParam("providerId") Long providerId,
-                                                             @PathParam("servicePointNumber") Integer servicePointNumber,
-                                                             @PathParam("workStationNumber") Integer workStationNumber,
-                                                             @BeanParam DateRangeBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException,
+        public Response getWorkStationEmployeesByTermStrict(@PathParam("providerId") Long providerId,
+                                                            @PathParam("servicePointNumber") Integer servicePointNumber,
+                                                            @PathParam("workStationNumber") Integer workStationNumber,
+                                                            @BeanParam DateRangeBeanParam params) throws ForbiddenException, NotFoundException, BadRequestException,
         /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
 
             RESTToolkit.authorizeAccessToWebService(params);
@@ -1042,12 +1146,12 @@ public class WorkStationResource {
             utx.begin();
 
             // find work station entity for which to get associated employees
-            WorkStation workStation = workStationFacade.find( new WorkStationId(providerId, servicePointNumber, workStationNumber) );
-            if(workStation == null)
+            WorkStation workStation = workStationFacade.find(new WorkStationId(providerId, servicePointNumber, workStationNumber));
+            if (workStation == null)
                 throw new NotFoundException("Could not find work station for id (" + providerId + "," + servicePointNumber + "," + workStationNumber + ").");
 
             // find employees by given criteria (work station, term strict)
-            ResourceList<Employee> employees =  new ResourceList<>(
+            ResourceList<Employee> employees = new ResourceList<>(
                     employeeFacade.findByWorkStationAndTermStrict(workStation, params.getStartDate(), params.getEndDate(),
                             params.getOffset(), params.getLimit())
             );
@@ -1063,7 +1167,8 @@ public class WorkStationResource {
 
     public class ServiceResource {
 
-        public ServiceResource() { }
+        public ServiceResource() {
+        }
 
         /**
          * Method returns subset of Service entities for given Work Station entity.
@@ -1072,10 +1177,10 @@ public class WorkStationResource {
          */
         @GET
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-        public Response getWorkStationServices( @PathParam("providerId") Long providerId,
-                                                @PathParam("servicePointNumber") Integer servicePointNumber,
-                                                @PathParam("workStationNumber") Integer workStationNumber,
-                                                @BeanParam ServiceBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException,
+        public Response getWorkStationServices(@PathParam("providerId") Long providerId,
+                                               @PathParam("servicePointNumber") Integer servicePointNumber,
+                                               @PathParam("workStationNumber") Integer workStationNumber,
+                                               @BeanParam ServiceBeanParam params) throws ForbiddenException, NotFoundException, BadRequestException,
         /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
 
             RESTToolkit.authorizeAccessToWebService(params);
@@ -1086,14 +1191,14 @@ public class WorkStationResource {
 
             // find work station entity for which to get associated services
             WorkStation workStation = workStationFacade.find(new WorkStationId(providerId, servicePointNumber, workStationNumber));
-            if(workStation == null)
+            if (workStation == null)
                 throw new NotFoundException("Could not find work station for id (" + providerId + "," + servicePointNumber + "," + workStationNumber + ").");
 
             Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
 
             ResourceList<Service> services = null;
 
-            if(noOfParams > 0) {
+            if (noOfParams > 0) {
                 logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
 
                 List<WorkStation> workStations = new ArrayList<>();
@@ -1101,8 +1206,8 @@ public class WorkStationResource {
 
                 // get services for given work station filtered by given query params
 
-                if( RESTToolkit.isSet(params.getKeywords()) ) {
-                    if( RESTToolkit.isSet(params.getNames()) || RESTToolkit.isSet(params.getDescriptions()) )
+                if (RESTToolkit.isSet(params.getKeywords())) {
+                    if (RESTToolkit.isSet(params.getNames()) || RESTToolkit.isSet(params.getDescriptions()))
                         throw new BadRequestException("Query params cannot include keywords and names or descriptions at the same time.");
 
                     // find only by keywords
@@ -1122,7 +1227,7 @@ public class WorkStationResource {
                 logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
 
                 // get services for given work station without filtering (eventually paginated)
-                services = new ResourceList<>( serviceFacade.findByWorkStation(workStation, params.getOffset(), params.getLimit()) );
+                services = new ResourceList<>(serviceFacade.findByWorkStation(workStation, params.getOffset(), params.getLimit()));
             }
 
             utx.commit();
@@ -1141,10 +1246,10 @@ public class WorkStationResource {
         @GET
         @Path("/eagerly")
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-        public Response getWorkStationServicesEagerly( @PathParam("providerId") Long providerId,
-                                                       @PathParam("servicePointNumber") Integer servicePointNumber,
-                                                       @PathParam("workStationNumber") Integer workStationNumber,
-                                                       @BeanParam ServiceBeanParam params ) throws ForbiddenException, NotFoundException, BadRequestException,
+        public Response getWorkStationServicesEagerly(@PathParam("providerId") Long providerId,
+                                                      @PathParam("servicePointNumber") Integer servicePointNumber,
+                                                      @PathParam("workStationNumber") Integer workStationNumber,
+                                                      @BeanParam ServiceBeanParam params) throws ForbiddenException, NotFoundException, BadRequestException,
         /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
 
             RESTToolkit.authorizeAccessToWebService(params);
@@ -1155,14 +1260,14 @@ public class WorkStationResource {
 
             // find work station entity for which to get associated services
             WorkStation workStation = workStationFacade.find(new WorkStationId(providerId, servicePointNumber, workStationNumber));
-            if(workStation == null)
+            if (workStation == null)
                 throw new NotFoundException("Could not find work station for id (" + providerId + "," + servicePointNumber + "," + workStationNumber + ").");
 
             Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
 
             ResourceList<ServiceWrapper> services = null;
 
-            if(noOfParams > 0) {
+            if (noOfParams > 0) {
                 logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
 
                 List<WorkStation> workStations = new ArrayList<>();
@@ -1170,8 +1275,8 @@ public class WorkStationResource {
 
                 // get services eagerly for given work station filtered by given query params
 
-                if( RESTToolkit.isSet(params.getKeywords()) ) {
-                    if( RESTToolkit.isSet(params.getNames()) || RESTToolkit.isSet(params.getDescriptions()) )
+                if (RESTToolkit.isSet(params.getKeywords())) {
+                    if (RESTToolkit.isSet(params.getNames()) || RESTToolkit.isSet(params.getDescriptions()))
                         throw new BadRequestException("Query params cannot include keywords and names or descriptions at the same time.");
 
                     // find only by keywords
@@ -1197,7 +1302,7 @@ public class WorkStationResource {
                 logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
 
                 // get services eagerly for given work station without filtering (eventually paginated)
-                services = new ResourceList<>( ServiceWrapper.wrap(serviceFacade.findByWorkStationEagerly(workStation, params.getOffset(), params.getLimit())) );
+                services = new ResourceList<>(ServiceWrapper.wrap(serviceFacade.findByWorkStationEagerly(workStation, params.getOffset(), params.getLimit())));
             }
 
             utx.commit();
@@ -1216,10 +1321,10 @@ public class WorkStationResource {
         @GET
         @Path("/count")
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-        public Response countServicesByWorkStation( @PathParam("providerId") Long providerId,
-                                                    @PathParam("servicePointNumber") Integer servicePointNumber,
-                                                    @PathParam("workStationNumber") Integer workStationNumber,
-                                                    @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException,
+        public Response countServicesByWorkStation(@PathParam("providerId") Long providerId,
+                                                   @PathParam("servicePointNumber") Integer servicePointNumber,
+                                                   @PathParam("workStationNumber") Integer workStationNumber,
+                                                   @BeanParam GenericBeanParam params) throws ForbiddenException, NotFoundException,
         /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
 
             RESTToolkit.authorizeAccessToWebService(params);
@@ -1229,8 +1334,8 @@ public class WorkStationResource {
             utx.begin();
 
             // find work station entity for which to count services
-            WorkStation workStation = workStationFacade.find( new WorkStationId(providerId, servicePointNumber, workStationNumber) );
-            if(workStation == null)
+            WorkStation workStation = workStationFacade.find(new WorkStationId(providerId, servicePointNumber, workStationNumber));
+            if (workStation == null)
                 throw new NotFoundException("Could not find work station for id (" + providerId + "," + servicePointNumber + "," + workStationNumber + ").");
 
             ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(serviceFacade.countByWorkStation(workStation)), 200,
@@ -1244,7 +1349,8 @@ public class WorkStationResource {
 
     public class EmployeeTermResource {
 
-        public EmployeeTermResource() { }
+        public EmployeeTermResource() {
+        }
 
         /**
          * Method returns subset of Employee Term entities for given Work Station entity.
@@ -1253,10 +1359,10 @@ public class WorkStationResource {
          */
         @GET
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-        public Response getWorkStationEmployeeTerms( @PathParam("providerId") Long providerId,
-                                                     @PathParam("servicePointNumber") Integer servicePointNumber,
-                                                     @PathParam("workStationNumber") Integer workStationNumber,
-                                                     @BeanParam EmployeeTermBeanParam params ) throws ForbiddenException, NotFoundException,
+        public Response getWorkStationEmployeeTerms(@PathParam("providerId") Long providerId,
+                                                    @PathParam("servicePointNumber") Integer servicePointNumber,
+                                                    @PathParam("workStationNumber") Integer workStationNumber,
+                                                    @BeanParam EmployeeTermBeanParam params) throws ForbiddenException, NotFoundException,
         /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
 
             RESTToolkit.authorizeAccessToWebService(params);
@@ -1266,15 +1372,15 @@ public class WorkStationResource {
             utx.begin();
 
             // find work station entity for which to get associated employee terms
-            WorkStation workStation = workStationFacade.find( new WorkStationId(providerId, servicePointNumber, workStationNumber) );
-            if(workStation == null)
+            WorkStation workStation = workStationFacade.find(new WorkStationId(providerId, servicePointNumber, workStationNumber));
+            if (workStation == null)
                 throw new NotFoundException("Could not find work station for id (" + providerId + "," + servicePointNumber + "," + workStationNumber + ").");
 
             Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
 
             ResourceList<EmployeeTerm> employeeTerms = null;
 
-            if(noOfParams > 0) {
+            if (noOfParams > 0) {
                 logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
 
                 List<WorkStation> workStations = new ArrayList<>();
@@ -1291,7 +1397,7 @@ public class WorkStationResource {
                 logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
 
                 // get employee terms for given work station without filtering (eventually paginated)
-                employeeTerms = new ResourceList<>( employeeTermFacade.findByWorkStation(workStation, params.getOffset(), params.getLimit()) );
+                employeeTerms = new ResourceList<>(employeeTermFacade.findByWorkStation(workStation, params.getOffset(), params.getLimit()));
             }
 
             utx.commit();
@@ -1309,10 +1415,10 @@ public class WorkStationResource {
         @GET
         @Path("/count")
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-        public Response countEmployeeTermsByWorkStation( @PathParam("providerId") Long providerId,
-                                                         @PathParam("servicePointNumber") Integer servicePointNumber,
-                                                         @PathParam("workStationNumber") Integer workStationNumber,
-                                                         @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException,
+        public Response countEmployeeTermsByWorkStation(@PathParam("providerId") Long providerId,
+                                                        @PathParam("servicePointNumber") Integer servicePointNumber,
+                                                        @PathParam("workStationNumber") Integer workStationNumber,
+                                                        @BeanParam GenericBeanParam params) throws ForbiddenException, NotFoundException,
         /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
 
             RESTToolkit.authorizeAccessToWebService(params);
@@ -1322,8 +1428,8 @@ public class WorkStationResource {
             utx.begin();
 
             // find work station entity for which to count employee terms
-            WorkStation workStation = workStationFacade.find( new WorkStationId(providerId, servicePointNumber, workStationNumber) );
-            if(workStation == null)
+            WorkStation workStation = workStationFacade.find(new WorkStationId(providerId, servicePointNumber, workStationNumber));
+            if (workStation == null)
                 throw new NotFoundException("Could not find work station for id (" + providerId + "," + servicePointNumber + "," + workStationNumber + ").");
 
             ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(employeeTermFacade.countByWorkStation(workStation)), 200,
@@ -1338,7 +1444,8 @@ public class WorkStationResource {
 
     public class TermResource {
 
-        public TermResource() { }
+        public TermResource() {
+        }
 
         /**
          * Method returns subset of Term entities for given Work Station entity.
@@ -1347,10 +1454,10 @@ public class WorkStationResource {
          */
         @GET
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-        public Response getWorkStationTerms( @PathParam("providerId") Long providerId,
-                                             @PathParam("servicePointNumber") Integer servicePointNumber,
-                                             @PathParam("workStationNumber") Integer workStationNumber,
-                                             @BeanParam TermBeanParam params ) throws ForbiddenException, NotFoundException,
+        public Response getWorkStationTerms(@PathParam("providerId") Long providerId,
+                                            @PathParam("servicePointNumber") Integer servicePointNumber,
+                                            @PathParam("workStationNumber") Integer workStationNumber,
+                                            @BeanParam TermBeanParam params) throws ForbiddenException, NotFoundException,
         /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
 
             RESTToolkit.authorizeAccessToWebService(params);
@@ -1384,7 +1491,7 @@ public class WorkStationResource {
                 logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
 
                 // get terms for given work station without filtering (eventually paginated)
-                terms = new ResourceList<>( termFacade.findByWorkStation(workStation, params.getOffset(), params.getLimit()) );
+                terms = new ResourceList<>(termFacade.findByWorkStation(workStation, params.getOffset(), params.getLimit()));
             }
 
             utx.commit();
@@ -1403,10 +1510,10 @@ public class WorkStationResource {
         @GET
         @Path("/eagerly")
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-        public Response getWorkStationTermsEagerly( @PathParam("providerId") Long providerId,
-                                                    @PathParam("servicePointNumber") Integer servicePointNumber,
-                                                    @PathParam("workStationNumber") Integer workStationNumber,
-                                                    @BeanParam TermBeanParam params ) throws ForbiddenException, NotFoundException,
+        public Response getWorkStationTermsEagerly(@PathParam("providerId") Long providerId,
+                                                   @PathParam("servicePointNumber") Integer servicePointNumber,
+                                                   @PathParam("workStationNumber") Integer workStationNumber,
+                                                   @BeanParam TermBeanParam params) throws ForbiddenException, NotFoundException,
         /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
 
             RESTToolkit.authorizeAccessToWebService(params);
@@ -1424,7 +1531,7 @@ public class WorkStationResource {
 
             ResourceList<TermWrapper> terms = null;
 
-            if(noOfParams > 0) {
+            if (noOfParams > 0) {
                 logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
 
                 List<WorkStation> workStations = new ArrayList<>();
@@ -1443,7 +1550,7 @@ public class WorkStationResource {
                 logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
 
                 // get terms eagerly for given work station without filtering (eventually paginated)
-                terms = new ResourceList<>( TermWrapper.wrap(termFacade.findByWorkStationEagerly(workStation, params.getOffset(), params.getLimit())) );
+                terms = new ResourceList<>(TermWrapper.wrap(termFacade.findByWorkStationEagerly(workStation, params.getOffset(), params.getLimit())));
             }
 
             utx.commit();
@@ -1461,10 +1568,10 @@ public class WorkStationResource {
         @GET
         @Path("/count")
         @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-        public Response countTermsByWorkStation( @PathParam("providerId") Long providerId,
-                                                 @PathParam("servicePointNumber") Integer servicePointNumber,
-                                                 @PathParam("workStationNumber") Integer workStationNumber,
-                                                 @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException,
+        public Response countTermsByWorkStation(@PathParam("providerId") Long providerId,
+                                                @PathParam("servicePointNumber") Integer servicePointNumber,
+                                                @PathParam("workStationNumber") Integer workStationNumber,
+                                                @BeanParam GenericBeanParam params) throws ForbiddenException, NotFoundException,
         /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
 
             RESTToolkit.authorizeAccessToWebService(params);
@@ -1474,13 +1581,321 @@ public class WorkStationResource {
             utx.begin();
 
             // find work station entity for which to count terms
-            WorkStation workStation = workStationFacade.find( new WorkStationId(providerId, servicePointNumber, workStationNumber) );
-            if(workStation == null)
+            WorkStation workStation = workStationFacade.find(new WorkStationId(providerId, servicePointNumber, workStationNumber));
+            if (workStation == null)
                 throw new NotFoundException("Could not find work station for id (" + providerId + "," + servicePointNumber + "," + workStationNumber + ").");
 
             ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(termFacade.countByWorkStation(workStation)), 200,
                     "number of terms for work station with id (" + workStation.getServicePoint().getProvider().getUserId() + ","
                             + workStation.getServicePoint().getServicePointNumber() + "," + workStation.getWorkStationNumber() + ")");
+
+            utx.commit();
+
+            return Response.status(Status.OK).entity(responseEntity).build();
+        }
+    }
+
+    public class TransactionResource {
+
+        public TransactionResource() { }
+
+        /**
+         * Method returns subset of Transaction entities for given Work Station entity.
+         * The provider id, service point number and work station number are passed through path params.
+         * They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getWorkStationTransactions( @PathParam("providerId") Long providerId,
+                                                    @PathParam("servicePointNumber") Integer servicePointNumber,
+                                                    @PathParam("workStationNumber") Integer workStationNumber,
+                                                    @BeanParam TransactionBeanParam params ) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning transactions for given work station using " +
+                    "WorkStationResource.TransactionResource.getWorkStationTransactions(providerId, servicePointNumber, workStationNumber) method of REST API");
+
+            utx.begin();
+
+            // find work station entity for which to get associated transactions
+            WorkStation workStation = workStationFacade.find(new WorkStationId(providerId, servicePointNumber, workStationNumber));
+            if(workStation == null)
+                throw new NotFoundException("Could not find work station for id (" + providerId + "," + servicePointNumber + "," + workStationNumber + ").");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<Transaction> transactions = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<WorkStation> workStations = new ArrayList<>();
+                workStations.add(workStation);
+
+                // get transactions for given work station filtered by given query params
+                transactions = new ResourceList<>(
+                        transactionFacade.findByMultipleCriteria(params.getClients(), params.getProviders(), params.getServices(), params.getServicePoints(),
+                                workStations, params.getEmployees(), params.getProviderServices(), params.getTransactionTimePeriod(),
+                                params.getBookedTimePeriod(), params.getTerms(), params.getPriceRange(), params.getCurrencyCodes(), params.getPaymentMethods(),
+                                params.getPaid(), params.getOffset(), params.getLimit())
+                );
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get transactions for given work station without filtering (eventually paginated)
+                transactions = new ResourceList<>( transactionFacade.findByWorkStation(workStation, params.getOffset(), params.getLimit()) );
+            }
+
+            utx.commit();
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.TransactionResource.populateWithHATEOASLinks(transactions, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(transactions).build();
+        }
+
+        /**
+         * Method returns subset of Transaction entities for given Work Station fetching them eagerly.
+         * The provider id, service point number and work station number are passed through path params.
+         * They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Path("/eagerly")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getWorkStationTransactionsEagerly( @PathParam("providerId") Long providerId,
+                                                           @PathParam("servicePointNumber") Integer servicePointNumber,
+                                                           @PathParam("workStationNumber") Integer workStationNumber,
+                                                           @BeanParam TransactionBeanParam params ) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning transactions eagerly for given work station using " +
+                    "WorkStationResource.TransactionResource.getWorkStationTransactionsEagerly(providerId, servicePointNumber, workStationNumber) method of REST API");
+
+            utx.begin();
+
+            // find work station entity for which to get associated transactions
+            WorkStation workStation = workStationFacade.find(new WorkStationId(providerId, servicePointNumber, workStationNumber));
+            if(workStation == null)
+                throw new NotFoundException("Could not find work station for id (" + providerId + "," + servicePointNumber + "," + workStationNumber + ").");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<TransactionWrapper> transactions = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<WorkStation> workStations = new ArrayList<>();
+                workStations.add(workStation);
+
+                // get transactions eagerly for given work station filtered by given query params
+                transactions = new ResourceList<>(
+                        TransactionWrapper.wrap(
+                                transactionFacade.findByMultipleCriteriaEagerly(params.getClients(), params.getProviders(), params.getServices(),
+                                        params.getServicePoints(), workStations, params.getEmployees(), params.getProviderServices(),
+                                        params.getTransactionTimePeriod(), params.getBookedTimePeriod(), params.getTerms(), params.getPriceRange(),
+                                        params.getCurrencyCodes(), params.getPaymentMethods(), params.getPaid(), params.getOffset(), params.getLimit())
+                        )
+                );
+            }  else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get transactions eagerly for given work station without filtering (eventually paginated)
+                transactions = new ResourceList<>( TransactionWrapper.wrap(transactionFacade.findByWorkStationEagerly(workStation, params.getOffset(), params.getLimit())) );
+            }
+
+            utx.commit();
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.TransactionResource.populateWithHATEOASLinks(transactions, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(transactions).build();
+        }
+
+        /**
+         * Method that counts Transaction entities for given Work Station resource.
+         * The provider id, service point number and work station number are passed through path params.
+         */
+        @GET
+        @Path("/count")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response countTransactionsByWorkStation( @PathParam("providerId") Long providerId,
+                                                        @PathParam("servicePointNumber") Integer servicePointNumber,
+                                                        @PathParam("workStationNumber") Integer workStationNumber,
+                                                        @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning number of transactions for given work station by executing " +
+                    "WorkStationResource.TransactionResource.countTransactionsByWorkStation(providerId, servicePointNumber, workStationNumber) method of REST API");
+
+            utx.begin();
+
+            // find work station entity for which to count transactions
+            WorkStation workStation = workStationFacade.find(new WorkStationId(providerId, servicePointNumber, workStationNumber));
+            if(workStation == null)
+                throw new NotFoundException("Could not find work station for id (" + providerId + "," + servicePointNumber + "," + workStationNumber + ").");
+
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(transactionFacade.countByWorkStation(workStation)), 200,
+                    "number of transactions for work station with id (" + workStation.getServicePoint().getProvider().getUserId() + "," +
+                            workStation.getServicePoint().getServicePointNumber() + "," + workStation.getWorkStationNumber() + ")");
+
+            utx.commit();
+
+            return Response.status(Status.OK).entity(responseEntity).build();
+        }
+    }
+
+    public class HistoricalTransactionResource {
+
+        public HistoricalTransactionResource() {}
+
+        /**
+         * Method returns subset of Historical Transaction entities for given Work Station entity.
+         * The provider id, service point number and work station number are passed through path params.
+         * They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getWorkStationHistoricalTransactions( @PathParam("providerId") Long providerId,
+                                                              @PathParam("servicePointNumber") Integer servicePointNumber,
+                                                              @PathParam("workStationNumber") Integer workStationNumber,
+                                                              @BeanParam HistoricalTransactionBeanParam params ) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning historical transactions for given work station using " +
+                    "WorkStationResource.HistoricalTransactionResource.getWorkStationHistoricalTransactions(providerId, servicePointNumber, workStationNumber) method of REST API");
+
+            utx.begin();
+
+            // find work station entity for which to get associated historical transactions
+            WorkStation workStation = workStationFacade.find(new WorkStationId(providerId, servicePointNumber, workStationNumber));
+            if (workStation == null)
+                throw new NotFoundException("Could not find work station for id (" + providerId + "," + servicePointNumber + "," + workStationNumber + ").");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<HistoricalTransaction> historicalTransactions = null;
+
+            if (noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<WorkStation> workStations = new ArrayList<>();
+                workStations.add(workStation);
+
+                // get historical transactions for given work station filtered by given query params
+                historicalTransactions = new ResourceList<>(
+                        historicalTransactionFacade.findByMultipleCriteria(params.getClients(), params.getProviders(), params.getServices(), params.getServicePoints(),
+                                workStations, params.getEmployees(), params.getProviderServices(), params.getTransactionTimePeriod(),
+                                params.getBookedTimePeriod(), params.getTerms(), params.getPriceRange(), params.getCurrencyCodes(), params.getPaymentMethods(),
+                                params.getPaid(), params.getCompletionStatuses(), params.getClientRatingRange(), params.getClientComments(),
+                                params.getProviderRatingRange(), params.getProviderDementis(), params.getOffset(), params.getLimit())
+                );
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get historical transactions for given work station without filtering (eventually paginated)
+                historicalTransactions = new ResourceList<>(historicalTransactionFacade.findByWorkStation(workStation, params.getOffset(), params.getLimit()));
+            }
+
+            utx.commit();
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.HistoricalTransactionResource.populateWithHATEOASLinks(historicalTransactions, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(historicalTransactions).build();
+        }
+
+        /**
+         * Method returns subset of Historical Transaction entities for given Work Station fetching them eagerly.
+         * The provider id, service point number and work station number are passed through path params.
+         * They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Path("/eagerly")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getWorkStationHistoricalTransactionsEagerly( @PathParam("providerId") Long providerId,
+                                                                     @PathParam("servicePointNumber") Integer servicePointNumber,
+                                                                     @PathParam("workStationNumber") Integer workStationNumber,
+                                                                     @BeanParam HistoricalTransactionBeanParam params ) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning historical transactions eagerly for given work station using " +
+                    "WorkStationResource.HistoricalTransactionResource.getWorkStationHistoricalTransactionsEagerly(providerId, servicePointNumber, workStationNumber) method of REST API");
+
+            utx.begin();
+
+            // find work station entity for which to get associated historical transactions
+            WorkStation workStation = workStationFacade.find(new WorkStationId(providerId, servicePointNumber, workStationNumber));
+            if (workStation == null)
+                throw new NotFoundException("Could not find work station for id (" + providerId + "," + servicePointNumber + "," + workStationNumber + ").");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<HistoricalTransactionWrapper> historicalTransactions = null;
+
+            if (noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<WorkStation> workStations = new ArrayList<>();
+                workStations.add(workStation);
+
+                // get historical transactions eagerly for given work station filtered by given query params
+                historicalTransactions = new ResourceList<>(
+                        HistoricalTransactionWrapper.wrap(
+                                historicalTransactionFacade.findByMultipleCriteriaEagerly(params.getClients(), params.getProviders(), params.getServices(), params.getServicePoints(),
+                                        workStations, params.getEmployees(), params.getProviderServices(), params.getTransactionTimePeriod(),
+                                        params.getBookedTimePeriod(), params.getTerms(), params.getPriceRange(), params.getCurrencyCodes(), params.getPaymentMethods(),
+                                        params.getPaid(), params.getCompletionStatuses(), params.getClientRatingRange(), params.getClientComments(),
+                                        params.getProviderRatingRange(), params.getProviderDementis(), params.getOffset(), params.getLimit())
+                        )
+                );
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get historical transactions eagerly for given work station without filtering (eventually paginated)
+                historicalTransactions = new ResourceList<>(HistoricalTransactionWrapper.wrap(historicalTransactionFacade.findByWorkStationEagerly(workStation, params.getOffset(), params.getLimit())));
+            }
+
+            utx.commit();
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.HistoricalTransactionResource.populateWithHATEOASLinks(historicalTransactions, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(historicalTransactions).build();
+        }
+
+        /**
+         * Method that counts Historical Transaction entities for given Work Station resource.
+         * The provider id, service point number and work station number are passed through path params.
+         */
+        @GET
+        @Path("/count")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response countHistoricalTransactionsByWorkStation( @PathParam("providerId") Long providerId,
+                                                                  @PathParam("servicePointNumber") Integer servicePointNumber,
+                                                                  @PathParam("workStationNumber") Integer workStationNumber,
+                                                                  @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning number of historical transactions for given work station by executing " +
+                    "WorkStationResource.HistoricalTransactionResource.countHistoricalTransactionsByWorkStation(providerId, servicePointNumber, workStationNumber) method of REST API");
+
+            utx.begin();
+
+            // find work station entity for which to count historical transactions
+            WorkStation workStation = workStationFacade.find(new WorkStationId(providerId, servicePointNumber, workStationNumber));
+            if (workStation == null)
+                throw new NotFoundException("Could not find work station for id (" + providerId + "," + servicePointNumber + "," + workStationNumber + ").");
+
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(historicalTransactionFacade.countByWorkStation(workStation)), 200,
+                    "number of historical transactions for work station with id (" + workStation.getServicePoint().getProvider().getUserId() + "," +
+                            workStation.getServicePoint().getServicePointNumber() + "," + workStation.getWorkStationNumber() + ")");
 
             utx.commit();
 

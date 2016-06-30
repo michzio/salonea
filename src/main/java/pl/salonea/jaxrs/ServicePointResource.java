@@ -2,6 +2,7 @@ package pl.salonea.jaxrs;
 
 import pl.salonea.ejb.stateless.*;
 import pl.salonea.entities.*;
+import pl.salonea.entities.Transaction;
 import pl.salonea.entities.idclass.ServicePointId;
 import pl.salonea.enums.WorkStationType;
 import pl.salonea.jaxrs.bean_params.*;
@@ -58,6 +59,10 @@ public class ServicePointResource {
     private EmployeeTermFacade employeeTermFacade;
     @Inject
     private TermFacade termFacade;
+    @Inject
+    private TransactionFacade transactionFacade;
+    @Inject
+    private HistoricalTransactionFacade historicalTransactionFacade;
 
     @Inject
     private ProviderResource providerResource;
@@ -375,31 +380,28 @@ public class ServicePointResource {
     public PhotoResource getServicePointPhotoResource() {
         return new PhotoResource();
     }
-
     @Path("/{providerId: \\d+}+{servicePointNumber: \\d+}/virtual-tours")
     public VirtualTourResource getVirtualTourResource() {
         return new VirtualTourResource();
     }
-
     @Path("/{providerId: \\d+}+{servicePointNumber: \\d+}/employees")
     public EmployeeResource getEmployeeResource() { return new EmployeeResource(); }
-
     @Path("/{providerId: \\d+}+{servicePointNumber: \\d+}/services")
     public ServiceResource getServiceResource() { return  new ServiceResource(); }
-
     @Path("/{providerId: \\d+}+{servicePointNumber: \\d+}/provider-services")
     public ProviderServiceResource getProviderServiceResource() {
         return new ProviderServiceResource();
     }
-
     @Path("/{providerId: \\d+}+{servicePointNumber: \\d+}/work-stations")
     public WorkStationResource getWorkStationResource() { return new WorkStationResource(); }
-
     @Path("/{providerId: \\d+}+{servicePointNumber: \\d+}/employee-terms")
     public EmployeeTermResource getEmployeeTermResource() { return new EmployeeTermResource(); }
-
     @Path("/{providerId: \\d+}+{servicePointNumber: \\d+}/terms")
     public TermResource getTermResource() { return new TermResource(); }
+    @Path("/{providerId: \\d+}+{servicePointNumber: \\d+}/transactions")
+    public TransactionResource getTransactionResource() { return new TransactionResource(); }
+    @Path("/{providerId: \\d+}+{servicePointNumber: \\d+}/historical-transactions")
+    public HistoricalTransactionResource getHistoricalTransactionResource() { return new HistoricalTransactionResource(); }
 
     /**
      * This method enables to populate list of resources and each individual resource on list with hypermedia links
@@ -903,6 +905,76 @@ public class ServicePointResource {
                     .resolveTemplate("servicePointNumber", servicePoint.getServicePointNumber().toString())
                     .build())
                     .rel("terms-count").build() );
+
+            /**
+             * Transactions associated with current Service Point resource
+             */
+            // transactions
+            Method transactionsMethod = ServicePointResource.class.getMethod("getTransactionResource");
+            servicePoint.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ServicePointResource.class)
+                    .path(transactionsMethod)
+                    .resolveTemplate("providerId", servicePoint.getProvider().getUserId().toString())
+                    .resolveTemplate("servicePointNumber", servicePoint.getServicePointNumber().toString())
+                    .build())
+                    .rel("transactions").build());
+
+            // transactions eagerly
+            Method transactionsEagerlyMethod = ServicePointResource.TransactionResource.class.getMethod("getServicePointTransactionsEagerly", Long.class, Integer.class, TransactionBeanParam.class);
+            servicePoint.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ServicePointResource.class)
+                    .path(transactionsMethod)
+                    .path(transactionsEagerlyMethod)
+                    .resolveTemplate("providerId", servicePoint.getProvider().getUserId().toString())
+                    .resolveTemplate("servicePointNumber", servicePoint.getServicePointNumber().toString())
+                    .build())
+                    .rel("transactions-eagerly").build());
+
+            // transactions count
+            Method countTransactionsByServicePointMethod = ServicePointResource.TransactionResource.class.getMethod("countTransactionsByServicePoint", Long.class, Integer.class, GenericBeanParam.class);
+            servicePoint.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ServicePointResource.class)
+                    .path(transactionsMethod)
+                    .path(countTransactionsByServicePointMethod)
+                    .resolveTemplate("providerId", servicePoint.getProvider().getUserId().toString())
+                    .resolveTemplate("servicePointNumber", servicePoint.getServicePointNumber().toString())
+                    .build())
+                    .rel("transactions-count").build());
+
+            /**
+             * Historical Transactions associated with current Service Point resource
+             */
+            // historical-transactions
+            Method historicalTransactionsMethod = ServicePointResource.class.getMethod("getHistoricalTransactionResource");
+            servicePoint.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ServicePointResource.class)
+                    .path(historicalTransactionsMethod)
+                    .resolveTemplate("providerId", servicePoint.getProvider().getUserId().toString())
+                    .resolveTemplate("servicePointNumber", servicePoint.getServicePointNumber().toString())
+                    .build())
+                    .rel("historical-transactions").build());
+
+            // historical-transactions eagerly
+            Method historicalTransactionsEagerlyMethod = ServicePointResource.HistoricalTransactionResource.class.getMethod("getServicePointHistoricalTransactionsEagerly", Long.class, Integer.class, HistoricalTransactionBeanParam.class);
+            servicePoint.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ServicePointResource.class)
+                    .path(historicalTransactionsMethod)
+                    .path(historicalTransactionsEagerlyMethod)
+                    .resolveTemplate("providerId", servicePoint.getProvider().getUserId().toString())
+                    .resolveTemplate("servicePointNumber", servicePoint.getServicePointNumber().toString())
+                    .build())
+                    .rel("historical-transactions-eagerly").build());
+
+            // historical-transactions count
+            Method countHistoricalTransactionsByServicePointMethod = ServicePointResource.HistoricalTransactionResource.class.getMethod("countHistoricalTransactionsByServicePoint", Long.class, Integer.class, GenericBeanParam.class);
+            servicePoint.getLinks().add(Link.fromUri(uriInfo.getBaseUriBuilder()
+                    .path(ServicePointResource.class)
+                    .path(historicalTransactionsMethod)
+                    .path(countHistoricalTransactionsByServicePointMethod)
+                    .resolveTemplate("providerId", servicePoint.getProvider().getUserId().toString())
+                    .resolveTemplate("servicePointNumber", servicePoint.getServicePointNumber().toString())
+                    .build())
+                    .rel("historical-transactions-count").build());
 
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
@@ -2236,6 +2308,305 @@ public class ServicePointResource {
 
             return Response.status(Status.OK).entity(responseEntity).build();
         }
+    }
 
+    public class TransactionResource {
+
+        public TransactionResource() { }
+
+        /**
+         * Method returns subset of Transaction entities for given Service Point entity.
+         * The provider id and service point number are passed through path params.
+         * They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getServicePointTransactions( @PathParam("providerId") Long providerId,
+                                                     @PathParam("servicePointNumber") Integer servicePointNumber,
+                                                     @BeanParam TransactionBeanParam params ) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning transactions for given service point using " +
+                    "ServicePointResource.TransactionResource.getServicePointTransactions(providerId, servicePointNumber) method of REST API");
+
+            utx.begin();
+
+            // find service point entity for which to get associated transactions
+            ServicePoint servicePoint = servicePointFacade.find(new ServicePointId(providerId, servicePointNumber));
+            if(servicePoint == null)
+                throw new NotFoundException("Could not find service point for id (" + providerId + "," + servicePointNumber + ").");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<Transaction> transactions = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<ServicePoint> servicePoints = new ArrayList<>();
+                servicePoints.add(servicePoint);
+
+                // get transactions for given service point filtered by given query params
+                transactions = new ResourceList<>(
+                        transactionFacade.findByMultipleCriteria(params.getClients(), params.getProviders(), params.getServices(), servicePoints,
+                                params.getWorkStations(), params.getEmployees(), params.getProviderServices(), params.getTransactionTimePeriod(),
+                                params.getBookedTimePeriod(), params.getTerms(), params.getPriceRange(), params.getCurrencyCodes(), params.getPaymentMethods(),
+                                params.getPaid(), params.getOffset(), params.getLimit())
+                );
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get transactions for given service point without filtering (eventually paginated)
+                transactions = new ResourceList<>( transactionFacade.findByServicePoint(servicePoint, params.getOffset(), params.getLimit()) );
+            }
+
+            utx.commit();
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.TransactionResource.populateWithHATEOASLinks(transactions, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(transactions).build();
+        }
+
+        /**
+         * Method returns subset of Transaction entities for given Service Point fetching them eagerly.
+         * The provider id and service point number are passed through path params.
+         * They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Path("/eagerly")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getServicePointTransactionsEagerly( @PathParam("providerId") Long providerId,
+                                                            @PathParam("servicePointNumber") Integer servicePointNumber,
+                                                            @BeanParam TransactionBeanParam params ) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning transactions eagerly for given service point using " +
+                    "ServicePointResource.TransactionResource.getServicePointTransactionsEagerly(providerId, servicePointNumber) method of REST API");
+
+            utx.begin();
+
+            // find service point entity for which to get associated transactions
+            ServicePoint servicePoint = servicePointFacade.find(new ServicePointId(providerId, servicePointNumber));
+            if(servicePoint == null)
+                throw new NotFoundException("Could not find service point for id (" + providerId + "," + servicePointNumber + ").");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<TransactionWrapper> transactions = null;
+
+            if(noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<ServicePoint> servicePoints = new ArrayList<>();
+                servicePoints.add(servicePoint);
+
+                // get transactions eagerly for given service point filtered by given query params
+                transactions = new ResourceList<>(
+                        TransactionWrapper.wrap(
+                                transactionFacade.findByMultipleCriteriaEagerly(params.getClients(), params.getProviders(), params.getServices(),
+                                        servicePoints, params.getWorkStations(), params.getEmployees(), params.getProviderServices(),
+                                        params.getTransactionTimePeriod(), params.getBookedTimePeriod(), params.getTerms(), params.getPriceRange(),
+                                        params.getCurrencyCodes(), params.getPaymentMethods(), params.getPaid(), params.getOffset(), params.getLimit())
+                        )
+                );
+            }  else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get transactions eagerly for given service point without filtering (eventually paginated)
+                transactions = new ResourceList<>( TransactionWrapper.wrap(transactionFacade.findByServicePointEagerly(servicePoint, params.getOffset(), params.getLimit())) );
+            }
+
+            utx.commit();
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.TransactionResource.populateWithHATEOASLinks(transactions, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(transactions).build();
+        }
+
+        /**
+         * Method that counts Transaction entities for given Service Point resource.
+         * The provider id and service point number are passed through path params.
+         */
+        @GET
+        @Path("/count")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response countTransactionsByServicePoint( @PathParam("providerId") Long providerId,
+                                                         @PathParam("servicePointNumber") Integer servicePointNumber,
+                                                         @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning number of transactions for given service point by executing " +
+                    "ServicePointResource.TransactionResource.countTransactionsByServicePoint(providerId, servicePointNumber) method of REST API");
+
+            utx.begin();
+
+            // find service point entity for which to count transactions
+            ServicePoint servicePoint = servicePointFacade.find(new ServicePointId(providerId, servicePointNumber));
+            if(servicePoint == null)
+                throw new NotFoundException("Could not find service point for id (" + providerId + "," + servicePointNumber + ").");
+
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(transactionFacade.countByServicePoint(servicePoint)), 200,
+                    "number of transactions for service point with id (" + servicePoint.getProvider().getUserId() + "," + servicePoint.getServicePointNumber() + ")");
+
+            utx.commit();
+
+            return Response.status(Status.OK).entity(responseEntity).build();
+        }
+    }
+
+    public class HistoricalTransactionResource {
+
+        public HistoricalTransactionResource() {}
+
+        /**
+         * Method returns subset of Historical Transaction entities for given Service Point entity.
+         * The provider id and service point number are passed through path params.
+         * They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getServicePointHistoricalTransactions( @PathParam("providerId") Long providerId,
+                                                               @PathParam("servicePointNumber") Integer servicePointNumber,
+                                                               @BeanParam HistoricalTransactionBeanParam params ) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning historical transactions for given service point using " +
+                    "ServicePointResource.HistoricalTransactionResource.getServicePointHistoricalTransactions(providerId, servicePointNumber) method of REST API");
+
+            utx.begin();
+
+            // find service point entity for which to get associated historical transactions
+            ServicePoint servicePoint = servicePointFacade.find(new ServicePointId(providerId, servicePointNumber));
+            if (servicePoint == null)
+                throw new NotFoundException("Could not find service point for id (" + providerId + "," + servicePointNumber + ").");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<HistoricalTransaction> historicalTransactions = null;
+
+            if (noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<ServicePoint> servicePoints = new ArrayList<>();
+                servicePoints.add(servicePoint);
+
+                // get historical transactions for given service point filtered by given query params
+                historicalTransactions = new ResourceList<>(
+                        historicalTransactionFacade.findByMultipleCriteria(params.getClients(), params.getProviders(), params.getServices(), servicePoints,
+                                params.getWorkStations(), params.getEmployees(), params.getProviderServices(), params.getTransactionTimePeriod(),
+                                params.getBookedTimePeriod(), params.getTerms(), params.getPriceRange(), params.getCurrencyCodes(), params.getPaymentMethods(),
+                                params.getPaid(), params.getCompletionStatuses(), params.getClientRatingRange(), params.getClientComments(),
+                                params.getProviderRatingRange(), params.getProviderDementis(), params.getOffset(), params.getLimit())
+                );
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get historical transactions for given service point without filtering (eventually paginated)
+                historicalTransactions = new ResourceList<>(historicalTransactionFacade.findByServicePoint(servicePoint, params.getOffset(), params.getLimit()));
+            }
+
+            utx.commit();
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.HistoricalTransactionResource.populateWithHATEOASLinks(historicalTransactions, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(historicalTransactions).build();
+        }
+
+        /**
+         * Method returns subset of Historical Transaction entities for given Service Point fetching them eagerly.
+         * The provider id and service point number are passed through path params.
+         * They can be additionally filtered and paginated by @QueryParams.
+         */
+        @GET
+        @Path("/eagerly")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response getServicePointHistoricalTransactionsEagerly( @PathParam("providerId") Long providerId,
+                                                                      @PathParam("servicePointNumber") Integer servicePointNumber,
+                                                                      @BeanParam HistoricalTransactionBeanParam params ) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning historical transactions eagerly for given service point using " +
+                    "ServicePointResource.HistoricalTransactionResource.getServicePointHistoricalTransactionsEagerly(providerId, servicePointNumber) method of REST API");
+
+            utx.begin();
+
+            // find service point entity for which to get associated historical transactions
+            ServicePoint servicePoint = servicePointFacade.find(new ServicePointId(providerId, servicePointNumber));
+            if (servicePoint == null)
+                throw new NotFoundException("Could not find service point for id (" + providerId + "," + servicePointNumber + ").");
+
+            Integer noOfParams = RESTToolkit.calculateNumberOfFilterQueryParams(params);
+
+            ResourceList<HistoricalTransactionWrapper> historicalTransactions = null;
+
+            if (noOfParams > 0) {
+                logger.log(Level.INFO, "There is at least one filter query param in HTTP request.");
+
+                List<ServicePoint> servicePoints = new ArrayList<>();
+                servicePoints.add(servicePoint);
+
+                // get historical transactions eagerly for given service point filtered by given query params
+                historicalTransactions = new ResourceList<>(
+                        HistoricalTransactionWrapper.wrap(
+                                historicalTransactionFacade.findByMultipleCriteriaEagerly(params.getClients(), params.getProviders(), params.getServices(), servicePoints,
+                                        params.getWorkStations(), params.getEmployees(), params.getProviderServices(), params.getTransactionTimePeriod(),
+                                        params.getBookedTimePeriod(), params.getTerms(), params.getPriceRange(), params.getCurrencyCodes(), params.getPaymentMethods(),
+                                        params.getPaid(), params.getCompletionStatuses(), params.getClientRatingRange(), params.getClientComments(),
+                                        params.getProviderRatingRange(), params.getProviderDementis(), params.getOffset(), params.getLimit())
+                        )
+                );
+            } else {
+                logger.log(Level.INFO, "There isn't any filter query param in HTTP request.");
+
+                // get historical transactions eagerly for given service point without filtering (eventually paginated)
+                historicalTransactions = new ResourceList<>(HistoricalTransactionWrapper.wrap(historicalTransactionFacade.findByServicePointEagerly(servicePoint, params.getOffset(), params.getLimit())));
+            }
+
+            utx.commit();
+
+            // result resources need to be populated with hypermedia links to enable resource discovery
+            pl.salonea.jaxrs.HistoricalTransactionResource.populateWithHATEOASLinks(historicalTransactions, params.getUriInfo(), params.getOffset(), params.getLimit());
+
+            return Response.status(Status.OK).entity(historicalTransactions).build();
+        }
+
+        /**
+         * Method that counts Historical Transaction entities for given Service Point resource.
+         * The provider id and service point number are passed through path params.
+         */
+        @GET
+        @Path("/count")
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+        public Response countHistoricalTransactionsByServicePoint( @PathParam("providerId") Long providerId,
+                                                                   @PathParam("servicePointNumber") Integer servicePointNumber,
+                                                                   @BeanParam GenericBeanParam params ) throws ForbiddenException, NotFoundException,
+        /* UserTransaction exceptions */ HeuristicRollbackException, RollbackException, HeuristicMixedException, SystemException, NotSupportedException {
+
+            RESTToolkit.authorizeAccessToWebService(params);
+            logger.log(Level.INFO, "returning number of historical transactions for given service point by executing " +
+                    "ServicePointResource.HistoricalTransactionResource.countHistoricalTransactionsByServicePoint(providerId, servicePointNumber) method of REST API");
+
+            utx.begin();
+
+            // find service point entity for which to count historical transactions
+            ServicePoint servicePoint = servicePointFacade.find(new ServicePointId(providerId, servicePointNumber));
+            if (servicePoint == null)
+                throw new NotFoundException("Could not find service point for id (" + providerId + "," + servicePointNumber + ").");
+
+            ResponseWrapper responseEntity = new ResponseWrapper(String.valueOf(historicalTransactionFacade.countByServicePoint(servicePoint)), 200,
+                    "number of historical transactions for service point with id (" + servicePoint.getProvider().getUserId() + "," + servicePoint.getServicePointNumber() + ")");
+
+            utx.commit();
+
+            return Response.status(Status.OK).entity(responseEntity).build();
+        }
     }
 }
